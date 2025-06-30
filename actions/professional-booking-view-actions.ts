@@ -12,7 +12,10 @@ import { logger } from "@/lib/logs/logger"
 
 // Define a more specific type for the booking details needed by the professional view
 export interface BookingDetailsForProfessional
-  extends Omit<IBooking, "treatmentId" | "userId" | "addressId" | "professionalId" | "selectedDurationId"> {
+  extends Omit<
+    IBooking,
+    "treatmentId" | "userId" | "addressId" | "professionalId" | "selectedDurationId"
+  > {
   _id: Types.ObjectId
   treatmentId?: {
     _id: Types.ObjectId
@@ -60,7 +63,9 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
         select: "name durations defaultDurationMinutes pricingType",
         populate: { path: "durations" },
       })
-      .populate<{ addressId: Pick<IAddress, "_id" | "fullAddress" | "city" | "street" | "streetNumber"> | null }>({
+      .populate<{
+        addressId: Pick<IAddress, "_id" | "fullAddress" | "city" | "street" | "streetNumber"> | null
+      }>({
         path: "addressId",
         select: "fullAddress city street streetNumber",
       })
@@ -81,7 +86,8 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
 
     const currentProfessionalId = session.user.id
     const isAdmin = session.user.roles.includes("admin")
-    const isAssignedToCurrentPro = rawBooking.professionalId?._id.toString() === currentProfessionalId
+    const isAssignedToCurrentPro =
+      rawBooking.professionalId?._id.toString() === currentProfessionalId
 
     // Construct the booking object for the professional
     const bookingForPro: BookingDetailsForProfessional = {
@@ -114,9 +120,13 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
         name: treatmentDoc.name,
         defaultDurationMinutes: treatmentDoc.defaultDurationMinutes,
       }
-      if (treatmentDoc.pricingType === "duration_based" && rawBooking.selectedDurationId && treatmentDoc.durations) {
+      if (
+        treatmentDoc.pricingType === "duration_based" &&
+        rawBooking.selectedDurationId &&
+        treatmentDoc.durations
+      ) {
         const selectedDuration = treatmentDoc.durations.find(
-          (d: ITreatmentDuration) => d._id?.toString() === rawBooking.selectedDurationId?.toString(),
+          (d: ITreatmentDuration) => d._id?.toString() === rawBooking.selectedDurationId?.toString()
         )
         if (selectedDuration) {
           bookingForPro.treatmentId.selectedDuration = selectedDuration

@@ -52,7 +52,7 @@ export function PaymentMethodSelector({
       )}
 
       <div className="space-y-3">
-        {paymentMethods.map((pm) => (
+        {paymentMethods.map(pm => (
           <PurchaseCard
             key={pm._id.toString()}
             title={pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
@@ -67,7 +67,12 @@ export function PaymentMethodSelector({
       </div>
 
       {showAddButton && (
-        <Button type="button" variant="outline" onClick={() => setShowPaymentMethodForm(true)} className="w-full h-12">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowPaymentMethodForm(true)}
+          className="w-full h-12"
+        >
           <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
           {t("paymentMethods.addNewLink")}
         </Button>

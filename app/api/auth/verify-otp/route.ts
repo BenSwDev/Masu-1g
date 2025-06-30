@@ -13,13 +13,10 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await verifyOTP(phone, otp)
-    
+
     return NextResponse.json(result)
   } catch (error) {
     console.error("Error in verify-otp API:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
-} 
+}

@@ -2,12 +2,7 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,13 +51,13 @@ export default function CreateReviewModal({
       await createReview({
         bookingId: booking._id,
         rating,
-        comment: comment.trim() || undefined
+        comment: comment.trim() || undefined,
       })
-      
+
       toast.success(t("memberReviews.reviewSubmitted"))
       onSuccess()
       onClose()
-      
+
       // Reset form
       setRating(0)
       setComment("")
@@ -87,7 +82,7 @@ export default function CreateReviewModal({
           {Array.from({ length: 5 }, (_, i) => {
             const starValue = i + 1
             const isActive = starValue <= (hoveredRating || rating)
-            
+
             return (
               <button
                 key={i}
@@ -99,16 +94,16 @@ export default function CreateReviewModal({
               >
                 <Star
                   className={`h-8 w-8 cursor-pointer transition-colors ${
-                    isActive ? "fill-yellow-400 text-yellow-400" : "text-gray-300 hover:text-yellow-300"
+                    isActive
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300 hover:text-yellow-300"
                   }`}
                 />
               </button>
             )
           })}
         </div>
-        {rating > 0 && (
-          <span className="text-sm font-medium">{rating}/5</span>
-        )}
+        {rating > 0 && <span className="text-sm font-medium">{rating}/5</span>}
       </div>
     )
   }
@@ -142,7 +137,7 @@ export default function CreateReviewModal({
                     <span>{formatDateTime(booking.bookingDateTime, language)}</span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">{t("memberReviews.treatmentType")}:</span>
@@ -152,12 +147,14 @@ export default function CreateReviewModal({
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{t("memberReviews.duration")}:</span>
-                      <span>{booking.treatmentId.duration} {t("common.minutes")}</span>
+                      <span>
+                        {booking.treatmentId.duration} {t("common.minutes")}
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {booking.professionalId?.name && (
                 <div className="pt-2 border-t">
                   <div className="flex items-center space-x-2">
@@ -175,9 +172,7 @@ export default function CreateReviewModal({
             <CardHeader>
               <CardTitle className="text-lg">{t("memberReviews.yourRating")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              {renderStars()}
-            </CardContent>
+            <CardContent>{renderStars()}</CardContent>
           </Card>
 
           {/* Comment Section */}
@@ -189,7 +184,7 @@ export default function CreateReviewModal({
               <Textarea
                 placeholder={t("memberReviews.commentPlaceholder")}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={e => setComment(e.target.value)}
                 rows={4}
                 maxLength={1000}
               />
@@ -209,14 +204,11 @@ export default function CreateReviewModal({
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             {t("common.cancel")}
           </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={isSubmitting || rating === 0}
-          >
+          <Button onClick={handleSubmit} disabled={isSubmitting || rating === 0}>
             {isSubmitting ? t("common.submitting") : t("memberReviews.submitReview")}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   )
-} 
+}

@@ -1,5 +1,9 @@
 import { unifiedNotificationService } from "./unified-notification-service"
-import type { NotificationRecipient, NotificationData, NotificationResult } from "./notification-types"
+import type {
+  NotificationRecipient,
+  NotificationData,
+  NotificationResult,
+} from "./notification-types"
 import { User, type IUser, type INotificationPreferences } from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
 import dbConnect from "@/lib/db/mongoose"
@@ -17,15 +21,16 @@ interface UserNotificationProfile {
  * Always uses user's preferred communication methods and language
  */
 export class SmartNotificationService {
-  
   /**
    * Get user notification profile with preferences
    */
   private async getUserProfile(userId: string): Promise<UserNotificationProfile | null> {
     try {
       await dbConnect()
-      const user = await User.findById(userId).select('email phone notificationPreferences name').lean() as IUser | null
-      
+      const user = (await User.findById(userId)
+        .select("email phone notificationPreferences name")
+        .lean()) as IUser | null
+
       if (!user) {
         logger.warn(`User not found for notifications: ${userId}`)
         return null
@@ -34,7 +39,7 @@ export class SmartNotificationService {
       // Ensure default preferences if not set
       const preferences: INotificationPreferences = user.notificationPreferences || {
         methods: ["email", "sms"],
-        language: "he"
+        language: "he",
       }
 
       return {
@@ -42,7 +47,7 @@ export class SmartNotificationService {
         email: user.email,
         phone: user.phone,
         preferences,
-        name: user.name
+        name: user.name,
       }
     } catch (error) {
       logger.error(`Failed to get user profile for notifications:`, { userId, error })
@@ -62,13 +67,13 @@ export class SmartNotificationService {
           type: "email",
           value: profile.email,
           name: profile.name,
-          language: profile.preferences.language
+          language: profile.preferences.language,
         })
       } else if (method === "sms" && profile.phone) {
         recipients.push({
-          type: "phone", 
+          type: "phone",
           value: profile.phone,
-          language: profile.preferences.language
+          language: profile.preferences.language,
         })
       }
     })
@@ -79,10 +84,7 @@ export class SmartNotificationService {
   /**
    * Send notification to user respecting their preferences
    */
-  async sendToUser(
-    userId: string, 
-    data: NotificationData
-  ): Promise<NotificationResult[]> {
+  async sendToUser(userId: string, data: NotificationData): Promise<NotificationResult[]> {
     const profile = await this.getUserProfile(userId)
     if (!profile) {
       return [{ success: false, error: "User not found or has no contact information" }]
@@ -94,7 +96,9 @@ export class SmartNotificationService {
       return [{ success: false, error: "No valid notification methods configured" }]
     }
 
-    logger.info(`Sending notification to user ${userId} via ${recipients.map(r => r.type).join(', ')}`)
+    logger.info(
+      `Sending notification to user ${userId} via ${recipients.map(r => r.type).join(", ")}`
+    )
     return await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
   }
 
@@ -102,22 +106,22 @@ export class SmartNotificationService {
    * Send notification to multiple users respecting their individual preferences
    */
   async sendToMultipleUsers(
-    userIds: string[], 
+    userIds: string[],
     data: NotificationData
   ): Promise<{ [userId: string]: NotificationResult[] }> {
     const results: { [userId: string]: NotificationResult[] } = {}
-    
+
     // Process users in parallel
-    const promises = userIds.map(async (userId) => {
+    const promises = userIds.map(async userId => {
       const userResults = await this.sendToUser(userId, data)
       return { userId, results: userResults }
     })
 
     const settled = await Promise.allSettled(promises)
-    
+
     settled.forEach((result, index) => {
       const userId = userIds[index]
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         results[userId] = result.value.results
       } else {
         logger.error(`Failed to send notification to user ${userId}:`, result.reason)
@@ -143,7 +147,7 @@ export class SmartNotificationService {
       return {
         code: fallbackCode,
         expiryDate: fallbackExpiry,
-        results: [{ success: false, error: "User not found" }]
+        results: [{ success: false, error: "User not found" }],
       }
     }
 
@@ -154,15 +158,15 @@ export class SmartNotificationService {
       return {
         code: fallbackCode,
         expiryDate: fallbackExpiry,
-        results: [{ success: false, error: "No notification methods configured" }]
+        results: [{ success: false, error: "No notification methods configured" }],
       }
     }
 
     // Use the first preferred method for OTP generation
     const primaryRecipient = recipients[0]
     const { code, expiryDate, result } = await unifiedNotificationService.sendOTP(
-      primaryRecipient, 
-      length, 
+      primaryRecipient,
+      length,
       expiryMinutes
     )
 
@@ -172,12 +176,12 @@ export class SmartNotificationService {
       const otpData: NotificationData = {
         type: "otp",
         code,
-        expiresIn: expiryMinutes
+        expiresIn: expiryMinutes,
       }
-      
+
       const otherRecipients = recipients.slice(1)
       const additionalResults = await unifiedNotificationService.sendNotificationToMultiple(
-        otherRecipients, 
+        otherRecipients,
         otpData
       )
       otherResults.push(...additionalResults)
@@ -186,7 +190,7 @@ export class SmartNotificationService {
     return {
       code,
       expiryDate,
-      results: [result, ...otherResults]
+      results: [result, ...otherResults],
     }
   }
 
@@ -194,21 +198,21 @@ export class SmartNotificationService {
    * Send to guest user (no preferences, use defaults)
    */
   async sendToGuest(
-    email: string | null, 
-    phone: string | null, 
+    email: string | null,
+    phone: string | null,
     data: NotificationData,
     language: "he" | "en" | "ru" = "he",
     name?: string
   ): Promise<NotificationResult[]> {
     const recipients: NotificationRecipient[] = []
-    
+
     // Always send to email for guests if email provided
     if (email) {
       recipients.push({
         type: "email",
         value: email,
         name,
-        language
+        language,
       })
     }
 
@@ -216,8 +220,8 @@ export class SmartNotificationService {
     if (phone) {
       recipients.push({
         type: "phone",
-        value: phone, 
-        language
+        value: phone,
+        language,
       })
     }
 
@@ -238,25 +242,27 @@ export class SmartNotificationService {
     }
 
     const recipients: NotificationRecipient[] = []
-    
+
     // Add email recipient if available
     if (profile.email) {
       recipients.push({
         type: "email",
         value: profile.email,
         name: profile.name,
-        language: profile.preferences.language
+        language: profile.preferences.language,
       })
     }
-    
+
     // Always add phone recipient for professionals
     recipients.push({
       type: "phone",
       value: profile.phone,
-      language: profile.preferences.language
+      language: profile.preferences.language,
     })
 
-    logger.info(`Sending professional notification to ${professionalId} via ${recipients.map(r => r.type).join(' and ')}`)
+    logger.info(
+      `Sending professional notification to ${professionalId} via ${recipients.map(r => r.type).join(" and ")}`
+    )
     return await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
   }
 
@@ -269,20 +275,16 @@ export class SmartNotificationService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       await dbConnect()
-      
+
       const updateData: any = {}
       if (preferences.methods) {
-        updateData['notificationPreferences.methods'] = preferences.methods
+        updateData["notificationPreferences.methods"] = preferences.methods
       }
       if (preferences.language) {
-        updateData['notificationPreferences.language'] = preferences.language
+        updateData["notificationPreferences.language"] = preferences.language
       }
 
-      const result = await User.findByIdAndUpdate(
-        userId,
-        { $set: updateData },
-        { new: true }
-      )
+      const result = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true })
 
       if (!result) {
         return { success: false, error: "User not found" }
@@ -306,4 +308,4 @@ export class SmartNotificationService {
 }
 
 // Export singleton instance
-export const smartNotificationService = new SmartNotificationService() 
+export const smartNotificationService = new SmartNotificationService()

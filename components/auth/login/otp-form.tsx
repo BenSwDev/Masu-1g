@@ -47,7 +47,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     let interval: NodeJS.Timeout
     if (cooldown > 0) {
       interval = setInterval(() => {
-        setCooldown((prev) => prev - 1)
+        setCooldown(prev => prev - 1)
       }, 1000)
     }
     return () => clearInterval(interval)
@@ -160,7 +160,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     setOtpCode(newOtpCode)
 
     // Focus the appropriate field
-    const nextEmptyIndex = newOtpCode.findIndex((v) => !v)
+    const nextEmptyIndex = newOtpCode.findIndex(v => !v)
     if (nextEmptyIndex !== -1) {
       // Focus next empty field
       setTimeout(() => {
@@ -182,12 +182,14 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
   // Get current identifier from input field (client-side only)
   const getCurrentIdentifier = () => {
     if (typeof window !== "undefined") {
-              // For phone, get the value from the hidden input that PhoneInput creates
-        const hiddenInput = document.querySelector('input[name="phone"][type="hidden"]') as HTMLInputElement
-        if (hiddenInput && hiddenInput.value) {
-          return hiddenInput.value
-        }
-        return currentIdentifier
+      // For phone, get the value from the hidden input that PhoneInput creates
+      const hiddenInput = document.querySelector(
+        'input[name="phone"][type="hidden"]'
+      ) as HTMLInputElement
+      if (hiddenInput && hiddenInput.value) {
+        return hiddenInput.value
+      }
+      return currentIdentifier
     }
     return currentIdentifier
   }
@@ -219,7 +221,6 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     try {
       // TODO: Remove debug log
 
-
       toast({
         title: t("login.sendingOTP"),
         description: t("login.sendingOTPToPhone"),
@@ -236,10 +237,9 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           language: language,
         }),
       })
-      
+
       const result = await response.json()
       // TODO: Remove debug log
-
 
       if (result.success) {
         setOtpSent(true)
@@ -295,7 +295,6 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     try {
       // TODO: Remove debug log
 
-
       toast({
         title: t("login.verifyingOTP"),
         description: t("login.pleaseWait"),
@@ -312,10 +311,9 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           otp: code,
         }),
       })
-      
+
       const result = await response.json()
       // TODO: Remove debug log
-
 
       if (result.success && result.userId) {
         // Sign in the user
@@ -341,7 +339,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           toast({
             title: t("login.authenticationSuccessful"),
             description: t("login.redirecting"),
-            variant: "default"
+            variant: "default",
           })
           // הפניה אוטומטית לעמוד התפקיד
           setTimeout(() => {
@@ -400,9 +398,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       ) : (
         <>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("login.otpPhoneSent")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("login.otpPhoneSent")}</p>
             <p className="font-medium mt-1">{obscuredIdentifier}</p>
           </div>
 
@@ -412,17 +408,17 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
               {otpCode.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => {
+                  ref={el => {
                     otpInputRefs.current[index] = el
                   }}
                   type="text"
                   inputMode="numeric"
                   maxLength={6} // Allow up to 6 characters for iOS auto-fill
                   value={digit}
-                  onChange={(e) => handleOtpChange(e, index)}
-                  onInput={(e) => handleInput(e, index)} // Handle iOS auto-fill
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                  onPaste={index === 0 ? (e) => handlePaste(e, index) : handlePastePrevent}
+                  onChange={e => handleOtpChange(e, index)}
+                  onInput={e => handleInput(e, index)} // Handle iOS auto-fill
+                  onKeyDown={e => handleKeyDown(e, index)}
+                  onPaste={index === 0 ? e => handlePaste(e, index) : handlePastePrevent}
                   className="w-10 h-12 text-center text-lg border-turquoise-200 focus-visible:ring-turquoise-500"
                   autoComplete={index === 0 ? "one-time-code" : "off"} // Enable iOS auto-fill for first field
                 />

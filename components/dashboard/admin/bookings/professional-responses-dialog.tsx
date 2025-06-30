@@ -7,17 +7,17 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  MessageSquare,
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertTriangle,
   Phone,
   Smartphone,
   Monitor,
   RefreshCw,
-  Send
+  Send,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
@@ -52,7 +52,7 @@ export function ProfessionalResponsesDialog({
   open,
   onOpenChange,
   bookingId,
-  bookingStatus
+  bookingStatus,
 }: ProfessionalResponsesDialogProps) {
   const [responses, setResponses] = useState<ProfessionalResponse[]>([])
   const [loading, setLoading] = useState(false)
@@ -60,12 +60,12 @@ export function ProfessionalResponsesDialog({
 
   const fetchResponses = async () => {
     if (!open || !bookingId) return
-    
+
     setLoading(true)
     try {
       const response = await fetch(`/api/admin/bookings/${bookingId}/professional-responses`)
       const result = await response.json()
-      
+
       if (result.success && result.responses) {
         setResponses(result.responses)
       } else {
@@ -86,7 +86,7 @@ export function ProfessionalResponsesDialog({
         method: "POST",
       })
       const result = await response.json()
-      
+
       if (result.success) {
         toast.success(`נשלחו הודעות ל-${result.sentCount} מטפלים`)
         fetchResponses() // Refresh the list
@@ -108,25 +108,33 @@ export function ProfessionalResponsesDialog({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-          <Clock className="h-3 w-3 mr-1" />
-          ממתין
-        </Badge>
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Clock className="h-3 w-3 mr-1" />
+            ממתין
+          </Badge>
+        )
       case "accepted":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          <CheckCircle className="h-3 w-3 mr-1" />
-          קיבל
-        </Badge>
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            קיבל
+          </Badge>
+        )
       case "declined":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          <XCircle className="h-3 w-3 mr-1" />
-          דחה
-        </Badge>
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            <XCircle className="h-3 w-3 mr-1" />
+            דחה
+          </Badge>
+        )
       case "expired":
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-          <AlertTriangle className="h-3 w-3 mr-1" />
-          פג תוקף
-        </Badge>
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            פג תוקף
+          </Badge>
+        )
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -145,7 +153,8 @@ export function ProfessionalResponsesDialog({
     }
   }
 
-  const canResendNotifications = bookingStatus === "confirmed" && !responses.some(r => r.status === "accepted")
+  const canResendNotifications =
+    bookingStatus === "confirmed" && !responses.some(r => r.status === "accepted")
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,13 +169,8 @@ export function ProfessionalResponsesDialog({
         <div className="space-y-4">
           {/* Actions */}
           <div className="flex items-center justify-between">
-            <Button
-              onClick={fetchResponses}
-              variant="outline"
-              size="sm"
-              disabled={loading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <Button onClick={fetchResponses} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               רענן
             </Button>
 
@@ -177,7 +181,7 @@ export function ProfessionalResponsesDialog({
                 size="sm"
                 disabled={resending}
               >
-                <Send className={`h-4 w-4 mr-2 ${resending ? 'animate-pulse' : ''}`} />
+                <Send className={`h-4 w-4 mr-2 ${resending ? "animate-pulse" : ""}`} />
                 שלח הודעות מחדש
               </Button>
             )}
@@ -198,13 +202,11 @@ export function ProfessionalResponsesDialog({
               </div>
             ) : (
               <div className="space-y-3">
-                {responses.map((response) => (
+                {responses.map(response => (
                   <Card key={response._id} className="border-l-4 border-l-blue-200">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">
-                          {response.professionalId.name}
-                        </CardTitle>
+                        <CardTitle className="text-base">{response.professionalId.name}</CardTitle>
                         {getStatusBadge(response.status)}
                       </div>
                     </CardHeader>
@@ -216,9 +218,10 @@ export function ProfessionalResponsesDialog({
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          נשלח {formatDistanceToNow(new Date(response.sentAt), { 
-                            addSuffix: true, 
-                            locale: he 
+                          נשלח{" "}
+                          {formatDistanceToNow(new Date(response.sentAt), {
+                            addSuffix: true,
+                            locale: he,
                           })}
                         </div>
                       </div>
@@ -227,9 +230,10 @@ export function ProfessionalResponsesDialog({
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-1 text-muted-foreground">
                             {getResponseMethodIcon(response.responseMethod)}
-                            ענה {formatDistanceToNow(new Date(response.respondedAt), { 
-                              addSuffix: true, 
-                              locale: he 
+                            ענה{" "}
+                            {formatDistanceToNow(new Date(response.respondedAt), {
+                              addSuffix: true,
+                              locale: he,
                             })}
                           </div>
                         </div>
@@ -239,9 +243,10 @@ export function ProfessionalResponsesDialog({
                         <div className="text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                            פג תוקף {formatDistanceToNow(new Date(response.expiresAt), { 
-                              addSuffix: true, 
-                              locale: he 
+                            פג תוקף{" "}
+                            {formatDistanceToNow(new Date(response.expiresAt), {
+                              addSuffix: true,
+                              locale: he,
                             })}
                           </div>
                         </div>
@@ -265,9 +270,7 @@ export function ProfessionalResponsesDialog({
               <Separator />
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {responses.length}
-                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{responses.length}</div>
                   <div className="text-sm text-muted-foreground">סה"כ נשלחו</div>
                 </div>
                 <div>
@@ -295,4 +298,4 @@ export function ProfessionalResponsesDialog({
       </DialogContent>
     </Dialog>
   )
-} 
+}

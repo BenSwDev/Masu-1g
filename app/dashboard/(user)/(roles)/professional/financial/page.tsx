@@ -3,18 +3,18 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 import { getProfessionalFinancialSummary } from "@/actions/professional-financial-actions"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function ProfessionalFinancialPage() {
   const session = await getServerSession(authOptions)
   if (!session) {
-    redirect('/auth/login')
+    redirect("/auth/login")
   }
-  if (session.user.activeRole !== 'professional') {
-    redirect('/dashboard')
+  if (session.user.activeRole !== "professional") {
+    redirect("/dashboard")
   }
 
-  const result = await getProfessionalFinancialSummary('day')
+  const result = await getProfessionalFinancialSummary("day")
 
   return (
     <div className="space-y-6">
@@ -32,7 +32,7 @@ export default async function ProfessionalFinancialPage() {
               </tr>
             </thead>
             <tbody>
-              {result.data?.map((r) => (
+              {result.data?.map(r => (
                 <tr key={r.period} className="border-b last:border-0">
                   <td className="py-2">{r.period}</td>
                   <td className="py-2">{r.treatments}</td>

@@ -46,7 +46,7 @@ async function dbConnect() {
   }
 
   if (!cached.promise) {
-    const mongooseOptions = { 
+    const mongooseOptions = {
       serverSelectionTimeoutMS: 30000, // 30 seconds timeout for initial connection
       socketTimeoutMS: 45000, // 45 seconds socket timeout
       connectTimeoutMS: 30000, // 30 seconds connection timeout
@@ -57,27 +57,27 @@ async function dbConnect() {
     }
     cached.promise = mongoose
       .connect(MONGODB_URI, mongooseOptions) // Pass options here
-      .then(async (mongoose) => {
+      .then(async mongoose => {
         console.log("✅ MongoDB connected successfully")
-        
+
         // Set up connection event listeners
-        mongoose.connection.on('error', (error) => {
-          console.error('❌ MongoDB connection error:', error)
+        mongoose.connection.on("error", error => {
+          console.error("❌ MongoDB connection error:", error)
         })
-        
-        mongoose.connection.on('disconnected', () => {
-          console.warn('⚠️ MongoDB disconnected')
+
+        mongoose.connection.on("disconnected", () => {
+          console.warn("⚠️ MongoDB disconnected")
         })
-        
-        mongoose.connection.on('reconnected', () => {
-          console.log('🔄 MongoDB reconnected')
+
+        mongoose.connection.on("reconnected", () => {
+          console.log("🔄 MongoDB reconnected")
         })
-        
+
         // Load all models after connection
         await loadModels()
         return mongoose
       })
-      .catch((error) => {
+      .catch(error => {
         cached.promise = null
         throw error
       })
@@ -120,7 +120,6 @@ if (process.env.NODE_ENV === "development") {
     const result = JSON.stringify(query)
     const duration = Date.now() - start
     // TODO: Remove debug log
-
   })
 }
 

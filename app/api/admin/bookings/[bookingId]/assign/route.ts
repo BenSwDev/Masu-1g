@@ -17,10 +17,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     await dbConnect()
@@ -38,10 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate booking exists
     const booking = await Booking.findById(bookingId)
     if (!booking) {
-      return NextResponse.json(
-        { success: false, error: "Booking not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ success: false, error: "Booking not found" }, { status: 404 })
     }
 
     // Check if booking is already assigned
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const professionalProfile = await ProfessionalProfile.findOne({
       userId: new Types.ObjectId(professionalId),
       status: "active",
-      isActive: true
+      isActive: true,
     }).populate("userId")
 
     if (!professionalProfile) {
@@ -81,8 +75,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Check if professional handles this treatment
     const treatmentId = booking.treatmentId.toString()
-    const canHandleTreatment = professionalProfile.treatments.some(treatment => 
-      treatment.treatmentId.toString() === treatmentId
+    const canHandleTreatment = professionalProfile.treatments.some(
+      treatment => treatment.treatmentId.toString() === treatmentId
     )
 
     if (!canHandleTreatment) {
@@ -97,9 +91,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const bookingCity = booking.bookingAddressSnapshot.city
 
       const coversCity = professionalProfile.workAreas.some(workArea => {
-        return workArea.coveredCities.some(city => 
-          city.toLowerCase() === bookingCity.toLowerCase()
-        )
+        return workArea.coveredCities.some(city => city.toLowerCase() === bookingCity.toLowerCase())
       })
 
       if (!coversCity) {
@@ -115,19 +107,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       bookingId,
       {
         professionalId: new Types.ObjectId(professionalId),
-        status: "confirmed" // Update status to confirmed when assigned
+        status: "confirmed", // Update status to confirmed when assigned
       },
       { new: true }
-    ).populate("treatmentId")
-     .populate("professionalId")
-     .populate("userId")
+    )
+      .populate("treatmentId")
+      .populate("professionalId")
+      .populate("userId")
 
     return NextResponse.json({
       success: true,
       booking: updatedBooking,
-      message: "Booking assigned to professional successfully"
+      message: "Booking assigned to professional successfully",
     })
-
   } catch (error) {
     console.error("Error in assign booking API:", error)
     return NextResponse.json(
@@ -135,4 +127,4 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     )
   }
-} 
+}

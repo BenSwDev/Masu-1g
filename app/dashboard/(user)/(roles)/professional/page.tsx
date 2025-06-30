@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function ProfessionalDashboardPage() {
   const session = await getServerSession(authOptions)

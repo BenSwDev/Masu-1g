@@ -1,20 +1,20 @@
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { requireUserSession } from "@/lib/auth/require-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { Suspense } from "react"
+import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertTriangle } from "lucide-react"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "ניהול הזמנות",
-  description: "צפייה וניהול כל ההזמנות במערכת"
+  description: "צפייה וניהול כל ההזמנות במערכת",
 }
 
-import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client";
-import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
-import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary";
+import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client"
+import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
+import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary"
 
 function BookingsErrorFallback() {
   return (
@@ -30,7 +30,7 @@ function BookingsErrorFallback() {
           אירעה שגיאה בטעינת נתוני ההזמנות. אנא רענן את הדף או נסה שוב מאוחר יותר.
         </p>
         <div className="mt-4">
-          <a 
+          <a
             href="/dashboard/admin/bookings"
             className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
@@ -39,7 +39,7 @@ function BookingsErrorFallback() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function BookingsContent() {
@@ -47,15 +47,14 @@ function BookingsContent() {
     <BookingsErrorBoundary>
       <AdminBookingsClient />
     </BookingsErrorBoundary>
-  );
-  
+  )
 }
 
 export default async function AdminBookingsPage() {
   try {
-    const session = await requireUserSession();
+    const session = await requireUserSession()
     if (!session.user.roles?.includes("admin")) {
-      redirect("/dashboard");
+      redirect("/dashboard")
     }
 
     return (
@@ -64,9 +63,9 @@ export default async function AdminBookingsPage() {
           <BookingsContent />
         </Suspense>
       </div>
-    );
+    )
   } catch (error) {
-    console.error("Error in AdminBookingsPage:", error);
-    return <BookingsErrorFallback />;
+    console.error("Error in AdminBookingsPage:", error)
+    return <BookingsErrorFallback />
   }
 }

@@ -56,7 +56,12 @@ export interface GiftVoucherPlain {
   paymentMethodId?: string
   transactionId?: string
   notes?: string
-  usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string }[]
+  usageHistory?: {
+    date: Date | string
+    amountUsed: number
+    orderId?: string
+    description?: string
+  }[]
   isActive: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -165,7 +170,7 @@ export async function getGiftVouchers(
   page = 1,
   limit = 10,
   search = "",
-  filters: GetGiftVouchersOptions["filters"] = {},
+  filters: GetGiftVouchersOptions["filters"] = {}
 ): Promise<GetGiftVouchersResult> {
   try {
     const session = await getServerSession(authOptions)
@@ -180,32 +185,32 @@ export async function getGiftVouchers(
 
     if (search) {
       // Use aggregation pipeline for complex search across populated fields and guest info
-      const searchRegex = new RegExp(search, 'i')
-      
+      const searchRegex = new RegExp(search, "i")
+
       const pipeline: any[] = [
         {
           $lookup: {
             from: "users",
             localField: "purchaserUserId",
             foreignField: "_id",
-            as: "purchaser"
-          }
+            as: "purchaser",
+          },
         },
         {
           $lookup: {
             from: "users",
             localField: "ownerUserId",
             foreignField: "_id",
-            as: "owner"
-          }
+            as: "owner",
+          },
         },
         {
           $lookup: {
             from: "treatments",
             localField: "treatmentId",
             foreignField: "_id",
-            as: "treatment"
-          }
+            as: "treatment",
+          },
         },
         {
           $match: {
@@ -218,22 +223,22 @@ export async function getGiftVouchers(
               { "guestInfo.email": searchRegex },
               { "guestInfo.phone": searchRegex },
               { "treatment.name": searchRegex },
-              { "code": searchRegex },
-              { "recipientName": searchRegex }
-            ]
-          }
+              { code: searchRegex },
+              { recipientName: searchRegex },
+            ],
+          },
         },
         {
           $addFields: {
             purchaserUserId: { $arrayElemAt: ["$purchaser", 0] },
             ownerUserId: { $arrayElemAt: ["$owner", 0] },
-            treatmentId: { $arrayElemAt: ["$treatment", 0] }
-          }
+            treatmentId: { $arrayElemAt: ["$treatment", 0] },
+          },
         },
         {
-          $unset: ["purchaser", "owner", "treatment"]
+          $unset: ["purchaser", "owner", "treatment"],
         },
-        { $sort: { purchaseDate: -1 } }
+        { $sort: { purchaseDate: -1 } },
       ]
 
       // Apply filters to the pipeline
@@ -246,13 +251,19 @@ export async function getGiftVouchers(
       }
       if (filters?.dateRange) {
         if (filters.dateRange.from) {
-          matchStage.purchaseDate = { ...matchStage.purchaseDate, $gte: new Date(filters.dateRange.from) }
+          matchStage.purchaseDate = {
+            ...matchStage.purchaseDate,
+            $gte: new Date(filters.dateRange.from),
+          }
         }
         if (filters.dateRange.to) {
-          matchStage.purchaseDate = { ...matchStage.purchaseDate, $lte: new Date(filters.dateRange.to) }
+          matchStage.purchaseDate = {
+            ...matchStage.purchaseDate,
+            $lte: new Date(filters.dateRange.to),
+          }
         }
       }
-      
+
       if (Object.keys(matchStage).length > 0) {
         pipeline.splice(pipeline.length - 1, 0, { $match: matchStage })
       }
@@ -288,7 +299,9 @@ export async function getGiftVouchers(
       total = await mongoose.model("GiftVoucher").countDocuments(query)
       const skip = (page - 1) * limit
 
-      giftVoucherDocs = await mongoose.model("GiftVoucher").find(query)
+      giftVoucherDocs = await mongoose
+        .model("GiftVoucher")
+        .find(query)
         .sort({ purchaseDate: -1 })
         .skip(skip)
         .limit(limit)
@@ -304,7 +317,11 @@ export async function getGiftVouchers(
 
           // Handle purchaser name (user or guest)
           if (doc.purchaserUserId) {
-            const purchaser = await mongoose.model("User").findById(doc.purchaserUserId).select("name").lean() as any
+            const purchaser = (await mongoose
+              .model("User")
+              .findById(doc.purchaserUserId)
+              .select("name")
+              .lean()) as any
             purchaserName = purchaser?.name
           } else if (doc.guestInfo) {
             purchaserName = doc.guestInfo.name
@@ -312,7 +329,11 @@ export async function getGiftVouchers(
 
           // Handle owner name (user or guest)
           if (doc.ownerUserId) {
-            const owner = await mongoose.model("User").findById(doc.ownerUserId).select("name").lean() as any
+            const owner = (await mongoose
+              .model("User")
+              .findById(doc.ownerUserId)
+              .select("name")
+              .lean()) as any
             ownerName = owner?.name
           } else if (doc.guestInfo) {
             ownerName = doc.guestInfo.name
@@ -320,14 +341,16 @@ export async function getGiftVouchers(
 
           // Handle treatment details
           if (doc.voucherType === "treatment" && doc.treatmentId) {
-            const treatment = await mongoose.model("Treatment").findById(doc.treatmentId)
+            const treatment = (await mongoose
+              .model("Treatment")
+              .findById(doc.treatmentId)
               .select("name durations")
-              .lean() as any
+              .lean()) as any
             treatmentName = treatment?.name
-            
+
             if (doc.selectedDurationId && treatment?.durations) {
-              const duration = treatment.durations.find((d: any) => 
-                d._id.toString() === doc.selectedDurationId.toString()
+              const duration = treatment.durations.find(
+                (d: any) => d._id.toString() === doc.selectedDurationId.toString()
               )
               selectedDurationName = duration?.minutes ? `${duration.minutes} min` : undefined
             }
@@ -339,7 +362,7 @@ export async function getGiftVouchers(
             ownerName,
             treatmentName,
             selectedDurationName,
-            guestInfo: doc.guestInfo // Include guest info in response
+            guestInfo: doc.guestInfo, // Include guest info in response
           }
         } catch (error) {
           logger.warn("Error transforming gift voucher", { voucherId: doc._id, error })
@@ -378,7 +401,9 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsForSelec
 
     await dbConnect()
 
-    const treatments = await mongoose.model("Treatment").find({ isActive: true })
+    const treatments = await mongoose
+      .model("Treatment")
+      .find({ isActive: true })
       .select("name durations")
       .lean()
 
@@ -387,11 +412,12 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsForSelec
       treatments: treatments.map((treatment: any) => ({
         _id: treatment._id.toString(),
         name: treatment.name,
-        durations: treatment.durations?.map((duration: any) => ({
-          _id: duration._id.toString(),
-          minutes: duration.minutes,
-          price: duration.price,
-        })) || [],
+        durations:
+          treatment.durations?.map((duration: any) => ({
+            _id: duration._id.toString(),
+            minutes: duration.minutes,
+            price: duration.price,
+          })) || [],
       })),
     }
   } catch (error) {
@@ -412,10 +438,7 @@ export async function getUsersForAdminSelection(): Promise<GetUsersForAdminSelec
 
     await dbConnect()
 
-    const users = await mongoose.model("User").find()
-      .select("name email")
-      .sort({ name: 1 })
-      .lean()
+    const users = await mongoose.model("User").find().select("name email").sort({ name: 1 }).lean()
 
     return {
       success: true,
@@ -429,4 +452,4 @@ export async function getUsersForAdminSelection(): Promise<GetUsersForAdminSelec
     logger.error("Error in getUsersForAdminSelection:", error)
     return { success: false, error: "Failed to fetch users" }
   }
-} 
+}

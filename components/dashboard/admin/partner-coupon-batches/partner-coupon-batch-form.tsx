@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, Loader2 } from "lucide-react"
@@ -26,7 +32,10 @@ const formSchema = z
     name: z.string().min(1, "Name is required").trim(),
     description: z.string().optional(),
     assignedPartnerId: z.string().optional().nullable(),
-    couponCount: z.coerce.number().min(1, "Must have at least 1 coupon").max(1000, "Cannot exceed 1000 coupons"),
+    couponCount: z.coerce
+      .number()
+      .min(1, "Must have at least 1 coupon")
+      .max(1000, "Cannot exceed 1000 coupons"),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.coerce.number().min(0, "Discount value must be non-negative"),
     validFrom: z.date({ required_error: "Start date is required." }),
@@ -37,7 +46,7 @@ const formSchema = z
 
     notesForPartner: z.string().optional(),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],
   })
@@ -52,7 +61,13 @@ interface PartnerCouponBatchFormProps {
   loading: boolean
 }
 
-export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmit, onCancel, loading }: PartnerCouponBatchFormProps) {
+export function PartnerCouponBatchForm({
+  initialData,
+  partnersForSelect,
+  onSubmit,
+  onCancel,
+  loading,
+}: PartnerCouponBatchFormProps) {
   const { t, dir } = useTranslation()
 
   const defaultValues = React.useMemo(
@@ -73,7 +88,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
 
       notesForPartner: initialData?.notesForPartner || "",
     }),
-    [initialData],
+    [initialData]
   )
 
   const form = useForm<PartnerCouponBatchFormValues>({
@@ -101,57 +116,85 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
         </div>
 
         <div>
-          <Label htmlFor="description">{t("adminPartnerCouponBatches.form.descriptionLabel")}</Label>
+          <Label htmlFor="description">
+            {t("adminPartnerCouponBatches.form.descriptionLabel")}
+          </Label>
           <Textarea id="description" {...form.register("description")} disabled={loading} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="couponCount">{t("adminPartnerCouponBatches.form.couponCountLabel")}</Label>
-            <Input 
-              id="couponCount" 
-              type="number" 
-              min="1" 
-              max="1000" 
-              {...form.register("couponCount")} 
+            <Label htmlFor="couponCount">
+              {t("adminPartnerCouponBatches.form.couponCountLabel")}
+            </Label>
+            <Input
+              id="couponCount"
+              type="number"
+              min="1"
+              max="1000"
+              {...form.register("couponCount")}
               disabled={loading || !!initialData} // Disable editing count for existing batches
             />
             {form.formState.errors.couponCount && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.couponCount.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.couponCount.message}
+              </p>
             )}
           </div>
-
-
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="discountType">{t("adminPartnerCouponBatches.form.discountTypeLabel")}</Label>
+            <Label htmlFor="discountType">
+              {t("adminPartnerCouponBatches.form.discountTypeLabel")}
+            </Label>
             <Controller
               name="discountType"
               control={form.control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={loading}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("adminPartnerCouponBatches.form.discountTypePlaceholder")} />
+                    <SelectValue
+                      placeholder={t("adminPartnerCouponBatches.form.discountTypePlaceholder")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percentage">{t("adminPartnerCouponBatches.form.discountTypePercentage")}</SelectItem>
-                    <SelectItem value="fixedAmount">{t("adminPartnerCouponBatches.form.discountTypeFixedAmount")}</SelectItem>
+                    <SelectItem value="percentage">
+                      {t("adminPartnerCouponBatches.form.discountTypePercentage")}
+                    </SelectItem>
+                    <SelectItem value="fixedAmount">
+                      {t("adminPartnerCouponBatches.form.discountTypeFixedAmount")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
             />
             {form.formState.errors.discountType && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountType.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.discountType.message}
+              </p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="discountValue">{t("adminPartnerCouponBatches.form.discountValueLabel")}</Label>
-            <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
+            <Label htmlFor="discountValue">
+              {t("adminPartnerCouponBatches.form.discountValueLabel")}
+            </Label>
+            <Input
+              id="discountValue"
+              type="number"
+              step="0.01"
+              {...form.register("discountValue")}
+              disabled={loading}
+            />
             {form.formState.errors.discountValue && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountValue.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.discountValue.message}
+              </p>
             )}
           </div>
         </div>
@@ -169,16 +212,23 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                       disabled={loading}
                     >
-                      <CalendarIcon className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")} />
+                      <CalendarIcon
+                        className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")}
+                      />
                       {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align={dir === "rtl" ? "end" : "start"}>
-                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               )}
@@ -189,7 +239,9 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
           </div>
 
           <div>
-            <Label htmlFor="validUntil">{t("adminPartnerCouponBatches.form.validUntilLabel")}</Label>
+            <Label htmlFor="validUntil">
+              {t("adminPartnerCouponBatches.form.validUntilLabel")}
+            </Label>
             <Controller
               name="validUntil"
               control={form.control}
@@ -200,11 +252,13 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                       disabled={loading}
                     >
-                      <CalendarIcon className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")} />
+                      <CalendarIcon
+                        className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")}
+                      />
                       {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                     </Button>
                   </PopoverTrigger>
@@ -213,7 +267,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < (form.getValues("validFrom") || new Date(0))}
+                      disabled={date => date < (form.getValues("validFrom") || new Date(0))}
                       initialFocus
                     />
                   </PopoverContent>
@@ -221,49 +275,75 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
               )}
             />
             {form.formState.errors.validUntil && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.validUntil.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.validUntil.message}
+              </p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="usageLimit">{t("adminPartnerCouponBatches.form.usageLimitLabel")}</Label>
-            <Input id="usageLimit" type="number" {...form.register("usageLimit")} disabled={loading} />
+            <Label htmlFor="usageLimit">
+              {t("adminPartnerCouponBatches.form.usageLimitLabel")}
+            </Label>
+            <Input
+              id="usageLimit"
+              type="number"
+              {...form.register("usageLimit")}
+              disabled={loading}
+            />
             {form.formState.errors.usageLimit && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimit.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.usageLimit.message}
+              </p>
             )}
           </div>
           <div>
-            <Label htmlFor="usageLimitPerUser">{t("adminPartnerCouponBatches.form.usageLimitPerUserLabel")}</Label>
-            <Input id="usageLimitPerUser" type="number" {...form.register("usageLimitPerUser")} disabled={loading} />
+            <Label htmlFor="usageLimitPerUser">
+              {t("adminPartnerCouponBatches.form.usageLimitPerUserLabel")}
+            </Label>
+            <Input
+              id="usageLimitPerUser"
+              type="number"
+              {...form.register("usageLimitPerUser")}
+              disabled={loading}
+            />
             {form.formState.errors.usageLimitPerUser && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimitPerUser.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {form.formState.errors.usageLimitPerUser.message}
+              </p>
             )}
           </div>
         </div>
 
         <div>
-          <Label htmlFor="assignedPartnerId">{t("adminPartnerCouponBatches.form.assignedPartnerLabel")}</Label>
+          <Label htmlFor="assignedPartnerId">
+            {t("adminPartnerCouponBatches.form.assignedPartnerLabel")}
+          </Label>
           <Controller
             name="assignedPartnerId"
             control={form.control}
             render={({ field }) => (
               <Select
-                onValueChange={(value) => {
+                onValueChange={value => {
                   field.onChange(value === NO_PARTNER_SELECTED_VALUE ? null : value)
                 }}
                 value={
-                  field.value === null || field.value === undefined ? NO_PARTNER_SELECTED_VALUE : field.value.toString()
+                  field.value === null || field.value === undefined
+                    ? NO_PARTNER_SELECTED_VALUE
+                    : field.value.toString()
                 }
                 disabled={loading || partnersForSelect.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t("adminPartnerCouponBatches.form.assignedPartnerPlaceholder")} />
+                  <SelectValue
+                    placeholder={t("adminPartnerCouponBatches.form.assignedPartnerPlaceholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
-                  {partnersForSelect.map((partner) => (
+                  {partnersForSelect.map(partner => (
                     <SelectItem key={partner.value} value={partner.value}>
                       {partner.label}
                     </SelectItem>
@@ -275,7 +355,9 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
         </div>
 
         <div>
-          <Label htmlFor="notesForPartner">{t("adminPartnerCouponBatches.form.notesForPartnerLabel")}</Label>
+          <Label htmlFor="notesForPartner">
+            {t("adminPartnerCouponBatches.form.notesForPartnerLabel")}
+          </Label>
           <Textarea id="notesForPartner" {...form.register("notesForPartner")} disabled={loading} />
         </div>
 
@@ -284,7 +366,12 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
             name="isActive"
             control={form.control}
             render={({ field }) => (
-              <Checkbox id="isActive" checked={field.value} onCheckedChange={field.onChange} disabled={loading} />
+              <Checkbox
+                id="isActive"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={loading}
+              />
             )}
           />
           <Label
@@ -305,12 +392,18 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
           </Button>
           <Button type="submit" disabled={loading}>
             {loading && (
-              <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />
+              <Loader2
+                className={
+                  dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"
+                }
+              />
             )}
-            {initialData ? t("adminPartnerCouponBatches.form.saveChanges") : t("adminPartnerCouponBatches.form.createBatch")}
+            {initialData
+              ? t("adminPartnerCouponBatches.form.saveChanges")
+              : t("adminPartnerCouponBatches.form.createBatch")}
           </Button>
         </div>
       </div>
     </form>
   )
-} 
+}

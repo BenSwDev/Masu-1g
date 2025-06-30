@@ -41,7 +41,7 @@ export function PasswordChangeForm() {
             ? "הסיסמה שונתה בהצלחה"
             : language === "ru"
               ? "Пароль успешно изменен"
-              : "Password changed successfully",
+              : "Password changed successfully"
         )
         // Reset form
         e.currentTarget.reset()
@@ -52,7 +52,7 @@ export function PasswordChangeForm() {
               ? "הסיסמאות החדשות אינן תואמות"
               : language === "ru"
                 ? "Новые пароли не совпадают"
-                : "New passwords do not match",
+                : "New passwords do not match"
           )
         } else if (result.message === "invalidCurrentPassword") {
           setError(
@@ -60,7 +60,7 @@ export function PasswordChangeForm() {
               ? "הסיסמה הנוכחית שגויה"
               : language === "ru"
                 ? "Текущий пароль неверен"
-                : "Current password is incorrect",
+                : "Current password is incorrect"
           )
         } else if (result.message === "weakPassword") {
           setError(
@@ -68,7 +68,7 @@ export function PasswordChangeForm() {
               ? "הסיסמה החדשה חלשה מדי"
               : language === "ru"
                 ? "Новый пароль слишком слабый"
-                : "New password is too weak",
+                : "New password is too weak"
           )
         } else {
           setError(t("errors.unknown"))
@@ -82,7 +82,7 @@ export function PasswordChangeForm() {
   }
 
   const togglePasswordVisibility = (field: "current" | "new" | "confirm") => {
-    setShowPasswords((prev) => ({
+    setShowPasswords(prev => ({
       ...prev,
       [field]: !prev[field],
     }))
@@ -93,7 +93,11 @@ export function PasswordChangeForm() {
       {/* Current Password */}
       <div className="space-y-2">
         <Label htmlFor="currentPassword">
-          {language === "he" ? "סיסמה נוכחית" : language === "ru" ? "Текущий пароль" : "Current Password"}
+          {language === "he"
+            ? "סיסמה נוכחית"
+            : language === "ru"
+              ? "Текущий пароль"
+              : "Current Password"}
         </Label>
         <div className="relative">
           <Input
@@ -183,9 +187,15 @@ export function PasswordChangeForm() {
       </div>
 
       {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-      {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>}
+      {success && (
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>
+      )}
 
-      <Button type="submit" className="w-full bg-turquoise-500 hover:bg-turquoise-600" disabled={isLoading}>
+      <Button
+        type="submit"
+        className="w-full bg-turquoise-500 hover:bg-turquoise-600"
+        disabled={isLoading}
+      >
         {isLoading
           ? t("common.loading")
           : language === "he"

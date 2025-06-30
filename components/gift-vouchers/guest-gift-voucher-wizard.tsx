@@ -11,7 +11,12 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { useTranslation } from "@/lib/translations/i18n"
-import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import {
+  initiateGuestPurchaseGiftVoucher,
+  confirmGuestGiftVoucherPurchase,
+  saveAbandonedGiftVoucherPurchase,
+  type GiftVoucherPlain,
+} from "@/actions/gift-voucher-actions"
 import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
@@ -51,15 +56,17 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
   const [guestInfo, setGuestInfo] = useState<any>(defaultGuestInfo)
 
   const selectedTreatment = treatments.find(t => String(t._id) === selectedTreatmentId)
-  const selectedDuration = selectedTreatment?.pricingType === "duration_based"
-    ? selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId)
-    : undefined
+  const selectedDuration =
+    selectedTreatment?.pricingType === "duration_based"
+      ? selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId)
+      : undefined
 
-  const price = voucherType === "monetary"
-    ? Math.max(monetaryValue, 150)
-    : selectedTreatment?.pricingType === "fixed"
-      ? selectedTreatment.fixedPrice || 0
-      : selectedDuration?.price || 0
+  const price =
+    voucherType === "monetary"
+      ? Math.max(monetaryValue, 150)
+      : selectedTreatment?.pricingType === "fixed"
+        ? selectedTreatment.fixedPrice || 0
+        : selectedDuration?.price || 0
 
   const calculatedPrice: CalculatedPriceDetails = {
     basePrice: price,
@@ -97,7 +104,15 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         currentStep,
       })
     }
-  }, [guestUserId, guestInfo, voucherType, selectedTreatmentId, selectedDurationId, monetaryValue, currentStep])
+  }, [
+    guestUserId,
+    guestInfo,
+    voucherType,
+    selectedTreatmentId,
+    selectedDurationId,
+    monetaryValue,
+    currentStep,
+  ])
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
@@ -120,7 +135,12 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
   const handlePurchase = async () => {
     setIsLoading(true)
     let sendDateForPayload: string | undefined = "immediate"
-    if (guestInfo.isGift && guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime) {
+    if (
+      guestInfo.isGift &&
+      guestInfo.sendOption === "scheduled" &&
+      guestInfo.sendDate &&
+      guestInfo.sendTime
+    ) {
       const [h, m] = guestInfo.sendTime.split(":").map(Number)
       const combined = new Date(guestInfo.sendDate)
       combined.setHours(h, m, 0, 0)
@@ -133,7 +153,9 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
       selectedDurationId: voucherType === "treatment" ? selectedDurationId || undefined : undefined,
       monetaryValue: voucherType === "monetary" ? price : undefined,
       isGift: guestInfo.isGift || false,
-      recipientName: guestInfo.recipientFirstName ? guestInfo.recipientFirstName + " " + guestInfo.recipientLastName : undefined,
+      recipientName: guestInfo.recipientFirstName
+        ? guestInfo.recipientFirstName + " " + guestInfo.recipientLastName
+        : undefined,
       recipientPhone: guestInfo.recipientPhone,
       greetingMessage: guestInfo.greetingMessage,
       sendDate: sendDateForPayload,
@@ -141,7 +163,7 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         name: guestInfo.firstName + " " + guestInfo.lastName,
         email: guestInfo.email,
         phone: guestInfo.phone,
-      }
+      },
     })
 
     if (!initRes.success || !initRes.voucherId) {
@@ -159,7 +181,7 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         name: guestInfo.firstName + " " + guestInfo.lastName,
         email: guestInfo.email,
         phone: guestInfo.phone,
-      }
+      },
     })
 
     setIsLoading(false)
@@ -182,23 +204,40 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
   const renderVoucherTypeStep = () => (
     <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">{t("giftVouchers.fields.selectVoucherType")}</h2>
+        <h2 className="text-2xl font-semibold text-gray-900">
+          {t("giftVouchers.fields.selectVoucherType")}
+        </h2>
         <p className="text-gray-600 mt-2">{t("giftVouchers.wizard.chooseTypeDesc")}</p>
       </div>
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className={`cursor-pointer border-2 ${voucherType === "monetary" ? "border-blue-500" : "border-gray-200"}`}
-          onClick={() => { setVoucherType("monetary"); setSelectedTreatmentId(""); setSelectedDurationId("") }}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">{t("giftVouchers.monetaryVoucher")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{t("giftVouchers.monetaryDesc")}</p>
-        </CardContent>
-        </Card>
-        <Card className={`cursor-pointer border-2 ${voucherType === "treatment" ? "border-blue-500" : "border-gray-200"}`}
-          onClick={() => { setVoucherType("treatment"); setMonetaryValue(150) }}>
+        <Card
+          className={`cursor-pointer border-2 ${voucherType === "monetary" ? "border-blue-500" : "border-gray-200"}`}
+          onClick={() => {
+            setVoucherType("monetary")
+            setSelectedTreatmentId("")
+            setSelectedDurationId("")
+          }}
+        >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">{t("giftVouchers.treatmentVoucher")}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {t("giftVouchers.monetaryVoucher")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{t("giftVouchers.monetaryDesc")}</p>
+          </CardContent>
+        </Card>
+        <Card
+          className={`cursor-pointer border-2 ${voucherType === "treatment" ? "border-blue-500" : "border-gray-200"}`}
+          onClick={() => {
+            setVoucherType("treatment")
+            setMonetaryValue(150)
+          }}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {t("giftVouchers.treatmentVoucher")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p>{t("giftVouchers.treatmentDesc")}</p>
@@ -206,7 +245,9 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         </Card>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
+        <Button variant="outline" onClick={prevStep}>
+          {t("common.back")}
+        </Button>
         <Button onClick={nextStep}>{t("common.next")}</Button>
       </div>
     </div>
@@ -215,7 +256,9 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
   const renderMonetaryStep = () => (
     <div className="space-y-6">
       <div className="text-center mb-6" dir={dir} lang={language}>
-        <h2 className="text-2xl font-semibold text-gray-900">{t("giftVouchers.wizard.amountTitle")}</h2>
+        <h2 className="text-2xl font-semibold text-gray-900">
+          {t("giftVouchers.wizard.amountTitle")}
+        </h2>
         <p className="text-gray-600 mt-2">{t("giftVouchers.wizard.amountDesc")}</p>
       </div>
       <Card>
@@ -223,19 +266,29 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
           <CardTitle>סכום</CardTitle>
         </CardHeader>
         <CardContent>
-          <Input type="number" min={150} value={monetaryValue} onChange={e => setMonetaryValue(Number(e.target.value))} placeholder="150" />
+          <Input
+            type="number"
+            min={150}
+            value={monetaryValue}
+            onChange={e => setMonetaryValue(Number(e.target.value))}
+            placeholder="150"
+          />
         </CardContent>
       </Card>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
-        <Button onClick={nextStep} disabled={monetaryValue < 150}>{t("common.next")}</Button>
+        <Button variant="outline" onClick={prevStep}>
+          {t("common.back")}
+        </Button>
+        <Button onClick={nextStep} disabled={monetaryValue < 150}>
+          {t("common.next")}
+        </Button>
       </div>
     </div>
   )
 
   const renderTreatmentStep = () => (
     <GuestTreatmentSelectionStep
-      initialData={{ 
+      initialData={{
         activeTreatments: treatments,
         activeUserSubscriptions: [],
         usableGiftVouchers: [],
@@ -257,8 +310,10 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
       setBookingOptions={(update: any) => {
         const prev = { selectedTreatmentId, selectedDurationId }
         const next = typeof update === "function" ? update(prev) : update
-        if (next.selectedTreatmentId !== undefined) setSelectedTreatmentId(next.selectedTreatmentId || "")
-        if (next.selectedDurationId !== undefined) setSelectedDurationId(next.selectedDurationId || "")
+        if (next.selectedTreatmentId !== undefined)
+          setSelectedTreatmentId(next.selectedTreatmentId || "")
+        if (next.selectedDurationId !== undefined)
+          setSelectedDurationId(next.selectedDurationId || "")
       }}
       onNext={nextStep}
       onPrev={prevStep}
@@ -280,24 +335,57 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
               <CardTitle>{t("giftVouchers.voucherDetailsTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between"><span>{t("giftVouchers.type")}</span><span>{voucherType === "monetary" ? t("giftVouchers.types.monetary") : t("giftVouchers.types.treatment")}</span></div>
+              <div className="flex justify-between">
+                <span>{t("giftVouchers.type")}</span>
+                <span>
+                  {voucherType === "monetary"
+                    ? t("giftVouchers.types.monetary")
+                    : t("giftVouchers.types.treatment")}
+                </span>
+              </div>
               {voucherType === "monetary" ? (
-                <div className="flex justify-between"><span>{t("giftVouchers.value")}</span><span>{price} ₪</span></div>
+                <div className="flex justify-between">
+                  <span>{t("giftVouchers.value")}</span>
+                  <span>{price} ₪</span>
+                </div>
               ) : (
                 <>
-                  <div className="flex justify-between"><span>{t("giftVouchers.treatment")}</span><span>{selectedTreatment?.name}</span></div>
+                  <div className="flex justify-between">
+                    <span>{t("giftVouchers.treatment")}</span>
+                    <span>{selectedTreatment?.name}</span>
+                  </div>
                   {selectedDuration && (
-                    <div className="flex justify-between"><span>{t("giftVouchers.duration")}</span><span>{selectedDuration.minutes} {t("common.minutes")}</span></div>
+                    <div className="flex justify-between">
+                      <span>{t("giftVouchers.duration")}</span>
+                      <span>
+                        {selectedDuration.minutes} {t("common.minutes")}
+                      </span>
+                    </div>
                   )}
-                  <div className="flex justify-between"><span>{t("giftVouchers.price")}</span><span>{price} ₪</span></div>
+                  <div className="flex justify-between">
+                    <span>{t("giftVouchers.price")}</span>
+                    <span>{price} ₪</span>
+                  </div>
                 </>
               )}
               {guestInfo.isGift && (
                 <>
-                  <div className="flex justify-between"><span>{t("giftVouchers.recipient")}</span><span>{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span></div>
-                  {guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime && (
-                    <div className="flex justify-between"><span>{t("giftVouchers.sendTime")}</span><span>{guestInfo.sendDate.toLocaleDateString()} {guestInfo.sendTime}</span></div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>{t("giftVouchers.recipient")}</span>
+                    <span>
+                      {guestInfo.recipientFirstName} {guestInfo.recipientLastName}
+                    </span>
+                  </div>
+                  {guestInfo.sendOption === "scheduled" &&
+                    guestInfo.sendDate &&
+                    guestInfo.sendTime && (
+                      <div className="flex justify-between">
+                        <span>{t("giftVouchers.sendTime")}</span>
+                        <span>
+                          {guestInfo.sendDate.toLocaleDateString()} {guestInfo.sendTime}
+                        </span>
+                      </div>
+                    )}
                 </>
               )}
             </CardContent>
@@ -309,24 +397,37 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
               <CardTitle>{t("giftVouchers.purchaserDetails")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between"><span>{t("common.name")}</span><span>{guestInfo.firstName} {guestInfo.lastName}</span></div>
-              <div className="flex justify-between"><span>{t("common.email")}</span><span>{guestInfo.email}</span></div>
-              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{formatPhoneForDisplay(guestInfo.phone || "")}</span></div>
+              <div className="flex justify-between">
+                <span>{t("common.name")}</span>
+                <span>
+                  {guestInfo.firstName} {guestInfo.lastName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t("common.email")}</span>
+                <span>{guestInfo.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t("common.phone")}</span>
+                <span>{formatPhoneForDisplay(guestInfo.phone || "")}</span>
+              </div>
             </CardContent>
           </Card>
         </div>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
+        <Button variant="outline" onClick={prevStep}>
+          {t("common.back")}
+        </Button>
         <Button onClick={nextStep}>{t("giftVouchers.wizard.continueToPay")}</Button>
       </div>
     </div>
   )
 
-
   const renderStep = () => {
     if (currentStep === 1) return renderVoucherTypeStep()
-    if (currentStep === 2) return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
+    if (currentStep === 2)
+      return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
     if (currentStep === 3)
       return (
         <GuestInfoStep
@@ -340,17 +441,19 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         />
       )
     if (currentStep === 4) return renderSummaryStep()
-    if (currentStep === 5) return (
-      <GuestPaymentStep
-        calculatedPrice={calculatedPrice}
-        guestInfo={guestInfo}
-        setGuestInfo={setGuestInfo}
-        onConfirm={handlePurchase}
-        onPrev={prevStep}
-        isLoading={isLoading}
-      />
-    )
-    if (currentStep === 6 && purchaseComplete) return <GuestGiftVoucherConfirmation voucher={purchasedVoucher} />
+    if (currentStep === 5)
+      return (
+        <GuestPaymentStep
+          calculatedPrice={calculatedPrice}
+          guestInfo={guestInfo}
+          setGuestInfo={setGuestInfo}
+          onConfirm={handlePurchase}
+          onPrev={prevStep}
+          isLoading={isLoading}
+        />
+      )
+    if (currentStep === 6 && purchaseComplete)
+      return <GuestGiftVoucherConfirmation voucher={purchasedVoucher} />
     return null
   }
 

@@ -12,12 +12,12 @@ interface HeadingProps {
   icon?: LucideIcon
 }
 
-export const Heading: React.FC<HeadingProps> = ({ 
-  title, 
-  description, 
-  titleKey, 
-  descriptionKey, 
-  icon: Icon 
+export const Heading: React.FC<HeadingProps> = ({
+  title,
+  description,
+  titleKey,
+  descriptionKey,
+  icon: Icon,
 }) => {
   const { t } = useTranslation()
 

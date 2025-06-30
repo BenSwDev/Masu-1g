@@ -10,9 +10,8 @@ import type {
   GiftVoucherUpdateForm,
   GiftVoucherResponse,
   GiftVoucherListResponse,
-  GiftVoucherRedemption
+  GiftVoucherRedemption,
 } from "@/types/core"
-
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -39,8 +38,8 @@ async function generateUniqueVoucherCode(): Promise<string> {
 }
 
 function generateVoucherCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = 'GV-'
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let result = "GV-"
   for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
@@ -78,22 +77,26 @@ async function toGiftVoucherPlain(voucherDocOrPlain: any): Promise<GiftVoucherPl
     } else if (voucher.guestInfo) {
       purchaserName = voucher.guestInfo.name
     }
-    
+
     if (ownerUserIdStr) {
       const owner = await User.findById(ownerUserIdStr).select("name").lean()
       ownerName = owner?.name
     } else if (voucher.guestInfo) {
       ownerName = voucher.guestInfo.name
     }
-    
+
     if (voucher.voucherType === "treatment" && treatmentIdStr) {
       const treatmentDoc = (await Treatment.findById(treatmentIdStr)
         .select("name durations fixedPrice pricingType")
         .lean()) as any
       treatmentName = treatmentDoc?.name
       if (selectedDurationIdStr && treatmentDoc?.durations) {
-        const duration = treatmentDoc.durations.find((d: any) => d._id?.toString() === selectedDurationIdStr)
-        selectedDurationName = duration?.minutes ? `${duration.minutes} min` : duration?.name || "Selected Duration"
+        const duration = treatmentDoc.durations.find(
+          (d: any) => d._id?.toString() === selectedDurationIdStr
+        )
+        selectedDurationName = duration?.minutes
+          ? `${duration.minutes} min`
+          : duration?.name || "Selected Duration"
       }
     }
 
@@ -131,12 +134,13 @@ async function toGiftVoucherPlain(voucherDocOrPlain: any): Promise<GiftVoucherPl
       paymentMethodId: voucher.paymentMethodId,
       transactionId: voucher.transactionId,
       notes: voucher.notes,
-      usageHistory: voucher.usageHistory?.map((h: any) => ({
-        date: formatDate(h.date)!,
-        amountUsed: h.amountUsed,
-        orderId: h.orderId?.toString(),
-        description: h.description,
-      })) || [],
+      usageHistory:
+        voucher.usageHistory?.map((h: any) => ({
+          date: formatDate(h.date)!,
+          amountUsed: h.amountUsed,
+          orderId: h.orderId?.toString(),
+          description: h.description,
+        })) || [],
       isActive: voucher.isActive,
       createdAt: formatDate(voucher.createdAt),
       updatedAt: formatDate(voucher.updatedAt),
@@ -146,7 +150,7 @@ async function toGiftVoucherPlain(voucherDocOrPlain: any): Promise<GiftVoucherPl
       message: error instanceof Error ? error.message : String(error),
       voucherId: voucher._id?.toString(),
     })
-    
+
     // Fallback to a minimal representation
     const minimalVoucher: GiftVoucherPlain = {
       _id: String(voucher._id),
@@ -186,38 +190,46 @@ async function toGiftVoucherPlain(voucherDocOrPlain: any): Promise<GiftVoucherPl
 // CRUD OPERATIONS
 // ============================================================================
 
-export async function createGiftVoucher(formData: GiftVoucherCreateForm): Promise<GiftVoucherResponse> {
+export async function createGiftVoucher(
+  formData: GiftVoucherCreateForm
+): Promise<GiftVoucherResponse> {
   try {
     await dbConnect()
 
     const code = await generateUniqueVoucherCode()
-    
+
     const voucherData = {
       code,
       voucherType: formData.voucherType,
       amount: formData.amount || formData.monetaryValue || 0,
-      treatmentId: formData.treatmentId ? new mongoose.Types.ObjectId(formData.treatmentId) : undefined,
-      selectedDurationId: formData.selectedDurationId ? new mongoose.Types.ObjectId(formData.selectedDurationId) : undefined,
+      treatmentId: formData.treatmentId
+        ? new mongoose.Types.ObjectId(formData.treatmentId)
+        : undefined,
+      selectedDurationId: formData.selectedDurationId
+        ? new mongoose.Types.ObjectId(formData.selectedDurationId)
+        : undefined,
       monetaryValue: formData.monetaryValue,
-      ownerUserId: formData.ownerUserId ? new mongoose.Types.ObjectId(formData.ownerUserId) : undefined,
+      ownerUserId: formData.ownerUserId
+        ? new mongoose.Types.ObjectId(formData.ownerUserId)
+        : undefined,
       isGift: true,
       recipientName: formData.recipientName,
       recipientPhone: formData.recipientPhone,
       recipientEmail: formData.recipientEmail,
       greetingMessage: formData.greetingMessage,
-      status: 'pending_payment',
+      status: "pending_payment",
       validFrom: new Date(formData.validFrom),
       validUntil: new Date(formData.validUntil),
       notes: formData.notes,
       usageHistory: [],
       isActive: true,
     }
-    
+
     const voucher = new GiftVoucher(voucherData)
     await voucher.save()
-    
+
     const plainVoucher = await toGiftVoucherPlain(voucher)
-    
+
     return { success: true, voucher: plainVoucher }
   } catch (error) {
     logger.error("Error creating gift voucher:", error)
@@ -225,30 +237,34 @@ export async function createGiftVoucher(formData: GiftVoucherCreateForm): Promis
   }
 }
 
-export async function updateGiftVoucher(id: string, updateData: GiftVoucherUpdateForm): Promise<GiftVoucherResponse> {
+export async function updateGiftVoucher(
+  id: string,
+  updateData: GiftVoucherUpdateForm
+): Promise<GiftVoucherResponse> {
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return { success: false, error: "Invalid voucher ID format" }
     }
-    
+
     await dbConnect()
-    
+
     const updateFields: any = {}
-    
+
     if (updateData.status) updateFields.status = updateData.status
     if (updateData.notes !== undefined) updateFields.notes = updateData.notes
-    if (updateData.greetingMessage !== undefined) updateFields.greetingMessage = updateData.greetingMessage
+    if (updateData.greetingMessage !== undefined)
+      updateFields.greetingMessage = updateData.greetingMessage
     if (updateData.validFrom) updateFields.validFrom = new Date(updateData.validFrom)
     if (updateData.validUntil) updateFields.validUntil = new Date(updateData.validUntil)
-    
+
     const voucher = await GiftVoucher.findByIdAndUpdate(id, updateFields, { new: true })
-    
+
     if (!voucher) {
       return { success: false, error: "Voucher not found" }
     }
-    
+
     const plainVoucher = await toGiftVoucherPlain(voucher)
-    
+
     return { success: true, voucher: plainVoucher }
   } catch (error) {
     logger.error("Error updating gift voucher:", { id, error })
@@ -282,13 +298,13 @@ export async function getGiftVoucherByCode(code: string): Promise<GiftVoucherRes
   try {
     await dbConnect()
     const voucherDoc = await GiftVoucher.findOne({ code }).lean()
-    
+
     if (!voucherDoc) {
       return { success: false, error: "Voucher not found" }
     }
-    
+
     const voucher = await toGiftVoucherPlain(voucherDoc)
-    
+
     return { success: true, voucher }
   } catch (error) {
     logger.error("Error fetching gift voucher by code:", { code, error })
@@ -296,49 +312,59 @@ export async function getGiftVoucherByCode(code: string): Promise<GiftVoucherRes
   }
 }
 
-export async function redeemGiftVoucher(redemptionData: GiftVoucherRedemption): Promise<GiftVoucherResponse> {
+export async function redeemGiftVoucher(
+  redemptionData: GiftVoucherRedemption
+): Promise<GiftVoucherResponse> {
   try {
     await dbConnect()
-    
+
     const voucher = await GiftVoucher.findOne({ code: redemptionData.code })
-    
+
     if (!voucher) {
       return { success: false, error: "Voucher not found" }
     }
-    
+
     // Check if voucher is valid for use
     if (!voucher.isActive || voucher.status === "fully_used") {
       return { success: false, error: "Voucher is not valid for use" }
     }
-    
+
     // Use the voucher
     if (voucher.voucherType === "treatment") {
-        voucher.status = "fully_used"
-        voucher.remainingAmount = 0
+      voucher.status = "fully_used"
+      voucher.remainingAmount = 0
       voucher.isActive = false
     } else if (voucher.voucherType === "monetary") {
-      const amountToUse = Math.min(redemptionData.orderDetails.totalAmount, voucher.remainingAmount || voucher.amount)
+      const amountToUse = Math.min(
+        redemptionData.orderDetails.totalAmount,
+        voucher.remainingAmount || voucher.amount
+      )
       voucher.remainingAmount = (voucher.remainingAmount || voucher.amount) - amountToUse
       voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
       if (voucher.remainingAmount <= 0) voucher.isActive = false
     }
-    
+
     voucher.usageHistory = voucher.usageHistory || []
     voucher.usageHistory.push({
       date: new Date(),
       amountUsed: redemptionData.orderDetails.totalAmount,
-      orderId: redemptionData.orderDetails.orderId ? new mongoose.Types.ObjectId(redemptionData.orderDetails.orderId) : undefined,
-      description: `Redeemed for order: ${redemptionData.orderDetails.items?.map(i => i.name).join(', ') || 'Order items'}`
+      orderId: redemptionData.orderDetails.orderId
+        ? new mongoose.Types.ObjectId(redemptionData.orderDetails.orderId)
+        : undefined,
+      description: `Redeemed for order: ${redemptionData.orderDetails.items?.map(i => i.name).join(", ") || "Order items"}`,
     })
 
     await voucher.save()
 
     const plainVoucher = await toGiftVoucherPlain(voucher)
-    
+
     return { success: true, voucher: plainVoucher }
   } catch (error) {
     logger.error("Error redeeming gift voucher:", { code: redemptionData.code, error })
-    return { success: false, error: error instanceof Error ? error.message : "Failed to redeem voucher" }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to redeem voucher",
+    }
   }
 }
 
@@ -346,58 +372,54 @@ export async function redeemGiftVoucher(redemptionData: GiftVoucherRedemption): 
 // LIST OPERATIONS
 // ============================================================================
 
-export async function getGiftVouchersList(options: {
-  page?: number
-  limit?: number
-  status?: string[]
-  ownerUserId?: string
-  search?: string
-} = {}): Promise<GiftVoucherListResponse> {
+export async function getGiftVouchersList(
+  options: {
+    page?: number
+    limit?: number
+    status?: string[]
+    ownerUserId?: string
+    search?: string
+  } = {}
+): Promise<GiftVoucherListResponse> {
   try {
     await dbConnect()
-    
+
     const { page = 1, limit = 20, status, ownerUserId, search } = options
     const skip = (page - 1) * limit
-    
+
     // Build query
     const query: any = {}
-    
+
     if (status && status.length > 0) {
       query.status = { $in: status }
     }
-    
+
     if (ownerUserId) {
       query.ownerUserId = new mongoose.Types.ObjectId(ownerUserId)
     }
-    
+
     if (search) {
       query.$or = [
-        { code: { $regex: search, $options: 'i' } },
-        { recipientName: { $regex: search, $options: 'i' } },
-        { recipientEmail: { $regex: search, $options: 'i' } },
-        { notes: { $regex: search, $options: 'i' } }
+        { code: { $regex: search, $options: "i" } },
+        { recipientName: { $regex: search, $options: "i" } },
+        { recipientEmail: { $regex: search, $options: "i" } },
+        { notes: { $regex: search, $options: "i" } },
       ]
     }
-    
+
     const [voucherDocs, total] = await Promise.all([
-      GiftVoucher.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      GiftVoucher.countDocuments(query)
+      GiftVoucher.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      GiftVoucher.countDocuments(query),
     ])
-    
-    const vouchers = await Promise.all(
-      voucherDocs.map(doc => toGiftVoucherPlain(doc))
-    )
+
+    const vouchers = await Promise.all(voucherDocs.map(doc => toGiftVoucherPlain(doc)))
 
     return {
       success: true,
       vouchers,
       total,
       page,
-      limit
+      limit,
     }
   } catch (error) {
     logger.error("Error fetching gift vouchers list:", error)
@@ -407,6 +429,7 @@ export async function getGiftVouchersList(options: {
 
 // Legacy exports for backward compatibility
 export { generateUniqueVoucherCode, toGiftVoucherPlain }
+export type { GiftVoucherPlain }
 
 // Member-specific functions
 export async function getMemberOwnedVouchers(userId: string): Promise<GiftVoucherListResponse> {
@@ -414,9 +437,9 @@ export async function getMemberOwnedVouchers(userId: string): Promise<GiftVouche
 }
 
 export async function getMemberPurchasedVouchers(userId: string): Promise<GiftVoucherListResponse> {
-  return getGiftVouchersList({ 
+  return getGiftVouchersList({
     ownerUserId: userId,
-    status: ['active', 'partially_used', 'sent']
+    status: ["active", "partially_used", "sent"],
   })
 }
 
@@ -439,7 +462,9 @@ export async function saveAbandonedGiftVoucherPurchase(data: any): Promise<any> 
 /**
  * Delete a gift voucher (admin only)
  */
-export async function deleteGiftVoucher(voucherId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteGiftVoucher(
+  voucherId: string
+): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()
 
@@ -461,4 +486,4 @@ export async function deleteGiftVoucher(voucherId: string): Promise<{ success: b
     logger.error("Error deleting gift voucher:", { error, voucherId })
     return { success: false, error: "Failed to delete gift voucher" }
   }
-} 
+}

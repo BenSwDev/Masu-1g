@@ -41,44 +41,50 @@ export interface ICityDistance extends Document {
 }
 
 // City schema with unified coordinates
-const CitySchema = new Schema<ICity>({
-  name: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    trim: true
+const CitySchema = new Schema<ICity>(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    coordinates: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true },
+    },
+    isActive: { type: Boolean, default: true },
   },
-  coordinates: {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true }
-  },
-  isActive: { type: Boolean, default: true }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-})
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+)
 
 // City distance schema
-const CityDistanceSchema = new Schema<ICityDistance>({
-  fromCityId: { 
-    type: Schema.Types.ObjectId, 
-    ref: "City", 
-    required: true
+const CityDistanceSchema = new Schema<ICityDistance>(
+  {
+    fromCityId: {
+      type: Schema.Types.ObjectId,
+      ref: "City",
+      required: true,
+    },
+    toCityId: {
+      type: Schema.Types.ObjectId,
+      ref: "City",
+      required: true,
+    },
+    fromCityName: { type: String, required: true },
+    toCityName: { type: String, required: true },
+    distanceKm: { type: Number, required: true, min: 0 },
   },
-  toCityId: { 
-    type: Schema.Types.ObjectId, 
-    ref: "City", 
-    required: true
-  },
-  fromCityName: { type: String, required: true },
-  toCityName: { type: String, required: true },
-  distanceKm: { type: Number, required: true, min: 0 }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-})
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+)
 
 // Compound indexes for better performance
 CityDistanceSchema.index({ fromCityId: 1, toCityId: 1 }, { unique: true })
@@ -89,80 +95,97 @@ CityDistanceSchema.index({ fromCityName: 1 })
 CityDistanceSchema.index({ toCityName: 1 })
 
 // Static method to find cities within distance
-CityDistanceSchema.statics.findCitiesWithinDistance = function(
-  fromCityName: string, 
+CityDistanceSchema.statics.findCitiesWithinDistance = function (
+  fromCityName: string,
   maxDistanceKm: number
 ) {
   return this.find({
     fromCityName: fromCityName,
-    distanceKm: { $lte: maxDistanceKm }
-  }).select('toCityName distanceKm').sort({ distanceKm: 1 })
+    distanceKm: { $lte: maxDistanceKm },
+  })
+    .select("toCityName distanceKm")
+    .sort({ distanceKm: 1 })
 }
 
 // Static method to get covered cities for a work area
-CityDistanceSchema.statics.getCoveredCities = function(
-  cityName: string, 
-  distanceRadius: string
-) {
+CityDistanceSchema.statics.getCoveredCities = function (cityName: string, distanceRadius: string) {
   let maxDistance: number
-  
+
   switch (distanceRadius) {
-    case "20km": maxDistance = 20; break
-    case "40km": maxDistance = 40; break
-    case "60km": maxDistance = 60; break
-    case "80km": maxDistance = 80; break
-    case "unlimited": maxDistance = Infinity; break
-    default: maxDistance = 20 // Default to 20km
+    case "20km":
+      maxDistance = 20
+      break
+    case "40km":
+      maxDistance = 40
+      break
+    case "60km":
+      maxDistance = 60
+      break
+    case "80km":
+      maxDistance = 80
+      break
+    case "unlimited":
+      maxDistance = Infinity
+      break
+    default:
+      maxDistance = 20 // Default to 20km
   }
-  
+
   if (maxDistance === Infinity) {
     // Return all active cities except the source city
     const CityModel = mongoose.models?.City || mongoose.model<ICity>("City", CitySchema)
-    return CityModel.find({ 
+    return CityModel.find({
       isActive: true,
-      name: { $ne: cityName }
-    }).select('name').sort({ name: 1 })
+      name: { $ne: cityName },
+    })
+      .select("name")
+      .sort({ name: 1 })
   }
-  
+
   return (this as any).findCitiesWithinDistance(cityName, maxDistance)
 }
 
 // Method to calculate distance between two coordinates (Haversine formula)
-CitySchema.statics.calculateDistance = function(
-  lat1: number, lng1: number, 
-  lat2: number, lng2: number
+CitySchema.statics.calculateDistance = function (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
 ): number {
   const R = 6371 // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLng/2) * Math.sin(dLng/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return Math.round(R * c * 100) / 100 // Round to 2 decimal places
 }
 
 // Method to populate distance relationships
-CitySchema.statics.populateDistances = async function() {
+CitySchema.statics.populateDistances = async function () {
   const cities = await this.find({ isActive: true })
-  const CityDistance = mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
-  
+  const CityDistance =
+    mongoose.models?.CityDistance ||
+    mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
+
   // TODO: Remove debug log
 
-  
   for (let i = 0; i < cities.length; i++) {
     for (let j = i + 1; j < cities.length; j++) {
       const city1 = cities[i]
       const city2 = cities[j]
-      
+
       const distance = (this as any).calculateDistance(
         city1.coordinates.lat,
         city1.coordinates.lng,
         city2.coordinates.lat,
         city2.coordinates.lng
       )
-      
+
       // Create both directions
       await CityDistance.findOneAndUpdate(
         { fromCityId: city1._id, toCityId: city2._id },
@@ -171,11 +194,11 @@ CitySchema.statics.populateDistances = async function() {
           toCityId: city2._id,
           fromCityName: city1.name,
           toCityName: city2.name,
-          distanceKm: distance
+          distanceKm: distance,
         },
         { upsert: true, new: true }
       )
-      
+
       await CityDistance.findOneAndUpdate(
         { fromCityId: city2._id, toCityId: city1._id },
         {
@@ -183,29 +206,30 @@ CitySchema.statics.populateDistances = async function() {
           toCityId: city1._id,
           fromCityName: city2.name,
           toCityName: city1.name,
-          distanceKm: distance
+          distanceKm: distance,
         },
         { upsert: true, new: true }
       )
     }
   }
-  
-  // TODO: Remove debug log
 
+  // TODO: Remove debug log
 }
 
 // Static method to recalculate distances when a new city is added
-CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: string) {
+CitySchema.statics.calculateDistancesForNewCity = async function (newCityId: string) {
   const newCity = await this.findById(newCityId)
   if (!newCity) throw new Error("City not found")
-  
-  const existingCities = await this.find({ 
-    isActive: true, 
-    _id: { $ne: newCityId } 
+
+  const existingCities = await this.find({
+    isActive: true,
+    _id: { $ne: newCityId },
   })
-  
-  const CityDistance = mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
-  
+
+  const CityDistance =
+    mongoose.models?.CityDistance ||
+    mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
+
   for (const existingCity of existingCities) {
     const distance = (this as any).calculateDistance(
       newCity.coordinates.lat,
@@ -213,7 +237,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
       existingCity.coordinates.lat,
       existingCity.coordinates.lng
     )
-    
+
     // Create both directions
     await CityDistance.findOneAndUpdate(
       { fromCityId: newCity._id, toCityId: existingCity._id },
@@ -222,11 +246,11 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
         toCityId: existingCity._id,
         fromCityName: newCity.name,
         toCityName: existingCity.name,
-        distanceKm: distance
+        distanceKm: distance,
       },
       { upsert: true, new: true }
     )
-    
+
     await CityDistance.findOneAndUpdate(
       { fromCityId: existingCity._id, toCityId: newCity._id },
       {
@@ -234,7 +258,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
         toCityId: newCity._id,
         fromCityName: existingCity.name,
         toCityName: newCity.name,
-        distanceKm: distance
+        distanceKm: distance,
       },
       { upsert: true, new: true }
     )
@@ -245,10 +269,11 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
 let City: CityModel
 let CityDistance: CityDistanceModel
 
-if (typeof window === 'undefined') {
+if (typeof window === "undefined") {
   // Server side
   City = (mongoose.models?.City || mongoose.model<ICity>("City", CitySchema)) as CityModel
-  CityDistance = (mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)) as CityDistanceModel
+  CityDistance = (mongoose.models?.CityDistance ||
+    mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)) as CityDistanceModel
 } else {
   // Client side - create dummy objects to prevent errors
   City = {} as CityModel
@@ -256,4 +281,4 @@ if (typeof window === 'undefined') {
 }
 
 export { City, CityDistance }
-export default City 
+export default City

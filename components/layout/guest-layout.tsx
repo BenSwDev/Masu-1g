@@ -64,12 +64,13 @@ export function GuestLayout({ children }: GuestLayoutProps) {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className={cn(
-              "hidden md:flex items-center",
-              dir === "rtl" ? "space-x-reverse space-x-6" : "space-x-6"
-            )}
-          >
-              {navigation.map((item) => {
+            <nav
+              className={cn(
+                "hidden md:flex items-center",
+                dir === "rtl" ? "space-x-reverse space-x-6" : "space-x-6"
+              )}
+            >
+              {navigation.map(item => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -95,9 +96,7 @@ export function GuestLayout({ children }: GuestLayoutProps) {
               {session ? (
                 <>
                   <Button asChild>
-                    <Link href="/dashboard">
-                      {t("common.dashboard")}
-                    </Link>
+                    <Link href="/dashboard">{t("common.dashboard")}</Link>
                   </Button>
                   <Button
                     variant="ghost"
@@ -111,9 +110,7 @@ export function GuestLayout({ children }: GuestLayoutProps) {
                 </>
               ) : (
                 <Button asChild>
-                  <Link href="/auth/login">
-                    {t("common.login")}
-                  </Link>
+                  <Link href="/auth/login">{t("common.login")}</Link>
                 </Button>
               )}
             </div>
@@ -123,7 +120,7 @@ export function GuestLayout({ children }: GuestLayoutProps) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t bg-white">
               <nav className="px-2 pt-2 pb-4 space-y-1">
-                {navigation.map((item) => {
+                {navigation.map(item => {
                   const Icon = item.icon
                   return (
                     <Link
@@ -150,9 +147,7 @@ export function GuestLayout({ children }: GuestLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-        <div className="container mx-auto px-4 py-8 max-w-6xl min-h-full">
-          {children}
-        </div>
+        <div className="container mx-auto px-4 py-8 max-w-6xl min-h-full">{children}</div>
       </main>
 
       {/* Footer */}
@@ -163,4 +158,4 @@ export function GuestLayout({ children }: GuestLayoutProps) {
       </footer>
     </div>
   )
-} 
+}

@@ -22,12 +22,16 @@ interface NotificationsModalProps {
 
 const defaultPrefs: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
 
-export function NotificationsModal({ isOpen, onClose, currentPreferences }: NotificationsModalProps) {
+export function NotificationsModal({
+  isOpen,
+  onClose,
+  currentPreferences,
+}: NotificationsModalProps) {
   const [selectedMethods, setSelectedMethods] = useState<INotificationPreferences["methods"]>(
-    currentPreferences?.methods || defaultPrefs.methods,
+    currentPreferences?.methods || defaultPrefs.methods
   )
   const [selectedLanguage, setSelectedLanguage] = useState<INotificationPreferences["language"]>(
-    currentPreferences?.language || defaultPrefs.language,
+    currentPreferences?.language || defaultPrefs.language
   )
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -36,13 +40,15 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
-      setSelectedMethods(currentPreferences.methods.length > 0 ? currentPreferences.methods : defaultPrefs.methods)
+      setSelectedMethods(
+        currentPreferences.methods.length > 0 ? currentPreferences.methods : defaultPrefs.methods
+      )
       setSelectedLanguage(currentPreferences.language || defaultPrefs.language)
     } else if (isOpen && !currentPreferences && session?.user?.notificationPreferences) {
       setSelectedMethods(
         session.user.notificationPreferences.methods.length > 0
           ? session.user.notificationPreferences.methods
-          : defaultPrefs.methods,
+          : defaultPrefs.methods
       )
       setSelectedLanguage(session.user.notificationPreferences.language || defaultPrefs.language)
     } else if (isOpen) {
@@ -52,7 +58,9 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   }, [isOpen, currentPreferences, session?.user?.notificationPreferences])
 
   const handleMethodChange = (method: "email" | "sms") => {
-    setSelectedMethods((prev) => (prev.includes(method) ? prev.filter((m) => m !== method) : [...prev, method]))
+    setSelectedMethods(prev =>
+      prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
+    )
   }
 
   const handleSave = async () => {
@@ -99,7 +107,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             <div
               className={cn(
                 "flex items-center gap-2",
-                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
               )}
             >
               <Checkbox
@@ -113,7 +121,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             <div
               className={cn(
                 "flex items-center gap-2",
-                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
               )}
             >
               <Checkbox
@@ -127,20 +135,25 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
           </div>
         </div>
         <div>
-          <Label htmlFor="notificationLanguage" className={cn(dir === "rtl" ? "text-right block" : "text-left block")}>
+          <Label
+            htmlFor="notificationLanguage"
+            className={cn(dir === "rtl" ? "text-right block" : "text-left block")}
+          >
             {t("preferences.notifications.languageLabel")}
           </Label>
           <RadioGroup
             id="notificationLanguage"
             value={selectedLanguage}
-            onValueChange={(value: INotificationPreferences["language"]) => setSelectedLanguage(value)}
+            onValueChange={(value: INotificationPreferences["language"]) =>
+              setSelectedLanguage(value)
+            }
             className="mt-2 space-y-2"
             dir={dir}
           >
             <div
               className={cn(
                 "flex items-center gap-2",
-                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
               )}
             >
               <RadioGroupItem value="he" id="lang-he" />
@@ -149,7 +162,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             <div
               className={cn(
                 "flex items-center gap-2",
-                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
               )}
             >
               <RadioGroupItem value="en" id="lang-en" />
@@ -158,7 +171,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             <div
               className={cn(
                 "flex items-center gap-2",
-                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
               )}
             >
               <RadioGroupItem value="ru" id="lang-ru" />

@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button" // Corrected import path
 import { Badge } from "@/components/ui/badge" // Corrected import path
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
+import type { GiftVoucherPlain } from "@/types/core" // Corrected import path
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Corrected import path
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
@@ -31,7 +31,7 @@ interface GiftVoucherRowProps {
 
 const getStatusBadgeVariant = (
   status: GiftVoucherPlain["status"],
-  isActive: boolean,
+  isActive: boolean
 ): "default" | "secondary" | "destructive" | "outline" => {
   if (!isActive) return "secondary" // Overriding status if not active by admin
   switch (status) {
@@ -79,9 +79,12 @@ const getStatusIcon = (status: GiftVoucherPlain["status"], isActive: boolean) =>
 
 export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: GiftVoucherRowProps) {
   const { t } = useTranslation()
-  const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
-  const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
-  const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
+  const validFromDate =
+    typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
+  const validUntilDate =
+    typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
+  const purchaseDate =
+    typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
   const statusDisplay = t(`giftVouchers.statuses.${voucher.status}`)
 
@@ -93,15 +96,15 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
       >
         {/* Code */}
         <div className="col-span-1">
-          <div className="font-mono text-sm font-medium">
-            {voucher.code}
-          </div>
+          <div className="font-mono text-sm font-medium">{voucher.code}</div>
         </div>
 
         {/* Voucher Type */}
         <div className="col-span-1">
           <Badge variant={voucher.voucherType === "treatment" ? "default" : "secondary"}>
-            {voucher.voucherType === "treatment" ? t("giftVouchers.treatmentVoucher") : t("giftVouchers.monetaryVoucher")}
+            {voucher.voucherType === "treatment"
+              ? t("giftVouchers.treatmentVoucher")
+              : t("giftVouchers.monetaryVoucher")}
           </Badge>
         </div>
 
@@ -123,9 +126,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
         <div className="col-span-2">
           <div className="space-y-1">
             {voucher.purchaserName && (
-              <div className="text-sm font-medium">
-                {voucher.purchaserName}
-              </div>
+              <div className="text-sm font-medium">{voucher.purchaserName}</div>
             )}
             {voucher.guestInfo && (
               <div className="text-xs text-gray-600 space-y-1">
@@ -136,9 +137,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
             {voucher.isGift && (
               <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
                 🎁 מתנה
-                {voucher.recipientName && (
-                  <div>ל: {voucher.recipientName}</div>
-                )}
+                {voucher.recipientName && <div>ל: {voucher.recipientName}</div>}
               </div>
             )}
           </div>
@@ -146,18 +145,12 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
 
         {/* Amount */}
         <div className="col-span-1">
-          <div className="text-sm font-medium">
-            ₪{voucher.amount || voucher.monetaryValue || 0}
-          </div>
+          <div className="text-sm font-medium">₪{voucher.amount || voucher.monetaryValue || 0}</div>
           {voucher.voucherType === "treatment" && voucher.treatmentName && (
-            <div className="text-xs text-gray-500">
-              {voucher.treatmentName}
-            </div>
+            <div className="text-xs text-gray-500">{voucher.treatmentName}</div>
           )}
           {voucher.remainingAmount !== undefined && voucher.remainingAmount !== voucher.amount && (
-            <div className="text-xs text-orange-600">
-              נותר: ₪{voucher.remainingAmount}
-            </div>
+            <div className="text-xs text-orange-600">נותר: ₪{voucher.remainingAmount}</div>
           )}
         </div>
 
@@ -165,14 +158,18 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
         <div className="col-span-1">
           <div className="text-sm">
             {format(
-              typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate,
-              "dd/MM/yy",
+              typeof voucher.purchaseDate === "string"
+                ? parseISO(voucher.purchaseDate)
+                : voucher.purchaseDate,
+              "dd/MM/yy"
             )}
           </div>
           <div className="text-xs text-gray-500">
             {format(
-              typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate,
-              "HH:mm",
+              typeof voucher.purchaseDate === "string"
+                ? parseISO(voucher.purchaseDate)
+                : voucher.purchaseDate,
+              "HH:mm"
             )}
           </div>
         </div>
@@ -181,9 +178,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
         <div className="col-span-1">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="text-sm">
-                {format(validUntilDate, "dd/MM/yy")}
-              </div>
+              <div className="text-sm">{format(validUntilDate, "dd/MM/yy")}</div>
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -206,7 +201,9 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
               >
                 {getStatusIcon(voucher.status, voucher.isActive)}
                 {statusDisplay}
-                {!voucher.isActive && <span className="text-xs">({t("giftVouchers.adminDisabled")})</span>}
+                {!voucher.isActive && (
+                  <span className="text-xs">({t("giftVouchers.adminDisabled")})</span>
+                )}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
@@ -217,8 +214,10 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
                 <p>
                   {t("giftVouchers.fields.sendDate")}:{" "}
                   {format(
-                    typeof voucher.sendDate === "string" ? parseISO(voucher.sendDate) : voucher.sendDate,
-                    "MMM d, yyyy",
+                    typeof voucher.sendDate === "string"
+                      ? parseISO(voucher.sendDate)
+                      : voucher.sendDate,
+                    "MMM d, yyyy"
                   )}
                 </p>
               )}
@@ -255,7 +254,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   onEdit(voucher)
                 }}
@@ -273,7 +272,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   onDelete(voucher._id)
                 }}

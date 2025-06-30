@@ -23,7 +23,7 @@ export default function Error({
 
   const defaultMessage = t("common.unexpectedError")
   const isServerRenderError = error.message.startsWith(
-    "An error occurred in the Server Components render",
+    "An error occurred in the Server Components render"
   )
   const message = isServerRenderError ? defaultMessage : error.message
 
@@ -37,12 +37,12 @@ export default function Error({
           <h2 className="text-2xl font-bold tracking-tight">{t("common.error")}</h2>
           <p className="text-muted-foreground">
             {message || defaultMessage}
-            {error.digest && (
-              <span className="block mt-2 text-xs">Error Code: {error.digest}</span>
-            )}
+            {error.digest && <span className="block mt-2 text-xs">Error Code: {error.digest}</span>}
           </p>
           <div className="flex gap-4 mt-4">
-            <Button variant="outline" onClick={() => router.push("/")}>{t("navigation.home")}</Button>
+            <Button variant="outline" onClick={() => router.push("/")}>
+              {t("navigation.home")}
+            </Button>
             <Button onClick={() => reset()}>{t("bookings.errors.tryAgain")}</Button>
           </div>
         </div>

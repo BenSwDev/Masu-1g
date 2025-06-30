@@ -8,11 +8,36 @@ import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX, Pencil, X, MapPin, Briefcase, Shield, Eye, EyeOff } from "lucide-react"
+import {
+  User,
+  Save,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  Mail,
+  Phone,
+  Calendar,
+  UserCheck,
+  Clock,
+  UserX,
+  Pencil,
+  X,
+  MapPin,
+  Briefcase,
+  Shield,
+  Eye,
+  EyeOff,
+} from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
@@ -27,26 +52,30 @@ export default function ProfessionalBasicInfoTab({
   loading,
   isCreatingNew = false,
   onCreated,
-  onLoadingChange
+  onLoadingChange,
 }: ProfessionalBasicInfoTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   // Form state for creating new professional
   const [formData, setFormData] = useState({
-    name: (typeof professional?.userId === 'object' && professional?.userId?.name) || "",
-    email: (typeof professional?.userId === 'object' && professional?.userId?.email) || "",
-    phone: (typeof professional?.userId === 'object' && professional?.userId?.phone) || "",
-    gender: (typeof professional?.userId === 'object' && professional?.userId?.gender) || "male",
-    birthDate: (typeof professional?.userId === 'object' && professional?.userId?.dateOfBirth) ? 
-      new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : "",
+    name: (typeof professional?.userId === "object" && professional?.userId?.name) || "",
+    email: (typeof professional?.userId === "object" && professional?.userId?.email) || "",
+    phone: (typeof professional?.userId === "object" && professional?.userId?.phone) || "",
+    gender: (typeof professional?.userId === "object" && professional?.userId?.gender) || "male",
+    birthDate:
+      typeof professional?.userId === "object" && professional?.userId?.dateOfBirth
+        ? new Date(professional.userId.dateOfBirth).toISOString().split("T")[0]
+        : "",
   })
 
   // State for status management
   const [statusLoading, setStatusLoading] = useState(false)
   const [adminNotes, setAdminNotes] = useState(professional?.adminNotes || "")
   const [rejectionReason, setRejectionReason] = useState(professional?.rejectionReason || "")
-  const [selectedStatus, setSelectedStatus] = useState<ProfessionalStatus>(professional?.status || "pending_admin_approval")
+  const [selectedStatus, setSelectedStatus] = useState<ProfessionalStatus>(
+    professional?.status || "pending_admin_approval"
+  )
 
   // State for creation process
   const [creationLoading, setCreationLoading] = useState(false)
@@ -54,38 +83,38 @@ export default function ProfessionalBasicInfoTab({
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
-    
+
     if (!formData.name.trim() || formData.name.length < 2) {
       errors.name = "שם חייב להכיל לפחות 2 תווים"
     }
-    
+
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "כתובת אימייל לא תקינה"
     }
-    
+
     if (!formData.phone.trim() || formData.phone.length < 10) {
       errors.phone = "מספר טלפון חייב להכיל לפחות 10 ספרות"
     }
-    
+
     return errors
   }
 
   const handleCreateProfessional = async () => {
     const errors = validateForm()
     setValidationErrors(errors)
-    
+
     if (Object.keys(errors).length > 0) {
       toast({
         variant: "destructive",
         title: "שגיאות בטופס",
-        description: "נא לתקן את השגיאות ולנסות שוב"
+        description: "נא לתקן את השגיאות ולנסות שוב",
       })
       return
     }
 
     setCreationLoading(true)
     onLoadingChange?.(true)
-    
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append("name", formData.name.trim())
@@ -96,15 +125,17 @@ export default function ProfessionalBasicInfoTab({
         formDataToSend.append("birthDate", formData.birthDate)
       }
 
-      const { createProfessional } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
+      const { createProfessional } = await import(
+        "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+      )
       const result = await createProfessional(formDataToSend)
-      
+
       if (result.success && result.professional) {
         toast({
           title: "הצלחה",
-          description: "המטפל נוצר בהצלחה"
+          description: "המטפל נוצר בהצלחה",
         })
-        
+
         // Transform to our Professional interface
         const transformedProfessional: Professional = {
           _id: result.professional._id.toString(),
@@ -117,16 +148,16 @@ export default function ProfessionalBasicInfoTab({
           bio: result.professional.bio,
           profileImage: result.professional.profileImage,
           treatments: (result.professional.treatments || []).map(t => ({
-            treatmentId: t.treatmentId?.toString() || '',
+            treatmentId: t.treatmentId?.toString() || "",
             durationId: t.durationId?.toString(),
             professionalPrice: t.professionalPrice || 0,
-            treatmentName: (t as any).treatmentName
+            treatmentName: (t as any).treatmentName,
           })),
           workAreas: (result.professional.workAreas || []).map(w => ({
-            cityId: w.cityId?.toString() || '',
-            cityName: w.cityName || '',
+            cityId: w.cityId?.toString() || "",
+            cityName: w.cityName || "",
             distanceRadius: w.distanceRadius,
-            coveredCities: w.coveredCities || []
+            coveredCities: w.coveredCities || [],
           })),
           totalEarnings: result.professional.totalEarnings || 0,
           pendingPayments: result.professional.pendingPayments || 0,
@@ -137,9 +168,9 @@ export default function ProfessionalBasicInfoTab({
           rejectedAt: result.professional.rejectedAt,
           lastActiveAt: result.professional.lastActiveAt,
           createdAt: result.professional.createdAt,
-          updatedAt: result.professional.updatedAt
+          updatedAt: result.professional.updatedAt,
         }
-        
+
         onUpdate(transformedProfessional)
         if (onCreated) {
           onCreated(transformedProfessional)
@@ -148,7 +179,7 @@ export default function ProfessionalBasicInfoTab({
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה ביצירת המטפל"
+          description: result.error || "שגיאה ביצירת המטפל",
         })
       }
     } catch (error) {
@@ -156,7 +187,7 @@ export default function ProfessionalBasicInfoTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה ביצירת המטפל"
+        description: "שגיאה ביצירת המטפל",
       })
     } finally {
       setCreationLoading(false)
@@ -169,13 +200,13 @@ export default function ProfessionalBasicInfoTab({
       toast({
         variant: "destructive",
         title: "אין שינויים",
-        description: "לא בוצעו שינויים בסטטוס"
+        description: "לא בוצעו שינויים בסטטוס",
       })
       return
     }
 
     setStatusLoading(true)
-    
+
     try {
       const result = await updateProfessionalStatus(
         professional._id,
@@ -183,25 +214,25 @@ export default function ProfessionalBasicInfoTab({
         adminNotes,
         rejectionReason
       )
-      
+
       if (result.success && result.professional) {
         toast({
           title: "הצלחה",
-          description: "סטטוס המטפל עודכן בהצלחה"
+          description: "סטטוס המטפל עודכן בהצלחה",
         })
-        
+
         onUpdate({
           status: result.professional.status,
           adminNotes: result.professional.adminNotes,
           rejectionReason: result.professional.rejectionReason,
           approvedAt: result.professional.approvedAt,
-          rejectedAt: result.professional.rejectedAt
+          rejectedAt: result.professional.rejectedAt,
         })
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון הסטטוס"
+          description: result.error || "שגיאה בעדכון הסטטוס",
         })
       }
     } catch (error) {
@@ -209,7 +240,7 @@ export default function ProfessionalBasicInfoTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בעדכון הסטטוס"
+        description: "שגיאה בעדכון הסטטוס",
       })
     } finally {
       setStatusLoading(false)
@@ -218,41 +249,41 @@ export default function ProfessionalBasicInfoTab({
 
   const getStatusInfo = (status: ProfessionalStatus) => {
     const statusConfig = {
-      active: { 
-        variant: "default" as const, 
-        icon: UserCheck, 
-        text: "פעיל", 
+      active: {
+        variant: "default" as const,
+        icon: UserCheck,
+        text: "פעיל",
         description: "המטפל פעיל במערכת ויכול לקבל הזמנות",
-        color: "text-green-600"
+        color: "text-green-600",
       },
-      pending_admin_approval: { 
-        variant: "secondary" as const, 
-        icon: Clock, 
-        text: "ממתין לאישור מנהל", 
+      pending_admin_approval: {
+        variant: "secondary" as const,
+        icon: Clock,
+        text: "ממתין לאישור מנהל",
         description: "המטפל ממתין לאישור מנהל המערכת",
-        color: "text-orange-600"
+        color: "text-orange-600",
       },
-      pending_user_action: { 
-        variant: "outline" as const, 
-        icon: Clock, 
-        text: "ממתין לפעולת משתמש", 
+      pending_user_action: {
+        variant: "outline" as const,
+        icon: Clock,
+        text: "ממתין לפעולת משתמש",
         description: "נדרשת פעולה מצד המטפל",
-        color: "text-blue-600"
+        color: "text-blue-600",
       },
-      rejected: { 
-        variant: "destructive" as const, 
-        icon: UserX, 
-        text: "נדחה", 
+      rejected: {
+        variant: "destructive" as const,
+        icon: UserX,
+        text: "נדחה",
         description: "הבקשה נדחתה על ידי מנהל המערכת",
-        color: "text-red-600"
+        color: "text-red-600",
       },
-      suspended: { 
-        variant: "destructive" as const, 
-        icon: AlertTriangle, 
-        text: "מושהה", 
+      suspended: {
+        variant: "destructive" as const,
+        icon: AlertTriangle,
+        text: "מושהה",
         description: "המטפל מושהה זמנית מהמערכת",
-        color: "text-red-600"
-      }
+        color: "text-red-600",
+      },
     }
     return statusConfig[status]
   }
@@ -260,11 +291,11 @@ export default function ProfessionalBasicInfoTab({
   const formatDate = (date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL", {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
     } catch {
       return "-"
@@ -285,7 +316,8 @@ export default function ProfessionalBasicInfoTab({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                פרטים בסיסיים ליצירת חשבון משתמש. המערכת תיצור אוטומטית משתמש עם תפקיד מטפל וסיסמה זמנית: 123456
+                פרטים בסיסיים ליצירת חשבון משתמש. המערכת תיצור אוטומטית משתמש עם תפקיד מטפל וסיסמה
+                זמנית: 123456
               </AlertDescription>
             </Alert>
 
@@ -297,7 +329,7 @@ export default function ProfessionalBasicInfoTab({
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => {
+                  onChange={e => {
                     setFormData(prev => ({ ...prev, name: e.target.value }))
                     if (validationErrors.name) {
                       setValidationErrors(prev => ({ ...prev, name: "" }))
@@ -310,7 +342,7 @@ export default function ProfessionalBasicInfoTab({
                   <p className="text-sm text-red-500">{validationErrors.name}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   אימייל (אופציונלי)
@@ -321,7 +353,7 @@ export default function ProfessionalBasicInfoTab({
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData(prev => ({ ...prev, email: e.target.value }))
                       if (validationErrors.email) {
                         setValidationErrors(prev => ({ ...prev, email: "" }))
@@ -335,7 +367,7 @@ export default function ProfessionalBasicInfoTab({
                   <p className="text-sm text-red-500">{validationErrors.email}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium">
                   טלפון *
@@ -345,7 +377,7 @@ export default function ProfessionalBasicInfoTab({
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => {
+                    onChange={e => {
                       setFormData(prev => ({ ...prev, phone: e.target.value }))
                       if (validationErrors.phone) {
                         setValidationErrors(prev => ({ ...prev, phone: "" }))
@@ -364,7 +396,12 @@ export default function ProfessionalBasicInfoTab({
                 <Label htmlFor="gender" className="text-sm font-medium">
                   מגדר *
                 </Label>
-                <Select value={formData.gender} onValueChange={(value: "male" | "female" | "other") => setFormData(prev => ({ ...prev, gender: value }))}>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value: "male" | "female" | "other") =>
+                    setFormData(prev => ({ ...prev, gender: value }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -374,7 +411,7 @@ export default function ProfessionalBasicInfoTab({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="birthDate" className="text-sm font-medium">
                   תאריך לידה
@@ -385,25 +422,25 @@ export default function ProfessionalBasicInfoTab({
                     id="birthDate"
                     type="date"
                     value={formData.birthDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
+                    onChange={e => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
                     className="pr-10"
                   />
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 onClick={handleCreateProfessional}
                 disabled={creationLoading || loading || !formData.name || !formData.phone}
                 className="flex items-center gap-2 min-w-[120px]"
               >
-                {(creationLoading || loading) ? (
+                {creationLoading || loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                {(creationLoading || loading) ? "יוצר..." : "צור מטפל"}
+                {creationLoading || loading ? "יוצר..." : "צור מטפל"}
               </Button>
             </div>
           </CardContent>
@@ -434,21 +471,21 @@ export default function ProfessionalBasicInfoTab({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">{statusInfo.description}</p>
-          
+
           {professional.approvedAt && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CheckCircle className="w-4 h-4" />
               אושר ב-{formatDate(professional.approvedAt)}
             </div>
           )}
-          
+
           {professional.rejectedAt && (
             <div className="flex items-center gap-2 text-sm text-red-600">
               <UserX className="w-4 h-4" />
               נדחה ב-{formatDate(professional.rejectedAt)}
             </div>
           )}
-          
+
           {professional.rejectionReason && (
             <Alert className="mt-3">
               <AlertTriangle className="h-4 w-4" />
@@ -472,43 +509,54 @@ export default function ProfessionalBasicInfoTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">שם מלא</Label>
-              <p className="text-sm font-medium">{typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}</p>
+              <p className="text-sm font-medium">
+                {typeof professional.userId === "object" ? professional.userId.name : "לא זמין"}
+              </p>
             </div>
-            
+
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">מגדר</Label>
-              <p className="text-sm">{typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+              <p className="text-sm">
+                {typeof professional.userId === "object" && professional.userId.gender === "male"
+                  ? "זכר"
+                  : "נקבה"}
+              </p>
             </div>
-            
+
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">אימייל</Label>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}</p>
+                <p className="text-sm">
+                  {typeof professional.userId === "object" ? professional.userId.email : "לא זמין"}
+                </p>
               </div>
             </div>
-            
+
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}</p>
+                <p className="text-sm">
+                  {formatPhoneForDisplay(
+                    typeof professional.userId === "object" ? professional.userId.phone || "" : ""
+                  )}
+                </p>
               </div>
             </div>
-            
+
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">תאריך לידה</Label>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">
-                  {typeof professional.userId === 'object' && professional.userId.dateOfBirth 
+                  {typeof professional.userId === "object" && professional.userId.dateOfBirth
                     ? formatDate(professional.userId.dateOfBirth)
-                    : 'לא צוין'
-                  }
+                    : "לא צוין"}
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">תאריך הצטרפות</Label>
               <p className="text-sm">{formatDate(professional.appliedAt)}</p>
@@ -530,7 +578,10 @@ export default function ProfessionalBasicInfoTab({
             <Label htmlFor="status" className="text-sm font-medium">
               סטטוס חדש
             </Label>
-            <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as ProfessionalStatus)}>
+            <Select
+              value={selectedStatus}
+              onValueChange={value => setSelectedStatus(value as ProfessionalStatus)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -551,7 +602,7 @@ export default function ProfessionalBasicInfoTab({
             <Textarea
               id="adminNotes"
               value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
+              onChange={e => setAdminNotes(e.target.value)}
               placeholder="הוסף הערות מנהל..."
               rows={3}
             />
@@ -565,10 +616,12 @@ export default function ProfessionalBasicInfoTab({
               <Textarea
                 id="rejectionReason"
                 value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
+                onChange={e => setRejectionReason(e.target.value)}
                 placeholder="הסבר את הסיבה לדחיית הבקשה..."
                 rows={3}
-                className={selectedStatus === "rejected" && !rejectionReason ? "border-red-500" : ""}
+                className={
+                  selectedStatus === "rejected" && !rejectionReason ? "border-red-500" : ""
+                }
               />
               {selectedStatus === "rejected" && !rejectionReason && (
                 <p className="text-sm text-red-500">סיבת דחייה נדרשת</p>
@@ -594,4 +647,4 @@ export default function ProfessionalBasicInfoTab({
       </Card>
     </div>
   )
-} 
+}

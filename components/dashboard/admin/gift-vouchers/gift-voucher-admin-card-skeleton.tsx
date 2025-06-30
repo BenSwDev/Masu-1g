@@ -71,4 +71,4 @@ export default function GiftVoucherAdminCardSkeleton() {
       </CardFooter>
     </Card>
   )
-} 
+}

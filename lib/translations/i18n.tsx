@@ -80,30 +80,28 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
 
   // In development mode, expose a global function to get and copy missing keys.
   useEffect(() => {
-       window.getMissingTranslations = () => {
-        if (missingKeys.size === 0) {
+    window.getMissingTranslations = () => {
+      if (missingKeys.size === 0) {
+        // TODO: Remove debug log
+
+        return
+      }
+
+      const keys = Array.from(missingKeys).join("\n")
+      // TODO: Remove debug log
+
+      // TODO: Remove debug log
+
+      // TODO: Remove debug log
+
+      navigator.clipboard
+        .writeText(keys)
+        .then(() => {
           // TODO: Remove debug log
-
-          return
-        }
-
-        const keys = Array.from(missingKeys).join("\n")
-        // TODO: Remove debug log
-
-        // TODO: Remove debug log
-
-        // TODO: Remove debug log
-
-
-        navigator.clipboard
-          .writeText(keys)
-          .then(() => {
-            // TODO: Remove debug log
-
-          })
-          .catch((err) => {
-            console.error("[i18n] Failed to copy missing keys: ", err)
-          })
+        })
+        .catch(err => {
+          console.error("[i18n] Failed to copy missing keys: ", err)
+        })
     }
 
     // Cleanup the global function when the component unmounts.
@@ -156,7 +154,7 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
     // After the loop, if the key was not fully found or if the final result is not a string
     // (meaning the key might be a prefix to a deeper object, not a leaf translation string)
     if (!keyFound || typeof current !== "string") {
-        missingKeys.add(key)
+      missingKeys.add(key)
 
       return key // Fallback to the original key
     }
@@ -164,7 +162,11 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
     return current
   }
 
-  return <I18nContext.Provider value={{ language, setLanguage, t, dir }}>{children}</I18nContext.Provider>
+  return (
+    <I18nContext.Provider value={{ language, setLanguage, t, dir }}>
+      {children}
+    </I18nContext.Provider>
+  )
 }
 
 // Hook for using translations

@@ -33,7 +33,7 @@ const SubscriptionPurchaseSchema = new Schema<ISubscriptionPurchase>(
       savedAt: { type: Date, default: Date.now },
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 )
 
 const SubscriptionPurchase: Model<ISubscriptionPurchase> =

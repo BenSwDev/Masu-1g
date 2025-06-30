@@ -114,12 +114,8 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
               <LanguageSelector />
             </div>
-            <CardTitle className="text-2xl font-bold text-turquoise-700">
-              הכנס סיסמה חדשה
-            </CardTitle>
-            <CardDescription>
-              הכנס את הסיסמה החדשה שלך
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-turquoise-700">הכנס סיסמה חדשה</CardTitle>
+            <CardDescription>הכנס את הסיסמה החדשה שלך</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -129,7 +125,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                   id="newPassword"
                   type="password"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={e => setNewPassword(e.target.value)}
                   placeholder="הכנס סיסמה חדשה"
                   required
                   minLength={8}
@@ -142,7 +138,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="הכנס את הסיסמה שוב"
                   required
                   minLength={8}
@@ -150,9 +146,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 />
               </div>
               {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                  {error}
-                </div>
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>
               )}
               <Button
                 type="submit"
@@ -177,12 +171,8 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
               <LanguageSelector />
             </div>
-            <CardTitle className="text-2xl font-bold text-turquoise-700">
-              הכנס קוד אימות
-            </CardTitle>
-            <CardDescription>
-              שלחנו קוד אימות ל-{obscuredPhone}
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-turquoise-700">הכנס קוד אימות</CardTitle>
+            <CardDescription>שלחנו קוד אימות ל-{obscuredPhone}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleOtpSubmit} className="space-y-4">
@@ -192,7 +182,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                   id="otpCode"
                   type="text"
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
                   required
                   maxLength={6}
@@ -200,9 +190,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 />
               </div>
               {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                  {error}
-                </div>
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>
               )}
               <Button
                 type="submit"
@@ -235,12 +223,8 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
           <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
             <LanguageSelector />
           </div>
-          <CardTitle className="text-2xl font-bold text-turquoise-700">
-            שכחת סיסמה?
-          </CardTitle>
-          <CardDescription>
-            הכנס את מספר הטלפון שלך ונשלח לך קוד אימות
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold text-turquoise-700">שכחת סיסמה?</CardTitle>
+          <CardDescription>הכנס את מספר הטלפון שלך ונשלח לך קוד אימות</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePhoneSubmit} className="space-y-4">
@@ -254,11 +238,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 required
               />
             </div>
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {error}
-              </div>
-            )}
+            {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
             <Button
               type="submit"
               disabled={isLoading || !phone}

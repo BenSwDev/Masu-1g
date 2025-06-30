@@ -62,30 +62,30 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
 function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSLanguage): string {
   const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { 
-      day: "2-digit", 
-      month: "2-digit", 
+    {
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
-      timeZone: "Asia/Jerusalem" 
+      timeZone: "Asia/Jerusalem",
     }
   )
-  
+
   const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { 
-      hour: "2-digit", 
+    {
+      hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Asia/Jerusalem" 
+      timeZone: "Asia/Jerusalem",
     }
   )
 
   const responseUrl = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${data.responseId}`
 
   // Extract city from address (assuming format like "Street, City" or just "City")
-  const city = data.address ? data.address.split(',').pop().trim() : data.city || ''
+  const city = data.address ? data.address.split(",").pop().trim() : data.city || ""
 
   // Format treatment name with duration if available
-  let treatmentDisplay = data.treatmentName || ''
+  let treatmentDisplay = data.treatmentName || ""
   if (data.treatmentDuration) {
     treatmentDisplay += ` (${data.treatmentDuration} דקות)`
   }
@@ -128,7 +128,7 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
 
 Or enter the app: masu.co.il`
   }
-  
+
   return message
 }
 
@@ -185,20 +185,20 @@ function getPasswordResetSmsTemplate(resetUrl: string, language: SMSLanguage): s
 function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage): string {
   const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { 
-      day: "2-digit", 
-      month: "2-digit", 
+    {
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
-      timeZone: "Asia/Jerusalem" 
+      timeZone: "Asia/Jerusalem",
     }
   )
-  
+
   const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { 
-      hour: "2-digit", 
+    {
+      hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Asia/Jerusalem" 
+      timeZone: "Asia/Jerusalem",
     }
   )
 

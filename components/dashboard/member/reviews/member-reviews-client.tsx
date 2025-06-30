@@ -6,7 +6,13 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { DataTable } from "@/components/ui/data-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
@@ -44,11 +50,11 @@ const getLocale = (locale: string) => {
  */
 export default function MemberReviewsClient() {
   const { t, language, dir } = useTranslation()
-  
+
   // Search and filters state
   const [searchTerm, setSearchTerm] = useState("")
   const [ratingFilter, setRatingFilter] = useState<string>("all")
-  
+
   // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedReview, setSelectedReview] = useState<PopulatedReview | null>(null)
@@ -63,22 +69,18 @@ export default function MemberReviewsClient() {
     setCurrentPage(1)
   }, [debouncedSearchTerm, ratingFilter])
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<
+  const { data, isLoading, error, refetch } = useQuery<
     { reviews: PopulatedReview[]; totalPages: number; totalReviews: number },
     Error
   >({
     queryKey: ["memberReviews", language, debouncedSearchTerm, ratingFilter, currentPage],
-    queryFn: () => getUserReviews({
-      search: debouncedSearchTerm || undefined,
-      rating: ratingFilter === "all" ? undefined : parseInt(ratingFilter),
-      page: currentPage,
-      limit: 20,
-    }),
+    queryFn: () =>
+      getUserReviews({
+        search: debouncedSearchTerm || undefined,
+        rating: ratingFilter === "all" ? undefined : parseInt(ratingFilter),
+        page: currentPage,
+        limit: 20,
+      }),
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
   })
@@ -143,7 +145,7 @@ export default function MemberReviewsClient() {
       <div className="mb-6 text-center md:text-right">
         <h2 className="text-3xl font-bold tracking-tight">{t("memberReviews.title")}</h2>
       </div>
-      
+
       {/* Search and Filters Bar */}
       <div className="mb-6 space-y-4">
         {/* Main search bar */}
@@ -153,11 +155,11 @@ export default function MemberReviewsClient() {
             <Input
               placeholder={t("memberReviews.searchPlaceholder")}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-8"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <PopoverTrigger asChild>
@@ -182,12 +184,14 @@ export default function MemberReviewsClient() {
                       </Button>
                     )}
                   </div>
-                  
+
                   <Separator />
-                  
+
                   {/* Rating Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">{t("memberReviews.filterByRating")}</label>
+                    <label className="text-sm font-medium">
+                      {t("memberReviews.filterByRating")}
+                    </label>
                     <Select value={ratingFilter} onValueChange={setRatingFilter}>
                       <SelectTrigger>
                         <SelectValue />
@@ -205,7 +209,7 @@ export default function MemberReviewsClient() {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4 mr-2" />
               {t("common.refresh")}
@@ -213,14 +217,14 @@ export default function MemberReviewsClient() {
           </div>
         </div>
       </div>
-      
+
       <DataTable
         columns={columns}
         data={data?.reviews || []}
         hideDefaultPagination={true}
         hideColumnsSelector={true}
       />
-      
+
       {data && data.totalReviews > 0 && (
         <div className="mt-4 text-sm text-muted-foreground text-center">
           {t("memberReviews.totalReviews")}: {data.totalReviews}
@@ -238,4 +242,4 @@ export default function MemberReviewsClient() {
       )}
     </div>
   )
-} 
+}

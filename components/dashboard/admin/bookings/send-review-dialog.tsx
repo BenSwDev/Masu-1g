@@ -1,7 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -17,9 +23,18 @@ interface SendReviewDialogProps {
   onSent: () => void
 }
 
-export default function SendReviewDialog({ booking, open, onOpenChange, onSent }: SendReviewDialogProps) {
-  const [sendSms, setSendSms] = useState(Boolean(booking.recipientPhone || (booking.userId as any)?.phone))
-  const [sendEmail, setSendEmail] = useState(Boolean(booking.recipientEmail || (booking.userId as any)?.email))
+export default function SendReviewDialog({
+  booking,
+  open,
+  onOpenChange,
+  onSent,
+}: SendReviewDialogProps) {
+  const [sendSms, setSendSms] = useState(
+    Boolean(booking.recipientPhone || (booking.userId as any)?.phone)
+  )
+  const [sendEmail, setSendEmail] = useState(
+    Boolean(booking.recipientEmail || (booking.userId as any)?.email)
+  )
   const [sending, setSending] = useState(false)
 
   const handleSend = async () => {
@@ -27,7 +42,10 @@ export default function SendReviewDialog({ booking, open, onOpenChange, onSent }
 
     setSending(true)
     try {
-      const result = await sendReviewReminder(booking._id.toString(), { sms: sendSms, email: sendEmail })
+      const result = await sendReviewReminder(booking._id.toString(), {
+        sms: sendSms,
+        email: sendEmail,
+      })
       if (result.success) {
         toast.success("נשלחה בקשת חוות דעת")
         onSent()
@@ -49,23 +67,45 @@ export default function SendReviewDialog({ booking, open, onOpenChange, onSent }
           <DialogTitle>שליחת חוות דעת</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm">למי: {booking.recipientName || (booking.userId as any)?.name || "-"}</p>
+          <p className="text-sm">
+            למי: {booking.recipientName || (booking.userId as any)?.name || "-"}
+          </p>
           {booking.recipientEmail || (booking.userId as any)?.email ? (
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Checkbox id="send-email" checked={sendEmail} onCheckedChange={(v) => setSendEmail(Boolean(v))} />
-              <Label htmlFor="send-email">אימייל ({booking.recipientEmail || (booking.userId as any)?.email})</Label>
+              <Checkbox
+                id="send-email"
+                checked={sendEmail}
+                onCheckedChange={v => setSendEmail(Boolean(v))}
+              />
+              <Label htmlFor="send-email">
+                אימייל ({booking.recipientEmail || (booking.userId as any)?.email})
+              </Label>
             </div>
           ) : null}
           {booking.recipientPhone || (booking.userId as any)?.phone ? (
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Checkbox id="send-sms" checked={sendSms} onCheckedChange={(v) => setSendSms(Boolean(v))} />
-                              <Label htmlFor="send-sms">SMS ({formatPhoneForDisplay(booking.recipientPhone || (booking.userId as any)?.phone || "")})</Label>
+              <Checkbox
+                id="send-sms"
+                checked={sendSms}
+                onCheckedChange={v => setSendSms(Boolean(v))}
+              />
+              <Label htmlFor="send-sms">
+                SMS (
+                {formatPhoneForDisplay(
+                  booking.recipientPhone || (booking.userId as any)?.phone || ""
+                )}
+                )
+              </Label>
             </div>
           ) : null}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>ביטול</Button>
-          <Button onClick={handleSend} disabled={sending || (!sendSms && !sendEmail)}>שלח</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
+            ביטול
+          </Button>
+          <Button onClick={handleSend} disabled={sending || (!sendSms && !sendEmail)}>
+            שלח
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

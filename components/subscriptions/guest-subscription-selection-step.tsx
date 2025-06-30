@@ -25,15 +25,13 @@ export default function GuestSubscriptionSelectionStep({
   return (
     <div className="space-y-6 px-4 sm:px-6" dir={dir} lang={language}>
       <div className="text-center">
-        <h2 className="text-2xl font-semibold">
-          {t("subscriptions.purchase.selectSubscription")}
-        </h2>
+        <h2 className="text-2xl font-semibold">{t("subscriptions.purchase.selectSubscription")}</h2>
         <p className="text-muted-foreground mt-2">
           {t("subscriptions.purchase.selectSubscriptionDesc")}
         </p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {subscriptions.map((sub) => (
+        {subscriptions.map(sub => (
           <Card
             key={String(sub._id)}
             className={`cursor-pointer border-2 transition-all ${selectedId === String(sub._id) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"}`}
@@ -55,8 +53,12 @@ export default function GuestSubscriptionSelectionStep({
         ))}
       </div>
       <div className="flex justify-between mt-4">
-        <Button variant="outline" onClick={onPrev}>{t("common.back")}</Button>
-        <Button onClick={onNext} disabled={!selectedId}>{t("common.next")}</Button>
+        <Button variant="outline" onClick={onPrev}>
+          {t("common.back")}
+        </Button>
+        <Button onClick={onNext} disabled={!selectedId}>
+          {t("common.next")}
+        </Button>
       </div>
     </div>
   )

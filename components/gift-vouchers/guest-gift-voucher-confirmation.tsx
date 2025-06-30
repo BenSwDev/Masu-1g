@@ -4,11 +4,11 @@ import { CheckCircle } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import type { GiftVoucher } from "@/types/core/gift-voucher"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface Props {
-  voucher: GiftVoucherPlain | null
+  voucher: GiftVoucher | null
 }
 
 export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
@@ -27,8 +27,12 @@ export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
         <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("giftVouchers.purchaseComplete")}</h1>
-        <p className="text-lg text-muted-foreground">{t("giftVouchers.voucherDetailsDescription")}</p>
+        <h1 className="text-3xl font-bold text-green-600 mb-2">
+          {t("giftVouchers.purchaseComplete")}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          {t("giftVouchers.voucherDetailsDescription")}
+        </p>
       </div>
       <Card>
         <CardHeader>
@@ -41,7 +45,11 @@ export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
           </div>
           <div className="flex justify-between">
             <span>{t("giftVouchers.type")}</span>
-            <span>{voucher.voucherType === "monetary" ? t("giftVouchers.types.monetary") : t("giftVouchers.types.treatment")}</span>
+            <span>
+              {voucher.voucherType === "monetary"
+                ? t("giftVouchers.types.monetary")
+                : t("giftVouchers.types.treatment")}
+            </span>
           </div>
           {voucher.voucherType === "monetary" ? (
             <div className="flex justify-between">

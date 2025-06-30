@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { BarChart3 } from "lucide-react"
 import BookingsPerProfessionalClient from "@/components/dashboard/admin/reports/bookings-per-professional-client"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "Bookings Per Professional",
-  description: "Report showing number of bookings for each professional"
+  description: "Report showing number of bookings for each professional",
 }
 
 export default async function BookingsPerProfessionalPage() {

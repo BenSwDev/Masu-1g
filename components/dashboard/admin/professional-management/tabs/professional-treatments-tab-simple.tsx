@@ -53,14 +53,16 @@ interface ProfessionalTreatmentsTabProps {
 export default function ProfessionalTreatmentsTab({
   professional,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: ProfessionalTreatmentsTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [selectedTreatments, setSelectedTreatments] = useState<Set<string>>(new Set())
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
-  const [treatmentsByCategory, setTreatmentsByCategory] = useState<Record<string, TreatmentOption[]>>({})
+  const [treatmentsByCategory, setTreatmentsByCategory] = useState<
+    Record<string, TreatmentOption[]>
+  >({})
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -77,32 +79,35 @@ export default function ProfessionalTreatmentsTab({
   useEffect(() => {
     const loadTreatments = async () => {
       try {
-        const response = await fetch('/api/treatments')
+        const response = await fetch("/api/treatments")
         if (response.ok) {
           const data = await response.json()
           const treatmentList = data.treatments || []
           setAvailableTreatments(treatmentList)
-          
+
           // Group treatments by category
-          const grouped = treatmentList.reduce((acc: Record<string, TreatmentOption[]>, treatment: TreatmentOption) => {
-            const category = treatment.category || "אחר"
-            if (!acc[category]) {
-              acc[category] = []
-            }
-            acc[category].push(treatment)
-            return acc
-          }, {})
-          
+          const grouped = treatmentList.reduce(
+            (acc: Record<string, TreatmentOption[]>, treatment: TreatmentOption) => {
+              const category = treatment.category || "אחר"
+              if (!acc[category]) {
+                acc[category] = []
+              }
+              acc[category].push(treatment)
+              return acc
+            },
+            {}
+          )
+
           setTreatmentsByCategory(grouped)
         } else {
-          throw new Error('Failed to fetch treatments')
+          throw new Error("Failed to fetch treatments")
         }
       } catch (error) {
         console.error("Error loading treatments:", error)
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "שגיאה בטעינת רשימת הטיפולים"
+          description: "שגיאה בטעינת רשימת הטיפולים",
         })
       } finally {
         setLoadingTreatments(false)
@@ -126,7 +131,7 @@ export default function ProfessionalTreatmentsTab({
   const handleCategoryToggle = (category: string, checked: boolean) => {
     const categoryTreatments = treatmentsByCategory[category] || []
     const newSelected = new Set(selectedTreatments)
-    
+
     categoryTreatments.forEach(treatment => {
       if (checked) {
         newSelected.add(treatment._id)
@@ -134,14 +139,14 @@ export default function ProfessionalTreatmentsTab({
         newSelected.delete(treatment._id)
       }
     })
-    
+
     setSelectedTreatments(newSelected)
     setHasChanges(true)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    
+
     try {
       // Convert selected treatments to the format expected by the API
       const treatmentsToSave = Array.from(selectedTreatments).map(treatmentId => {
@@ -150,41 +155,41 @@ export default function ProfessionalTreatmentsTab({
           treatmentId,
           treatmentName: treatment?.name || "",
           professionalPrice: treatment?.fixedProfessionalPrice || 0,
-          durationId: undefined // Will be handled by duration-based treatments if needed
+          durationId: undefined, // Will be handled by duration-based treatments if needed
         }
       })
-      
+
       const result = await updateProfessionalTreatments(professional._id, treatmentsToSave)
-      
+
       if (result.success && result.professional) {
         toast({
           title: "הצלחה",
-          description: "טיפולי המטפל עודכנו בהצלחה"
+          description: "טיפולי המטפל עודכנו בהצלחה",
         })
-        
+
         // Update professional with new treatments
         const updatedTreatments = (result.professional.treatments || []).map(t => ({
-          treatmentId: t.treatmentId?.toString() || '',
+          treatmentId: t.treatmentId?.toString() || "",
           durationId: t.durationId?.toString(),
           professionalPrice: t.professionalPrice || 0,
-          treatmentName: (t as any).treatmentName
+          treatmentName: (t as any).treatmentName,
         }))
-        
+
         onUpdate({ treatments: updatedTreatments })
         setHasChanges(false)
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון הטיפולים"
+          description: result.error || "שגיאה בעדכון הטיפולים",
         })
       }
     } catch (error) {
       console.error("Error saving treatments:", error)
       toast({
         variant: "destructive",
-        title: "שגיאה", 
-        description: "שגיאה בעדכון הטיפולים"
+        title: "שגיאה",
+        description: "שגיאה בעדכון הטיפולים",
       })
     } finally {
       setSaving(false)
@@ -193,20 +198,28 @@ export default function ProfessionalTreatmentsTab({
 
   const getCategoryDisplayName = (category: string) => {
     switch (category) {
-      case "massages": return "עיסויים"
-      case "facial_treatments": return "טיפולי פנים"
-      default: return category
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
     }
   }
 
   const isCategoryFullySelected = (category: string) => {
     const categoryTreatments = treatmentsByCategory[category] || []
-    return categoryTreatments.length > 0 && categoryTreatments.every(t => selectedTreatments.has(t._id))
+    return (
+      categoryTreatments.length > 0 && categoryTreatments.every(t => selectedTreatments.has(t._id))
+    )
   }
 
   const isCategoryPartiallySelected = (category: string) => {
     const categoryTreatments = treatmentsByCategory[category] || []
-    return categoryTreatments.some(t => selectedTreatments.has(t._id)) && !isCategoryFullySelected(category)
+    return (
+      categoryTreatments.some(t => selectedTreatments.has(t._id)) &&
+      !isCategoryFullySelected(category)
+    )
   }
 
   if (disabled) {
@@ -214,9 +227,7 @@ export default function ProfessionalTreatmentsTab({
       <div className="p-6">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            נא ליצור תחילה את המטפל כדי להגדיר טיפולים
-          </AlertDescription>
+          <AlertDescription>נא ליצור תחילה את המטפל כדי להגדיר טיפולים</AlertDescription>
         </Alert>
       </div>
     )
@@ -230,18 +241,14 @@ export default function ProfessionalTreatmentsTab({
           <h3 className="text-lg font-semibold">טיפולי המטפל</h3>
           <Badge variant="secondary">{selectedTreatments.size} טיפולים</Badge>
         </div>
-        
+
         {hasChanges && (
           <Button
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-2 min-w-[100px]"
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? "שומר..." : "שמור"}
           </Button>
         )}
@@ -277,14 +284,24 @@ export default function ProfessionalTreatmentsTab({
                     <Checkbox
                       id={`category-${category}`}
                       checked={isCategoryFullySelected(category)}
-                      onCheckedChange={(checked) => handleCategoryToggle(category, checked as boolean)}
-                      className={isCategoryPartiallySelected(category) ? "data-[state=checked]:bg-orange-500" : ""}
+                      onCheckedChange={checked =>
+                        handleCategoryToggle(category, checked as boolean)
+                      }
+                      className={
+                        isCategoryPartiallySelected(category)
+                          ? "data-[state=checked]:bg-orange-500"
+                          : ""
+                      }
                     />
-                    <Label htmlFor={`category-${category}`} className="text-base font-semibold cursor-pointer">
+                    <Label
+                      htmlFor={`category-${category}`}
+                      className="text-base font-semibold cursor-pointer"
+                    >
                       {getCategoryDisplayName(category)}
                     </Label>
                     <Badge variant="outline">
-                      {treatments.filter(t => selectedTreatments.has(t._id)).length} / {treatments.length}
+                      {treatments.filter(t => selectedTreatments.has(t._id)).length} /{" "}
+                      {treatments.length}
                     </Badge>
                   </div>
                 </CardTitle>
@@ -292,20 +309,28 @@ export default function ProfessionalTreatmentsTab({
               <CardContent>
                 <div className="grid grid-cols-1 gap-3">
                   {treatments.map(treatment => (
-                    <div key={treatment._id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <div
+                      key={treatment._id}
+                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
+                    >
                       <Checkbox
                         id={`treatment-${treatment._id}`}
                         checked={selectedTreatments.has(treatment._id)}
-                        onCheckedChange={(checked) => handleTreatmentToggle(treatment._id, checked as boolean)}
+                        onCheckedChange={checked =>
+                          handleTreatmentToggle(treatment._id, checked as boolean)
+                        }
                       />
                       <div className="flex-1 space-y-1">
-                        <Label htmlFor={`treatment-${treatment._id}`} className="font-medium cursor-pointer">
+                        <Label
+                          htmlFor={`treatment-${treatment._id}`}
+                          className="font-medium cursor-pointer"
+                        >
                           {treatment.name}
                         </Label>
                         {treatment.description && (
                           <p className="text-sm text-muted-foreground">{treatment.description}</p>
                         )}
-                        
+
                         <div className="flex flex-wrap gap-2 mt-2">
                           {/* Pricing info */}
                           {treatment.pricingType === "fixed" ? (
@@ -323,11 +348,13 @@ export default function ProfessionalTreatmentsTab({
                             <div className="flex items-center gap-1 text-xs">
                               <Clock className="w-3 h-3" />
                               <span>
-                                {treatment.durations?.map(d => `${d.minutes} דקות (₪${d.price})`).join(", ") || "משתנה"}
+                                {treatment.durations
+                                  ?.map(d => `${d.minutes} דקות (₪${d.price})`)
+                                  .join(", ") || "משתנה"}
                               </span>
                             </div>
                           )}
-                          
+
                           {treatment.allowTherapistGenderSelection && (
                             <Badge variant="outline" className="text-xs">
                               בחירת מגדר מטפל
@@ -356,7 +383,7 @@ export default function ProfessionalTreatmentsTab({
               </Badge>
             </div>
           </div>
-          
+
           {selectedTreatments.size === 0 && (
             <Alert className="mt-3">
               <AlertTriangle className="h-4 w-4" />
@@ -369,4 +396,4 @@ export default function ProfessionalTreatmentsTab({
       </Card>
     </div>
   )
-} 
+}

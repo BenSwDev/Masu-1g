@@ -41,27 +41,29 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
     <div>
       {/* Add Filters here if needed */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {coupons.map((coupon) => (
-          <AssignedCouponCard 
-            key={String(coupon._id)} 
-            coupon={coupon as any} 
-          />
+        {coupons.map(coupon => (
+          <AssignedCouponCard key={String(coupon._id)} coupon={coupon as any} />
         ))}
       </div>
       {/* Add Pagination controls here if totalPages > 1 */}
       {pagination.totalPages > 1 && (
         <div className="mt-8 flex justify-center space-x-2">
           <Button
-            onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage - 1}`)}
+            onClick={() =>
+              router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage - 1}`)
+            }
             disabled={pagination.currentPage <= 1 || loading}
           >
             {t("partnerAssignedCoupons.pagination.previous")}
           </Button>
           <span className="p-2">
-            {t("partnerAssignedCoupons.pagination.pageInfo")} - {t("common.page")}: {pagination.currentPage}, {t("common.totalPages")}: {pagination.totalPages}
+            {t("partnerAssignedCoupons.pagination.pageInfo")} - {t("common.page")}:{" "}
+            {pagination.currentPage}, {t("common.totalPages")}: {pagination.totalPages}
           </span>
           <Button
-            onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage + 1}`)}
+            onClick={() =>
+              router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage + 1}`)
+            }
             disabled={pagination.currentPage >= pagination.totalPages || loading}
           >
             {t("partnerAssignedCoupons.pagination.next")}

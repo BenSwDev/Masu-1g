@@ -17,50 +17,50 @@ const nextConfig = {
   reactStrictMode: true,
   // Show more verbose error overlays in development
   devIndicators: {
-    position: 'bottom-right',
+    position: "bottom-right",
   },
   // Enable source maps in production for better stack traces
   productionBrowserSourceMaps: true,
-  
+
   // Additional configurations for better debugging and error catching
   experimental: {
     // Better debugging for server components
     serverSourceMaps: true,
   },
-  
+
   // Webpack configuration for better error reporting
   webpack: (config, { dev, isServer }) => {
     if (dev) {
       // Enable better stack traces in development
-      config.devtool = 'eval-source-map'
+      config.devtool = "eval-source-map"
     }
-    
+
     return config
   },
-  
+
   // Security headers for production
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
         ],
       },
     ]
   },
-  
+
   // Logging configuration for better error tracking
   logging: {
     fetches: {

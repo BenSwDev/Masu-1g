@@ -6,16 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { 
-  Calendar,
-  Clock,
-  User,
-  MapPin,
-  Edit,
-  CheckCircle,
-  AlertCircle,
-  Users
-} from "lucide-react"
+import { Calendar, Clock, User, MapPin, Edit, CheckCircle, AlertCircle, Users } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
 interface BookingSchedulingTabProps {
@@ -44,15 +35,27 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
-        return <Badge variant="default" className="bg-green-100 text-green-800">מאושר</Badge>
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            מאושר
+          </Badge>
+        )
       case "pending":
         return <Badge variant="secondary">ממתין לאישור</Badge>
       case "cancelled":
         return <Badge variant="destructive">מבוטל</Badge>
       case "completed":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">הושלם</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            הושלם
+          </Badge>
+        )
       case "in_progress":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">בביצוע</Badge>
+        return (
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+            בביצוע
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -64,7 +67,6 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
       const minutes = booking.treatmentId.defaultDurationMinutes
       const hours = Math.floor(minutes / 60)
       const remainingMinutes = minutes % 60
-      
 
       return `${minutes} דקות`
     }
@@ -86,7 +88,6 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
             <Label className="text-sm font-medium">סטטוס נוכחי</Label>
             {getStatusBadge(booking.status)}
           </div>
-
         </CardContent>
       </Card>
 
@@ -152,9 +153,9 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-green-600" />
                     <span className="font-medium">
-                      {typeof booking.professionalId === 'object' 
-                        ? booking.professionalId.name 
-                        : 'מטפל לא זמין'}
+                      {typeof booking.professionalId === "object"
+                        ? booking.professionalId.name
+                        : "מטפל לא זמין"}
                     </span>
                   </div>
                 </div>
@@ -162,8 +163,6 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   משויך
                 </Badge>
               </div>
-
-
             </div>
           ) : (
             <div className="flex items-center justify-between">
@@ -174,9 +173,7 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   <span className="text-amber-600">לא שויך מטפל</span>
                 </div>
               </div>
-              <Badge variant="secondary">
-                ממתין לשיוך
-              </Badge>
+              <Badge variant="secondary">ממתין לשיוך</Badge>
             </div>
           )}
         </CardContent>
@@ -198,7 +195,8 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     <span className="font-medium">
-                      {booking.bookingAddressSnapshot.street} {booking.bookingAddressSnapshot.streetNumber}
+                      {booking.bookingAddressSnapshot.street}{" "}
+                      {booking.bookingAddressSnapshot.streetNumber}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -207,7 +205,8 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   {booking.bookingAddressSnapshot.floor && (
                     <p className="text-sm">
                       קומה {booking.bookingAddressSnapshot.floor}
-                      {booking.bookingAddressSnapshot.apartment && `, דירה ${booking.bookingAddressSnapshot.apartment}`}
+                      {booking.bookingAddressSnapshot.apartment &&
+                        `, דירה ${booking.bookingAddressSnapshot.apartment}`}
                     </p>
                   )}
                 </div>
@@ -261,4 +260,4 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
       </Card>
     </div>
   )
-} 
+}

@@ -42,7 +42,7 @@ export function PurchaseNavigation({
         disabled={!canGoPrevious || isLoading}
         className={cn(
           "flex items-center gap-2 transition-all duration-300",
-          !canGoPrevious && "opacity-0 pointer-events-none",
+          !canGoPrevious && "opacity-0 pointer-events-none"
         )}
       >
         {dir === "rtl" ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -65,11 +65,15 @@ export function PurchaseNavigation({
           disabled={!canGoNext || isLoading}
           className={cn(
             "flex items-center gap-2 transition-all duration-300",
-            !canGoNext && "opacity-70 cursor-not-allowed",
+            !canGoNext && "opacity-70 cursor-not-allowed"
           )}
         >
           {nextLabel || t("common.next")}
-          {dir === "rtl" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {dir === "rtl" ? (
+            <ChevronLeft className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}
         </Button>
       )}
     </div>

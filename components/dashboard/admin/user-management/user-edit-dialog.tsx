@@ -32,11 +32,11 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { PhoneInput } from "@/components/common/phone-input"
-import { 
-  updateUser, 
+import {
+  updateUser,
   resetUserPassword,
-  type UserData, 
-  type UpdateUserData 
+  type UserData,
+  type UpdateUserData,
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 
 const updateUserSchema = z.object({
@@ -44,10 +44,12 @@ const updateUserSchema = z.object({
   email: z.string().email("כתובת מייל לא תקינה").optional().or(z.literal("")),
   phone: z.string().min(10, "מספר טלפון לא תקין"),
   gender: z.enum(["male", "female", "other"], {
-    required_error: "יש לבחור מגדר"
+    required_error: "יש לבחור מגדר",
   }),
   dateOfBirth: z.string().optional(),
-  roles: z.array(z.enum(["admin", "professional", "member", "partner"])).min(1, "יש לבחור לפחות תפקיד אחד")
+  roles: z
+    .array(z.enum(["admin", "professional", "member", "partner"]))
+    .min(1, "יש לבחור לפחות תפקיד אחד"),
 })
 
 type UpdateUserFormData = z.infer<typeof updateUserSchema>
@@ -63,7 +65,7 @@ export default function UserEditDialog({
   open,
   onOpenChange,
   user,
-  onSuccess
+  onSuccess,
 }: UserEditDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -77,8 +79,8 @@ export default function UserEditDialog({
       phone: "",
       gender: "male",
       dateOfBirth: "",
-      roles: ["member"]
-    }
+      roles: ["member"],
+    },
   })
 
   // Update form when user changes
@@ -89,8 +91,8 @@ export default function UserEditDialog({
         email: user.email || "",
         phone: user.phone || "",
         gender: user.gender || "male",
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
-        roles: user.roles || ["member"]
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
+        roles: user.roles || ["member"],
       })
     }
   }, [user, open, form])
@@ -106,29 +108,29 @@ export default function UserEditDialog({
         phone: data.phone,
         gender: data.gender,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        roles: data.roles
+        roles: data.roles,
       }
 
       const result = await updateUser(user._id, userData)
-      
+
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "המשתמש עודכן בהצלחה"
+          description: "המשתמש עודכן בהצלחה",
         })
         onSuccess()
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה בעדכון המשתמש"
+          description: result.error || "אירעה שגיאה בעדכון המשתמש",
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בעדכון המשתמש"
+        description: "אירעה שגיאה בעדכון המשתמש",
       })
     } finally {
       setLoading(false)
@@ -144,20 +146,20 @@ export default function UserEditDialog({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: `הסיסמה אופסה ל: ${result.data.newPassword}`
+          description: `הסיסמה אופסה ל: ${result.data.newPassword}`,
         })
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה באיפוס הסיסמה"
+          description: result.error || "אירעה שגיאה באיפוס הסיסמה",
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה באיפוס הסיסמה"
+        description: "אירעה שגיאה באיפוס הסיסמה",
       })
     } finally {
       setResettingPassword(false)
@@ -169,7 +171,10 @@ export default function UserEditDialog({
     if (checked) {
       form.setValue("roles", [...currentRoles, role as any])
     } else {
-      form.setValue("roles", currentRoles.filter(r => r !== role))
+      form.setValue(
+        "roles",
+        currentRoles.filter(r => r !== role)
+      )
     }
   }
 
@@ -180,9 +185,7 @@ export default function UserEditDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>עריכת משתמש</DialogTitle>
-          <DialogDescription>
-            ערוך את פרטי המשתמש {user.name}
-          </DialogDescription>
+          <DialogDescription>ערוך את פרטי המשתמש {user.name}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -256,11 +259,7 @@ export default function UserEditDialog({
                   <FormItem>
                     <FormLabel>כתובת מייל</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="הכנס כתובת מייל" 
-                        {...field} 
-                      />
+                      <Input type="email" placeholder="הכנס כתובת מייל" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,10 +275,7 @@ export default function UserEditDialog({
                 <FormItem>
                   <FormLabel>תאריך לידה</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field} 
-                    />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -298,8 +294,8 @@ export default function UserEditDialog({
                       { value: "member", label: "חבר" },
                       { value: "professional", label: "מטפל" },
                       { value: "partner", label: "שותף" },
-                      { value: "admin", label: "מנהל" }
-                    ].map((role) => (
+                      { value: "admin", label: "מנהל" },
+                    ].map(role => (
                       <FormField
                         key={role.value}
                         control={form.control}
@@ -309,14 +305,12 @@ export default function UserEditDialog({
                             <FormControl>
                               <Checkbox
                                 checked={field.value?.includes(role.value as any)}
-                                onCheckedChange={(checked) => 
+                                onCheckedChange={checked =>
                                   handleRoleChange(role.value, checked as boolean)
                                 }
                               />
                             </FormControl>
-                            <FormLabel className="text-sm font-normal">
-                              {role.label}
-                            </FormLabel>
+                            <FormLabel className="text-sm font-normal">{role.label}</FormLabel>
                           </FormItem>
                         )}
                       />
@@ -374,11 +368,7 @@ export default function UserEditDialog({
                 >
                   ביטול
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="flex-1 sm:flex-none"
-                >
+                <Button type="submit" disabled={loading} className="flex-1 sm:flex-none">
                   {loading ? "שומר..." : "שמור שינויים"}
                 </Button>
               </div>
@@ -388,4 +378,4 @@ export default function UserEditDialog({
       </DialogContent>
     </Dialog>
   )
-} 
+}

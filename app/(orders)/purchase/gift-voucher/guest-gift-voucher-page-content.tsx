@@ -11,7 +11,10 @@ interface GuestGiftVoucherPageContentProps {
   treatments: ITreatment[]
 }
 
-export default function GuestGiftVoucherPageContent({ success, treatments }: GuestGiftVoucherPageContentProps) {
+export default function GuestGiftVoucherPageContent({
+  success,
+  treatments,
+}: GuestGiftVoucherPageContentProps) {
   const { t, language, dir } = useTranslation()
 
   if (!success) {
@@ -35,4 +38,3 @@ export default function GuestGiftVoucherPageContent({ success, treatments }: Gue
     </GuestLayout>
   )
 }
-

@@ -41,14 +41,12 @@ export function DashboardHeader({ onSidebarToggle }: DashboardHeaderProps) {
           <div className={`flex items-center gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
             {/* Dashboard Button */}
             <Button asChild variant="outline">
-              <Link href="/dashboard">
-                {t("common.dashboard")}
-              </Link>
+              <Link href="/dashboard">{t("common.dashboard")}</Link>
             </Button>
-            
+
             {/* Language Selector */}
             <LanguageSelector />
-            
+
             {/* Logout Button */}
             <Button
               variant="ghost"

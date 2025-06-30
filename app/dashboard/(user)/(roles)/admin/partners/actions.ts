@@ -12,7 +12,7 @@ import {
   updateUser,
   deleteUser,
   type CreateUserData,
-  type UpdateUserData
+  type UpdateUserData,
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 
 interface GetPartnersOptions {
@@ -49,7 +49,7 @@ export async function getPartners(options: GetPartnersOptions = {}): Promise<Get
     const pipeline: any[] = [
       { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "userId" } },
       { $unwind: "$userId" },
-      { $match: { "userId.roles": "partner" } }
+      { $match: { "userId.roles": "partner" } },
     ]
 
     if (search) {
@@ -61,9 +61,9 @@ export async function getPartners(options: GetPartnersOptions = {}): Promise<Get
             { "userId.email": regex },
             { "userId.phone": regex },
             { businessNumber: regex },
-            { contactName: regex }
-          ]
-        }
+            { contactName: regex },
+          ],
+        },
       })
     }
 
@@ -81,8 +81,8 @@ export async function getPartners(options: GetPartnersOptions = {}): Promise<Get
       success: true,
       data: {
         partners: partners as any,
-        pagination: { page, limit, total, pages }
-      }
+        pagination: { page, limit, total, pages },
+      },
     }
   } catch (error) {
     console.error("Error getPartners", error)
@@ -90,7 +90,9 @@ export async function getPartners(options: GetPartnersOptions = {}): Promise<Get
   }
 }
 
-export async function getPartnerById(id: string): Promise<{ success: boolean; partner?: IPartnerProfile & { userId: IUser }; error?: string }> {
+export async function getPartnerById(
+  id: string
+): Promise<{ success: boolean; partner?: IPartnerProfile & { userId: IUser }; error?: string }> {
   try {
     await requireAdmin()
 
@@ -130,7 +132,7 @@ export async function createPartner(formData: FormData) {
       phone: String(formData.get("phone") || ""),
       password: String(formData.get("password") || "User123!"),
       gender: (formData.get("gender") as "male" | "female" | "other") || "male",
-      roles: ["partner"]
+      roles: ["partner"],
     }
 
     const userRes = await createUser(userData)
@@ -174,7 +176,7 @@ export async function updatePartner(id: string, formData: FormData) {
       email: String(formData.get("email") || "") || undefined,
       phone: String(formData.get("phone") || ""),
       gender: (formData.get("gender") as "male" | "female" | "other") || "male",
-      roles: ["partner"]
+      roles: ["partner"],
     }
 
     const res = await updateUser(String(existing.userId), userData)

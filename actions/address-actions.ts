@@ -152,7 +152,7 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
   } catch (error) {
     logger.error("Error creating address:", error)
     if (error instanceof z.ZodError) {
-      const msg = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(" | ")
+      const msg = error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(" | ")
       return { success: false, error: msg }
     }
     return { success: false, error: (error as Error)?.message || "Failed to create address" }
@@ -175,14 +175,18 @@ export async function updateAddress(id: string, data: z.infer<typeof addressSche
       fullAddress: fullAddress, // Add the constructed fullAddress
     }
 
-    const address = await AddressQueries.updateAddress(id, session.user.id, addressDataWithFullAddress)
+    const address = await AddressQueries.updateAddress(
+      id,
+      session.user.id,
+      addressDataWithFullAddress
+    )
 
     revalidatePath("/dashboard/member/addresses")
     return { success: true, address: addressToPlain(address) }
   } catch (error) {
     logger.error("Error updating address:", error)
     if (error instanceof z.ZodError) {
-      const msg = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(" | ")
+      const msg = error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(" | ")
       return { success: false, error: msg }
     }
     return { success: false, error: (error as Error)?.message || "Failed to update address" }

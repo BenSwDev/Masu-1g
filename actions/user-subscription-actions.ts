@@ -13,21 +13,20 @@ import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type {
-  EmailRecipient,
-  PhoneRecipient,
-} from "@/lib/notifications/notification-types"
+import type { EmailRecipient, PhoneRecipient } from "@/lib/notifications/notification-types"
 
 // Helper function to generate unique subscription code
 async function generateUniqueSubscriptionCode(): Promise<string> {
   await dbConnect()
   for (let attempt = 0; attempt < 5; attempt++) {
     // Generate SB + 6 random alphanumeric characters
-    const code = 'SB' + Array.from({ length: 6 }, () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-      return chars.charAt(Math.floor(Math.random() * chars.length))
-    }).join('')
-    
+    const code =
+      "SB" +
+      Array.from({ length: 6 }, () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return chars.charAt(Math.floor(Math.random() * chars.length))
+      }).join("")
+
     const exists = await UserSubscription.exists({ code })
     if (!exists) return code
   }
@@ -38,29 +37,33 @@ async function generateUniqueSubscriptionCode(): Promise<string> {
 const rateLimitStore = new Map<string, { count: number; firstRequest: number }>()
 
 // Rate limiting function
-function checkRateLimit(identifier: string, maxRequests = 5, windowMs = 60000): { allowed: boolean; remainingTime?: number } {
+function checkRateLimit(
+  identifier: string,
+  maxRequests = 5,
+  windowMs = 60000
+): { allowed: boolean; remainingTime?: number } {
   const now = Date.now()
   const key = identifier
   const record = rateLimitStore.get(key)
-  
+
   if (!record) {
     rateLimitStore.set(key, { count: 1, firstRequest: now })
     return { allowed: true }
   }
-  
+
   const timeElapsed = now - record.firstRequest
-  
+
   if (timeElapsed > windowMs) {
     // Reset window
     rateLimitStore.set(key, { count: 1, firstRequest: now })
     return { allowed: true }
   }
-  
+
   if (record.count >= maxRequests) {
     const remainingTime = windowMs - timeElapsed
     return { allowed: false, remainingTime }
   }
-  
+
   record.count++
   return { allowed: true }
 }
@@ -68,53 +71,53 @@ function checkRateLimit(identifier: string, maxRequests = 5, windowMs = 60000): 
 // Enhanced input validation
 function validateGuestInfo(guestInfo: any): { valid: boolean; errors: string[] } {
   const errors: string[] = []
-  
-  if (!guestInfo || typeof guestInfo !== 'object') {
-    errors.push('Guest info is required')
+
+  if (!guestInfo || typeof guestInfo !== "object") {
+    errors.push("Guest info is required")
     return { valid: false, errors }
   }
-  
+
   // Name validation
-  if (!guestInfo.name || typeof guestInfo.name !== 'string') {
-    errors.push('Name is required')
+  if (!guestInfo.name || typeof guestInfo.name !== "string") {
+    errors.push("Name is required")
   } else if (guestInfo.name.trim().length < 2) {
-    errors.push('Name must be at least 2 characters')
+    errors.push("Name must be at least 2 characters")
   } else if (guestInfo.name.length > 100) {
-    errors.push('Name must be less than 100 characters')
+    errors.push("Name must be less than 100 characters")
   } else if (!/^[a-zA-Z\u0590-\u05FF\s'-]+$/.test(guestInfo.name)) {
-    errors.push('Name contains invalid characters')
+    errors.push("Name contains invalid characters")
   }
-  
+
   // Email validation (optional now)
-  if (guestInfo.email && typeof guestInfo.email === 'string') {
+  if (guestInfo.email && typeof guestInfo.email === "string") {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(guestInfo.email)) {
-      errors.push('Invalid email format')
+      errors.push("Invalid email format")
     } else if (guestInfo.email.length > 254) {
-      errors.push('Email is too long')
+      errors.push("Email is too long")
     }
   }
-  
+
   // Phone validation
-  if (!guestInfo.phone || typeof guestInfo.phone !== 'string') {
-    errors.push('Phone is required')
+  if (!guestInfo.phone || typeof guestInfo.phone !== "string") {
+    errors.push("Phone is required")
   } else {
     // Use centralized phone validation
     const { validatePhoneNumber } = require("@/lib/phone-utils")
     if (!validatePhoneNumber(guestInfo.phone)) {
-      errors.push('Invalid phone number format')
+      errors.push("Invalid phone number format")
     }
   }
-  
+
   return { valid: errors.length === 0, errors }
 }
 
 // Sanitize input to prevent injection
 function sanitizeInput(input: string): string {
-  if (typeof input !== 'string') return ''
+  if (typeof input !== "string") return ""
   return input
     .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/[<>]/g, "") // Remove potential HTML tags
     .substring(0, 1000) // Limit length
 }
 
@@ -133,13 +136,13 @@ export async function purchaseSubscription({
 }: PurchaseSubscriptionArgs) {
   const requestId = `sub_purchase_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
-  
+
   let sessionData
   try {
     logger.info(`[${requestId}] Starting subscription purchase`, {
       subscriptionId,
       treatmentId,
-      hasSelectedDuration: !!selectedDurationId
+      hasSelectedDuration: !!selectedDurationId,
     })
 
     sessionData = await getServerSession(authOptions)
@@ -151,10 +154,10 @@ export async function purchaseSubscription({
     const dbConnectStart = Date.now()
     await dbConnect()
     const dbConnectTime = Date.now() - dbConnectStart
-    
-    logger.info(`[${requestId}] Database connected`, { 
+
+    logger.info(`[${requestId}] Database connected`, {
       dbConnectTime: `${dbConnectTime}ms`,
-      userId: sessionData.user.id
+      userId: sessionData.user.id,
     })
 
     // Load all required data in parallel
@@ -162,17 +165,23 @@ export async function purchaseSubscription({
     const [subscriptionResult, treatmentResult, paymentMethodResult] = await Promise.allSettled([
       Subscription.findById(subscriptionId),
       Treatment.findById(treatmentId).lean(),
-      PaymentMethod.findById(paymentMethodId)
+      PaymentMethod.findById(paymentMethodId),
     ])
     const dataLoadTime = Date.now() - dataLoadStart
 
     // Check for failed data loads
-    if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected" || paymentMethodResult.status === "rejected") {
+    if (
+      subscriptionResult.status === "rejected" ||
+      treatmentResult.status === "rejected" ||
+      paymentMethodResult.status === "rejected"
+    ) {
       logger.error(`[${requestId}] Failed to load required data`, {
         dataLoadTime: `${dataLoadTime}ms`,
-        subscriptionError: subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
+        subscriptionError:
+          subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
         treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
-        paymentMethodError: paymentMethodResult.status === "rejected" ? paymentMethodResult.reason : null
+        paymentMethodError:
+          paymentMethodResult.status === "rejected" ? paymentMethodResult.reason : null,
       })
       return { success: false, error: "Failed to load required data" }
     }
@@ -187,7 +196,7 @@ export async function purchaseSubscription({
       subscriptionActive: subscription?.isActive,
       treatmentFound: !!treatment,
       treatmentActive: treatment?.isActive,
-      paymentMethodFound: !!paymentMethod
+      paymentMethodFound: !!paymentMethod,
     })
 
     if (!subscription || !subscription.isActive) {
@@ -201,9 +210,9 @@ export async function purchaseSubscription({
     }
 
     if (!paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id) {
-      logger.warn(`[${requestId}] Payment method not found or not owned by user`, { 
-        paymentMethodId, 
-        userId: sessionData.user.id
+      logger.warn(`[${requestId}] Payment method not found or not owned by user`, {
+        paymentMethodId,
+        userId: sessionData.user.id,
       })
       return { success: false, error: "Payment method not found or not owned by user" }
     }
@@ -216,14 +225,16 @@ export async function purchaseSubscription({
       singleSessionPrice = treatment.fixedPrice
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) {
-        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, { treatmentId })
+        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, {
+          treatmentId,
+        })
         return { success: false, error: "Duration must be selected for this treatment" }
       }
-      const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId)
+      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
       if (!duration || !duration.isActive) {
-        logger.warn(`[${requestId}] Selected duration not found or inactive`, { 
-          selectedDurationId, 
-          treatmentId
+        logger.warn(`[${requestId}] Selected duration not found or inactive`, {
+          selectedDurationId,
+          treatmentId,
         })
         return { success: false, error: "Selected duration not found or inactive" }
       }
@@ -231,20 +242,20 @@ export async function purchaseSubscription({
     }
 
     if (singleSessionPrice === undefined || singleSessionPrice < 0) {
-      logger.error(`[${requestId}] Invalid price calculated for treatment`, { 
-        treatmentId, 
-        singleSessionPrice
+      logger.error(`[${requestId}] Invalid price calculated for treatment`, {
+        treatmentId,
+        singleSessionPrice,
       })
       return { success: false, error: "Invalid treatment price" }
     }
 
     const totalPaymentAmount = subscription.quantity * singleSessionPrice
     const priceCalcTime = Date.now() - priceCalcStart
-    
+
     logger.info(`[${requestId}] Price calculation completed`, {
       priceCalcTime: `${priceCalcTime}ms`,
       singleSessionPrice,
-      totalPaymentAmount
+      totalPaymentAmount,
     })
 
     const purchaseDate = new Date()
@@ -259,7 +270,9 @@ export async function purchaseSubscription({
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
       selectedDurationId:
-        treatment.pricingType === "duration_based" && selectedDurationId && mongoose.Types.ObjectId.isValid(selectedDurationId)
+        treatment.pricingType === "duration_based" &&
+        selectedDurationId &&
+        mongoose.Types.ObjectId.isValid(selectedDurationId)
           ? new mongoose.Types.ObjectId(selectedDurationId)
           : undefined,
       purchaseDate,
@@ -274,10 +287,10 @@ export async function purchaseSubscription({
 
     await newUserSubscription.save()
     const saveTime = Date.now() - saveStart
-    
+
     logger.info(`[${requestId}] User subscription created successfully`, {
       saveTime: `${saveTime}ms`,
-      userSubscriptionId: newUserSubscription._id
+      userSubscriptionId: newUserSubscription._id,
     })
 
     try {
@@ -291,21 +304,31 @@ export async function purchaseSubscription({
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
         const messageHe = `תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.`
         const messageEn = `Thank you for your purchase! Your subscription code: ${newUserSubscription.code}\nUse this code to book treatments.`
-        const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
+        const data = {
+          type: "purchase-success" as const,
+          message: lang === "he" ? messageHe : messageEn,
+        }
         const recipients = []
         if (methods.includes("email") && purchaser.email) {
-          recipients.push({ type: "email" as const, value: purchaser.email, name: purchaser.name, language: lang as any })
+          recipients.push({
+            type: "email" as const,
+            value: purchaser.email,
+            name: purchaser.name,
+            language: lang as any,
+          })
         }
         if (methods.includes("sms") && purchaser.phone) {
           recipients.push({ type: "phone" as const, value: purchaser.phone, language: lang as any })
         }
-        
+
         if (recipients.length > 0) {
           await unifiedNotificationService.sendPurchaseSuccess(recipients, data.message)
         }
       }
     } catch (notificationError) {
-      logger.error("Failed to send subscription purchase notification", { error: notificationError })
+      logger.error("Failed to send subscription purchase notification", {
+        error: notificationError,
+      })
     }
 
     revalidatePath("/dashboard/member/subscriptions")
@@ -319,8 +342,8 @@ export async function purchaseSubscription({
         dbConnect: `${dbConnectTime}ms`,
         dataLoad: `${dataLoadTime}ms`,
         priceCalc: `${priceCalcTime}ms`,
-        save: `${saveTime}ms`
-      }
+        save: `${saveTime}ms`,
+      },
     })
 
     return { success: true, userSubscription: newUserSubscription.toObject() } // Return plain object
@@ -328,10 +351,13 @@ export async function purchaseSubscription({
     const totalTime = Date.now() - startTime
     logger.error(`[${requestId}] Error purchasing subscription`, {
       totalTime: `${totalTime}ms`,
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 5)
-      } : String(error),
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack?.split("\n").slice(0, 5),
+            }
+          : String(error),
       subscriptionId,
       treatmentId,
       userId: sessionData?.user?.id,
@@ -372,7 +398,8 @@ export async function getUserSubscriptions() {
         const treatmentDoc = sub.treatmentId as ITreatment
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
-            (d: any) => d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString(),
+            (d: any) =>
+              d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString()
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -399,7 +426,7 @@ export async function getAllUserSubscriptions(
     search?: string
     page?: number
     limit?: number
-  } = {},
+  } = {}
 ) {
   try {
     const sessionData = await getServerSession(authOptions)
@@ -417,11 +444,11 @@ export async function getAllUserSubscriptions(
 
     // Add search functionality for guest purchases
     if (options.search) {
-      const searchRegex = new RegExp(options.search, 'i')
+      const searchRegex = new RegExp(options.search, "i")
       query.$or = [
-        { 'guestInfo.name': searchRegex },
-        { 'guestInfo.email': searchRegex },
-        { 'guestInfo.phone': searchRegex }
+        { "guestInfo.name": searchRegex },
+        { "guestInfo.email": searchRegex },
+        { "guestInfo.phone": searchRegex },
       ]
     }
 
@@ -455,7 +482,8 @@ export async function getAllUserSubscriptions(
         const treatmentDoc = sub.treatmentId as ITreatment
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
-            (d: any) => d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString(),
+            (d: any) =>
+              d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString()
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -481,7 +509,12 @@ export async function getAllUserSubscriptions(
       error: error instanceof Error ? error.message : String(error),
       options,
     })
-    return { success: false, error: "Failed to fetch user subscriptions", userSubscriptions: [], pagination: undefined }
+    return {
+      success: false,
+      error: "Failed to fetch user subscriptions",
+      userSubscriptions: [],
+      pagination: undefined,
+    }
   }
 }
 
@@ -500,7 +533,11 @@ export async function useSubscription(userSubscriptionId: string, quantity = 1) 
       return { success: false, error: "Subscription not found" }
     }
 
-    if (userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
+    if (
+      userSubscription.userId &&
+      userSubscription.userId.toString() !== sessionData.user.id &&
+      !sessionData.user.roles.includes("admin")
+    ) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -546,7 +583,11 @@ export async function cancelSubscription(userSubscriptionId: string) {
       return { success: false, error: "Subscription not found" }
     }
 
-    if (userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
+    if (
+      userSubscription.userId &&
+      userSubscription.userId.toString() !== sessionData.user.id &&
+      !sessionData.user.roles.includes("admin")
+    ) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -603,13 +644,13 @@ export async function initiateGuestSubscriptionPurchase(data: {
   }
 }): Promise<{ success: boolean; userSubscriptionId?: string; amount?: number; error?: string }> {
   const requestId = `guest_sub_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-  
+
   try {
     logger.info(`[${requestId}] Starting guest subscription purchase initiation`, {
       subscriptionId: data.subscriptionId,
       treatmentId: data.treatmentId,
       hasSelectedDuration: !!data.selectedDurationId,
-      guestEmail: data.guestInfo.email
+      guestEmail: data.guestInfo.email,
     })
 
     await dbConnect()
@@ -625,7 +666,10 @@ export async function initiateGuestSubscriptionPurchase(data: {
     if (guestInfo.email && guestInfo.email.trim() !== "") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(guestInfo.email)) {
-        return { success: false, error: "Valid email address format is required when email is provided." }
+        return {
+          success: false,
+          error: "Valid email address format is required when email is provided.",
+        }
       }
     }
 
@@ -635,12 +679,12 @@ export async function initiateGuestSubscriptionPurchase(data: {
     }
 
     // Load subscription and treatment
-    const subscription = await Subscription.findById(subscriptionId).lean() as any
+    const subscription = (await Subscription.findById(subscriptionId).lean()) as any
     if (!subscription || !subscription.isActive) {
       return { success: false, error: "Subscription not found or inactive" }
     }
 
-    const treatment = await Treatment.findById(treatmentId).lean() as ITreatment | null
+    const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "Treatment not found or inactive" }
     }
@@ -660,7 +704,8 @@ export async function initiateGuestSubscriptionPurchase(data: {
     }
 
     const totalPrice = subscription.price
-    const totalPaymentAmount = treatmentPrice > 0 ? subscription.quantity * treatmentPrice : totalPrice
+    const totalPaymentAmount =
+      treatmentPrice > 0 ? subscription.quantity * treatmentPrice : totalPrice
 
     // Find or create user by phone
     const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
@@ -685,7 +730,9 @@ export async function initiateGuestSubscriptionPurchase(data: {
       userId: new mongoose.Types.ObjectId(userResult.userId),
       subscriptionId: new mongoose.Types.ObjectId(subscriptionId),
       treatmentId: new mongoose.Types.ObjectId(treatmentId),
-      selectedDurationId: selectedDurationId ? new mongoose.Types.ObjectId(selectedDurationId) : undefined,
+      selectedDurationId: selectedDurationId
+        ? new mongoose.Types.ObjectId(selectedDurationId)
+        : undefined,
       purchaseDate,
       expiryDate,
       remainingQuantity: subscription.quantity + (subscription.bonusQuantity || 0),
@@ -696,7 +743,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
       guestInfo: {
         name: guestInfo.name,
         email: guestInfo.email,
-        phone: guestInfo.phone
+        phone: guestInfo.phone,
       },
       // Payment will be set when confirmed
     })
@@ -707,7 +754,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
       userSubscriptionId: newUserSubscription._id,
       userId: userResult.userId,
       totalPrice,
-      guestEmail: guestInfo.email
+      guestEmail: guestInfo.email,
     })
 
     return {
@@ -717,15 +764,18 @@ export async function initiateGuestSubscriptionPurchase(data: {
     }
   } catch (error) {
     logger.error(`[${requestId}] Error initiating guest subscription purchase`, {
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 5)
-      } : String(error),
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack?.split("\n").slice(0, 5),
+            }
+          : String(error),
       subscriptionId: data.subscriptionId,
       treatmentId: data.treatmentId,
-      guestEmail: data.guestInfo.email
+      guestEmail: data.guestInfo.email,
     })
-    
+
     return { success: false, error: "Failed to initiate subscription purchase. Please try again." }
   }
 }
@@ -745,20 +795,20 @@ export async function purchaseGuestSubscription({
 }) {
   const requestId = `guest_sub_purchase_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
-  
+
   try {
     // Rate limiting check
-    const rateLimitKey = guestInfo.email + ':subscription_purchase'
+    const rateLimitKey = guestInfo.email + ":subscription_purchase"
     const rateLimit = checkRateLimit(rateLimitKey, 3, 300000) // 3 attempts per 5 minutes
-    
+
     if (!rateLimit.allowed) {
       logger.warn(`Rate limit exceeded for guest subscription purchase`, {
         email: guestInfo.email,
-        remainingTime: rateLimit.remainingTime
+        remainingTime: rateLimit.remainingTime,
       })
-      return { 
-        success: false, 
-        error: `Too many purchase attempts. Please try again in ${Math.ceil((rateLimit.remainingTime || 0) / 60000)} minutes.` 
+      return {
+        success: false,
+        error: `Too many purchase attempts. Please try again in ${Math.ceil((rateLimit.remainingTime || 0) / 60000)} minutes.`,
       }
     }
 
@@ -767,9 +817,9 @@ export async function purchaseGuestSubscription({
     if (!guestValidation.valid) {
       logger.warn(`Invalid guest info for subscription purchase`, {
         errors: guestValidation.errors,
-        email: guestInfo.email
+        email: guestInfo.email,
       })
-      return { success: false, error: `Invalid input: ${guestValidation.errors.join(', ')}` }
+      return { success: false, error: `Invalid input: ${guestValidation.errors.join(", ")}` }
     }
 
     // Sanitize inputs
@@ -794,16 +844,16 @@ export async function purchaseGuestSubscription({
       subscriptionId,
       treatmentId,
       hasSelectedDuration: !!selectedDurationId,
-      guestEmail: sanitizedGuestInfo.email
+      guestEmail: sanitizedGuestInfo.email,
     })
 
     const dbConnectStart = Date.now()
     await dbConnect()
     const dbConnectTime = Date.now() - dbConnectStart
-    
-    logger.info(`[${requestId}] Database connected`, { 
+
+    logger.info(`[${requestId}] Database connected`, {
       dbConnectTime: `${dbConnectTime}ms`,
-      guestEmail: guestInfo.email
+      guestEmail: guestInfo.email,
     })
 
     // Load all required data in parallel
@@ -818,7 +868,8 @@ export async function purchaseGuestSubscription({
     if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected") {
       logger.error(`[${requestId}] Failed to load required data`, {
         dataLoadTime: `${dataLoadTime}ms`,
-        subscriptionError: subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
+        subscriptionError:
+          subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
         treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
       })
       return { success: false, error: "Failed to load required data" }
@@ -853,14 +904,16 @@ export async function purchaseGuestSubscription({
       singleSessionPrice = treatment.fixedPrice
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) {
-        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, { treatmentId })
+        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, {
+          treatmentId,
+        })
         return { success: false, error: "Duration must be selected for this treatment" }
       }
-      const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId)
+      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
       if (!duration || !duration.isActive) {
-        logger.warn(`[${requestId}] Selected duration not found or inactive`, { 
-          selectedDurationId, 
-          treatmentId
+        logger.warn(`[${requestId}] Selected duration not found or inactive`, {
+          selectedDurationId,
+          treatmentId,
         })
         return { success: false, error: "Selected duration not found or inactive" }
       }
@@ -868,20 +921,20 @@ export async function purchaseGuestSubscription({
     }
 
     if (singleSessionPrice === undefined || singleSessionPrice < 0) {
-      logger.error(`[${requestId}] Invalid price calculated for treatment`, { 
-        treatmentId, 
-        singleSessionPrice
+      logger.error(`[${requestId}] Invalid price calculated for treatment`, {
+        treatmentId,
+        singleSessionPrice,
       })
       return { success: false, error: "Invalid treatment price" }
     }
 
     const totalPaymentAmount = subscription.quantity * singleSessionPrice
     const priceCalcTime = Date.now() - priceCalcStart
-    
+
     logger.info(`[${requestId}] Price calculation completed`, {
       priceCalcTime: `${priceCalcTime}ms`,
       singleSessionPrice,
-      totalPaymentAmount
+      totalPaymentAmount,
     })
 
     const purchaseDate = new Date()
@@ -901,9 +954,9 @@ export async function purchaseGuestSubscription({
     }
 
     const userId = userResult.userId
-    logger.info(`[${requestId}] User ${userResult.isNewUser ? 'created' : 'found'}`, { 
-      userId, 
-      userType: userResult.userType 
+    logger.info(`[${requestId}] User ${userResult.isNewUser ? "created" : "found"}`, {
+      userId,
+      userType: userResult.userType,
     })
 
     const saveStart = Date.now()
@@ -915,7 +968,9 @@ export async function purchaseGuestSubscription({
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
       selectedDurationId:
-        treatment.pricingType === "duration_based" && selectedDurationId && mongoose.Types.ObjectId.isValid(selectedDurationId)
+        treatment.pricingType === "duration_based" &&
+        selectedDurationId &&
+        mongoose.Types.ObjectId.isValid(selectedDurationId)
           ? new mongoose.Types.ObjectId(selectedDurationId)
           : undefined,
       purchaseDate,
@@ -923,28 +978,31 @@ export async function purchaseGuestSubscription({
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
       status: "pending_payment", // Wait for payment confirmation
-      paymentMethodId: paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId) ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
+      paymentMethodId:
+        paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId)
+          ? new mongoose.Types.ObjectId(paymentMethodId)
+          : undefined,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
       guestInfo: {
         name: sanitizedGuestInfo.name,
         email: sanitizedGuestInfo.email,
-        phone: sanitizedGuestInfo.phone
+        phone: sanitizedGuestInfo.phone,
       },
     })
 
     await newUserSubscription.save()
     const saveTime = Date.now() - saveStart
-    
+
     logger.info(`[${requestId}] Guest subscription created with pending payment status`, {
       saveTime: `${saveTime}ms`,
       userSubscriptionId: newUserSubscription._id,
       guestEmail: guestInfo.email,
-      status: "pending_payment"
+      status: "pending_payment",
     })
 
     // DO NOT send notifications or mark as active until payment is confirmed
-    
+
     revalidatePath("/dashboard/admin/user-subscriptions")
 
     const totalTime = Date.now() - startTime
@@ -956,23 +1014,26 @@ export async function purchaseGuestSubscription({
         dbConnect: `${dbConnectTime}ms`,
         dataLoad: `${dataLoadTime}ms`,
         priceCalc: `${priceCalcTime}ms`,
-        save: `${saveTime}ms`
-      }
+        save: `${saveTime}ms`,
+      },
     })
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       userSubscription: newUserSubscription.toObject(),
-      requiresPaymentConfirmation: true
+      requiresPaymentConfirmation: true,
     }
   } catch (error) {
     const totalTime = Date.now() - startTime
     logger.error(`[${requestId}] Error purchasing guest subscription`, {
       totalTime: `${totalTime}ms`,
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 5)
-      } : String(error),
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack?.split("\n").slice(0, 5),
+            }
+          : String(error),
       subscriptionId,
       treatmentId,
       guestEmail: guestInfo.email,
@@ -1063,7 +1124,8 @@ export async function getUserSubscriptionById(id: string) {
     if (!sub) return { success: false, error: "Subscription not found" }
 
     const isGuest = !sub.userId
-    const isOwner = sub.userId && sessionData?.user?.id && sub.userId.toString() === sessionData.user.id
+    const isOwner =
+      sub.userId && sessionData?.user?.id && sub.userId.toString() === sessionData.user.id
     const isAdmin = !!sessionData?.user?.roles?.includes("admin")
 
     if (!isGuest && !isOwner && !isAdmin) {
@@ -1089,7 +1151,7 @@ export async function confirmGuestSubscriptionPurchase(data: {
   }
 }): Promise<{ success: boolean; subscription?: any; error?: string }> {
   const requestId = `guest_sub_confirm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-  
+
   try {
     if (!mongoose.Types.ObjectId.isValid(data.subscriptionId)) {
       return { success: false, error: "Invalid subscription ID format." }
@@ -1106,12 +1168,15 @@ export async function confirmGuestSubscriptionPurchase(data: {
     if (userSubscription.status !== "pending_payment") {
       // If already active, it might be a duplicate callback
       if (userSubscription.status === "active") {
-        logger.info(`[${requestId}] Guest subscription ${subscriptionId} already processed. Status: ${userSubscription.status}`)
+        logger.info(
+          `[${requestId}] Guest subscription ${subscriptionId} already processed. Status: ${userSubscription.status}`
+        )
         return { success: true, subscription: userSubscription.toObject() }
       }
       return {
         success: false,
-        error: "Subscription not awaiting payment or already processed with a non-successful status.",
+        error:
+          "Subscription not awaiting payment or already processed with a non-successful status.",
       }
     }
 
@@ -1120,11 +1185,11 @@ export async function confirmGuestSubscriptionPurchase(data: {
       userSubscription.status = "active"
       userSubscription.paymentId = paymentId
       await userSubscription.save()
-      
+
       logger.info(`[${requestId}] Guest subscription activated successfully`, {
         subscriptionId,
         code: userSubscription.code,
-        guestEmail: guestInfo.email
+        guestEmail: guestInfo.email,
       })
 
       // Send success notifications
@@ -1133,19 +1198,24 @@ export async function confirmGuestSubscriptionPurchase(data: {
         const message = `תודה על רכישתך! קוד המנוי שלך: ${userSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
         const recipients = []
         if (guestInfo.email) {
-          recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+          recipients.push({
+            type: "email" as const,
+            value: guestInfo.email,
+            name: guestInfo.name,
+            language: lang as any,
+          })
         }
         if (guestInfo.phone) {
           recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
         }
-        
+
         if (recipients.length > 0) {
           await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
         }
       } catch (notificationError) {
-        logger.error(`[${requestId}] Failed to send guest subscription purchase notification`, { 
+        logger.error(`[${requestId}] Failed to send guest subscription purchase notification`, {
           error: notificationError,
-          subscriptionId 
+          subscriptionId,
         })
       }
 
@@ -1159,12 +1229,12 @@ export async function confirmGuestSubscriptionPurchase(data: {
       userSubscription.status = "cancelled"
       userSubscription.paymentId = paymentId
       await userSubscription.save()
-      
+
       logger.info(`[${requestId}] Guest subscription cancelled due to payment failure`, {
         subscriptionId,
-        guestEmail: guestInfo.email
+        guestEmail: guestInfo.email,
       })
-      
+
       return { success: false, error: "Payment failed. Subscription not activated." }
     }
   } catch (error) {
@@ -1172,7 +1242,7 @@ export async function confirmGuestSubscriptionPurchase(data: {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       details: error,
-      subscriptionId: data.subscriptionId
+      subscriptionId: data.subscriptionId,
     })
     return { success: false, error: "Failed to confirm purchase. Please contact support." }
   }

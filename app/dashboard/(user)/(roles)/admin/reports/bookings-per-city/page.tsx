@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { MapPin } from "lucide-react"
 import BookingsPerCityClient from "@/components/dashboard/admin/reports/bookings-per-city-client"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "Bookings Per City",
-  description: "Report showing bookings distribution by city"
+  description: "Report showing bookings distribution by city",
 }
 
 export default async function BookingsPerCityPage() {

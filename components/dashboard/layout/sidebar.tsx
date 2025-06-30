@@ -118,7 +118,8 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
   const currentRoleIcon = getRoleIcon(activeRole)
   const currentRoleLabel = getRoleLabel(activeRole)
-  const roleSwitcherTooltipContent = t("dashboard.sidebar.roleSwitcherTooltip") + `: ${currentRoleLabel}`
+  const roleSwitcherTooltipContent =
+    t("dashboard.sidebar.roleSwitcherTooltip") + `: ${currentRoleLabel}`
 
   if (isCollapsed) {
     return (
@@ -138,13 +139,13 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="right" sideOffset={12} className="w-52">
-                {roles.map((role) => (
+                {roles.map(role => (
                   <DropdownMenuItem
                     key={role}
                     onClick={() => handleRoleSwitch(role)}
                     className={cn(
                       "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
-                      role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
+                      role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700"
                     )}
                   >
                     {getRoleIcon(role)}
@@ -177,13 +178,13 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-56">
-          {roles.map((role) => (
+          {roles.map(role => (
             <DropdownMenuItem
               key={role}
               onClick={() => handleRoleSwitch(role)}
               className={cn(
                 "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
-                role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
+                role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700"
               )}
             >
               {getRoleIcon(role)}
@@ -209,12 +210,12 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
   // State for fetched preferences to pass to modals
   // These can also be read directly from session if session update is quick enough
-  const [treatmentPreferences, setTreatmentPreferences] = useState<ITreatmentPreferences | undefined>(
-    session?.user?.treatmentPreferences,
-  )
-  const [notificationPreferences, setNotificationPreferences] = useState<INotificationPreferences | undefined>(
-    session?.user?.notificationPreferences,
-  )
+  const [treatmentPreferences, setTreatmentPreferences] = useState<
+    ITreatmentPreferences | undefined
+  >(session?.user?.treatmentPreferences)
+  const [notificationPreferences, setNotificationPreferences] = useState<
+    INotificationPreferences | undefined
+  >(session?.user?.notificationPreferences)
 
   // Fetch preferences when component mounts or session changes
   // This ensures modals have the latest data if not relying solely on session prop updates
@@ -251,7 +252,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     if (name)
       return name
         .split(" ")
-        .map((n) => n[0])
+        .map(n => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2)
@@ -273,33 +274,71 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       },
     ]
 
-    const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>> = {
+    const roleMenus: Record<
+      string,
+      Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>
+    > = {
       admin: [
         // רכישות ומימושים (Purchases & Redemptions)
         { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "purchases" },
         { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "purchases" },
-        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions", section: "purchases" },
+        {
+          titleKey: "userSubscriptions",
+          icon: CreditCard,
+          hrefSuffix: "user-subscriptions",
+          section: "purchases",
+        },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers", section: "purchases" },
         { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons", section: "purchases" },
-        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches", section: "purchases" },
-        
+        {
+          titleKey: "partnerCouponBatches",
+          icon: Handshake,
+          hrefSuffix: "partner-coupon-batches",
+          section: "purchases",
+        },
+
         // משתמשים (Users)
         { titleKey: "customers", icon: Users, hrefSuffix: "customers", section: "users" },
-        { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management", section: "users" },
+        {
+          titleKey: "professional-management",
+          icon: Users,
+          hrefSuffix: "professional-management",
+          section: "users",
+        },
         { titleKey: "partners", icon: Handshake, hrefSuffix: "partners", section: "users" },
         { titleKey: "users", icon: User, hrefSuffix: "users", section: "users" },
-        
+
         // הגדרות (Settings)
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments", section: "settings" },
         { titleKey: "cities", icon: MapPin, hrefSuffix: "cities", section: "settings" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours", section: "settings" },
-        { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions", section: "settings" },
+        {
+          titleKey: "subscriptions",
+          icon: CreditCard,
+          hrefSuffix: "subscriptions",
+          section: "settings",
+        },
 
         // דוחות (Reports)
-        { titleKey: "revenueSummary", icon: PieChart, hrefSuffix: "reports/revenue-summary", section: "reports" },
-        { titleKey: "bookingsPerProfessional", icon: Users, hrefSuffix: "reports/bookings-per-professional", section: "reports" },
-        { titleKey: "bookingsPerCity", icon: MapPin, hrefSuffix: "reports/bookings-per-city", section: "reports" },
+        {
+          titleKey: "revenueSummary",
+          icon: PieChart,
+          hrefSuffix: "reports/revenue-summary",
+          section: "reports",
+        },
+        {
+          titleKey: "bookingsPerProfessional",
+          icon: Users,
+          hrefSuffix: "reports/bookings-per-professional",
+          section: "reports",
+        },
+        {
+          titleKey: "bookingsPerCity",
+          icon: MapPin,
+          hrefSuffix: "reports/bookings-per-city",
+          section: "reports",
+        },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
@@ -321,7 +360,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" },
       ],
     }
-    ;(roleMenus[activeRole] || []).forEach((item) => {
+    ;(roleMenus[activeRole] || []).forEach(item => {
       const href = `/dashboard/${activeRole}/${item.hrefSuffix}`
       baseItems.push({
         title: t(`dashboard.sidebar.${item.titleKey}`),
@@ -374,7 +413,10 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         variant="ghost"
         size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={cn("text-white hover:bg-white/20 transition-all duration-200 rounded-md", isCollapsed && "mx-auto")}
+        className={cn(
+          "text-white hover:bg-white/20 transition-all duration-200 rounded-md",
+          isCollapsed && "mx-auto"
+        )}
       >
         {dir === "rtl" ? (
           isCollapsed ? (
@@ -403,7 +445,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                 variant="ghost"
                 className={cn(
                   "w-full h-auto relative rounded-md",
-                  isCollapsed ? "px-0 justify-center py-1.5" : "p-0 text-left hover:bg-gray-100/80",
+                  isCollapsed ? "px-0 justify-center py-1.5" : "p-0 text-left hover:bg-gray-100/80"
                 )}
                 aria-label={userMenuTriggerTooltip}
               >
@@ -488,7 +530,9 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             className="text-red-500 hover:!bg-red-50 focus:bg-red-50 focus:text-red-600 cursor-pointer group py-2 px-2.5"
           >
             <LogOut className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
-            <span className="text-sm group-hover:text-red-600 transition-colors">{t("dashboard.sidebar.signOut")}</span>
+            <span className="text-sm group-hover:text-red-600 transition-colors">
+              {t("dashboard.sidebar.signOut")}
+            </span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -525,8 +569,16 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           sideOffset={10}
         >
           {[
-            { labelKey: "dashboard.sidebar.profile", icon: User, action: () => navigateTo("/dashboard/profile") },
-            { labelKey: "dashboard.sidebar.account", icon: Settings, action: () => navigateTo("/dashboard/account") },
+            {
+              labelKey: "dashboard.sidebar.profile",
+              icon: User,
+              action: () => navigateTo("/dashboard/profile"),
+            },
+            {
+              labelKey: "dashboard.sidebar.account",
+              icon: Settings,
+              action: () => navigateTo("/dashboard/account"),
+            },
             // New Mobile Menu Items
             {
               labelKey: "dashboard.sidebar.userMenu.treatmentPreferences", // Use translation key
@@ -540,7 +592,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             }, // Use translation key
           ].map(
             (
-              item, // Ensure t() is used for all items
+              item // Ensure t() is used for all items
             ) => (
               <DropdownMenuItem
                 key={item.labelKey}
@@ -551,9 +603,11 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                 className="cursor-pointer group py-2.5 px-3"
               >
                 <item.icon className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
-                <span className="text-sm group-hover:text-turquoise-600 transition-colors">{t(item.labelKey)}</span>
+                <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+                  {t(item.labelKey)}
+                </span>
               </DropdownMenuItem>
-            ),
+            )
           )}
           <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem
@@ -564,7 +618,9 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             className="text-red-500 hover:!bg-red-50 focus:bg-red-50 focus:text-red-600 cursor-pointer group py-2.5 px-3"
           >
             <LogOut className="mr-2.5 h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
-            <span className="text-sm group-hover:text-red-600 transition-colors">{t("dashboard.sidebar.signOut")}</span>
+            <span className="text-sm group-hover:text-red-600 transition-colors">
+              {t("dashboard.sidebar.signOut")}
+            </span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -576,8 +632,13 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     if (!quickActions || quickActions.length === 0) return null
 
     return (
-      <div className={cn("border-b border-gray-200/80", isMobile ? "p-3.5 space-y-2.5" : "p-2.5 space-y-1.5")}>
-        {quickActions.map((action) => (
+      <div
+        className={cn(
+          "border-b border-gray-200/80",
+          isMobile ? "p-3.5 space-y-2.5" : "p-2.5 space-y-1.5"
+        )}
+      >
+        {quickActions.map(action => (
           <Button
             key={action.title}
             variant={action.variant === "default" ? "default" : "outline"}
@@ -589,7 +650,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                 "border-gray-300 text-gray-700 hover:border-turquoise-500 hover:bg-turquoise-50 hover:text-turquoise-700",
               action.variant === "default" &&
                 "bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-sm hover:shadow-md",
-              isCollapsed && !isMobile && "justify-center !px-0 w-10 h-10", // Collapsed specific style
+              isCollapsed && !isMobile && "justify-center !px-0 w-10 h-10" // Collapsed specific style
             )}
             onClick={() => {
               navigateTo(action.href)
@@ -601,7 +662,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               className={cn(
                 "flex-shrink-0",
                 isMobile ? "h-5 w-5 mr-3" : "h-4 w-4",
-                isCollapsed && !isMobile ? "mr-0" : isMobile ? "mr-3" : "mr-2.5",
+                isCollapsed && !isMobile ? "mr-0" : isMobile ? "mr-3" : "mr-2.5"
               )}
             />
             {!(isCollapsed && !isMobile) && <span>{action.title}</span>}
@@ -613,7 +674,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
   const renderMenuItems = (items: ReturnType<typeof getMenuItems>, isMobile: boolean) => {
     const activeRole = session?.user?.activeRole || "member"
-    
+
     // For admin role, group items by section
     if (activeRole === "admin") {
       const mainMenuItems: any[] = []
@@ -621,7 +682,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       const usersItems: any[] = []
       const settingsItems: any[] = []
       const reportsItems: any[] = []
-      
+
       items.forEach((item: any) => {
         if (!item.section) {
           mainMenuItems.push(item)
@@ -639,8 +700,12 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       const renderSectionLabel = (labelKey: string) => {
         if (isCollapsed && !isMobile) return null
         return (
-          <div className={cn("text-xs font-semibold text-gray-500 uppercase tracking-wider", 
-            isMobile ? "px-3 pt-4 pb-2" : "px-2 pt-4 pb-2")}>
+          <div
+            className={cn(
+              "text-xs font-semibold text-gray-500 uppercase tracking-wider",
+              isMobile ? "px-3 pt-4 pb-2" : "px-2 pt-4 pb-2"
+            )}
+          >
             {t(`dashboard.sidebar.sections.${labelKey}`)}
           </div>
         )
@@ -648,7 +713,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
       const renderItemGroup = (groupItems: any[], showDivider = true) => (
         <>
-          {groupItems.map((item) => {
+          {groupItems.map(item => {
             const content = (
               <>
                 <item.icon
@@ -660,14 +725,16 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                       ? isCollapsed && !isMobile
                         ? "text-white"
                         : "text-turquoise-600"
-                      : "text-gray-500 group-hover:text-turquoise-600",
+                      : "text-gray-500 group-hover:text-turquoise-600"
                   )}
                 />
                 {!(isCollapsed && !isMobile) && (
                   <span
                     className={cn(
                       "text-sm transition-colors",
-                      item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
+                      item.isActive
+                        ? "font-medium text-turquoise-600"
+                        : "text-gray-700 group-hover:text-turquoise-600"
                     )}
                   >
                     {item.title}
@@ -687,7 +754,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                       ? "bg-turquoise-500 hover:bg-turquoise-600"
                       : "bg-turquoise-50 hover:bg-turquoise-100"
                     : "hover:bg-gray-100/80",
-                  isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
+                  isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center"
                 )}
                 onClick={() => {
                   navigateTo(item.href)
@@ -721,7 +788,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           {/* Main Menu */}
           {renderSectionLabel("mainMenu")}
           {renderItemGroup(mainMenuItems)}
-          
+
           {/* Purchases & Redemptions */}
           {purchasesItems.length > 0 && (
             <>
@@ -729,7 +796,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               {renderItemGroup(purchasesItems)}
             </>
           )}
-          
+
           {/* Users */}
           {usersItems.length > 0 && (
             <>
@@ -737,7 +804,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               {renderItemGroup(usersItems)}
             </>
           )}
-          
+
           {/* Settings */}
           {settingsItems.length > 0 && (
             <>
@@ -756,11 +823,11 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         </nav>
       )
     }
-    
+
     // For non-admin roles, use the original simple layout
     return (
       <nav className={cn("flex flex-col gap-0.5", isMobile ? "px-3.5 py-4" : "px-2 py-3")}>
-        {items.map((item) => {
+        {items.map(item => {
           const content = (
             <>
               <item.icon
@@ -772,14 +839,16 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                     ? isCollapsed && !isMobile
                       ? "text-white"
                       : "text-turquoise-600"
-                    : "text-gray-500 group-hover:text-turquoise-600",
+                    : "text-gray-500 group-hover:text-turquoise-600"
                 )}
               />
               {!(isCollapsed && !isMobile) && (
                 <span
                   className={cn(
                     "text-sm transition-colors",
-                    item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
+                    item.isActive
+                      ? "font-medium text-turquoise-600"
+                      : "text-gray-700 group-hover:text-turquoise-600"
                   )}
                 >
                   {item.title}
@@ -799,7 +868,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
                     ? "bg-turquoise-500 hover:bg-turquoise-600"
                     : "bg-turquoise-50 hover:bg-turquoise-100"
                   : "hover:bg-gray-100/80",
-                isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
+                isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center"
               )}
               onClick={() => {
                 navigateTo(item.href)
@@ -832,7 +901,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         className={cn(
           "hidden md:flex h-screen flex-col bg-white transition-all duration-200 shadow-lg border-gray-200/80",
           isCollapsed ? "w-[72px]" : "w-64",
-          dir === "rtl" ? "border-l" : "border-r",
+          dir === "rtl" ? "border-l" : "border-r"
         )}
       >
         {renderDesktopHeader()}
@@ -848,10 +917,15 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
   const MobileSidebarContent = (
     <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
-      <SheetContent side={dir === "rtl" ? "right" : "left"} className="p-0 w-[300px] bg-gray-50 flex flex-col">
+      <SheetContent
+        side={dir === "rtl" ? "right" : "left"}
+        className="p-0 w-[300px] bg-gray-50 flex flex-col"
+      >
         {renderMobileUserSectionWithDropdown()}
         {renderMemberQuickActions(true)}
-        <div className="flex-1 overflow-y-auto scrolling-touch">{renderMenuItems(getMenuItems(), true)}</div>
+        <div className="flex-1 overflow-y-auto scrolling-touch">
+          {renderMenuItems(getMenuItems(), true)}
+        </div>
         <div className="mt-auto border-t border-gray-200/80">
           <RoleSwitcher />
         </div>

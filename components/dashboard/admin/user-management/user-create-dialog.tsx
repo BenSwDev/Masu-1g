@@ -34,21 +34,25 @@ import { useToast } from "@/components/ui/use-toast"
 import { PhoneInput } from "@/components/common/phone-input"
 import { createUser, type CreateUserData } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 
-const createUserSchema = z.object({
-  name: z.string().min(2, "השם חייב להכיל לפחות 2 תווים"),
-  email: z.string().email("כתובת מייל לא תקינה").optional().or(z.literal("")),
-  phone: z.string().min(10, "מספר טלפון לא תקין"),
-  password: z.string().min(6, "הסיסמה חייבת להכיל לפחות 6 תווים"),
-  confirmPassword: z.string().min(6, "אישור הסיסמה חייב להכיל לפחות 6 תווים"),
-  gender: z.enum(["male", "female", "other"], {
-    required_error: "יש לבחור מגדר"
-  }),
-  dateOfBirth: z.string().optional(),
-  roles: z.array(z.enum(["admin", "professional", "member", "partner"])).min(1, "יש לבחור לפחות תפקיד אחד")
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "הסיסמאות אינן תואמות",
-  path: ["confirmPassword"]
-})
+const createUserSchema = z
+  .object({
+    name: z.string().min(2, "השם חייב להכיל לפחות 2 תווים"),
+    email: z.string().email("כתובת מייל לא תקינה").optional().or(z.literal("")),
+    phone: z.string().min(10, "מספר טלפון לא תקין"),
+    password: z.string().min(6, "הסיסמה חייבת להכיל לפחות 6 תווים"),
+    confirmPassword: z.string().min(6, "אישור הסיסמה חייב להכיל לפחות 6 תווים"),
+    gender: z.enum(["male", "female", "other"], {
+      required_error: "יש לבחור מגדר",
+    }),
+    dateOfBirth: z.string().optional(),
+    roles: z
+      .array(z.enum(["admin", "professional", "member", "partner"]))
+      .min(1, "יש לבחור לפחות תפקיד אחד"),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "הסיסמאות אינן תואמות",
+    path: ["confirmPassword"],
+  })
 
 type CreateUserFormData = z.infer<typeof createUserSchema>
 
@@ -58,11 +62,7 @@ interface UserCreateDialogProps {
   onSuccess: () => void
 }
 
-export default function UserCreateDialog({
-  open,
-  onOpenChange,
-  onSuccess
-}: UserCreateDialogProps) {
+export default function UserCreateDialog({ open, onOpenChange, onSuccess }: UserCreateDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
@@ -76,8 +76,8 @@ export default function UserCreateDialog({
       confirmPassword: "",
       gender: "male",
       dateOfBirth: "",
-      roles: ["member"]
-    }
+      roles: ["member"],
+    },
   })
 
   const onSubmit = async (data: CreateUserFormData) => {
@@ -90,15 +90,15 @@ export default function UserCreateDialog({
         password: data.password,
         gender: data.gender,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        roles: data.roles
+        roles: data.roles,
       }
 
       const result = await createUser(userData)
-      
+
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "המשתמש נוצר בהצלחה"
+          description: "המשתמש נוצר בהצלחה",
         })
         form.reset()
         onSuccess()
@@ -106,14 +106,14 @@ export default function UserCreateDialog({
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה ביצירת המשתמש"
+          description: result.error || "אירעה שגיאה ביצירת המשתמש",
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה ביצירת המשתמש"
+        description: "אירעה שגיאה ביצירת המשתמש",
       })
     } finally {
       setLoading(false)
@@ -125,7 +125,10 @@ export default function UserCreateDialog({
     if (checked) {
       form.setValue("roles", [...currentRoles, role as any])
     } else {
-      form.setValue("roles", currentRoles.filter(r => r !== role))
+      form.setValue(
+        "roles",
+        currentRoles.filter(r => r !== role)
+      )
     }
   }
 
@@ -134,9 +137,7 @@ export default function UserCreateDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>יצירת משתמש חדש</DialogTitle>
-          <DialogDescription>
-            צור משתמש חדש במערכת עם כל הפרטים הנדרשים
-          </DialogDescription>
+          <DialogDescription>צור משתמש חדש במערכת עם כל הפרטים הנדרשים</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -210,11 +211,7 @@ export default function UserCreateDialog({
                   <FormItem>
                     <FormLabel>כתובת מייל</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="הכנס כתובת מייל" 
-                        {...field} 
-                      />
+                      <Input type="email" placeholder="הכנס כתובת מייל" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -230,10 +227,7 @@ export default function UserCreateDialog({
                 <FormItem>
                   <FormLabel>תאריך לידה</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field} 
-                    />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -249,11 +243,7 @@ export default function UserCreateDialog({
                   <FormItem>
                     <FormLabel>סיסמה *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="הכנס סיסמה" 
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="הכנס סיסמה" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -268,11 +258,7 @@ export default function UserCreateDialog({
                   <FormItem>
                     <FormLabel>אישור סיסמה *</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="אשר את הסיסמה" 
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="אשר את הסיסמה" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -292,8 +278,8 @@ export default function UserCreateDialog({
                       { value: "member", label: "חבר" },
                       { value: "professional", label: "מטפל" },
                       { value: "partner", label: "שותף" },
-                      { value: "admin", label: "מנהל" }
-                    ].map((role) => (
+                      { value: "admin", label: "מנהל" },
+                    ].map(role => (
                       <FormField
                         key={role.value}
                         control={form.control}
@@ -303,14 +289,12 @@ export default function UserCreateDialog({
                             <FormControl>
                               <Checkbox
                                 checked={field.value?.includes(role.value as any)}
-                                onCheckedChange={(checked) => 
+                                onCheckedChange={checked =>
                                   handleRoleChange(role.value, checked as boolean)
                                 }
                               />
                             </FormControl>
-                            <FormLabel className="text-sm font-normal">
-                              {role.label}
-                            </FormLabel>
+                            <FormLabel className="text-sm font-normal">{role.label}</FormLabel>
                           </FormItem>
                         )}
                       />
@@ -339,4 +323,4 @@ export default function UserCreateDialog({
       </DialogContent>
     </Dialog>
   )
-} 
+}

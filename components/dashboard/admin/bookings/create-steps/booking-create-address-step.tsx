@@ -9,7 +9,13 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { MapPin, ArrowLeft, Home } from "lucide-react"
 import { CitySelectForm } from "@/components/ui/city-select-form"
 
@@ -24,7 +30,7 @@ export default function BookingCreateAddressStep({
   formData,
   onUpdate,
   onNext,
-  onPrev
+  onPrev,
 }: BookingCreateAddressStepProps) {
   const { t, dir } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -60,8 +66,8 @@ export default function BookingCreateAddressStep({
     onUpdate({
       customAddress: {
         ...formData.customAddress,
-        [field]: value
-      }
+        [field]: value,
+      },
     })
   }
 
@@ -80,7 +86,7 @@ export default function BookingCreateAddressStep({
             <Label>סוג כתובת</Label>
             <RadioGroup
               value={formData.addressType}
-              onValueChange={(value) => onUpdate({ addressType: value })}
+              onValueChange={value => onUpdate({ addressType: value })}
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
@@ -100,7 +106,7 @@ export default function BookingCreateAddressStep({
               <Label htmlFor="existingAddress">בחר כתובת קיימת *</Label>
               <Select
                 value={formData.addressId || ""}
-                onValueChange={(value) => onUpdate({ addressId: value })}
+                onValueChange={value => onUpdate({ addressId: value })}
               >
                 <SelectTrigger className={errors.addressId ? "border-red-500" : ""}>
                   <SelectValue placeholder="בחר כתובת..." />
@@ -111,9 +117,7 @@ export default function BookingCreateAddressStep({
                   <SelectItem value="address3">הנביאים 67, חיפה</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.addressId && (
-                <p className="text-sm text-red-500">{errors.addressId}</p>
-              )}
+              {errors.addressId && <p className="text-sm text-red-500">{errors.addressId}</p>}
             </div>
           )}
 
@@ -125,26 +129,22 @@ export default function BookingCreateAddressStep({
                   <Label htmlFor="city">עיר *</Label>
                   <CitySelectForm
                     value={formData.customAddress?.city || ""}
-                    onValueChange={(value) => updateCustomAddress("city", value)}
+                    onValueChange={value => updateCustomAddress("city", value)}
                     placeholder="בחר עיר..."
                     className={errors.city ? "border-red-500" : ""}
                   />
-                  {errors.city && (
-                    <p className="text-sm text-red-500">{errors.city}</p>
-                  )}
+                  {errors.city && <p className="text-sm text-red-500">{errors.city}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="street">רחוב *</Label>
                   <Input
                     id="street"
                     value={formData.customAddress?.street || ""}
-                    onChange={(e) => updateCustomAddress("street", e.target.value)}
+                    onChange={e => updateCustomAddress("street", e.target.value)}
                     className={errors.street ? "border-red-500" : ""}
                     placeholder="שם הרחוב"
                   />
-                  {errors.street && (
-                    <p className="text-sm text-red-500">{errors.street}</p>
-                  )}
+                  {errors.street && <p className="text-sm text-red-500">{errors.street}</p>}
                 </div>
               </div>
 
@@ -154,7 +154,7 @@ export default function BookingCreateAddressStep({
                   <Input
                     id="houseNumber"
                     value={formData.customAddress?.houseNumber || ""}
-                    onChange={(e) => updateCustomAddress("houseNumber", e.target.value)}
+                    onChange={e => updateCustomAddress("houseNumber", e.target.value)}
                     className={errors.houseNumber ? "border-red-500" : ""}
                     placeholder="123"
                   />
@@ -167,7 +167,7 @@ export default function BookingCreateAddressStep({
                   <Input
                     id="apartmentNumber"
                     value={formData.customAddress?.apartmentNumber || ""}
-                    onChange={(e) => updateCustomAddress("apartmentNumber", e.target.value)}
+                    onChange={e => updateCustomAddress("apartmentNumber", e.target.value)}
                     placeholder="5"
                   />
                 </div>
@@ -176,7 +176,7 @@ export default function BookingCreateAddressStep({
                   <Input
                     id="floor"
                     value={formData.customAddress?.floor || ""}
-                    onChange={(e) => updateCustomAddress("floor", e.target.value)}
+                    onChange={e => updateCustomAddress("floor", e.target.value)}
                     placeholder="2"
                   />
                 </div>
@@ -187,7 +187,7 @@ export default function BookingCreateAddressStep({
                 <Input
                   id="entrance"
                   value={formData.customAddress?.entrance || ""}
-                  onChange={(e) => updateCustomAddress("entrance", e.target.value)}
+                  onChange={e => updateCustomAddress("entrance", e.target.value)}
                   placeholder="כניסה א'"
                 />
               </div>
@@ -197,7 +197,7 @@ export default function BookingCreateAddressStep({
                 <Textarea
                   id="notes"
                   value={formData.customAddress?.notes || ""}
-                  onChange={(e) => updateCustomAddress("notes", e.target.value)}
+                  onChange={e => updateCustomAddress("notes", e.target.value)}
                   placeholder="הערות לגבי הגעה, חניה, קוד דיגיטלי וכו'"
                   rows={3}
                 />
@@ -207,7 +207,7 @@ export default function BookingCreateAddressStep({
                 <Checkbox
                   id="parking"
                   checked={formData.customAddress?.parking || false}
-                  onCheckedChange={(checked) => updateCustomAddress("parking", checked)}
+                  onCheckedChange={checked => updateCustomAddress("parking", checked)}
                 />
                 <Label htmlFor="parking">יש חניה זמינה</Label>
               </div>
@@ -215,7 +215,10 @@ export default function BookingCreateAddressStep({
           )}
 
           {/* Address Summary */}
-          {((formData.addressType === "custom" && formData.customAddress?.city && formData.customAddress?.street && formData.customAddress?.houseNumber) ||
+          {((formData.addressType === "custom" &&
+            formData.customAddress?.city &&
+            formData.customAddress?.street &&
+            formData.customAddress?.houseNumber) ||
             (formData.addressType === "existing" && formData.addressId)) && (
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
@@ -231,7 +234,8 @@ export default function BookingCreateAddressStep({
                       <span>כתובת:</span>
                       <span className="font-medium">
                         {formData.customAddress?.street} {formData.customAddress?.houseNumber}
-                        {formData.customAddress?.apartmentNumber && `, דירה ${formData.customAddress.apartmentNumber}`}
+                        {formData.customAddress?.apartmentNumber &&
+                          `, דירה ${formData.customAddress.apartmentNumber}`}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -302,10 +306,8 @@ export default function BookingCreateAddressStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           חזור
         </Button>
-        <Button onClick={handleNext}>
-          המשך
-        </Button>
+        <Button onClick={handleNext}>המשך</Button>
       </div>
     </div>
   )
-} 
+}

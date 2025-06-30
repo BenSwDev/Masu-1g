@@ -1,1 +1,1 @@
-export { default as UniversalBookingWizard } from './guest-booking-wizard' 
+export { default as UniversalBookingWizard } from "./guest-booking-wizard"

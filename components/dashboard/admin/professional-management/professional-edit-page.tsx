@@ -7,7 +7,19 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { AlertTriangle, ArrowLeft, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText, Save, Calendar } from "lucide-react"
+import {
+  AlertTriangle,
+  ArrowLeft,
+  User,
+  Stethoscope,
+  MapPin,
+  CreditCard,
+  FileText,
+  DollarSign,
+  ScrollText,
+  Save,
+  Calendar,
+} from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
 import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
@@ -28,7 +40,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
-  
+
   const [activeTab, setActiveTab] = useState("profile")
   const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -37,7 +49,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const handleUpdate = (updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({
       ...prev,
-      ...updatedData
+      ...updatedData,
     }))
     setHasUnsavedChanges(true)
   }
@@ -56,14 +68,14 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
       // כאן ניתן להוסיף לוגיקה לשמירה כללית של כל השינויים
       toast({
         title: "הצלחה",
-        description: "כל השינויים נשמרו בהצלחה"
+        description: "כל השינויים נשמרו בהצלחה",
       })
       setHasUnsavedChanges(false)
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בשמירת השינויים"
+        description: "אירעה שגיאה בשמירת השינויים",
       })
     } finally {
       setIsSaving(false)
@@ -73,10 +85,22 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
       active: { variant: "default" as const, text: "פעיל", color: "bg-green-100 text-green-800" },
-      pending_admin_approval: { variant: "secondary" as const, text: "ממתין לאישור", color: "bg-orange-100 text-orange-800" },
-      pending_user_action: { variant: "outline" as const, text: "ממתין למשתמש", color: "bg-blue-100 text-blue-800" },
+      pending_admin_approval: {
+        variant: "secondary" as const,
+        text: "ממתין לאישור",
+        color: "bg-orange-100 text-orange-800",
+      },
+      pending_user_action: {
+        variant: "outline" as const,
+        text: "ממתין למשתמש",
+        color: "bg-blue-100 text-blue-800",
+      },
       rejected: { variant: "destructive" as const, text: "נדחה", color: "bg-red-100 text-red-800" },
-      suspended: { variant: "destructive" as const, text: "מושהה", color: "bg-red-100 text-red-800" }
+      suspended: {
+        variant: "destructive" as const,
+        text: "מושהה",
+        color: "bg-red-100 text-red-800",
+      },
     }
 
     const config = statusConfig[status]
@@ -92,7 +116,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const formatDate = (date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL")
     } catch {
       return "-"
@@ -104,19 +128,22 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleBack}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             חזור לרשימה
           </Button>
-          
+
           <div>
             <h1 className="text-2xl font-bold">
-              עריכת מטפל - {typeof updatedProfessional.userId === 'object' ? updatedProfessional.userId.name : 'טוען...'}
+              עריכת מטפל -{" "}
+              {typeof updatedProfessional.userId === "object"
+                ? updatedProfessional.userId.name
+                : "טוען..."}
             </h1>
             <div className="flex items-center gap-3 mt-1">
               {getStatusBadge(updatedProfessional.status)}
@@ -126,7 +153,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {hasUnsavedChanges && (
             <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
@@ -134,8 +161,8 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
               <span className="text-sm">שינויים לא נשמרו</span>
             </div>
           )}
-          
-          <Button 
+
+          <Button
             onClick={handleSaveAll}
             disabled={!hasUnsavedChanges || isSaving}
             className="flex items-center gap-2"
@@ -250,4 +277,4 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
       </Card>
     </div>
   )
-} 
+}

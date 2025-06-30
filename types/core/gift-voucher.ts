@@ -1,4 +1,4 @@
-import type { Types } from 'mongoose'
+import type { Types } from "mongoose"
 
 /**
  * CORE GIFT VOUCHER TYPES - SINGLE SOURCE OF TRUTH
@@ -16,29 +16,29 @@ import type { Types } from 'mongoose'
 export interface GiftVoucher {
   _id: string
   code: string
-  voucherType: 'treatment' | 'monetary'
+  voucherType: "treatment" | "monetary"
   amount: number // Primary value of the voucher
-  
+
   // Treatment-specific fields
   treatmentId?: string
   treatmentName?: string
   selectedDurationId?: string
   selectedDurationName?: string
-  
+
   // Monetary-specific fields
   monetaryValue?: number
   originalAmount?: number
   remainingAmount?: number
-  
+
   // Ownership & User Information
   purchaserUserId?: string
   purchaserName?: string
   ownerUserId?: string
   ownerName?: string
-  
+
   // Guest Information (for non-user purchases)
   guestInfo?: GiftVoucherGuestInfo
-  
+
   // Gift Information
   isGift: boolean
   recipientName?: string
@@ -46,23 +46,23 @@ export interface GiftVoucher {
   recipientEmail?: string
   greetingMessage?: string
   sendDate?: string
-  
+
   // Status & Lifecycle
   status: GiftVoucherStatus
   purchaseDate: string
   validFrom: string
   validUntil: string
   isActive: boolean
-  
+
   // Payment Information
   paymentId?: string
   paymentAmount?: number
   paymentMethodId?: string
   transactionId?: string
-  
+
   // Usage Tracking
   usageHistory: GiftVoucherUsage[]
-  
+
   // Administrative
   notes?: string
   createdAt?: string
@@ -82,14 +82,14 @@ export interface GiftVoucherGuestInfo {
  * Gift Voucher Status Enum
  */
 export type GiftVoucherStatus =
-  | 'pending_payment'
-  | 'active'
-  | 'partially_used'
-  | 'fully_used'
-  | 'expired'
-  | 'pending_send'
-  | 'sent'
-  | 'cancelled'
+  | "pending_payment"
+  | "active"
+  | "partially_used"
+  | "fully_used"
+  | "expired"
+  | "pending_send"
+  | "sent"
+  | "cancelled"
 
 /**
  * Gift Voucher Usage History Entry
@@ -112,37 +112,37 @@ export interface GiftVoucherUsage {
 export interface IGiftVoucherDocument {
   _id: Types.ObjectId
   code: string
-  voucherType: 'treatment' | 'monetary'
+  voucherType: "treatment" | "monetary"
   amount: number
-  
+
   treatmentId?: Types.ObjectId
   selectedDurationId?: Types.ObjectId
   monetaryValue?: number
   originalAmount?: number
   remainingAmount?: number
-  
+
   purchaserUserId?: Types.ObjectId
   ownerUserId?: Types.ObjectId
   guestInfo?: GiftVoucherGuestInfo
-  
+
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
   recipientEmail?: string
   greetingMessage?: string
   sendDate?: Date
-  
+
   status: GiftVoucherStatus
   purchaseDate: Date
   validFrom: Date
   validUntil: Date
-  
+
   paymentId?: string
   paymentAmount?: number
   paymentMethodId?: string
   transactionId?: string
   notes?: string
-  
+
   usageHistory: Array<{
     date: Date
     amountUsed: number
@@ -150,7 +150,7 @@ export interface IGiftVoucherDocument {
     description?: string
     userId?: Types.ObjectId
   }>
-  
+
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -164,7 +164,7 @@ export interface IGiftVoucherDocument {
  * Gift Voucher Creation Form Data
  */
 export interface GiftVoucherCreateForm {
-  voucherType: 'treatment' | 'monetary'
+  voucherType: "treatment" | "monetary"
   treatmentId?: string
   selectedDurationId?: string
   amount?: number
@@ -190,7 +190,7 @@ export interface GiftVoucherUpdateForm extends Partial<GiftVoucherCreateForm> {
  * Gift Voucher Purchase Initiation Data
  */
 export interface GiftVoucherPurchaseData {
-  voucherType: 'treatment' | 'monetary'
+  voucherType: "treatment" | "monetary"
   treatmentId?: string
   selectedDurationId?: string
   monetaryValue?: number
@@ -235,7 +235,7 @@ export interface GiftVoucherRedemption {
  */
 export interface GiftVoucherFilters {
   status?: GiftVoucherStatus[]
-  voucherType?: ('treatment' | 'monetary')[]
+  voucherType?: ("treatment" | "monetary")[]
   ownerUserId?: string
   purchaserUserId?: string
   validFrom?: string
@@ -250,8 +250,8 @@ export interface GiftVoucherFilters {
 export interface GiftVoucherListOptions {
   page?: number
   limit?: number
-  sortBy?: 'purchaseDate' | 'validUntil' | 'amount' | 'status'
-  sortOrder?: 'asc' | 'desc'
+  sortBy?: "purchaseDate" | "validUntil" | "amount" | "status"
+  sortOrder?: "asc" | "desc"
   filters?: GiftVoucherFilters
 }
 
@@ -289,21 +289,21 @@ export interface GiftVoucherListResponse {
  */
 export type GiftVoucherSummary = Pick<
   GiftVoucher,
-  | '_id'
-  | 'code'
-  | 'voucherType'
-  | 'amount'
-  | 'status'
-  | 'validUntil'
-  | 'isActive'
-  | 'ownerName'
-  | 'treatmentName'
+  | "_id"
+  | "code"
+  | "voucherType"
+  | "amount"
+  | "status"
+  | "validUntil"
+  | "isActive"
+  | "ownerName"
+  | "treatmentName"
 >
 
 /**
  * Gift Voucher Details (for detailed views)
  */
-export type GiftVoucherDetails = Omit<GiftVoucher, 'usageHistory'> & {
+export type GiftVoucherDetails = Omit<GiftVoucher, "usageHistory"> & {
   usageHistory: GiftVoucherUsage[]
 }
 
@@ -318,13 +318,13 @@ export function isGiftVoucherValid(voucher: GiftVoucher): boolean {
   const now = new Date()
   const validFrom = new Date(voucher.validFrom)
   const validUntil = new Date(voucher.validUntil)
-  
+
   return (
     voucher.isActive &&
-    voucher.status === 'active' &&
+    voucher.status === "active" &&
     now >= validFrom &&
     now <= validUntil &&
-    (voucher.voucherType === 'monetary' ? (voucher.remainingAmount || 0) > 0 : true)
+    (voucher.voucherType === "monetary" ? (voucher.remainingAmount || 0) > 0 : true)
   )
 }
 
@@ -333,10 +333,10 @@ export function isGiftVoucherValid(voucher: GiftVoucher): boolean {
  */
 export function canRedeemGiftVoucher(voucher: GiftVoucher, amount: number): boolean {
   if (!isGiftVoucherValid(voucher)) return false
-  
-  if (voucher.voucherType === 'monetary') {
+
+  if (voucher.voucherType === "monetary") {
     return (voucher.remainingAmount || 0) >= amount
   }
-  
+
   return true // Treatment vouchers can always be redeemed if valid
-} 
+}

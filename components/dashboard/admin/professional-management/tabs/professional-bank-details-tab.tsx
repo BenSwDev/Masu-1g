@@ -18,15 +18,15 @@ interface ProfessionalBankDetailsTabProps {
 
 export default function ProfessionalBankDetailsTab({
   professional,
-  onUpdate
+  onUpdate,
 }: ProfessionalBankDetailsTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [bankDetails, setBankDetails] = useState({
     bankName: professional.bankDetails?.bankName || "",
     branchNumber: professional.bankDetails?.branchNumber || "",
-    accountNumber: professional.bankDetails?.accountNumber || ""
+    accountNumber: professional.bankDetails?.accountNumber || "",
   })
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -34,40 +34,44 @@ export default function ProfessionalBankDetailsTab({
   const handleInputChange = (field: keyof typeof bankDetails, value: string) => {
     setBankDetails(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
     setHasChanges(true)
   }
 
   const handleSave = async () => {
     // Basic validation
-    if (!bankDetails.bankName.trim() || !bankDetails.branchNumber.trim() || !bankDetails.accountNumber.trim()) {
+    if (
+      !bankDetails.bankName.trim() ||
+      !bankDetails.branchNumber.trim() ||
+      !bankDetails.accountNumber.trim()
+    ) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נא למלא את כל שדות חשבון הבנק"
+        description: "נא למלא את כל שדות חשבון הבנק",
       })
       return
     }
 
     setSaving(true)
-    
+
     try {
       const result = await updateProfessionalBankDetails(professional._id, bankDetails)
-      
+
       if (result.success) {
         onUpdate({ bankDetails })
         setHasChanges(false)
-        
+
         toast({
           title: "הצלחה",
-          description: "פרטי חשבון הבנק נשמרו בהצלחה"
+          description: "פרטי חשבון הבנק נשמרו בהצלחה",
         })
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון פרטי חשבון הבנק"
+          description: result.error || "שגיאה בעדכון פרטי חשבון הבנק",
         })
       }
     } catch (error) {
@@ -75,7 +79,7 @@ export default function ProfessionalBankDetailsTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בשמירת פרטי חשבון הבנק"
+        description: "שגיאה בשמירת פרטי חשבון הבנק",
       })
     } finally {
       setSaving(false)
@@ -90,9 +94,7 @@ export default function ProfessionalBankDetailsTab({
             <CreditCard className="h-5 w-5" />
             פרטי חשבון בנק
           </h3>
-          <p className="text-sm text-muted-foreground">
-            הגדר את פרטי חשבון הבנק לתשלומים למטפל
-          </p>
+          <p className="text-sm text-muted-foreground">הגדר את פרטי חשבון הבנק לתשלומים למטפל</p>
         </div>
         {hasChanges && (
           <Button onClick={handleSave} disabled={saving}>
@@ -122,7 +124,7 @@ export default function ProfessionalBankDetailsTab({
               <Input
                 id="bankName"
                 value={bankDetails.bankName}
-                onChange={(e) => handleInputChange("bankName", e.target.value)}
+                onChange={e => handleInputChange("bankName", e.target.value)}
                 placeholder="לדוגמה: בנק הפועלים"
                 className="text-right"
                 dir={dir}
@@ -134,7 +136,7 @@ export default function ProfessionalBankDetailsTab({
               <Input
                 id="branchNumber"
                 value={bankDetails.branchNumber}
-                onChange={(e) => handleInputChange("branchNumber", e.target.value)}
+                onChange={e => handleInputChange("branchNumber", e.target.value)}
                 placeholder="לדוגמה: 123"
                 className="text-right"
                 dir={dir}
@@ -148,7 +150,7 @@ export default function ProfessionalBankDetailsTab({
             <Input
               id="accountNumber"
               value={bankDetails.accountNumber}
-              onChange={(e) => handleInputChange("accountNumber", e.target.value)}
+              onChange={e => handleInputChange("accountNumber", e.target.value)}
               placeholder="לדוגמה: 123456789"
               className="text-right"
               dir={dir}
@@ -192,7 +194,7 @@ export default function ProfessionalBankDetailsTab({
               <div>
                 <span className="font-medium">חשבון:</span>
                 <div className="text-muted-foreground">
-                  {professional.bankDetails.accountNumber.replace(/(.{4})/g, '$1-')}
+                  {professional.bankDetails.accountNumber.replace(/(.{4})/g, "$1-")}
                 </div>
               </div>
             </div>
@@ -201,4 +203,4 @@ export default function ProfessionalBankDetailsTab({
       )}
     </div>
   )
-} 
+}

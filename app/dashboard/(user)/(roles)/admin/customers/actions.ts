@@ -57,7 +57,7 @@ export interface GetAllPurchaseTransactionsResult {
 export async function getCustomerSummary(customerId: string): Promise<GetCustomerSummaryResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes('admin')) {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -77,55 +77,67 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
 
     // Get bookings
     const bookings = await Booking.find({ userId }).lean()
-    const completedBookings = bookings.filter(b => b.status === 'completed')
-    const cancelledBookings = bookings.filter(b => 
-      b.status === 'cancelled_by_user' || b.status === 'cancelled_by_admin'
+    const completedBookings = bookings.filter(b => b.status === "completed")
+    const cancelledBookings = bookings.filter(
+      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
     )
-    const noShowBookings = bookings.filter(b => b.status === 'no_show')
+    const noShowBookings = bookings.filter(b => b.status === "no_show")
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()
-    const activeSubscriptions = userSubscriptions.filter(s => 
-      s.remainingQuantity > 0 && s.expiryDate > new Date()
+    const activeSubscriptions = userSubscriptions.filter(
+      s => s.remainingQuantity > 0 && s.expiryDate > new Date()
     )
 
     // Get vouchers
-    const vouchers = await GiftVoucher.find({ 
-      $or: [{ purchaserUserId: userId }, { ownerUserId: userId }]
+    const vouchers = await GiftVoucher.find({
+      $or: [{ purchaserUserId: userId }, { ownerUserId: userId }],
     }).lean()
-    const activeVouchers = vouchers.filter(v => 
-      v.status === 'active' || v.status === 'partially_used'
+    const activeVouchers = vouchers.filter(
+      v => v.status === "active" || v.status === "partially_used"
     )
-    const usedVouchers = vouchers.filter(v => v.status === 'fully_used')
+    const usedVouchers = vouchers.filter(v => v.status === "fully_used")
 
     // Calculate totals
     const totalBookingSpent = bookings.reduce((sum, b) => sum + b.priceDetails.finalAmount, 0)
-    const totalSubscriptionSpent = userSubscriptions.reduce((sum, s) => sum + (s.paymentAmount || 0), 0)
-    const totalVoucherSpent = vouchers.filter(v => v.purchaserUserId.equals(userId))
+    const totalSubscriptionSpent = userSubscriptions.reduce(
+      (sum, s) => sum + (s.paymentAmount || 0),
+      0
+    )
+    const totalVoucherSpent = vouchers
+      .filter(v => v.purchaserUserId.equals(userId))
       .reduce((sum, v) => sum + v.amount, 0)
     const totalSpent = totalBookingSpent + totalSubscriptionSpent + totalVoucherSpent
 
     const averageBookingValue = bookings.length > 0 ? totalBookingSpent / bookings.length : 0
 
     // Find last activity
-    const lastBooking = bookings.sort((a, b) => b.bookingDateTime.getTime() - a.bookingDateTime.getTime())[0]
-    const lastSubscription = userSubscriptions.sort((a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime())[0]
-    const lastVoucher = vouchers.sort((a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime())[0]
-    
+    const lastBooking = bookings.sort(
+      (a, b) => b.bookingDateTime.getTime() - a.bookingDateTime.getTime()
+    )[0]
+    const lastSubscription = userSubscriptions.sort(
+      (a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime()
+    )[0]
+    const lastVoucher = vouchers.sort(
+      (a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime()
+    )[0]
+
     const activities = [
       lastBooking?.bookingDateTime,
       lastSubscription?.purchaseDate,
-      lastVoucher?.purchaseDate
+      lastVoucher?.purchaseDate,
     ].filter(Boolean)
-    
-    const lastActivity = activities.length > 0 ? 
-      new Date(Math.max(...activities.map(d => d!.getTime()))) : customer.createdAt
+
+    const lastActivity =
+      activities.length > 0
+        ? new Date(Math.max(...activities.map(d => d!.getTime())))
+        : customer.createdAt
 
     const customerSummary: CustomerSummary = {
       userId: customer._id.toString(),
       customerName: customer.name,
       customerEmail: customer.email,
-      customerPhone: customer.phone || '',
+      customerPhone: customer.phone || "",
       joinDate: customer.createdAt,
       totalSpent,
       totalBookings: bookings.length,
@@ -140,13 +152,13 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
         totalVouchersUsed: usedVouchers.length,
         totalSubscriptionsPurchased: userSubscriptions.length,
         averageBookingValue,
-      }
+      },
     }
 
     return { success: true, data: customerSummary }
   } catch (error) {
-    console.error('Error fetching customer summary:', error)
-    return { success: false, error: 'Failed to fetch customer summary' }
+    console.error("Error fetching customer summary:", error)
+    return { success: false, error: "Failed to fetch customer summary" }
   }
 }
 
@@ -162,11 +174,11 @@ export async function getAllCustomers(
   page = 1,
   limit = 20,
   search?: string,
-  userType?: 'all' | 'guests' | 'members'
+  userType?: "all" | "guests" | "members"
 ): Promise<GetAllCustomersResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes('admin')) {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -176,29 +188,25 @@ export async function getAllCustomers(
     let userQuery: Record<string, unknown> = {}
 
     // Filter by user type
-    if (userType === 'guests') {
-      userQuery.roles = { $in: ['guest'] }
-    } else if (userType === 'members') {
-      userQuery.roles = { $in: ['member'] }
+    if (userType === "guests") {
+      userQuery.roles = { $in: ["guest"] }
+    } else if (userType === "members") {
+      userQuery.roles = { $in: ["member"] }
     } else {
       // Default: show all customers (members and guests)
-      userQuery.roles = { $in: ['member', 'guest'] }
+      userQuery.roles = { $in: ["member", "guest"] }
     }
 
     if (search) {
       userQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } }
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
       ]
     }
 
     const totalCount = await User.countDocuments(userQuery)
-    const users = await User.find(userQuery)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
+    const users = await User.find(userQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
 
     const customers: CustomerSummary[] = []
 
@@ -208,7 +216,7 @@ export async function getAllCustomers(
         // Add user type information
         const customerWithType = {
           ...summaryResult.data,
-          userType: user.roles.includes('guest') ? 'guest' : 'member'
+          userType: user.roles.includes("guest") ? "guest" : "member",
         }
         customers.push(customerWithType as CustomerSummary)
       }
@@ -221,11 +229,11 @@ export async function getAllCustomers(
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
         currentPage: page,
-      }
+      },
     }
   } catch (error) {
-    console.error('Error fetching all customers:', error)
-    return { success: false, error: 'Failed to fetch customers' }
+    console.error("Error fetching all customers:", error)
+    return { success: false, error: "Failed to fetch customers" }
   }
 }
 
@@ -241,7 +249,7 @@ export async function getAllPurchaseTransactions(
   limit = 20,
   filters?: {
     userId?: string
-    type?: ('booking' | 'gift_voucher' | 'subscription')[]
+    type?: ("booking" | "gift_voucher" | "subscription")[]
     status?: string[]
     dateFrom?: Date
     dateTo?: Date
@@ -249,4 +257,4 @@ export async function getAllPurchaseTransactions(
   }
 ) {
   return getSharedPurchaseTransactions(page, limit, filters)
-} 
+}

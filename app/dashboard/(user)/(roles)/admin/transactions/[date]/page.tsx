@@ -9,7 +9,7 @@ import Link from "next/link"
 import AdminDailyTransactionsClient from "@/components/dashboard/admin/transactions/admin-daily-transactions-client"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 interface AdminDailyTransactionsPageProps {
   params: {
@@ -18,7 +18,7 @@ interface AdminDailyTransactionsPageProps {
 }
 
 export default async function AdminDailyTransactionsPage({
-  params
+  params,
 }: AdminDailyTransactionsPageProps) {
   const session = await requireUserSession()
   if (!session.user.roles?.includes("admin")) {
@@ -26,7 +26,7 @@ export default async function AdminDailyTransactionsPage({
   }
 
   const { date } = params
-  
+
   // Validate date format (YYYY-MM-DD)
   const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date)
   if (!isValidDate) {
@@ -35,9 +35,9 @@ export default async function AdminDailyTransactionsPage({
 
   const formattedDate = new Date(date).toLocaleDateString("he-IL", {
     weekday: "long",
-    year: "numeric", 
+    year: "numeric",
     month: "long",
-    day: "numeric"
+    day: "numeric",
   })
 
   return (
@@ -61,4 +61,4 @@ export default async function AdminDailyTransactionsPage({
       </div>
     </ScrollArea>
   )
-} 
+}

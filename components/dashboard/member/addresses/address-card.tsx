@@ -4,7 +4,14 @@ import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { IAddress } from "@/lib/db/models/address"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Edit, Trash2, Star } from "lucide-react"
 import { setDefaultAddress, deleteAddress } from "@/actions/address-actions"
@@ -36,7 +43,7 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
 
   const handleSetDefault = async () => {
     if (!address._id) return
-    
+
     const result = await setDefaultAddress(String(address._id))
     if (result.success) {
       toast.success(t("addresses.setDefaultSuccess"))
@@ -48,7 +55,7 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
 
   const handleDelete = async () => {
     if (!address._id) return
-    
+
     const result = await deleteAddress(String(address._id))
     if (result.success) {
       toast.success(t("addresses.deleteSuccess"))
@@ -61,7 +68,7 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
   // Compose the main address line
   const mainLine =
     [address.street, address.streetNumber, address.city]
-      .filter((v) => typeof v === "string" && v.trim() !== "")
+      .filter(v => typeof v === "string" && v.trim() !== "")
       .join(" ") || t("addresses.noDetails")
 
   // Compose details
@@ -71,7 +78,9 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
       details.push(`${t("addresses.fields.floor")}: ${address.apartmentDetails.floor}`)
     }
     if (address.apartmentDetails.apartmentNumber) {
-      details.push(`${t("addresses.fields.apartmentNumber")}: ${address.apartmentDetails.apartmentNumber}`)
+      details.push(
+        `${t("addresses.fields.apartmentNumber")}: ${address.apartmentDetails.apartmentNumber}`
+      )
     }
     if (address.apartmentDetails.entrance) {
       details.push(`${t("addresses.fields.entrance")}: ${address.apartmentDetails.entrance}`)
@@ -170,7 +179,12 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm" disabled={isLoading} className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
               <Trash2 className="h-4 w-4 ml-2" />
               {t("common.delete")}
             </Button>
@@ -178,7 +192,9 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("addresses.deleteConfirm")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("addresses.deleteConfirmDescription")}</AlertDialogDescription>
+              <AlertDialogDescription>
+                {t("addresses.deleteConfirmDescription")}
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>

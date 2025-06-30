@@ -38,7 +38,7 @@ const CouponSchema: Schema<ICoupon> = new Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
+  }
 )
 
 // Ensure validUntil is after validFrom
@@ -61,6 +61,7 @@ CouponSchema.virtual("isUsageLimitReached").get(function () {
   return this.usageLimit !== 0 && this.timesUsed >= this.usageLimit
 })
 
-const Coupon: Model<ICoupon> = mongoose.models.Coupon || mongoose.model<ICoupon>("Coupon", CouponSchema)
+const Coupon: Model<ICoupon> =
+  mongoose.models.Coupon || mongoose.model<ICoupon>("Coupon", CouponSchema)
 
 export default Coupon

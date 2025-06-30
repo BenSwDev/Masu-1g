@@ -16,12 +16,12 @@ interface ProfessionalDocumentsTabProps {
 
 const requiredDocuments = [
   { type: "insurance", name: "ביטוח אחריות מקצועית", required: true },
-  { type: "diploma", name: "תעודת הכשרה/דיפלומה", required: true }
+  { type: "diploma", name: "תעודת הכשרה/דיפלומה", required: true },
 ]
 
 export default function ProfessionalDocumentsTab({
   professional,
-  onUpdate
+  onUpdate,
 }: ProfessionalDocumentsTabProps) {
   const { t, dir } = useTranslation()
   const [uploading, setUploading] = useState<string | null>(null)
@@ -72,24 +72,23 @@ export default function ProfessionalDocumentsTab({
 
   const handleFileUpload = async (docType: string, file: File) => {
     setUploading(docType)
-    
+
     try {
       // Here you would typically upload the file to your storage service
       // For now, we'll simulate the upload process
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       const newDoc = {
         id: Date.now().toString(),
         type: docType,
         name: file.name,
         status: "pending" as const,
         uploadDate: new Date(),
-        fileUrl: URL.createObjectURL(file) // This would be the actual URL from your storage
+        fileUrl: URL.createObjectURL(file), // This would be the actual URL from your storage
       }
 
       const updatedDocuments = [...documents.filter(d => d.type !== docType), newDoc]
       onUpdate({ documents: updatedDocuments })
-      
     } catch (error) {
       console.error("Error uploading document:", error)
     } finally {
@@ -102,13 +101,15 @@ export default function ProfessionalDocumentsTab({
       if (doc.id === docId) {
         return {
           ...doc,
-          status: action === "approve" ? "approved" as const : "rejected" as const,
-          ...(action === "approve" ? { approvedDate: new Date() } : { rejectedDate: new Date(), rejectionReason: reason })
+          status: action === "approve" ? ("approved" as const) : ("rejected" as const),
+          ...(action === "approve"
+            ? { approvedDate: new Date() }
+            : { rejectedDate: new Date(), rejectionReason: reason }),
         }
       }
       return doc
     })
-    
+
     onUpdate({ documents: updatedDocuments })
   }
 
@@ -123,9 +124,11 @@ export default function ProfessionalDocumentsTab({
 
   const getDocumentStats = () => {
     const requiredDocs = requiredDocuments.filter(d => d.required)
-    const approvedRequired = requiredDocs.filter(d => getDocumentStatus(d.type) === "approved").length
+    const approvedRequired = requiredDocs.filter(
+      d => getDocumentStatus(d.type) === "approved"
+    ).length
     const totalRequired = requiredDocs.length
-    
+
     return { approvedRequired, totalRequired }
   }
 
@@ -139,9 +142,7 @@ export default function ProfessionalDocumentsTab({
             <FileText className="h-5 w-5" />
             מסמכי המטפל
           </h3>
-          <p className="text-sm text-muted-foreground">
-            ניהול מסמכים נדרשים לאישור המטפל
-          </p>
+          <p className="text-sm text-muted-foreground">ניהול מסמכים נדרשים לאישור המטפל</p>
         </div>
         <div className="text-sm">
           <Badge variant={stats.approvedRequired === stats.totalRequired ? "default" : "secondary"}>
@@ -190,9 +191,12 @@ export default function ProfessionalDocumentsTab({
         {requiredDocuments.map(reqDoc => {
           const doc = getDocumentByType(reqDoc.type)
           const status = getDocumentStatus(reqDoc.type)
-          
+
           return (
-            <Card key={reqDoc.type} className={`${reqDoc.required && status === "missing" ? "border-red-200 bg-red-50/30" : ""}`}>
+            <Card
+              key={reqDoc.type}
+              className={`${reqDoc.required && status === "missing" ? "border-red-200 bg-red-50/30" : ""}`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -214,7 +218,7 @@ export default function ProfessionalDocumentsTab({
 
                   <div className="flex items-center gap-2">
                     {getStatusBadge(status)}
-                    
+
                     {doc ? (
                       <div className="flex items-center gap-1">
                         {doc.fileUrl && (
@@ -231,7 +235,7 @@ export default function ProfessionalDocumentsTab({
                             </Button>
                           </>
                         )}
-                        
+
                         {doc.status === "pending" && (
                           <>
                             <Button
@@ -245,14 +249,16 @@ export default function ProfessionalDocumentsTab({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDocumentAction(doc.id, "reject", "לא עומד בדרישות")}
+                              onClick={() =>
+                                handleDocumentAction(doc.id, "reject", "לא עומד בדרישות")
+                              }
                               className="text-red-600 hover:text-red-700"
                             >
                               <AlertTriangle className="h-4 w-4" />
                             </Button>
                           </>
                         )}
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -269,7 +275,7 @@ export default function ProfessionalDocumentsTab({
                           id={`upload-${reqDoc.type}`}
                           className="hidden"
                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                          onChange={(e) => {
+                          onChange={e => {
                             const file = e.target.files?.[0]
                             if (file) {
                               handleFileUpload(reqDoc.type, file)
@@ -304,9 +310,7 @@ export default function ProfessionalDocumentsTab({
                 {doc?.status === "rejected" && doc.rejectionReason && (
                   <Alert className="mt-3">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      סיבת דחייה: {doc.rejectionReason}
-                    </AlertDescription>
+                    <AlertDescription>סיבת דחייה: {doc.rejectionReason}</AlertDescription>
                   </Alert>
                 )}
               </CardContent>
@@ -332,4 +336,4 @@ export default function ProfessionalDocumentsTab({
       </Card>
     </div>
   )
-} 
+}

@@ -40,31 +40,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { 
-  Search, 
-  Plus, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Key, 
-  UserCheck, 
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Key,
+  UserCheck,
   UserX,
   Crown,
   Briefcase,
   User,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
-import { 
-  type UserData, 
-  type GetUsersResult, 
+import {
+  type UserData,
+  type GetUsersResult,
   type UserFilters,
   getAllUsers,
   deleteUser,
   resetUserPassword,
-  toggleUserRole
+  toggleUserRole,
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 import UserCreateDialog from "./user-create-dialog"
 import UserEditDialog from "./user-edit-dialog"
@@ -75,10 +75,10 @@ interface UserManagementClientProps {
   stats?: any
 }
 
-export default function UserManagementClient({ 
-  initialData, 
+export default function UserManagementClient({
+  initialData,
   initialFilters,
-  stats 
+  stats,
 }: UserManagementClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -116,9 +116,9 @@ export default function UserManagementClient({
         params.set(key, value.toString())
       }
     })
-    
+
     router.push(`/dashboard/admin/users?${params.toString()}`)
-    
+
     // Fetch new data
     await fetchUsers(updatedFilters)
   }
@@ -135,7 +135,7 @@ export default function UserManagementClient({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בטעינת המשתמשים"
+        description: "אירעה שגיאה בטעינת המשתמשים",
       })
     } finally {
       setLoading(false)
@@ -145,11 +145,11 @@ export default function UserManagementClient({
   const handlePageChange = async (page: number) => {
     const newFilters = { ...filters, page }
     setFilters(newFilters)
-    
+
     const params = new URLSearchParams(searchParams.toString())
     params.set("page", page.toString())
     router.push(`/dashboard/admin/users?${params.toString()}`)
-    
+
     await fetchUsers(newFilters)
   }
 
@@ -162,21 +162,21 @@ export default function UserManagementClient({
         if (result.success) {
           toast({
             title: "הצלחה",
-            description: "המשתמש נמחק בהצלחה"
+            description: "המשתמש נמחק בהצלחה",
           })
           await fetchUsers()
         } else {
           toast({
             variant: "destructive",
             title: "שגיאה",
-            description: result.error || "אירעה שגיאה במחיקת המשתמש"
+            description: result.error || "אירעה שגיאה במחיקת המשתמש",
           })
         }
       } catch (error) {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "אירעה שגיאה במחיקת המשתמש"
+          description: "אירעה שגיאה במחיקת המשתמש",
         })
       } finally {
         setDeleteDialogOpen(false)
@@ -192,20 +192,20 @@ export default function UserManagementClient({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: `הסיסמה אופסה ל: ${result.data.newPassword}`
+          description: `הסיסמה אופסה ל: ${result.data.newPassword}`,
         })
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה באיפוס הסיסמה"
+          description: result.error || "אירעה שגיאה באיפוס הסיסמה",
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה באיפוס הסיסמה"
+        description: "אירעה שגיאה באיפוס הסיסמה",
       })
     } finally {
       setResettingPassword(null)
@@ -219,21 +219,21 @@ export default function UserManagementClient({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "התפקיד עודכן בהצלחה"
+          description: "התפקיד עודכן בהצלחה",
         })
         await fetchUsers()
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה בעדכון התפקיד"
+          description: result.error || "אירעה שגיאה בעדכון התפקיד",
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בעדכון התפקיד"
+        description: "אירעה שגיאה בעדכון התפקיד",
       })
     } finally {
       setTogglingRole(null)
@@ -245,28 +245,30 @@ export default function UserManagementClient({
       admin: { label: "מנהל", variant: "destructive" as const, icon: Crown },
       professional: { label: "מטפל", variant: "default" as const, icon: Briefcase },
       member: { label: "חבר", variant: "secondary" as const, icon: User },
-      partner: { label: "שותף", variant: "outline" as const, icon: Shield }
+      partner: { label: "שותף", variant: "outline" as const, icon: Shield },
     }
 
-    return roles.map(role => {
-      const config = roleConfig[role as keyof typeof roleConfig]
-      if (!config) return null
-      
-      const Icon = config.icon
-      return (
-        <Badge key={role} variant={config.variant} className="flex items-center gap-1">
-          <Icon className="w-3 h-3" />
-          {config.label}
-        </Badge>
-      )
-    }).filter(Boolean)
+    return roles
+      .map(role => {
+        const config = roleConfig[role as keyof typeof roleConfig]
+        if (!config) return null
+
+        const Icon = config.icon
+        return (
+          <Badge key={role} variant={config.variant} className="flex items-center gap-1">
+            <Icon className="w-3 h-3" />
+            {config.label}
+          </Badge>
+        )
+      })
+      .filter(Boolean)
   }
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("he-IL", {
       day: "2-digit",
       month: "2-digit",
-      year: "numeric"
+      year: "numeric",
     })
   }
 
@@ -291,7 +293,7 @@ export default function UserManagementClient({
               <Input
                 placeholder="חיפוש לפי שם, מייל או טלפון..."
                 value={filters.search || ""}
-                onChange={(e) => updateFilters({ search: e.target.value })}
+                onChange={e => updateFilters({ search: e.target.value })}
                 className="pl-10"
               />
             </div>
@@ -299,7 +301,7 @@ export default function UserManagementClient({
             {/* Role Filter */}
             <Select
               value={filters.role || ""}
-              onValueChange={(value) => updateFilters({ role: value || undefined })}
+              onValueChange={value => updateFilters({ role: value || undefined })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="סנן לפי תפקיד" />
@@ -316,7 +318,7 @@ export default function UserManagementClient({
             {/* Gender Filter */}
             <Select
               value={filters.gender || ""}
-              onValueChange={(value) => updateFilters({ gender: value || undefined })}
+              onValueChange={value => updateFilters({ gender: value || undefined })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="סנן לפי מגדר" />
@@ -359,13 +361,17 @@ export default function UserManagementClient({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
+                  users.map(user => (
                     <TableRow key={user._id}>
                       <TableCell>
                         <div>
                           <div className="font-medium">{user.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {user.gender === "male" ? "זכר" : user.gender === "female" ? "נקבה" : "אחר"}
+                            {user.gender === "male"
+                              ? "זכר"
+                              : user.gender === "female"
+                                ? "נקבה"
+                                : "אחר"}
                           </div>
                         </div>
                       </TableCell>
@@ -378,9 +384,7 @@ export default function UserManagementClient({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {getRoleBadge(user.roles)}
-                        </div>
+                        <div className="flex flex-wrap gap-1">{getRoleBadge(user.roles)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -464,7 +468,9 @@ export default function UserManagementClient({
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
-                מציג {((currentPage - 1) * (filters.limit || 20)) + 1} עד {Math.min(currentPage * (filters.limit || 20), totalUsers)} מתוך {totalUsers} משתמשים
+                מציג {(currentPage - 1) * (filters.limit || 20) + 1} עד{" "}
+                {Math.min(currentPage * (filters.limit || 20), totalUsers)} מתוך {totalUsers}{" "}
+                משתמשים
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -522,8 +528,7 @@ export default function UserManagementClient({
           <AlertDialogHeader>
             <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
             <AlertDialogDescription>
-              פעולה זו תמחק את המשתמש {deletingUser?.name} לצמיתות.
-              לא ניתן לבטל פעולה זו.
+              פעולה זו תמחק את המשתמש {deletingUser?.name} לצמיתות. לא ניתן לבטל פעולה זו.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -540,4 +545,4 @@ export default function UserManagementClient({
       </AlertDialog>
     </div>
   )
-} 
+}

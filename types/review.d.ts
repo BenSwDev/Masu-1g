@@ -1,7 +1,8 @@
 import type { Types } from "mongoose"
 import type { IReview } from "@/lib/db/models/review"
 
-export interface PopulatedReview extends Omit<IReview, 'userId' | 'professionalId' | 'treatmentId' | 'bookingId'> {
+export interface PopulatedReview
+  extends Omit<IReview, "userId" | "professionalId" | "treatmentId" | "bookingId"> {
   _id: string
   bookingId: {
     _id: string
@@ -58,4 +59,4 @@ export interface ReviewFilters {
   dateRange?: string
   page?: number
   limit?: number
-} 
+}

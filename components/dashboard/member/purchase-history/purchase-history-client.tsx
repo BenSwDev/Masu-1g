@@ -35,7 +35,7 @@ export default function PurchaseHistoryClient() {
     try {
       setLoading(true)
       const result = await getUserPurchaseHistory(page, limit, newFilters)
-      
+
       if (result.success && result.data) {
         setTransactions(result.data.transactions)
         setCurrentPage(result.data.currentPage)
@@ -43,16 +43,16 @@ export default function PurchaseHistoryClient() {
         setTotalCount(result.data.totalCount)
       } else {
         toast({
-          title: t('purchaseHistory.error.loadFailed') || 'שגיאה בטעינת הנתונים',
-          description: result.error || t('common.unknownError'),
+          title: t("purchaseHistory.error.loadFailed") || "שגיאה בטעינת הנתונים",
+          description: result.error || t("common.unknownError"),
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error('Error loading purchase history:', error)
+      console.error("Error loading purchase history:", error)
       toast({
-        title: t('purchaseHistory.error.loadFailed') || 'שגיאה בטעינת הנתונים',
-        description: t('common.unknownError') || 'אירעה שגיאה לא צפויה',
+        title: t("purchaseHistory.error.loadFailed") || "שגיאה בטעינת הנתונים",
+        description: t("common.unknownError") || "אירעה שגיאה לא צפויה",
         variant: "destructive",
       })
     } finally {
@@ -84,9 +84,9 @@ export default function PurchaseHistoryClient() {
   // Calculate summary stats from current data
   const summaryStats = {
     totalTransactions: totalCount,
-    totalBookings: transactions.filter(t => t.type === 'booking').length,
-    totalSubscriptions: transactions.filter(t => t.type === 'subscription').length,
-    totalVouchers: transactions.filter(t => t.type === 'gift_voucher').length,
+    totalBookings: transactions.filter(t => t.type === "booking").length,
+    totalSubscriptions: transactions.filter(t => t.type === "subscription").length,
+    totalVouchers: transactions.filter(t => t.type === "gift_voucher").length,
     totalSpent: transactions.reduce((sum, t) => sum + (t.finalAmount || t.amount), 0),
   }
 
@@ -97,14 +97,14 @@ export default function PurchaseHistoryClient() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('purchaseHistory.summary.totalTransactions') || 'סה״כ עסקאות'}
+              {t("purchaseHistory.summary.totalTransactions") || "סה״כ עסקאות"}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.totalTransactions}</div>
             <p className="text-xs text-muted-foreground">
-              {t('purchaseHistory.summary.allTime') || 'מכל הזמנים'}
+              {t("purchaseHistory.summary.allTime") || "מכל הזמנים"}
             </p>
           </CardContent>
         </Card>
@@ -112,14 +112,14 @@ export default function PurchaseHistoryClient() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('purchaseHistory.summary.totalBookings') || 'הזמנות'}
+              {t("purchaseHistory.summary.totalBookings") || "הזמנות"}
             </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.totalBookings}</div>
             <p className="text-xs text-muted-foreground">
-              {t('purchaseHistory.summary.treatmentBookings') || 'הזמנות טיפולים'}
+              {t("purchaseHistory.summary.treatmentBookings") || "הזמנות טיפולים"}
             </p>
           </CardContent>
         </Card>
@@ -127,14 +127,14 @@ export default function PurchaseHistoryClient() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('purchaseHistory.summary.subscriptions') || 'מנויים'}
+              {t("purchaseHistory.summary.subscriptions") || "מנויים"}
             </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.totalSubscriptions}</div>
             <p className="text-xs text-muted-foreground">
-              {t('purchaseHistory.summary.purchasedSubscriptions') || 'מנויים שנרכשו'}
+              {t("purchaseHistory.summary.purchasedSubscriptions") || "מנויים שנרכשו"}
             </p>
           </CardContent>
         </Card>
@@ -142,14 +142,14 @@ export default function PurchaseHistoryClient() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('purchaseHistory.summary.vouchers') || 'שוברי מתנה'}
+              {t("purchaseHistory.summary.vouchers") || "שוברי מתנה"}
             </CardTitle>
             <Gift className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.totalVouchers}</div>
             <p className="text-xs text-muted-foreground">
-              {t('purchaseHistory.summary.purchasedVouchers') || 'שוברים שנרכשו'}
+              {t("purchaseHistory.summary.purchasedVouchers") || "שוברים שנרכשו"}
             </p>
           </CardContent>
         </Card>
@@ -173,10 +173,10 @@ export default function PurchaseHistoryClient() {
             disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {t('common.refresh') || 'רענן'}
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {t("common.refresh") || "רענן"}
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -184,16 +184,14 @@ export default function PurchaseHistoryClient() {
             className="flex items-center gap-2"
           >
             <Download className="h-4 w-4" />
-            {t('purchaseHistory.export') || 'ייצא לאקסל'}
+            {t("purchaseHistory.export") || "ייצא לאקסל"}
           </Button>
         </div>
 
         <div className="text-sm text-muted-foreground">
-          {loading ? (
-            t('common.loading') || 'טוען...'
-          ) : (
-            `${t('purchaseHistory.showing') || 'מציג'} ${Math.min((currentPage - 1) * limit + 1, totalCount)}-${Math.min(currentPage * limit, totalCount)} ${t('purchaseHistory.of') || 'מתוך'} ${totalCount} ${t('purchaseHistory.results') || 'תוצאות'}`
-          )}
+          {loading
+            ? t("common.loading") || "טוען..."
+            : `${t("purchaseHistory.showing") || "מציג"} ${Math.min((currentPage - 1) * limit + 1, totalCount)}-${Math.min(currentPage * limit, totalCount)} ${t("purchaseHistory.of") || "מתוך"} ${totalCount} ${t("purchaseHistory.results") || "תוצאות"}`}
         </div>
       </div>
 
@@ -210,23 +208,23 @@ export default function PurchaseHistoryClient() {
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   href="#"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault()
                     if (currentPage > 1) handlePageChange(currentPage - 1)
                   }}
-                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
-              
+
               {[...Array(totalPages)].map((_, index) => {
                 const page = index + 1
-                const showPage = 
-                  page === 1 || 
-                  page === totalPages || 
+                const showPage =
+                  page === 1 ||
+                  page === totalPages ||
                   (page >= currentPage - 2 && page <= currentPage + 2)
-                
+
                 if (!showPage) {
                   if (page === currentPage - 3 || page === currentPage + 3) {
                     return (
@@ -237,12 +235,12 @@ export default function PurchaseHistoryClient() {
                   }
                   return null
                 }
-                
+
                 return (
                   <PaginationItem key={page}>
                     <PaginationLink
                       href="#"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.preventDefault()
                         handlePageChange(page)
                       }}
@@ -253,15 +251,15 @@ export default function PurchaseHistoryClient() {
                   </PaginationItem>
                 )
               })}
-              
+
               <PaginationItem>
-                <PaginationNext 
+                <PaginationNext
                   href="#"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault()
                     if (currentPage < totalPages) handlePageChange(currentPage + 1)
                   }}
-                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -277,28 +275,29 @@ export default function PurchaseHistoryClient() {
               <TrendingUp className="h-12 w-12 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">
-              {t('purchaseHistory.emptyState.title') || 'אין עסקאות להצגה'}
+              {t("purchaseHistory.emptyState.title") || "אין עסקאות להצגה"}
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {Object.keys(filters).length > 0
-                ? (t('purchaseHistory.emptyState.withFilters') || 'לא נמצאו עסקאות התואמות לפילטרים שנבחרו. נסה לשנות את הפילטרים.')
-                : (t('purchaseHistory.emptyState.noTransactions') || 'עדיין לא ביצעת רכישות או הזמנות. התחל לחקור את השירותים שלנו!')
-              }
+                ? t("purchaseHistory.emptyState.withFilters") ||
+                  "לא נמצאו עסקאות התואמות לפילטרים שנבחרו. נסה לשנות את הפילטרים."
+                : t("purchaseHistory.emptyState.noTransactions") ||
+                  "עדיין לא ביצעת רכישות או הזמנות. התחל לחקור את השירותים שלנו!"}
             </p>
             {Object.keys(filters).length > 0 ? (
               <Button onClick={handleClearFilters} variant="outline">
-                {t('purchaseHistory.emptyState.clearFilters') || 'נקה פילטרים'}
+                {t("purchaseHistory.emptyState.clearFilters") || "נקה פילטרים"}
               </Button>
             ) : (
               <div className="flex gap-2 justify-center">
                 <Button asChild>
                   <a href="/bookings/treatment">
-                    {t('purchaseHistory.emptyState.bookTreatment') || 'הזמן טיפול'}
+                    {t("purchaseHistory.emptyState.bookTreatment") || "הזמן טיפול"}
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
                   <a href="/purchase/subscription">
-                    {t('purchaseHistory.emptyState.buySubscription') || 'רכוש מנוי'}
+                    {t("purchaseHistory.emptyState.buySubscription") || "רכוש מנוי"}
                   </a>
                 </Button>
               </div>
@@ -308,4 +307,4 @@ export default function PurchaseHistoryClient() {
       )}
     </div>
   )
-} 
+}

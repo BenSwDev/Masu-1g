@@ -5,7 +5,10 @@ export const PartnerCouponBatchBaseSchema = z
     name: z.string().min(1, "Name is required").trim(),
     description: z.string().optional(),
     assignedPartnerId: z.string().optional().nullable(),
-    couponCount: z.number().min(1, "Must have at least 1 coupon").max(1000, "Cannot exceed 1000 coupons"),
+    couponCount: z
+      .number()
+      .min(1, "Must have at least 1 coupon")
+      .max(1000, "Cannot exceed 1000 coupons"),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.number().min(0, "Discount value must be non-negative"),
     validFrom: z.date(),
@@ -13,10 +16,10 @@ export const PartnerCouponBatchBaseSchema = z
     usageLimit: z.number().min(0, "Usage limit must be non-negative").default(1),
     usageLimitPerUser: z.number().min(0, "Usage limit per user must be non-negative").default(1),
     isActive: z.boolean().default(true),
-  
+
     notesForPartner: z.string().optional(),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],
   })
@@ -38,7 +41,7 @@ export const UpdatePartnerCouponBatchSchema = z
     isActive: z.boolean().default(true),
     notesForPartner: z.string().optional(),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],
   })
@@ -57,4 +60,4 @@ export const UpdateCouponsInBatchSchema = z.object({
 
 export type CreatePartnerCouponBatchPayload = z.infer<typeof CreatePartnerCouponBatchSchema>
 export type UpdatePartnerCouponBatchPayload = z.infer<typeof UpdatePartnerCouponBatchSchema>
-export type UpdateCouponsInBatchPayload = z.infer<typeof UpdateCouponsInBatchSchema> 
+export type UpdateCouponsInBatchPayload = z.infer<typeof UpdateCouponsInBatchSchema>

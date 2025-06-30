@@ -23,7 +23,10 @@ interface UserSubscriptionCardProps {
   onCancel: (subscriptionId: string) => void // Pass ID for cancellation
 }
 
-export default function UserSubscriptionCard({ userSubscription, onCancel }: UserSubscriptionCardProps) {
+export default function UserSubscriptionCard({
+  userSubscription,
+  onCancel,
+}: UserSubscriptionCardProps) {
   const { t, language } = useTranslation()
   const currentLocale = language === "he" ? he : undefined
 
@@ -49,8 +52,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
   const usagePercentage =
     userSubscription.totalQuantity > 0
       ? Math.round(
-          ((userSubscription.totalQuantity - userSubscription.remainingQuantity) / userSubscription.totalQuantity) *
-            100,
+          ((userSubscription.totalQuantity - userSubscription.remainingQuantity) /
+            userSubscription.totalQuantity) *
+            100
         )
       : 0
 
@@ -78,7 +82,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
       </CardHeader>
       <CardContent className="p-6 space-y-4">
         <div className="space-y-1">
-          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">{t("treatments.title")}</h4>
+          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">
+            {t("treatments.title")}
+          </h4>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {userSubscription.treatmentId?.name || t("treatments.unknownTreatment")}
             {userSubscription.selectedDurationDetails && (
@@ -93,7 +99,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
           <div className="flex items-center">
             <Package className="mr-2 h-5 w-5 text-blue-500" />
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.remaining")}:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {t("subscriptions.remaining")}:
+              </span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">
                 {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
               </span>
@@ -103,15 +111,21 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
           <div className="flex items-center">
             <Calendar className="mr-2 h-5 w-5 text-red-500" />
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.expiry")}:</span>
-              <span className="ml-1 text-gray-600 dark:text-gray-400">{formatDate(userSubscription.expiryDate)}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {t("subscriptions.expiry")}:
+              </span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400">
+                {formatDate(userSubscription.expiryDate)}
+              </span>
             </div>
           </div>
 
           <div className="flex items-center">
             <CreditCard className="mr-2 h-5 w-5 text-green-500" />
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.paymentMethod")}:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {t("subscriptions.paymentMethod")}:
+              </span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">
                 {userSubscription.paymentMethodId?.cardName || t("paymentMethods.card")}{" "}
                 {maskCardNumber(userSubscription.paymentMethodId?.cardNumber)}
@@ -122,7 +136,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
           <div className="flex items-center">
             <Tag className="mr-2 h-5 w-5 text-purple-500" />
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.pricePaid")}:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {t("subscriptions.pricePaid")}:
+              </span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">
                 {userSubscription.paymentAmount?.toFixed(2)} ₪
               </span>
@@ -148,8 +164,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
             <span>{t("subscriptions.usage")}</span>
             <span>
-              {userSubscription.totalQuantity - userSubscription.remainingQuantity} {t("subscriptions.used")} /{" "}
-              {userSubscription.totalQuantity} {t("subscriptions.total")}
+              {userSubscription.totalQuantity - userSubscription.remainingQuantity}{" "}
+              {t("subscriptions.used")} / {userSubscription.totalQuantity}{" "}
+              {t("subscriptions.total")}
             </span>
           </div>
           <Progress value={usagePercentage} className="h-2.5 w-full" />
@@ -159,7 +176,9 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
         {userSubscription.code && (
           <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-center">
             <div className="text-sm font-medium text-blue-900 mb-2">קוד המנוי למימוש</div>
-            <div className="font-mono text-xl font-bold text-blue-800 tracking-wider">{userSubscription.code}</div>
+            <div className="font-mono text-xl font-bold text-blue-800 tracking-wider">
+              {userSubscription.code}
+            </div>
             <div className="text-xs text-blue-600 mt-1">השתמש בקוד זה בעת הזמנת טיפול</div>
           </div>
         )}

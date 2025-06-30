@@ -115,7 +115,7 @@ const AddressSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 // Helper function to construct fullAddress
@@ -125,7 +125,10 @@ export function constructFullAddress(data: Partial<IAddress> | any): string {
   if (data.street) parts.push(data.street)
   if (data.streetNumber) parts.push(data.streetNumber)
 
-  if (data.addressType === "apartment" && (data.apartmentDetails?.apartmentNumber || data.apartment)) {
+  if (
+    data.addressType === "apartment" &&
+    (data.apartmentDetails?.apartmentNumber || data.apartment)
+  ) {
     const apartmentNumber = data.apartmentDetails?.apartmentNumber || data.apartment
     parts.push(`דירה ${apartmentNumber}`)
     const floor = data.apartmentDetails?.floor || data.floor
@@ -136,8 +139,10 @@ export function constructFullAddress(data: Partial<IAddress> | any): string {
     if (entrance) {
       parts.push(`כניסה ${entrance}`)
     }
-  } else if ((data.addressType === "house" || data.addressType === "private") && 
-             (data.houseDetails?.doorName || data.doorName)) {
+  } else if (
+    (data.addressType === "house" || data.addressType === "private") &&
+    (data.houseDetails?.doorName || data.doorName)
+  ) {
     const doorName = data.houseDetails?.doorName || data.doorName
     parts.push(doorName)
     const entrance = data.houseDetails?.entrance || data.entrance
@@ -158,7 +163,10 @@ export function constructFullAddress(data: Partial<IAddress> | any): string {
     parts.push(hotelName)
     const roomNumber = data.hotelDetails?.roomNumber || data.roomNumber
     if (roomNumber) parts.push(`חדר ${roomNumber}`)
-  } else if (data.addressType === "other" && (data.otherDetails?.instructions || data.otherInstructions)) {
+  } else if (
+    data.addressType === "other" &&
+    (data.otherDetails?.instructions || data.otherInstructions)
+  ) {
     const instructions = data.otherDetails?.instructions || data.otherInstructions
     if (instructions) parts.push(instructions)
   }
@@ -191,6 +199,7 @@ AddressSchema.index({ userId: 1, isDefault: 1 })
 AddressSchema.index({ createdAt: -1 })
 AddressSchema.index({ fullAddress: "text" }) // Optional: for text search on fullAddress
 
-const Address: Model<IAddress> = mongoose.models.Address || mongoose.model<IAddress>("Address", AddressSchema)
+const Address: Model<IAddress> =
+  mongoose.models.Address || mongoose.model<IAddress>("Address", AddressSchema)
 
 export default Address

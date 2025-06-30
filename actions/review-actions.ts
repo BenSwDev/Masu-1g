@@ -12,15 +12,25 @@ import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import User, { type IUser } from "@/lib/db/models/user"
 
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type { NotificationRecipient, NotificationData } from "@/lib/notifications/notification-types"
+import type {
+  NotificationRecipient,
+  NotificationData,
+} from "@/lib/notifications/notification-types"
 
 import { logger } from "@/lib/logs/logger"
-import type { CreateReviewData, UpdateReviewData, ReviewFilters, PopulatedReview } from "@/types/review"
+import type {
+  CreateReviewData,
+  UpdateReviewData,
+  ReviewFilters,
+  PopulatedReview,
+} from "@/types/review"
 
 /**
  * יצירת חוות דעת חדשה
  */
-export async function createReview(data: CreateReviewData): Promise<{ success: boolean; error?: string }> {
+export async function createReview(
+  data: CreateReviewData
+): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -82,12 +92,15 @@ export async function createReview(data: CreateReviewData): Promise<{ success: b
  * עדכון תגובת מטפל לחוות דעת
  */
 export async function updateReviewResponse(
-  reviewId: string, 
+  reviewId: string,
   professionalResponse: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.roles || !session.user.roles.some(role => ["admin", "professional"].includes(role))) {
+    if (
+      !session?.user?.roles ||
+      !session.user.roles.some(role => ["admin", "professional"].includes(role))
+    ) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -148,7 +161,7 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
       } else {
         matchStage.$or = [
           { professionalResponse: { $exists: false } },
-          { professionalResponse: "" }
+          { professionalResponse: "" },
         ]
       }
     }
@@ -156,7 +169,7 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
     if (filters.search) {
       matchStage.$or = [
         { comment: { $regex: filters.search, $options: "i" } },
-        { professionalResponse: { $regex: filters.search, $options: "i" } }
+        { professionalResponse: { $regex: filters.search, $options: "i" } },
       ]
     }
 
@@ -167,8 +180,8 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
           from: "bookings",
           localField: "bookingId",
           foreignField: "_id",
-          as: "bookingId"
-        }
+          as: "bookingId",
+        },
       },
       { $unwind: "$bookingId" },
       {
@@ -176,8 +189,8 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
           from: "users",
           localField: "userId",
           foreignField: "_id",
-          as: "userId"
-        }
+          as: "userId",
+        },
       },
       { $unwind: "$userId" },
       {
@@ -185,8 +198,8 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
           from: "treatments",
           localField: "treatmentId",
           foreignField: "_id",
-          as: "treatmentId"
-        }
+          as: "treatmentId",
+        },
       },
       { $unwind: "$treatmentId" },
       {
@@ -194,18 +207,18 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
           from: "users",
           localField: "professionalId",
           foreignField: "_id",
-          as: "professionalId"
-        }
+          as: "professionalId",
+        },
       },
       {
         $unwind: {
           path: "$professionalId",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
       },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
-      { $limit: limit }
+      { $limit: limit },
     ]
 
     const reviews = await Review.aggregate(pipeline)
@@ -215,7 +228,7 @@ export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
     return {
       reviews: reviews as PopulatedReview[],
       totalPages,
-      totalReviews
+      totalReviews,
     }
   } catch (error) {
     logger.error("Error getting all reviews:", error)
@@ -245,7 +258,7 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
 
     // Build aggregation pipeline
     const matchStage: any = {
-      userId: new mongoose.Types.ObjectId(session.user.id)
+      userId: new mongoose.Types.ObjectId(session.user.id),
     }
 
     if (filters.rating) {
@@ -255,7 +268,7 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
     if (filters.search) {
       matchStage.$or = [
         { comment: { $regex: filters.search, $options: "i" } },
-        { professionalResponse: { $regex: filters.search, $options: "i" } }
+        { professionalResponse: { $regex: filters.search, $options: "i" } },
       ]
     }
 
@@ -266,8 +279,8 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
           from: "bookings",
           localField: "bookingId",
           foreignField: "_id",
-          as: "bookingId"
-        }
+          as: "bookingId",
+        },
       },
       { $unwind: "$bookingId" },
       {
@@ -275,8 +288,8 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
           from: "treatments",
           localField: "treatmentId",
           foreignField: "_id",
-          as: "treatmentId"
-        }
+          as: "treatmentId",
+        },
       },
       { $unwind: "$treatmentId" },
       {
@@ -284,18 +297,18 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
           from: "users",
           localField: "professionalId",
           foreignField: "_id",
-          as: "professionalId"
-        }
+          as: "professionalId",
+        },
       },
       {
         $unwind: {
           path: "$professionalId",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
       },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
-      { $limit: limit }
+      { $limit: limit },
     ]
 
     const reviews = await Review.aggregate(pipeline)
@@ -305,7 +318,7 @@ export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
     return {
       reviews: reviews as PopulatedReview[],
       totalPages,
-      totalReviews
+      totalReviews,
     }
   } catch (error) {
     logger.error("Error getting user reviews:", error)
@@ -327,8 +340,8 @@ export async function getReviewByBookingId(bookingId: string): Promise<Populated
           from: "bookings",
           localField: "bookingId",
           foreignField: "_id",
-          as: "bookingId"
-        }
+          as: "bookingId",
+        },
       },
       { $unwind: "$bookingId" },
       {
@@ -336,8 +349,8 @@ export async function getReviewByBookingId(bookingId: string): Promise<Populated
           from: "users",
           localField: "userId",
           foreignField: "_id",
-          as: "userId"
-        }
+          as: "userId",
+        },
       },
       { $unwind: "$userId" },
       {
@@ -345,8 +358,8 @@ export async function getReviewByBookingId(bookingId: string): Promise<Populated
           from: "treatments",
           localField: "treatmentId",
           foreignField: "_id",
-          as: "treatmentId"
-        }
+          as: "treatmentId",
+        },
       },
       { $unwind: "$treatmentId" },
       {
@@ -354,15 +367,15 @@ export async function getReviewByBookingId(bookingId: string): Promise<Populated
           from: "users",
           localField: "professionalId",
           foreignField: "_id",
-          as: "professionalId"
-        }
+          as: "professionalId",
+        },
       },
       {
         $unwind: {
           path: "$professionalId",
-          preserveNullAndEmptyArrays: true
-        }
-      }
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ]
 
     const reviews = await Review.aggregate(pipeline)
@@ -392,17 +405,20 @@ export async function getCompletedBookingsWithoutReviews(): Promise<{
     // קבלת כל ההזמנות שהושלמו של המשתמש
     const completedBookings = await Booking.find({
       userId: session.user.id,
-      status: "completed"
-    }).populate("treatmentId").populate("professionalId").lean()
+      status: "completed",
+    })
+      .populate("treatmentId")
+      .populate("professionalId")
+      .lean()
 
     // קבלת כל חוות הדעת של המשתמש
     const existingReviews = await Review.find({
-      userId: session.user.id
-    }).select("bookingId").lean()
+      userId: session.user.id,
+    })
+      .select("bookingId")
+      .lean()
 
-    const reviewedBookingIds = new Set(
-      existingReviews.map(review => review.bookingId.toString())
-    )
+    const reviewedBookingIds = new Set(existingReviews.map(review => review.bookingId.toString()))
 
     // סינון הזמנות שאין להן חוות דעת
     const bookingsWithoutReviews = completedBookings.filter(
@@ -412,7 +428,7 @@ export async function getCompletedBookingsWithoutReviews(): Promise<{
     return {
       bookings: bookingsWithoutReviews,
       totalPages: 1,
-      totalBookings: bookingsWithoutReviews.length
+      totalBookings: bookingsWithoutReviews.length,
     }
   } catch (error) {
     logger.error("Error getting completed bookings without reviews:", error)
@@ -422,7 +438,7 @@ export async function getCompletedBookingsWithoutReviews(): Promise<{
 
 export async function sendReviewReminder(
   bookingId: string,
-  options: { sms?: boolean; email?: boolean } = {},
+  options: { sms?: boolean; email?: boolean } = {}
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
@@ -436,7 +452,7 @@ export async function sendReviewReminder(
 
     const booking = await Booking.findById(bookingId).populate(
       "userId",
-      "name email phone notificationPreferences",
+      "name email phone notificationPreferences"
     )
 
     if (!booking) {
@@ -456,29 +472,39 @@ export async function sendReviewReminder(
       return { success: false, error: "Reminder already sent" }
     }
 
-    const lang =
-      (booking.userId as any)?.notificationPreferences?.language || "he"
+    const lang = (booking.userId as any)?.notificationPreferences?.language || "he"
     const recipientName = booking.recipientName || (booking.userId as any)?.name || ""
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXTAUTH_URL ||
-      ""
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
     const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
 
     const recipients: NotificationRecipient[] = []
 
     if (email) {
       if (booking.recipientEmail) {
-        recipients.push({ type: "email", value: booking.recipientEmail, name: recipientName, language: lang as any })
+        recipients.push({
+          type: "email",
+          value: booking.recipientEmail,
+          name: recipientName,
+          language: lang as any,
+        })
       } else if ((booking.userId as any)?.email) {
-        recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
+        recipients.push({
+          type: "email",
+          value: (booking.userId as any).email,
+          name: (booking.userId as any).name,
+          language: lang as any,
+        })
       }
     }
     if (sms) {
       if (booking.recipientPhone) {
         recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })
       } else if ((booking.userId as any)?.phone) {
-        recipients.push({ type: "phone", value: (booking.userId as any).phone, language: lang as any })
+        recipients.push({
+          type: "phone",
+          value: (booking.userId as any).phone,
+          language: lang as any,
+        })
       }
     }
 
@@ -495,18 +521,18 @@ export async function sendReviewReminder(
     await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
 
     booking.reviewReminderSentAt = new Date()
-    
+
     // Ensure required fields have valid values for backward compatibility
     if (!booking.treatmentCategory) {
       booking.treatmentCategory = new mongoose.Types.ObjectId()
     }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
+    if (typeof booking.staticTreatmentPrice !== "number") {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }
-    if (typeof booking.staticTherapistPay !== 'number') {
+    if (typeof booking.staticTherapistPay !== "number") {
       booking.staticTherapistPay = 0
     }
-    if (typeof booking.companyFee !== 'number') {
+    if (typeof booking.companyFee !== "number") {
       booking.companyFee = 0
     }
     if (!booking.consents) {
@@ -514,10 +540,10 @@ export async function sendReviewReminder(
         customerAlerts: "email",
         patientAlerts: "email",
         marketingOptIn: false,
-        termsAccepted: false
+        termsAccepted: false,
       }
     }
-    
+
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 

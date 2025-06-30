@@ -49,7 +49,7 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
               ? "כתובת האימייל הזו כבר בשימוש"
               : language === "ru"
                 ? "Этот адрес электронной почты уже используется"
-                : "This email address is already in use",
+                : "This email address is already in use"
           )
         } else {
           setError(t("errors.unknown"))
@@ -83,7 +83,7 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
             ? "כתובת האימייל שונתה בהצלחה"
             : language === "ru"
               ? "Адрес электронной почты успешно изменен"
-              : "Email address changed successfully",
+              : "Email address changed successfully"
         )
         setStep("email")
         setNewEmail("")
@@ -92,14 +92,19 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           onEmailChanged(newEmail)
         }
         toast({
-          title: language === "he" ? "כתובת האימייל שונתה בהצלחה" : language === "ru" ? "Адрес электронной почты успешно изменен" : "Email address changed successfully",
-          variant: "default"
+          title:
+            language === "he"
+              ? "כתובת האימייל שונתה בהצלחה"
+              : language === "ru"
+                ? "Адрес электронной почты успешно изменен"
+                : "Email address changed successfully",
+          variant: "default",
         })
       } else {
         setError(result.message)
         toast({
           title: result.message,
-          variant: "destructive"
+          variant: "destructive",
         })
       }
     } catch (error) {
@@ -163,7 +168,7 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
                   inputMode="numeric"
                   maxLength={1}
                   value={digit}
-                  onChange={(e) => handleOtpChange(e, index)}
+                  onChange={e => handleOtpChange(e, index)}
                   className="w-10 h-12 text-center text-lg border-turquoise-200 focus-visible:ring-turquoise-500"
                 />
               ))}
@@ -173,7 +178,12 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
 
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setStep("email")} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep("email")}
+              className="flex-1"
+            >
               {language === "he" ? "חזור" : language === "ru" ? "Назад" : "Back"}
             </Button>
             <Button
@@ -199,7 +209,13 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
     <form onSubmit={handleEmailSubmit} className="space-y-6">
       {/* Current Email */}
       <div className="space-y-2">
-        <Label>{language === "he" ? "אימייל נוכחי" : language === "ru" ? "Текущий email" : "Current Email"}</Label>
+        <Label>
+          {language === "he"
+            ? "אימייל נוכחי"
+            : language === "ru"
+              ? "Текущий email"
+              : "Current Email"}
+        </Label>
         <Input value={currentEmail} disabled className="bg-gray-50 border-gray-200" />
       </div>
 
@@ -213,7 +229,11 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           name="newEmail"
           type="email"
           placeholder={
-            language === "he" ? "הכנס אימייל חדש" : language === "ru" ? "Введите новый email" : "Enter new email"
+            language === "he"
+              ? "הכנס אימייל חדש"
+              : language === "ru"
+                ? "Введите новый email"
+                : "Enter new email"
           }
           className="border-turquoise-200 focus-visible:ring-turquoise-500"
           required
@@ -221,9 +241,15 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
       </div>
 
       {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-      {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>}
+      {success && (
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>
+      )}
 
-      <Button type="submit" className="w-full bg-turquoise-500 hover:bg-turquoise-600" disabled={isLoading}>
+      <Button
+        type="submit"
+        className="w-full bg-turquoise-500 hover:bg-turquoise-600"
+        disabled={isLoading}
+      >
         {isLoading
           ? t("common.loading")
           : language === "he"

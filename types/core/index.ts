@@ -13,25 +13,25 @@ export type {
   GiftVoucherGuestInfo,
   GiftVoucherStatus,
   GiftVoucherUsage,
-  
+
   // Database Interface
   IGiftVoucherDocument,
-  
+
   // Form Interfaces
   GiftVoucherCreateForm,
   GiftVoucherUpdateForm,
   GiftVoucherPurchaseData,
   GiftVoucherPaymentResult,
   GiftVoucherRedemption,
-  
+
   // Query Interfaces
   GiftVoucherFilters,
   GiftVoucherListOptions,
-  
+
   // Response Interfaces
   GiftVoucherResponse,
   GiftVoucherListResponse,
-  
+
   // Utility Types
   GiftVoucherSummary,
   GiftVoucherDetails,
@@ -41,14 +41,14 @@ export type {
   GiftVoucherPurchaseResponse,
   GiftVoucherRedemptionRequest,
   GiftVoucherRedemptionResponse,
-  GiftVoucherUsageHistoryEntry
-} from './gift-voucher'
+  GiftVoucherUsageHistoryEntry,
+} from "./gift-voucher"
 
 export {
   // Validation Functions
   isGiftVoucherValid,
   canRedeemGiftVoucher,
-} from './gift-voucher'
+} from "./gift-voucher"
 
 // ============================================================================
 // BOOKING TYPES
@@ -66,28 +66,28 @@ export type {
   BookingConsents,
   BookingNotificationPreferences,
   BookingReview,
-  
+
   // Database Interface
   IBookingDocument,
-  
+
   // Form Interfaces
   BookingCreateForm,
   BookingUpdateForm,
   BookingWizardData,
-  
+
   // Query Interfaces
   BookingFilters,
   BookingListOptions,
-  
+
   // Response Interfaces
   BookingResponse,
   BookingListResponse,
   BookingCreateResponse,
-  
+
   // Utility Types
   BookingSummary,
   BookingDetails,
-} from './booking'
+} from "./booking"
 
 export {
   // Validation Functions
@@ -95,7 +95,7 @@ export {
   canRescheduleBooking,
   requiresPayment,
   getBookingDisplayStatus,
-} from './booking'
+} from "./booking"
 
 // ============================================================================
 // COMMON TYPES
@@ -130,7 +130,7 @@ export interface PaginationOptions {
   page?: number
   limit?: number
   sortBy?: string
-  sortOrder?: 'asc' | 'desc'
+  sortOrder?: "asc" | "desc"
 }
 
 /**
@@ -147,27 +147,27 @@ export interface BaseFilters {
 /**
  * Common Status Types
  */
-export type CommonStatus = 'active' | 'inactive' | 'pending' | 'cancelled'
+export type CommonStatus = "active" | "inactive" | "pending" | "cancelled"
 
 /**
  * Common Gender Type
  */
-export type Gender = 'male' | 'female' | 'other'
+export type Gender = "male" | "female" | "other"
 
 /**
  * Common Language Type
  */
-export type Language = 'he' | 'en' | 'ru'
+export type Language = "he" | "en" | "ru"
 
 /**
  * Common Notification Method Type
  */
-export type NotificationMethod = 'email' | 'sms' | 'both' | 'none'
+export type NotificationMethod = "email" | "sms" | "both" | "none"
 
 /**
  * Common Currency Type
  */
-export type Currency = 'ILS' | 'USD' | 'EUR'
+export type Currency = "ILS" | "USD" | "EUR"
 
 /**
  * Common Phone Number Format
@@ -209,7 +209,7 @@ export function isDefined<T>(value: T | undefined | null): value is T {
  * Type guard to check if string is not empty
  */
 export function isNonEmptyString(value: string | undefined | null): value is string {
-  return typeof value === 'string' && value.trim().length > 0
+  return typeof value === "string" && value.trim().length > 0
 }
 
 /**
@@ -225,28 +225,28 @@ export function isNonEmptyArray<T>(value: T[] | undefined | null): value is T[] 
 export function formatDateForDisplay(date: DateString | Date): string {
   try {
     const d = new Date(date)
-    if (isNaN(d.getTime())) return ''
-    return d.toLocaleDateString('he-IL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (isNaN(d.getTime())) return ""
+    return d.toLocaleDateString("he-IL", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     })
   } catch {
-    return ''
+    return ""
   }
 }
 
 /**
  * Format currency amount
  */
-export function formatCurrency(amount: number, currency: Currency = 'ILS'): string {
-  return new Intl.NumberFormat('he-IL', {
-    style: 'currency',
+export function formatCurrency(amount: number, currency: Currency = "ILS"): string {
+  return new Intl.NumberFormat("he-IL", {
+    style: "currency",
     currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 
@@ -263,14 +263,14 @@ export function isValidEmail(email: string): boolean {
  */
 export function isValidPhoneNumber(phone: string): boolean {
   const phoneRegex = /^(\+972|0)(5[0-9]|7[2-9])\d{7}$/
-  return phoneRegex.test(phone.replace(/[-\s]/g, ''))
+  return phoneRegex.test(phone.replace(/[-\s]/g, ""))
 }
 
 /**
  * Generate unique code
  */
-export function generateUniqueCode(prefix: string = '', length: number = 8): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+export function generateUniqueCode(prefix: string = "", length: number = 8): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   let result = prefix
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length))
@@ -287,5 +287,5 @@ export type {
   GuestUserData,
   CreateGuestUserResult,
   GuestBookingData,
-  AbandonedBookingResult
-} from "./guest" 
+  AbandonedBookingResult,
+} from "./guest"

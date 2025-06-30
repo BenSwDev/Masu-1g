@@ -44,7 +44,7 @@ export function useCachedPreferences() {
 
   // Update a specific preference
   const updatePreference = <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
-    setPreferences((prev) => {
+    setPreferences(prev => {
       const updated = { ...prev, [key]: value }
       setCacheItem(CACHE_KEYS.USER_PREFERENCES, updated, CACHE_EXPIRY.PERSISTENT)
       return updated
@@ -52,12 +52,15 @@ export function useCachedPreferences() {
   }
 
   // Update nested preference (for notifications)
-  const updateNestedPreference = <K extends keyof UserPreferences, N extends keyof UserPreferences[K]>(
+  const updateNestedPreference = <
+    K extends keyof UserPreferences,
+    N extends keyof UserPreferences[K],
+  >(
     key: K,
     nestedKey: N,
-    value: UserPreferences[K][N],
+    value: UserPreferences[K][N]
   ) => {
-    setPreferences((prev) => {
+    setPreferences(prev => {
       const updated = {
         ...prev,
         [key]: {

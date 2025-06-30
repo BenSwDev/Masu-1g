@@ -129,7 +129,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
             <LanguageSelector />
           </div>
-          <CardTitle className="text-2xl font-bold text-turquoise-700">{t("login.welcome")}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-turquoise-700">
+            {t("login.welcome")}
+          </CardTitle>
           <CardDescription>{t("login.signIn")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -144,9 +146,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               <form onSubmit={handlePasswordSubmit}>
                 <div className="grid gap-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="identifier">
-                      {t("login.phoneLabel")}
-                    </Label>
+                    <Label htmlFor="identifier">{t("login.phoneLabel")}</Label>
                     <PhoneInput
                       name="identifier"
                       fullNumberValue={phoneIdentifier}
@@ -157,7 +157,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                     />
                   </div>
                   <div className="grid gap-2">
-                    <div className={`flex items-center justify-between ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <div
+                      className={`flex items-center justify-between ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                    >
                       <Label htmlFor="password" className={dir === "rtl" ? "text-right" : ""}>
                         {t("login.passwordLabel")}
                       </Label>
@@ -189,7 +191,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                       t("login.signInButton")
                     )}
                   </Button>
-                  {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+                  {error && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>
+                  )}
                 </div>
               </form>
             </TabsContent>
@@ -197,9 +201,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             <TabsContent value="otp">
               <div className="grid gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="otp-identifier">
-                    {t("login.phoneLabel")}
-                  </Label>
+                  <Label htmlFor="otp-identifier">{t("login.phoneLabel")}</Label>
                   <PhoneInput
                     id="otp-identifier"
                     name="phone"
@@ -233,11 +235,17 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground">
         {t("login.termsAgreement")}{" "}
-        <a href="#" className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700">
+        <a
+          href="#"
+          className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700"
+        >
           {t("login.termsOfService")}
         </a>{" "}
         {t("login.and")}{" "}
-        <a href="#" className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700">
+        <a
+          href="#"
+          className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700"
+        >
           {t("login.privacyPolicy")}
         </a>
         .

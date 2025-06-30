@@ -1,5 +1,12 @@
-export type TransactionType = 'booking' | 'subscription' | 'gift_voucher'
-export type TransactionStatus = 'pending' | 'completed' | 'cancelled' | 'expired' | 'active' | 'partially_used' | 'fully_used'
+export type TransactionType = "booking" | "subscription" | "gift_voucher"
+export type TransactionStatus =
+  | "pending"
+  | "completed"
+  | "cancelled"
+  | "expired"
+  | "active"
+  | "partially_used"
+  | "fully_used"
 
 export interface PurchaseTransaction {
   id: string
@@ -22,7 +29,7 @@ export interface BookingDetails {
   professionalName?: string
   dateTime: Date
   clientName: string
-  source: 'new_purchase' | 'subscription_redemption' | 'gift_voucher_redemption'
+  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
   priceDetails: {
     basePrice: number
     finalAmount: number
@@ -30,7 +37,7 @@ export interface BookingDetails {
     appliedDiscounts?: number
     appliedVouchers?: number
   }
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'not_required'
+  paymentStatus: "pending" | "paid" | "failed" | "not_required"
 }
 
 export interface SubscriptionDetails {
@@ -48,7 +55,7 @@ export interface SubscriptionDetails {
 
 export interface GiftVoucherDetails {
   code: string
-  voucherType: 'treatment' | 'monetary'
+  voucherType: "treatment" | "monetary"
   originalAmount: number
   remainingAmount: number
   treatmentName?: string
@@ -75,7 +82,7 @@ export interface CustomerSummary {
   activeSubscriptions: number
   activeVouchers: number
   lastActivity: Date
-  userType?: 'guest' | 'member'
+  userType?: "guest" | "member"
   statistics: {
     completedBookings: number
     cancelledBookings: number

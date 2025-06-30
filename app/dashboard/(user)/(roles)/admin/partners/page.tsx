@@ -7,11 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPartners } from "./actions"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "ניהול שותפים | מנהל",
-  description: "ניהול שותפים במערכת"
+  description: "ניהול שותפים במערכת",
 }
 
 function PartnersLoadingSkeleton() {
@@ -43,7 +43,7 @@ async function PartnersPageContent() {
   }
   return (
     <PartnerManagement
-      initialPartners={initialData.data?.partners as any[] || []}
+      initialPartners={(initialData.data?.partners as any[]) || []}
       totalPages={initialData.data?.pagination.pages || 1}
       currentPage={initialData.data?.pagination.page || 1}
       initialSearch=""
@@ -65,7 +65,10 @@ export default async function AdminPartnersPage() {
           <p className="text-muted-foreground">ניהול וצפייה ברשימת השותפים במערכת</p>
         </div>
       </div>
-      <Suspense fallback={<PartnersLoadingSkeleton />}> <PartnersPageContent /> </Suspense>
+      <Suspense fallback={<PartnersLoadingSkeleton />}>
+        {" "}
+        <PartnersPageContent />{" "}
+      </Suspense>
     </div>
   )
 }

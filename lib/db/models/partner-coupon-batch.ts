@@ -42,7 +42,7 @@ const PartnerCouponBatchSchema: Schema<IPartnerCouponBatch> = new Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
+  }
 )
 
 // Ensure validUntil is after validFrom
@@ -60,7 +60,8 @@ PartnerCouponBatchSchema.virtual("isCurrentlyValid").get(function () {
   return this.isActive && this.validFrom <= now && this.validUntil >= now
 })
 
-const PartnerCouponBatch: Model<IPartnerCouponBatch> = 
-  mongoose.models.PartnerCouponBatch || mongoose.model<IPartnerCouponBatch>("PartnerCouponBatch", PartnerCouponBatchSchema)
+const PartnerCouponBatch: Model<IPartnerCouponBatch> =
+  mongoose.models.PartnerCouponBatch ||
+  mongoose.model<IPartnerCouponBatch>("PartnerCouponBatch", PartnerCouponBatchSchema)
 
-export default PartnerCouponBatch 
+export default PartnerCouponBatch

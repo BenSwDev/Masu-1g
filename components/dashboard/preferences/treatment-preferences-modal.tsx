@@ -21,9 +21,13 @@ interface TreatmentPreferencesModalProps {
 
 const defaultPrefs: ITreatmentPreferences = { therapistGender: "any" }
 
-export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences }: TreatmentPreferencesModalProps) {
+export function TreatmentPreferencesModal({
+  isOpen,
+  onClose,
+  currentPreferences,
+}: TreatmentPreferencesModalProps) {
   const [selectedGender, setSelectedGender] = useState<ITreatmentPreferences["therapistGender"]>(
-    currentPreferences?.therapistGender || defaultPrefs.therapistGender,
+    currentPreferences?.therapistGender || defaultPrefs.therapistGender
   )
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -34,7 +38,9 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
     if (isOpen && currentPreferences) {
       setSelectedGender(currentPreferences.therapistGender || defaultPrefs.therapistGender)
     } else if (isOpen && !currentPreferences && session?.user?.treatmentPreferences) {
-      setSelectedGender(session.user.treatmentPreferences.therapistGender || defaultPrefs.therapistGender)
+      setSelectedGender(
+        session.user.treatmentPreferences.therapistGender || defaultPrefs.therapistGender
+      )
     } else if (isOpen) {
       setSelectedGender(defaultPrefs.therapistGender)
     }
@@ -65,30 +71,44 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
       description={t("preferences.treatment.description")}
     >
       <div className="py-4">
-        <Label htmlFor="therapistGender" className={cn(dir === "rtl" ? "text-right block" : "text-left block")}>
+        <Label
+          htmlFor="therapistGender"
+          className={cn(dir === "rtl" ? "text-right block" : "text-left block")}
+        >
           {t("preferences.treatment.therapistGenderLabel")}
         </Label>
         <RadioGroup
           id="therapistGender"
           value={selectedGender}
-          onValueChange={(value: ITreatmentPreferences["therapistGender"]) => setSelectedGender(value)}
+          onValueChange={(value: ITreatmentPreferences["therapistGender"]) =>
+            setSelectedGender(value)
+          }
           className="mt-2 space-y-2"
           dir={dir}
         >
           <div
-            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+            className={cn(
+              "flex items-center gap-2",
+              dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
+            )}
           >
             <RadioGroupItem value="male" id="gender-male" />
             <Label htmlFor="gender-male">{t("preferences.treatment.genderMale")}</Label>
           </div>
           <div
-            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+            className={cn(
+              "flex items-center gap-2",
+              dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
+            )}
           >
             <RadioGroupItem value="female" id="gender-female" />
             <Label htmlFor="gender-female">{t("preferences.treatment.genderFemale")}</Label>
           </div>
           <div
-            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+            className={cn(
+              "flex items-center gap-2",
+              dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start"
+            )}
           >
             <RadioGroupItem value="any" id="gender-any" />
             <Label htmlFor="gender-any">{t("preferences.treatment.genderAny")}</Label>

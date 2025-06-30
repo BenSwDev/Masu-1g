@@ -40,10 +40,19 @@ async function SubscriptionsData() {
   const result = await getUserSubscriptions()
 
   if (!result.success) {
-    return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error || "Unknown error"}</div>
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-md">
+        Error: {result.error || "Unknown error"}
+      </div>
+    )
   }
 
-  return <UserSubscriptionsClient userSubscriptions={result.userSubscriptions} pagination={result.pagination} />
+  return (
+    <UserSubscriptionsClient
+      userSubscriptions={result.userSubscriptions}
+      pagination={result.pagination}
+    />
+  )
 }
 
 export default function UserSubscriptionsPage() {

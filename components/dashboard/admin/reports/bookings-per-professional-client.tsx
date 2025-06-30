@@ -3,8 +3,21 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 function getDateRange(frame: string) {
   const now = new Date()
@@ -40,7 +53,9 @@ export default function BookingsPerProfessionalClient() {
     setError(null)
     try {
       const { start, end } = getDateRange(timeframe)
-      const res = await fetch(`/api/admin/reports/bookings-per-professional?start=${start.toISOString()}&end=${end.toISOString()}`)
+      const res = await fetch(
+        `/api/admin/reports/bookings-per-professional?start=${start.toISOString()}&end=${end.toISOString()}`
+      )
       if (!res.ok) throw new Error("failed")
       const json = await res.json()
       setData(json.data || [])
@@ -83,11 +98,13 @@ export default function BookingsPerProfessionalClient() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.bookingsByProfessional.table.professional")}</TableHead>
-                <TableHead className="text-center">{t("reports.bookingsByProfessional.table.bookings")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.bookingsByProfessional.table.bookings")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((row) => (
+              {data.map(row => (
                 <TableRow key={row.professionalId}>
                   <TableCell>{row.professionalId}</TableCell>
                   <TableCell className="text-center">{row.count}</TableCell>

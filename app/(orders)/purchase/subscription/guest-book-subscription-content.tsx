@@ -11,7 +11,10 @@ interface GuestBookSubscriptionContentProps {
   treatmentsData: Awaited<ReturnType<typeof getTreatments>>
 }
 
-export default function GuestBookSubscriptionContent({ subsData, treatmentsData }: GuestBookSubscriptionContentProps) {
+export default function GuestBookSubscriptionContent({
+  subsData,
+  treatmentsData,
+}: GuestBookSubscriptionContentProps) {
   const { t, language, dir } = useTranslation()
 
   if (!subsData.success || !treatmentsData.success) {
@@ -38,4 +41,3 @@ export default function GuestBookSubscriptionContent({ subsData, treatmentsData 
     </GuestLayout>
   )
 }
-

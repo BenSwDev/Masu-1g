@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       subscriptionId,
       paymentId,
       success,
-      guestEmail: guestInfo.email
+      guestEmail: guestInfo.email,
     })
 
     // Confirm the subscription purchase
@@ -35,30 +35,27 @@ export async function POST(request: NextRequest) {
       subscriptionId,
       paymentId: paymentId || `payment_${Date.now()}`,
       success,
-      guestInfo
+      guestInfo,
     })
 
     if (result.success) {
       logger.info("Subscription payment confirmed successfully", {
         subscriptionId,
-        paymentSuccess: success
+        paymentSuccess: success,
       })
       return NextResponse.json(result)
     } else {
       logger.warn("Subscription payment confirmation failed", {
         subscriptionId,
-        error: result.error
+        error: result.error,
       })
       return NextResponse.json(result, { status: 400 })
     }
   } catch (error) {
     logger.error("Error processing subscription payment confirmation:", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     })
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
-} 
+}

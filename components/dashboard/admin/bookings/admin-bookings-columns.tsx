@@ -8,10 +8,10 @@ import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { useState, useMemo, useEffect } from "react"
-import { 
-  ArrowUpDown, 
-  MoreHorizontal, 
-  UserPlus, 
+import {
+  ArrowUpDown,
+  MoreHorizontal,
+  UserPlus,
   X,
   Loader2,
   MessageSquare,
@@ -20,7 +20,7 @@ import {
   Mail,
   UserCheck,
   UserX,
-  Eye
+  Eye,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -30,12 +30,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -47,7 +47,12 @@ import {
 import { toast } from "sonner"
 import { useToast } from "@/components/ui/use-toast"
 import type { PopulatedBooking } from "@/types/booking"
-import { assignProfessionalToBooking, getAvailableProfessionals, getSuitableProfessionalsForBooking, unassignProfessionalFromBooking } from "@/actions/booking-actions"
+import {
+  assignProfessionalToBooking,
+  getAvailableProfessionals,
+  getSuitableProfessionalsForBooking,
+  unassignProfessionalFromBooking,
+} from "@/actions/booking-actions"
 // Removed unused import - now using unified notification system
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
@@ -99,17 +104,15 @@ const formatCreatedAtSafe = (date: string | Date | null | undefined): string => 
   }
 }
 
-
-
 // Admin Actions Component
-const AdminBookingActions = ({ 
-  booking, 
+const AdminBookingActions = ({
+  booking,
   t,
-  onViewBooking
-}: { 
-  booking: PopulatedBooking; 
-  t: TFunction;
-  onViewBooking?: (booking: PopulatedBooking) => void;
+  onViewBooking,
+}: {
+  booking: PopulatedBooking
+  t: TFunction
+  onViewBooking?: (booking: PopulatedBooking) => void
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
@@ -120,7 +123,11 @@ const AdminBookingActions = ({
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
+  const {
+    data: existingReview,
+    isLoading: loadingReview,
+    refetch: refetchReview,
+  } = useQuery({
     queryKey: ["bookingReview", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: booking.status === "completed",
@@ -131,10 +138,12 @@ const AdminBookingActions = ({
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  const canAssignProfessional = !booking.professionalId && !["completed", "cancelled", "refunded"].includes(booking.status)
+  const canAssignProfessional =
+    !booking.professionalId && !["completed", "cancelled", "refunded"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
   const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
-  const canSendToProfessionals = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
+  const canSendToProfessionals =
+    !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
   const canViewResponses = ["confirmed", "in_process"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
@@ -157,7 +166,7 @@ const AdminBookingActions = ({
         <Button
           variant="ghost"
           size="sm"
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation()
             onViewBooking(booking)
           }}
@@ -167,7 +176,7 @@ const AdminBookingActions = ({
           {t("adminBookings.actions.viewBooking")}
         </Button>
       )}
-      
+
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -183,9 +192,7 @@ const AdminBookingActions = ({
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium">{t("adminBookings.actions")}</p>
-              <p className="text-xs text-muted-foreground">
-                #{booking.bookingNumber || "N/A"}
-              </p>
+              <p className="text-xs text-muted-foreground">#{booking.bookingNumber || "N/A"}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -197,12 +204,16 @@ const AdminBookingActions = ({
 
           <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
             <Mail className="mr-2 h-4 w-4" />
-            <span>{t("adminBookings.resendToClient")} ({t("common.notActive")})</span>
+            <span>
+              {t("adminBookings.resendToClient")} ({t("common.notActive")})
+            </span>
           </DropdownMenuItem>
 
           <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
             <UserPlus className="mr-2 h-4 w-4" />
-            <span>{t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}</span>
+            <span>
+              {t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}
+            </span>
           </DropdownMenuItem>
 
           {canSendToProfessionals && (
@@ -257,10 +268,7 @@ const AdminBookingActions = ({
           )}
 
           {hasNotes && (
-            <DropdownMenuItem
-              onClick={() => setShowNotesModal(true)}
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={() => setShowNotesModal(true)} className="cursor-pointer">
               <MessageSquare className="mr-2 h-4 w-4" />
               <span>{t("adminBookings.viewClientNotes")}</span>
             </DropdownMenuItem>
@@ -360,9 +368,10 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 // Info Components with null safety
 const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   // Handle both populated and non-populated userId
-  const user = booking?.userId && typeof booking.userId === 'object' && 'name' in booking.userId 
-    ? booking.userId as any 
-    : null
+  const user =
+    booking?.userId && typeof booking.userId === "object" && "name" in booking.userId
+      ? (booking.userId as any)
+      : null
 
   const clientName = booking?.recipientName || user?.name || t("common.unknown")
   const clientPhone = booking?.recipientPhone || user?.phone || ""
@@ -413,7 +422,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
     e.preventDefault() // Prevent any default behavior
     e.stopPropagation() // Prevent row click
     e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
-    
+
     setShowAssignDialog(true)
   }
 
@@ -429,9 +438,10 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
         setShowAssignDialog(false)
         setSelectedProfessional("")
       } else {
-        const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
-          ? t(result.error) 
-          : t("adminBookings.assignError")
+        const errorMessage =
+          result.error && result.error.startsWith("bookings.errors.")
+            ? t(result.error)
+            : t("adminBookings.assignError")
         toast.error(errorMessage)
       }
     } catch (error) {
@@ -446,7 +456,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
     e.preventDefault() // Prevent any default behavior
     e.stopPropagation() // Prevent row click
     e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
-    
+
     setIsLoading(true)
     try {
       const result = await unassignProfessionalFromBooking(booking._id)
@@ -465,13 +475,16 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   }
 
   // Get the list of professionals to show
-  const professionalsToShow = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
-    ? suitableProfessionals.professionals
-    : allProfessionals?.professionals || []
+  const professionalsToShow =
+    suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
+      ? suitableProfessionals.professionals
+      : allProfessionals?.professionals || []
 
-  const hasSuitableProfessionals = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
+  const hasSuitableProfessionals =
+    suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
   const hasAnyProfessionals = (professionalsToShow?.length || 0) > 0
-  const canSendNotifications = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
+  const canSendNotifications =
+    !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
 
   // If professional is assigned
   if (booking?.professionalId) {
@@ -488,7 +501,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             <Mail className="h-3 w-3" />
             {professional.email || "-"}
           </div>
-          
+
           {/* Action buttons on hover */}
           <div className="absolute top-0 left-0 w-full h-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
             <Button
@@ -497,8 +510,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onClick={handleOpenAssignDialog}
               disabled={isLoading}
               className="text-xs h-6"
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
+              onMouseUp={e => e.stopPropagation()}
             >
               <UserCheck className="h-3 w-3 mr-1" />
               {t("adminBookings.changeProfessional")}
@@ -509,8 +522,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onClick={handleUnassign}
               disabled={isLoading}
               className="text-xs h-6 text-red-600 hover:text-red-700"
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
+              onMouseUp={e => e.stopPropagation()}
             >
               <UserX className="h-3 w-3 mr-1" />
               {t("adminBookings.unassign")}
@@ -549,11 +562,14 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                             <span className="text-xs text-muted-foreground">
                               ({prof.gender === "male" ? t("common.male") : t("common.female")})
                             </span>
-                            {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
-                              <Badge variant="secondary" className="text-xs">
-                                {t("adminBookings.suitable")}
-                              </Badge>
-                            )}
+                            {hasSuitableProfessionals &&
+                              suitableProfessionals?.professionals?.some(
+                                (sp: any) => sp._id === prof._id
+                              ) && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {t("adminBookings.suitable")}
+                                </Badge>
+                              )}
                           </div>
                         </SelectItem>
                       ))
@@ -561,15 +577,16 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAssignDialog(false)}
+                  disabled={isLoading}
+                >
                   {t("common.cancel")}
                 </Button>
-                <Button 
-                  onClick={handleAssign} 
-                  disabled={!selectedProfessional || isLoading}
-                >
+                <Button onClick={handleAssign} disabled={!selectedProfessional || isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -597,8 +614,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
           onClick={handleOpenAssignDialog}
           disabled={isLoading}
           className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
-          onMouseDown={(e) => e.stopPropagation()}
-          onMouseUp={(e) => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+          onMouseUp={e => e.stopPropagation()}
         >
           {isLoading ? (
             <>
@@ -619,8 +636,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             size="sm"
             onClick={() => setShowNotificationModal(true)}
             className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full"
-            onMouseDown={(e) => e.stopPropagation()}
-            onMouseUp={(e) => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+            onMouseUp={e => e.stopPropagation()}
           >
             <MessageSquare className="mr-2 h-3 w-3" />
             שלח לתפוצה
@@ -640,10 +657,9 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">
-                {hasSuitableProfessionals 
-                  ? t("adminBookings.suitableProfessionals") 
-                  : t("adminBookings.availableProfessionals")
-                }
+                {hasSuitableProfessionals
+                  ? t("adminBookings.suitableProfessionals")
+                  : t("adminBookings.availableProfessionals")}
               </label>
               <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
                 <SelectTrigger className="mt-1">
@@ -662,11 +678,14 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                           <span className="text-xs text-muted-foreground">
                             ({prof.gender === "male" ? t("common.male") : t("common.female")})
                           </span>
-                          {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t("adminBookings.suitable")}
-                            </Badge>
-                          )}
+                          {hasSuitableProfessionals &&
+                            suitableProfessionals?.professionals?.some(
+                              (sp: any) => sp._id === prof._id
+                            ) && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t("adminBookings.suitable")}
+                              </Badge>
+                            )}
                         </div>
                       </SelectItem>
                     ))
@@ -674,15 +693,16 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={isLoading}>
+              <Button
+                variant="outline"
+                onClick={() => setShowAssignDialog(false)}
+                disabled={isLoading}
+              >
                 {t("common.cancel")}
               </Button>
-              <Button 
-                onClick={handleAssign} 
-                disabled={!selectedProfessional || isLoading}
-              >
+              <Button onClick={handleAssign} disabled={!selectedProfessional || isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -722,13 +742,9 @@ const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
 
   return (
     <div className="space-y-1 max-w-[180px]">
-      <div className="text-sm">
-        מחיר בסיס: ₪{basePrice.toFixed(2)}
-      </div>
+      <div className="text-sm">מחיר בסיס: ₪{basePrice.toFixed(2)}</div>
       {totalSurcharges > 0 && (
-        <div className="text-sm text-orange-600">
-          כולל תוספות: ₪{totalSurcharges.toFixed(2)}
-        </div>
+        <div className="text-sm text-orange-600">כולל תוספות: ₪{totalSurcharges.toFixed(2)}</div>
       )}
       <div className="font-medium text-sm border-t pt-1">
         מחיר כללי: ₪{totalPriceBeforeDiscounts.toFixed(2)}
@@ -744,9 +760,10 @@ const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   }
 
   const { priceDetails, source } = booking
-  const hasRedemption = priceDetails?.appliedCouponId || 
-                       priceDetails?.appliedGiftVoucherId || 
-                       priceDetails?.redeemedUserSubscriptionId
+  const hasRedemption =
+    priceDetails?.appliedCouponId ||
+    priceDetails?.appliedGiftVoucherId ||
+    priceDetails?.redeemedUserSubscriptionId
 
   if (!hasRedemption) {
     return <div className="text-sm text-muted-foreground">ללא מימוש</div>
@@ -755,19 +772,13 @@ const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   return (
     <div className="space-y-1 max-w-[150px]">
       {priceDetails.redeemedUserSubscriptionId && (
-        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-          מנוי
-        </div>
+        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">מנוי</div>
       )}
       {priceDetails.appliedGiftVoucherId && (
-        <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-          שובר מתנה
-        </div>
+        <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">שובר מתנה</div>
       )}
       {priceDetails.appliedCouponId && (
-        <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-          קופון
-        </div>
+        <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">קופון</div>
       )}
       {priceDetails.voucherAppliedAmount > 0 && (
         <div className="text-xs text-green-600">
@@ -791,19 +802,14 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
 
   return (
     <div className="space-y-1 max-w-[150px]">
-      <div className="text-sm font-medium">
-        סה"כ: ₪{finalAmount.toFixed(0)}
-      </div>
-      <div className="text-xs text-gray-600">
-        למטפל: ₪{professionalPayment.toFixed(0)}
-      </div>
-      <div className={`text-xs ${officeCommission >= 0 ? 'text-gray-600' : 'text-red-600'}`}>
-        לחברה: {officeCommission >= 0 ? '₪' : '-₪'}{Math.abs(officeCommission).toFixed(0)}
+      <div className="text-sm font-medium">סה"כ: ₪{finalAmount.toFixed(0)}</div>
+      <div className="text-xs text-gray-600">למטפל: ₪{professionalPayment.toFixed(0)}</div>
+      <div className={`text-xs ${officeCommission >= 0 ? "text-gray-600" : "text-red-600"}`}>
+        לחברה: {officeCommission >= 0 ? "₪" : "-₪"}
+        {Math.abs(officeCommission).toFixed(0)}
       </div>
       {priceDetails.isFullyCoveredByVoucherOrSubscription && (
-        <div className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded">
-          מכוסה במלואו
-        </div>
+        <div className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded">מכוסה במלואו</div>
       )}
     </div>
   )
@@ -853,14 +859,18 @@ const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
 // Update TreatmentInfo component to show more details with correct duration logic
 const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const treatment = booking.treatmentId as any
-  
+
   if (!treatment) {
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
   // Get duration information based on treatment type
   let durationInfo = null
-  if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+  if (
+    treatment.pricingType === "duration_based" &&
+    booking.selectedDurationId &&
+    treatment.durations
+  ) {
     const selectedDuration = treatment.durations.find(
       (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
     )
@@ -875,15 +885,9 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
     <div className="space-y-1 max-w-[200px]">
       <div className="font-medium text-sm">{treatment.name}</div>
       {treatment.category && (
-        <div className="text-xs text-muted-foreground">
-          {treatment.category}
-        </div>
+        <div className="text-xs text-muted-foreground">{treatment.category}</div>
       )}
-      {durationInfo && (
-        <div className="text-xs text-blue-600">
-          {durationInfo}
-        </div>
-      )}
+      {durationInfo && <div className="text-xs text-blue-600">{durationInfo}</div>}
     </div>
   )
 }
@@ -891,8 +895,9 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
 // Fix AddressDetailsInfo to properly handle parking information
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   // First try bookingAddressSnapshot, then addressId, then customAddressDetails
-  const address = booking.bookingAddressSnapshot || booking.customAddressDetails || (booking as any).addressId
-  
+  const address =
+    booking.bookingAddressSnapshot || booking.customAddressDetails || (booking as any).addressId
+
   if (!address) {
     return <div className="text-sm text-muted-foreground">-</div>
   }
@@ -904,20 +909,18 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   return (
     <div className="space-y-1 max-w-[200px]">
       <div className="font-medium text-sm">
-        {address.fullAddress || 
-         (address.street && streetNumber 
-          ? `${address.street} ${streetNumber}, ${address.city}`
-          : `${address.city}`
-         )
-        }
+        {address.fullAddress ||
+          (address.street && streetNumber
+            ? `${address.street} ${streetNumber}, ${address.city}`
+            : `${address.city}`)}
       </div>
-      
+
       {address.floor && (
         <div className="text-xs text-muted-foreground">
           {t("adminBookings.floor")}: {address.floor}
         </div>
       )}
-      
+
       {address.apartment && (
         <div className="text-xs text-muted-foreground">
           {t("adminBookings.apartment")}: {address.apartment}
@@ -959,22 +962,19 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
           {t("adminBookings.otherInstructions")}: {address.otherInstructions}
         </div>
       )}
-      
+
       {hasParking !== undefined && (
         <div className="flex items-center gap-1">
-          <span className={`text-xs px-2 py-1 rounded ${
-            hasParking 
-              ? "text-green-700 bg-green-100" 
-              : "text-red-700 bg-red-100"
-          }`}>
-            {hasParking 
-              ? t("adminBookings.hasParking") 
-              : t("adminBookings.noParking")
-            }
+          <span
+            className={`text-xs px-2 py-1 rounded ${
+              hasParking ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"
+            }`}
+          >
+            {hasParking ? t("adminBookings.hasParking") : t("adminBookings.noParking")}
           </span>
         </div>
       )}
-      
+
       {(address.additionalNotes || address.notes) && (
         <div className="text-xs text-muted-foreground bg-orange-50 px-2 py-1 rounded">
           {address.additionalNotes || address.notes}
@@ -1028,7 +1028,7 @@ const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: T
 
 // Export the updated column definition function
 export const getAdminBookingColumns = (
-  t: TFunction, 
+  t: TFunction,
   locale: string,
   onRowClick?: (booking: PopulatedBooking) => void
 ): ColumnDef<PopulatedBooking>[] => [
@@ -1050,12 +1050,8 @@ export const getAdminBookingColumns = (
       const createdAt = row.original.createdAt
       return (
         <div className="space-y-1">
-          <div className="font-mono text-sm font-medium">
-            #{bookingNumber || "Unknown"}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {formatCreatedAtSafe(createdAt)}
-          </div>
+          <div className="font-mono text-sm font-medium">#{bookingNumber || "Unknown"}</div>
+          <div className="text-xs text-muted-foreground">{formatCreatedAtSafe(createdAt)}</div>
         </div>
       )
     },
@@ -1146,21 +1142,17 @@ export const getAdminBookingColumns = (
     id: "actions",
     header: t("common.actions"),
     cell: ({ row }) => (
-      <div 
-        onClick={(e) => {
+      <div
+        onClick={e => {
           e.preventDefault()
           e.stopPropagation()
           e.nativeEvent.stopImmediatePropagation()
         }}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
+        onMouseDown={e => e.stopPropagation()}
+        onMouseUp={e => e.stopPropagation()}
       >
-        <AdminBookingActions 
-          booking={row.original} 
-          t={t} 
-          onViewBooking={onRowClick}
-        />
+        <AdminBookingActions booking={row.original} t={t} onViewBooking={onRowClick} />
       </div>
     ),
   },
-] 
+]

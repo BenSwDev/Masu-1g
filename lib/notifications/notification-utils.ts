@@ -90,61 +90,65 @@ export function obscurePhone(phone: string): string {
 
 // Development mode utilities
 let devNotifications: {
-  email: { [key: string]: { code: string; timestamp: number } };
-  phone: { [key: string]: { code: string; timestamp: number } };
+  email: { [key: string]: { code: string; timestamp: number } }
+  phone: { [key: string]: { code: string; timestamp: number } }
 } = {
   email: {},
   phone: {},
-};
+}
 
 export function getDevOTP(identifier: string, type: "email" | "phone"): string | null {
-  const notifications = devNotifications[type];
-  const notification = notifications[identifier];
-  
+  const notifications = devNotifications[type]
+  const notification = notifications[identifier]
+
   if (!notification) {
-    logger.debug(`No OTP found for ${type}: ${identifier}`);
-    return null;
+    logger.debug(`No OTP found for ${type}: ${identifier}`)
+    return null
   }
-  
+
   // Check if OTP is expired (10 minutes)
-  const now = Date.now();
+  const now = Date.now()
   if (now - notification.timestamp > 10 * 60 * 1000) {
-    logger.debug(`OTP expired for ${type}: ${identifier}`);
-    delete notifications[identifier];
-    return null;
+    logger.debug(`OTP expired for ${type}: ${identifier}`)
+    delete notifications[identifier]
+    return null
   }
-  
-  logger.debug(`Found valid OTP for ${type}: ${identifier}`);
-  return notification.code;
+
+  logger.debug(`Found valid OTP for ${type}: ${identifier}`)
+  return notification.code
 }
 
 export function storeDevOTP(identifier: string, type: "email" | "phone", code: string): void {
   devNotifications[type][identifier] = {
     code,
     timestamp: Date.now(),
-  };
-  logger.debug(`Stored OTP for ${type}: ${identifier}`);
+  }
+  logger.debug(`Stored OTP for ${type}: ${identifier}`)
 }
 
 export function clearDevOTP(identifier: string, type: "email" | "phone"): void {
-  delete devNotifications[type][identifier];
-  logger.debug(`Cleared OTP for ${type}: ${identifier}`);
+  delete devNotifications[type][identifier]
+  logger.debug(`Cleared OTP for ${type}: ${identifier}`)
 }
 
 // Enhanced logging for development
-export function logNotification(type: "email" | "sms", recipient: string, content: Record<string, unknown>): void {
+export function logNotification(
+  type: "email" | "sms",
+  recipient: string,
+  content: Record<string, unknown>
+): void {
   if (process.env.NODE_ENV === "development") {
-    console.log("\n=== Development Mode Notification ===");
-    console.log(`Type: ${type.toUpperCase()}`);
-    console.log(`Recipient: ${recipient}`);
-    console.log("Content:", content);
-    
+    console.log("\n=== Development Mode Notification ===")
+    console.log(`Type: ${type.toUpperCase()}`)
+    console.log(`Recipient: ${recipient}`)
+    console.log("Content:", content)
+
     if (content.code) {
-      console.log("\n🔑 OTP Code:", content.code);
-      console.log("⚠️  This code is valid for 10 minutes");
-      console.log("📝 Use this code to verify in development mode");
+      console.log("\n🔑 OTP Code:", content.code)
+      console.log("⚠️  This code is valid for 10 minutes")
+      console.log("📝 Use this code to verify in development mode")
     }
-    
-    console.log("===================================\n");
+
+    console.log("===================================\n")
   }
 }

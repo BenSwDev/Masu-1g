@@ -15,30 +15,25 @@ async function initializeDataIfNeeded(origin: string) {
   try {
     // TODO: Remove debug log
 
-
     const res = await fetch(`${origin}/api/init`, { method: "POST" })
 
     if (!res.ok) {
-      const contentType = res.headers.get("content-type") || "";
-      let body: string;
+      const contentType = res.headers.get("content-type") || ""
+      let body: string
       if (contentType.includes("application/json")) {
         try {
-          body = JSON.stringify(await res.json());
+          body = JSON.stringify(await res.json())
         } catch {
-          body = await res.text();
+          body = await res.text()
         }
       } else {
-        const text = await res.text();
-        body = text.length > 500 ? text.slice(0, 500) + "..." : text;
+        const text = await res.text()
+        body = text.length > 500 ? text.slice(0, 500) + "..." : text
       }
-      console.error(
-        `❌ Automatic data initialization failed (status ${res.status}):`,
-        body
-      );
+      console.error(`❌ Automatic data initialization failed (status ${res.status}):`, body)
     } else {
       isInitialized = true
       // TODO: Remove debug log
-
     }
   } catch (error) {
     console.error("❌ Automatic data initialization failed:", error)
@@ -54,14 +49,14 @@ export default withAuth(
       // Run initialization in background without blocking the request
       initializeDataIfNeeded(req.nextUrl.origin).catch(console.error)
     }
-    
+
     return NextResponse.next()
   },
   {
     callbacks: {
       authorized: ({ token }) => !!token,
     },
-  },
+  }
 )
 
 // Protect specific routes

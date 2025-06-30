@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     // Check admin authorization
     const session = await getServerSession(authOptions)
     if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     await dbConnect()
@@ -28,20 +25,20 @@ export async function GET(request: NextRequest) {
     // Get all professionals with their profiles
     const professionals = await User.find({
       roles: "professional",
-      isActive: true
+      isActive: true,
     })
-    .select("name email phone gender preferredLanguage")
-    .lean()
+      .select("name email phone gender preferredLanguage")
+      .lean()
 
     // Get professional profiles for additional info
     const professionalIds = professionals.map(p => p._id)
     const profiles = await ProfessionalProfile.find({
-      userId: { $in: professionalIds }
+      userId: { $in: professionalIds },
     })
-    .populate('workAreas.cityId', 'name')
-    .populate('treatments.treatmentId', 'name')
-    .select('userId workAreas treatments isActive')
-    .lean()
+      .populate("workAreas.cityId", "name")
+      .populate("treatments.treatmentId", "name")
+      .select("userId workAreas treatments isActive")
+      .lean()
 
     // Create a map of profiles by userId
     const profileMap = new Map()
@@ -66,29 +63,28 @@ export async function GET(request: NextRequest) {
           profileId: profile._id,
           workAreas: profile.workAreas || [],
           treatments: profile.treatments || [],
-          preferredLanguage: prof.preferredLanguage
+          preferredLanguage: prof.preferredLanguage,
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))
 
     logger.info(`Retrieved ${result.length} available professionals for admin`, {
-      adminId: session.user.id
+      adminId: session.user.id,
     })
 
     return NextResponse.json({
       success: true,
       professionals: result,
-      count: result.length
+      count: result.length,
     })
-
   } catch (error) {
     logger.error("Error in available professionals endpoint:", error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Internal server error" 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal server error",
       },
       { status: 500 }
     )
   }
-} 
+}

@@ -8,9 +8,20 @@ import { DataTable } from "@/components/ui/data-table" // Corrected path
 import { useToast } from "@/components/ui/use-toast"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { CouponForm, type CouponFormValues } from "./coupon-form"
-import { getAllCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/app/dashboard/(user)/(roles)/admin/coupons/actions"
+import {
+  getAllCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
+} from "@/app/dashboard/(user)/(roles)/admin/coupons/actions"
 import { columns as couponColumnsDefinition } from "./coupons-columns" // Corrected import and aliased
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +47,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
 
   // Ensure initialData.coupons is an array, default to empty array if undefined
   const [coupons, setCoupons] = React.useState<Array<ICoupon & { effectiveStatus: string }>>(
-    (initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || [],
+    (initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || []
   )
   const [pagination, setPagination] = React.useState({
     totalPages: initialData?.totalPages || 1,
@@ -45,7 +56,9 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
   })
   const [loading, setLoading] = React.useState(false)
   const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [editingCoupon, setEditingCoupon] = React.useState<(ICoupon & { effectiveStatus: string }) | null>(null)
+  const [editingCoupon, setEditingCoupon] = React.useState<
+    (ICoupon & { effectiveStatus: string }) | null
+  >(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [couponToDelete, setCouponToDelete] = React.useState<string | null>(null)
 
@@ -73,8 +86,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       const result = await deleteCoupon(couponToDelete)
       if (result.success) {
         toast({ title: t("common.success"), description: t("adminCoupons.toast.deleteSuccess") })
-        setCoupons((prev) => prev.filter((c) => c._id.toString() !== couponToDelete))
-        setPagination((prev) => ({ ...prev, totalCoupons: prev.totalCoupons - 1 }))
+        setCoupons(prev => prev.filter(c => c._id.toString() !== couponToDelete))
+        setPagination(prev => ({ ...prev, totalCoupons: prev.totalCoupons - 1 }))
       } else {
         toast({
           title: t("common.error"),
@@ -83,7 +96,11 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         })
       }
     } catch (error) {
-      toast({ title: t("common.error"), description: t("adminCoupons.toast.deleteError"), variant: "destructive" })
+      toast({
+        title: t("common.error"),
+        description: t("adminCoupons.toast.deleteError"),
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
       setIsDeleteDialogOpen(false)
@@ -104,22 +121,24 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       if (result.success && result.data) {
         toast({
           title: t("common.success"),
-          description: editingCoupon ? t("adminCoupons.toast.updateSuccess") : t("adminCoupons.toast.createSuccess"),
+          description: editingCoupon
+            ? t("adminCoupons.toast.updateSuccess")
+            : t("adminCoupons.toast.createSuccess"),
         })
         setIsFormOpen(false)
         setEditingCoupon(null)
         // Instead of router.refresh(), update state directly for better UX
         if (editingCoupon) {
-          setCoupons((prev) =>
-            prev.map((c) =>
+          setCoupons(prev =>
+            prev.map(c =>
               c._id.toString() === result.data?._id.toString()
                 ? (result.data as ICoupon & { effectiveStatus: string })
-                : c,
-            ),
+                : c
+            )
           )
         } else {
-          setCoupons((prev) => [...prev, result.data as ICoupon & { effectiveStatus: string }])
-          setPagination((prev) => ({ ...prev, totalCoupons: prev.totalCoupons + 1 }))
+          setCoupons(prev => [...prev, result.data as ICoupon & { effectiveStatus: string }])
+          setPagination(prev => ({ ...prev, totalCoupons: prev.totalCoupons + 1 }))
         }
         // Force a state refresh by reloading the page after successful operations
       } else {
@@ -130,7 +149,11 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         })
       }
     } catch (error) {
-      toast({ title: t("common.error"), description: t("adminCoupons.toast.formError"), variant: "destructive" })
+      toast({
+        title: t("common.error"),
+        description: t("adminCoupons.toast.formError"),
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -150,12 +173,12 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
   const memoizedColumns = React.useMemo(
     () =>
       couponColumnsDefinition({
-        onEdit: (coupon) => onEditRef.current(coupon),
-        onDelete: (couponId) => onDeleteRef.current(couponId),
+        onEdit: coupon => onEditRef.current(coupon),
+        onDelete: couponId => onDeleteRef.current(couponId),
         t,
         dir,
       }),
-    [t, dir],
+    [t, dir]
   )
 
   const isMobile = useIsMobile()
@@ -174,13 +197,14 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     <>
       <div className="flex items-center justify-between mb-4">
         <Button onClick={handleCreateNew} disabled={loading}>
-          <PlusCircle className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("adminCoupons.createNew")}
+          <PlusCircle className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+          {t("adminCoupons.createNew")}
         </Button>
       </div>
 
       {isMobile ? (
         <div className="space-y-4">
-          {coupons.map((coupon) => (
+          {coupons.map(coupon => (
             <CouponCard
               key={coupon._id.toString()}
               coupon={coupon}
@@ -216,7 +240,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
 
       <Dialog
         open={isFormOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setEditingCoupon(null)
           }
@@ -226,10 +250,14 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>
-              {editingCoupon ? t("adminCoupons.form.titleEdit") : t("adminCoupons.form.titleCreate")}
+              {editingCoupon
+                ? t("adminCoupons.form.titleEdit")
+                : t("adminCoupons.form.titleCreate")}
             </DialogTitle>
             <DialogDescription>
-              {editingCoupon ? t("adminCoupons.form.descriptionEdit") : t("adminCoupons.form.descriptionCreate")}
+              {editingCoupon
+                ? t("adminCoupons.form.descriptionEdit")
+                : t("adminCoupons.form.descriptionCreate")}
             </DialogDescription>
           </DialogHeader>
           <CouponForm
@@ -246,7 +274,9 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("adminCoupons.deleteDialog.title")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("adminCoupons.deleteDialog.description")}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {t("adminCoupons.deleteDialog.description")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>{t("common.cancel")}</AlertDialogCancel>
@@ -255,7 +285,9 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
               disabled={loading}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {loading ? t("adminCoupons.deleteDialog.deletingButton") : t("adminCoupons.deleteDialog.confirmButton")}
+              {loading
+                ? t("adminCoupons.deleteDialog.deletingButton")
+                : t("adminCoupons.deleteDialog.confirmButton")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

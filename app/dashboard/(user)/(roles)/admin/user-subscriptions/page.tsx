@@ -71,7 +71,9 @@ async function UserSubscriptionsData() {
   } catch (error) {
     console.error("Error loading user subscriptions:", error)
     // Using a generic error message key
-    return <DataFetchError error={"An unexpected error occurred while fetching user subscriptions."} />
+    return (
+      <DataFetchError error={"An unexpected error occurred while fetching user subscriptions."} />
+    )
   }
 }
 

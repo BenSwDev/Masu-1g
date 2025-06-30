@@ -11,9 +11,7 @@ import {
   type IProfessionalShare,
 } from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
-import type {
-  CalculatedPriceDetails as ClientCalculatedPriceDetails,
-} from "@/types/booking"
+import type { CalculatedPriceDetails as ClientCalculatedPriceDetails } from "@/types/booking"
 import { format } from "date-fns"
 import { CalculatePricePayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
@@ -22,12 +20,17 @@ import { getDayWorkingHours } from "./booking-availability"
 /**
  * Calculate booking price with all discounts, surcharges, and professional payments
  */
-export async function calculateBookingPrice(
-  payload: unknown,
-): Promise<{ success: boolean; priceDetails?: ClientCalculatedPriceDetails; error?: string; issues?: z.ZodIssue[] }> {
+export async function calculateBookingPrice(payload: unknown): Promise<{
+  success: boolean
+  priceDetails?: ClientCalculatedPriceDetails
+  error?: string
+  issues?: z.ZodIssue[]
+}> {
   const validationResult = CalculatePricePayloadSchema.safeParse(payload)
   if (!validationResult.success) {
-    logger.warn("Invalid payload for calculateBookingPrice:", { issues: validationResult.error.issues })
+    logger.warn("Invalid payload for calculateBookingPrice:", {
+      issues: validationResult.error.issues,
+    })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
   const validatedPayload = validationResult.data
@@ -52,11 +55,13 @@ export async function calculateBookingPrice(
         12,
         0,
         0,
-        0,
-      ),
+        0
+      )
     )
 
-    const treatment = (await Treatment.findById(treatmentId).populate("durations").lean()) as ITreatment | null
+    const treatment = (await Treatment.findById(treatmentId)
+      .populate("durations")
+      .lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
     }
@@ -66,7 +71,9 @@ export async function calculateBookingPrice(
       basePrice = treatment.fixedPrice || 0
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) return { success: false, error: "bookings.errors.durationRequired" }
-      const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId && d.isActive)
+      const duration = treatment.durations?.find(
+        d => d._id.toString() === selectedDurationId && d.isActive
+      )
       if (!duration) return { success: false, error: "bookings.errors.durationNotFound" }
       basePrice = duration.price
     }
@@ -102,24 +109,32 @@ export async function calculateBookingPrice(
         // Check if booking time is within surcharge time range
         const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
         let isInSurchargeRange = true // Default to true if no time range specified
-        
-        if (daySettings.priceAddition.priceAdditionStartTime || daySettings.priceAddition.priceAdditionEndTime) {
+
+        if (
+          daySettings.priceAddition.priceAdditionStartTime ||
+          daySettings.priceAddition.priceAdditionEndTime
+        ) {
           let surchargeStartMinutes = 0
           let surchargeEndMinutes = 24 * 60 // Default to full day
-          
+
           if (daySettings.priceAddition.priceAdditionStartTime) {
-            const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
-            surchargeStartMinutes = (startHour * 60) + startMinute
+            const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime
+              .split(":")
+              .map(Number)
+            surchargeStartMinutes = startHour * 60 + startMinute
           }
-          
+
           if (daySettings.priceAddition.priceAdditionEndTime) {
-            const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
-            surchargeEndMinutes = (endHour * 60) + endMinute
+            const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime
+              .split(":")
+              .map(Number)
+            surchargeEndMinutes = endHour * 60 + endMinute
           }
-          
-          isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
+
+          isInSurchargeRange =
+            bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
         }
-        
+
         if (isInSurchargeRange) {
           const surchargeBase = basePrice
           const surchargeAmount =
@@ -130,20 +145,24 @@ export async function calculateBookingPrice(
           if (surchargeAmount > 0) {
             // Calculate professional share for this surcharge
             let professionalShare: IProfessionalShare | undefined = undefined
-            if ('professionalShare' in daySettings && daySettings.professionalShare && daySettings.professionalShare.amount > 0) {
+            if (
+              "professionalShare" in daySettings &&
+              daySettings.professionalShare &&
+              daySettings.professionalShare.amount > 0
+            ) {
               professionalShare = {
                 amount: daySettings.professionalShare.amount,
-                type: daySettings.professionalShare.type
+                type: daySettings.professionalShare.type,
               }
             }
 
             priceDetails.surcharges.push({
               description:
                 daySettings.priceAddition.description ||
-                ('notes' in daySettings ? daySettings.notes : '') ||
+                ("notes" in daySettings ? daySettings.notes : "") ||
                 `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
               amount: surchargeAmount,
-              ...(professionalShare && { professionalShare })
+              ...(professionalShare && { professionalShare }),
             })
             priceDetails.totalSurchargesAmount += surchargeAmount
           }
@@ -162,15 +181,20 @@ export async function calculateBookingPrice(
         userSub &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0 &&
-        userSub.userId && userId && userSub.userId.toString() === userId
+        userSub.userId &&
+        userId &&
+        userSub.userId.toString() === userId
       ) {
         const subTreatment = userSub.treatmentId as ITreatment
-        const isTreatmentMatch = subTreatment && (subTreatment._id as any).toString() === treatmentId
+        const isTreatmentMatch =
+          subTreatment && (subTreatment._id as any).toString() === treatmentId
         let isDurationMatch = true
         if (isTreatmentMatch && subTreatment.pricingType === "duration_based") {
           isDurationMatch = userSub.selectedDurationId
             ? userSub.selectedDurationId.toString() === selectedDurationId
-            : subTreatment.durations?.some((d: any) => d._id.toString() === selectedDurationId && d.isActive) || false
+            : subTreatment.durations?.some(
+                (d: any) => d._id.toString() === selectedDurationId && d.isActive
+              ) || false
         }
 
         if (isTreatmentMatch && isDurationMatch) {
@@ -205,7 +229,11 @@ export async function calculateBookingPrice(
             durationMatches = !voucher.selectedDurationId
           }
 
-          if (treatmentMatches && durationMatches && !priceDetails.isBaseTreatmentCoveredBySubscription) {
+          if (
+            treatmentMatches &&
+            durationMatches &&
+            !priceDetails.isBaseTreatmentCoveredBySubscription
+          ) {
             priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
             priceDetails.isBaseTreatmentCoveredByTreatmentVoucher = true
             priceDetails.voucherAppliedAmount = basePrice
@@ -215,12 +243,13 @@ export async function calculateBookingPrice(
     }
 
     let subtotalBeforeGeneralReductions =
-      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher + priceDetails.totalSurchargesAmount
+      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher +
+      priceDetails.totalSurchargesAmount
 
     // Apply monetary gift vouchers
     if (priceDetails.appliedGiftVoucherId && subtotalBeforeGeneralReductions > 0) {
       const voucherToApply = (await GiftVoucher.findById(
-        priceDetails.appliedGiftVoucherId,
+        priceDetails.appliedGiftVoucherId
       ).lean()) as IGiftVoucher | null
       if (
         voucherToApply &&
@@ -229,7 +258,10 @@ export async function calculateBookingPrice(
         voucherToApply.remainingAmount &&
         voucherToApply.remainingAmount > 0
       ) {
-        const amountToApplyFromMonetary = Math.min(subtotalBeforeGeneralReductions, voucherToApply.remainingAmount)
+        const amountToApplyFromMonetary = Math.min(
+          subtotalBeforeGeneralReductions,
+          voucherToApply.remainingAmount
+        )
         if (amountToApplyFromMonetary > 0) {
           priceDetails.voucherAppliedAmount = amountToApplyFromMonetary
           subtotalBeforeGeneralReductions -= amountToApplyFromMonetary
@@ -265,14 +297,21 @@ export async function calculateBookingPrice(
     priceDetails.finalAmount = Math.max(0, currentTotalDue)
     priceDetails.isFullyCoveredByVoucherOrSubscription = priceDetails.finalAmount === 0
 
-    if (priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
+    if (
+      priceDetails.isBaseTreatmentCoveredBySubscription ||
+      priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
+    ) {
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
     } else {
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
     }
 
     // Calculate professional payment and office commission
-    const financialBreakdown = calculateProfessionalPayment(treatment, selectedDurationId, priceDetails)
+    const financialBreakdown = calculateProfessionalPayment(
+      treatment,
+      selectedDurationId,
+      priceDetails
+    )
     Object.assign(priceDetails, financialBreakdown)
 
     return { success: true, priceDetails }
@@ -315,7 +354,8 @@ function calculateProfessionalPayment(
         if (surcharge.professionalShare.type === "fixed") {
           surchargesProfessionalPayment += surcharge.professionalShare.amount
         } else if (surcharge.professionalShare.type === "percentage") {
-          surchargesProfessionalPayment += surchargeAmount * (surcharge.professionalShare.amount / 100)
+          surchargesProfessionalPayment +=
+            surchargeAmount * (surcharge.professionalShare.amount / 100)
         }
       }
     }
@@ -350,8 +390,9 @@ export async function recalculateBookingPrice(
   try {
     await dbConnect()
 
-    const booking = await require("@/lib/db/models/booking").default.findById(bookingId)
-      .populate('treatmentId')
+    const booking = await require("@/lib/db/models/booking")
+      .default.findById(bookingId)
+      .populate("treatmentId")
       .lean()
 
     if (!booking) {
@@ -382,14 +423,19 @@ export async function recalculateBookingPrice(
 /**
  * Calculate price for guest booking
  */
-export async function calculateGuestBookingPrice(
-  payload: unknown,
-): Promise<{ success: boolean; priceDetails?: ClientCalculatedPriceDetails; error?: string; issues?: z.ZodIssue[] }> {
+export async function calculateGuestBookingPrice(payload: unknown): Promise<{
+  success: boolean
+  priceDetails?: ClientCalculatedPriceDetails
+  error?: string
+  issues?: z.ZodIssue[]
+}> {
   // Guest bookings use the same pricing logic as regular bookings
   // but without user-specific discounts like subscriptions
   const validationResult = CalculatePricePayloadSchema.safeParse(payload)
   if (!validationResult.success) {
-    logger.warn("Invalid payload for calculateGuestBookingPrice:", { issues: validationResult.error.issues })
+    logger.warn("Invalid payload for calculateGuestBookingPrice:", {
+      issues: validationResult.error.issues,
+    })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
 
@@ -420,7 +466,7 @@ export async function validateCouponForBooking(
     }
 
     const now = new Date()
-    
+
     if (!coupon.isActive) {
       return { valid: false, error: "Coupon is not active" }
     }
@@ -476,7 +522,9 @@ export async function getBasePriceForTreatment(
       if (!selectedDurationId) {
         return { success: false, error: "Duration required for duration-based treatment" }
       }
-      const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId && d.isActive)
+      const duration = treatment.durations?.find(
+        d => d._id.toString() === selectedDurationId && d.isActive
+      )
       if (!duration) {
         return { success: false, error: "Duration not found" }
       }
@@ -488,4 +536,4 @@ export async function getBasePriceForTreatment(
     logger.error("Error getting base price for treatment:", { error, treatmentId })
     return { success: false, error: "System error" }
   }
-} 
+}

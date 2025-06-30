@@ -7,12 +7,19 @@ import { useTranslation } from "@/lib/translations/i18n"
 
 interface GuestBookTreatmentContentProps {
   success: boolean
-  initialData?: Awaited<ReturnType<typeof import("@/actions/booking-actions").getGuestBookingInitialData>>["data"]
+  initialData?: Awaited<
+    ReturnType<typeof import("@/actions/booking-actions").getGuestBookingInitialData>
+  >["data"]
   voucher?: any
   subscription?: any
 }
 
-export default function GuestBookTreatmentContent({ success, initialData, voucher, subscription }: GuestBookTreatmentContentProps) {
+export default function GuestBookTreatmentContent({
+  success,
+  initialData,
+  voucher,
+  subscription,
+}: GuestBookTreatmentContentProps) {
   const { t, language, dir } = useTranslation()
 
   if (!success || !initialData) {
@@ -40,4 +47,3 @@ export default function GuestBookTreatmentContent({ success, initialData, vouche
     </GuestLayout>
   )
 }
-

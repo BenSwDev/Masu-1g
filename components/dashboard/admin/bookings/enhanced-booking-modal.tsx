@@ -2,19 +2,39 @@
 
 import React, { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { 
-  Calendar, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, 
-  AlertTriangle, Stethoscope, CheckCircle, XCircle, DollarSign, 
-  UserCheck, Building, Truck, Gift, Ticket, Target, Eye, Edit3,
-  BadgeCheck, Shield, Activity, TrendingUp, Calculator,
-  Home, Hotel, Car
+import {
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  CreditCard,
+  FileText,
+  Star,
+  AlertTriangle,
+  Stethoscope,
+  CheckCircle,
+  XCircle,
+  DollarSign,
+  UserCheck,
+  Building,
+  Truck,
+  Gift,
+  Ticket,
+  Target,
+  Eye,
+  Edit3,
+  BadgeCheck,
+  Shield,
+  Activity,
+  TrendingUp,
+  Calculator,
+  Home,
+  Hotel,
+  Car,
 } from "lucide-react"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,7 +53,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
+import {
+  getAvailableProfessionals,
+  assignProfessionalToBooking,
+  updateBookingByAdmin,
+} from "@/actions/booking-actions"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
@@ -49,7 +73,7 @@ export default function EnhancedBookingModal({
   booking,
   isOpen,
   onClose,
-  t
+  t,
 }: EnhancedBookingModalProps) {
   const [editedBooking, setEditedBooking] = useState<Partial<PopulatedBooking>>({})
   const [isSaving, setIsSaving] = useState(false)
@@ -78,7 +102,7 @@ export default function EnhancedBookingModal({
       if (isNaN(d.getTime())) return { date: "", time: "" }
       return {
         date: format(d, "dd/MM/yyyy"),
-        time: format(d, "HH:mm")
+        time: format(d, "HH:mm"),
       }
     } catch (error) {
       return { date: "", time: "" }
@@ -88,11 +112,11 @@ export default function EnhancedBookingModal({
   const getStatusColor = (status: string) => {
     const colors = {
       pending_payment: "bg-yellow-500",
-      in_process: "bg-blue-500", 
+      in_process: "bg-blue-500",
       confirmed: "bg-green-500",
       completed: "bg-gray-500",
       cancelled: "bg-red-500",
-      refunded: "bg-purple-500"
+      refunded: "bg-purple-500",
     }
     return colors[status as keyof typeof colors] || "bg-gray-500"
   }
@@ -104,7 +128,7 @@ export default function EnhancedBookingModal({
       confirmed: CheckCircle,
       completed: BadgeCheck,
       cancelled: XCircle,
-      refunded: TrendingUp
+      refunded: TrendingUp,
     }
     const Icon = icons[status as keyof typeof icons] || Clock
     return <Icon className="h-4 w-4" />
@@ -112,16 +136,16 @@ export default function EnhancedBookingModal({
 
   // Data preparation
   const dateTime = formatDateTime(booking.bookingDateTime)
-  const client = booking.userId as any || {}
+  const client = (booking.userId as any) || {}
   const bookedByInfo = {
     name: booking.bookedByUserName || client?.name || t("common.unknown"),
     email: booking.bookedByUserEmail || client?.email || "",
-    phone: booking.bookedByUserPhone || client?.phone || ""
+    phone: booking.bookedByUserPhone || client?.phone || "",
   }
   const treatment = booking.treatmentId as any
   const professional = booking.professionalId as any
   const addressSnapshot = booking.bookingAddressSnapshot || booking.customAddressDetails
-  
+
   // Price calculations (snapshot from booking, not dynamic!)
   const priceDetails = booking.priceDetails
   const basePrice = priceDetails.basePrice || 0
@@ -133,15 +157,17 @@ export default function EnhancedBookingModal({
     setIsSaving(true)
     try {
       const updates: any = {}
-      
+
       if (editedBooking.status !== booking.status) {
         updates.status = editedBooking.status
       }
-      
+
       if (editedBooking.bookingDateTime !== booking.bookingDateTime) {
-        updates.bookingDateTime = editedBooking.bookingDateTime ? new Date(editedBooking.bookingDateTime) : undefined
+        updates.bookingDateTime = editedBooking.bookingDateTime
+          ? new Date(editedBooking.bookingDateTime)
+          : undefined
       }
-      
+
       if (editedBooking.notes !== booking.notes) {
         updates.notes = editedBooking.notes
       }
@@ -175,9 +201,7 @@ export default function EnhancedBookingModal({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-6 w-6 text-blue-600" />
-                <DialogTitle className="text-xl">
-                  הזמנה #{booking.bookingNumber}
-                </DialogTitle>
+                <DialogTitle className="text-xl">הזמנה #{booking.bookingNumber}</DialogTitle>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${getStatusColor(booking.status)}`} />
@@ -216,7 +240,6 @@ export default function EnhancedBookingModal({
           {/* Overview Tab - Read-only beautiful display */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
               {/* Client & Booking Info */}
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="pb-3">
@@ -235,28 +258,28 @@ export default function EnhancedBookingModal({
                       <div className="text-sm text-muted-foreground">מזמין</div>
                     </div>
                   </div>
-                  
+
                   {bookedByInfo.phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-400" />
                       <span>{formatPhoneForDisplay(bookedByInfo.phone || "")}</span>
                     </div>
                   )}
-                  
+
                   {bookedByInfo.email && (
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-400" />
                       <span>{bookedByInfo.email}</span>
                     </div>
                   )}
-                  
+
                   <Separator />
-                  
+
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-blue-500" />
                     <span className="font-medium">{dateTime.date}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-500" />
                     <span className="font-medium">{dateTime.time}</span>
@@ -279,22 +302,26 @@ export default function EnhancedBookingModal({
                       {treatment?.category ? treatment.category : ""}
                     </div>
                   </div>
-                  
+
                   {booking.selectedDurationId && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-green-500" />
                       <span>משך טיפול מותאם</span>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-green-500" />
                     <span>
-                      מטפל מועדף: {booking.therapistGenderPreference === "any" ? "לא משנה" 
-                        : booking.therapistGenderPreference === "male" ? "זכר" : "נקבה"}
+                      מטפל מועדף:{" "}
+                      {booking.therapistGenderPreference === "any"
+                        ? "לא משנה"
+                        : booking.therapistGenderPreference === "male"
+                          ? "זכר"
+                          : "נקבה"}
                     </span>
                   </div>
-                  
+
                   {booking.recipientName && booking.recipientName !== bookedByInfo.name && (
                     <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                       <div className="flex items-center gap-2 text-orange-700 font-medium">
@@ -324,36 +351,44 @@ export default function EnhancedBookingModal({
                     <span>מחיר בסיס:</span>
                     <span className="font-medium">₪{basePrice}</span>
                   </div>
-                  
+
                   {surcharges > 0 && (
                     <div className="flex justify-between items-center text-orange-600">
                       <span>תוספות:</span>
                       <span>+₪{surcharges}</span>
                     </div>
                   )}
-                  
+
                   {discounts > 0 && (
                     <div className="flex justify-between items-center text-green-600">
                       <span>הנחות/מימושים:</span>
                       <span>-₪{discounts}</span>
                     </div>
                   )}
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span>סה"כ לתשלום:</span>
                     <span className="text-purple-600">₪{finalAmount}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 mt-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      booking.paymentDetails?.paymentStatus === "paid" ? "bg-green-500" : 
-                      booking.paymentDetails?.paymentStatus === "pending" ? "bg-yellow-500" : "bg-red-500"
-                    }`} />
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        booking.paymentDetails?.paymentStatus === "paid"
+                          ? "bg-green-500"
+                          : booking.paymentDetails?.paymentStatus === "pending"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                    />
                     <span className="text-sm">
-                      {booking.paymentDetails?.paymentStatus === "paid" ? "שולם" :
-                       booking.paymentDetails?.paymentStatus === "pending" ? "ממתין לתשלום" : "לא שולם"}
+                      {booking.paymentDetails?.paymentStatus === "paid"
+                        ? "שולם"
+                        : booking.paymentDetails?.paymentStatus === "pending"
+                          ? "ממתין לתשלום"
+                          : "לא שולם"}
                     </span>
                   </div>
                 </CardContent>
@@ -388,9 +423,11 @@ export default function EnhancedBookingModal({
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>סטטוס הזמנה</Label>
-                    <Select 
+                    <Select
                       value={editedBooking.status || booking.status}
-                      onValueChange={(value) => setEditedBooking(prev => ({ ...prev, status: value as any }))}
+                      onValueChange={value =>
+                        setEditedBooking(prev => ({ ...prev, status: value as any }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -410,22 +447,25 @@ export default function EnhancedBookingModal({
                     <Label>תאריך ושעת הטיפול</Label>
                     <Input
                       type="datetime-local"
-                      value={editedBooking.bookingDateTime ? 
-                        format(new Date(editedBooking.bookingDateTime), "yyyy-MM-dd'T'HH:mm") :
-                        format(new Date(booking.bookingDateTime), "yyyy-MM-dd'T'HH:mm")
+                      value={
+                        editedBooking.bookingDateTime
+                          ? format(new Date(editedBooking.bookingDateTime), "yyyy-MM-dd'T'HH:mm")
+                          : format(new Date(booking.bookingDateTime), "yyyy-MM-dd'T'HH:mm")
                       }
-                      onChange={(e) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        bookingDateTime: new Date(e.target.value) 
-                      }))}
+                      onChange={e =>
+                        setEditedBooking(prev => ({
+                          ...prev,
+                          bookingDateTime: new Date(e.target.value),
+                        }))
+                      }
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label>הערות לקוח</Label>
-                    <Textarea 
+                    <Textarea
                       value={editedBooking.notes || booking.notes || ""}
-                      onChange={(e) => setEditedBooking(prev => ({ ...prev, notes: e.target.value }))}
+                      onChange={e => setEditedBooking(prev => ({ ...prev, notes: e.target.value }))}
                       rows={4}
                       placeholder="הערות מהלקוח..."
                     />
@@ -440,15 +480,21 @@ export default function EnhancedBookingModal({
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>סטטוס תשלום</Label>
-                    <Select 
-                      value={editedBooking.paymentDetails?.paymentStatus || booking.paymentDetails?.paymentStatus || "pending"}
-                      onValueChange={(value) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        paymentDetails: { 
-                          ...prev.paymentDetails, 
-                          paymentStatus: value as any 
-                        } 
-                      }))}
+                    <Select
+                      value={
+                        editedBooking.paymentDetails?.paymentStatus ||
+                        booking.paymentDetails?.paymentStatus ||
+                        "pending"
+                      }
+                      onValueChange={value =>
+                        setEditedBooking(prev => ({
+                          ...prev,
+                          paymentDetails: {
+                            ...prev.paymentDetails,
+                            paymentStatus: value as any,
+                          },
+                        }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -489,26 +535,30 @@ export default function EnhancedBookingModal({
                     חשוב לדעת
                   </div>
                   <p className="text-sm text-amber-700 mt-1">
-                    המחירים כאן הם snapshot מרגע ההזמנה ולא ישתנו גם אם מחירי הטיפולים יתעדכנו במערכת
+                    המחירים כאן הם snapshot מרגע ההזמנה ולא ישתנו גם אם מחירי הטיפולים יתעדכנו
+                    במערכת
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900">פירוט מחירים</h4>
-                    
+
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span>מחיר בסיס טיפול:</span>
                         <span className="font-medium">₪{basePrice}</span>
                       </div>
-                      
+
                       {priceDetails.surcharges && priceDetails.surcharges.length > 0 && (
                         <>
                           <Separator />
                           <div className="text-sm text-gray-600">תוספות:</div>
                           {priceDetails.surcharges.map((surcharge, index) => (
-                            <div key={index} className="flex justify-between text-sm text-orange-600">
+                            <div
+                              key={index}
+                              className="flex justify-between text-sm text-orange-600"
+                            >
                               <span>{surcharge.description}:</span>
                               <span>+₪{surcharge.amount}</span>
                             </div>
@@ -519,14 +569,14 @@ export default function EnhancedBookingModal({
                           </div>
                         </>
                       )}
-                      
+
                       <Separator />
-                      
+
                       <div className="flex justify-between font-medium">
                         <span>סכום לפני הנחות:</span>
                         <span>₪{basePrice + surcharges}</span>
                       </div>
-                      
+
                       {discounts > 0 && (
                         <>
                           <div className="flex justify-between text-green-600">
@@ -535,9 +585,9 @@ export default function EnhancedBookingModal({
                           </div>
                         </>
                       )}
-                      
+
                       <Separator className="border-2" />
-                      
+
                       <div className="flex justify-between text-lg font-bold">
                         <span>סה"כ לתשלום:</span>
                         <span className="text-purple-600">₪{finalAmount}</span>
@@ -547,22 +597,26 @@ export default function EnhancedBookingModal({
 
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900">פירוט רווחים</h4>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-50 p-3 rounded-lg">
                         <div className="text-sm font-medium text-green-800">שולם בפועל</div>
                         <div className="text-lg font-bold text-green-600">₪{finalAmount}</div>
                       </div>
-                      
+
                       <div className="bg-blue-50 p-3 rounded-lg">
                         <div className="text-sm font-medium text-blue-800">תשלום למטפל (אומדן)</div>
-                        <div className="text-lg font-bold text-blue-600">₪{(finalAmount * 0.7).toFixed(2)}</div>
+                        <div className="text-lg font-bold text-blue-600">
+                          ₪{(finalAmount * 0.7).toFixed(2)}
+                        </div>
                         <div className="text-xs text-blue-600">70% מהסכום הסופי</div>
                       </div>
-                      
+
                       <div className="bg-purple-50 p-3 rounded-lg">
                         <div className="text-sm font-medium text-purple-800">עמלת משרד (אומדן)</div>
-                        <div className="text-lg font-bold text-purple-600">₪{(finalAmount * 0.3).toFixed(2)}</div>
+                        <div className="text-lg font-bold text-purple-600">
+                          ₪{(finalAmount * 0.3).toFixed(2)}
+                        </div>
                         <div className="text-xs text-purple-600">30% מהסכום הסופי</div>
                       </div>
                     </div>
@@ -596,7 +650,7 @@ export default function EnhancedBookingModal({
                           </div>
                         </div>
                       </div>
-                      
+
                       {professional.phone && (
                         <div className="flex items-center gap-2 text-sm text-green-700">
                           <Phone className="h-4 w-4" />
@@ -616,28 +670,31 @@ export default function EnhancedBookingModal({
                         <UserCheck className="h-8 w-8 text-gray-400" />
                       </div>
                       <h3 className="font-medium text-gray-900 mb-2">טרם שויך מטפל</h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        יש לשייך מטפל מתאים להזמנה זו
-                      </p>
+                      <p className="text-sm text-gray-500 mb-4">יש לשייך מטפל מתאים להזמנה זו</p>
                     </div>
 
                     <div className="space-y-2">
                       <Label>בחר מטפל מהרשימה</Label>
-                      <Select onValueChange={async (value) => {
-                        try {
-                          const result = await assignProfessionalToBooking(booking._id.toString(), value)
-                          if (result.success) {
-                            toast.success("המטפל שויך בהצלחה")
-                            queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-                            // Refresh page
-                            window.location.reload()
-                          } else {
-                            toast.error(result.error || "שגיאה בשיוך המטפל")
+                      <Select
+                        onValueChange={async value => {
+                          try {
+                            const result = await assignProfessionalToBooking(
+                              booking._id.toString(),
+                              value
+                            )
+                            if (result.success) {
+                              toast.success("המטפל שויך בהצלחה")
+                              queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+                              // Refresh page
+                              window.location.reload()
+                            } else {
+                              toast.error(result.error || "שגיאה בשיוך המטפל")
+                            }
+                          } catch (error) {
+                            toast.error("שגיאה בשיוך המטפל")
                           }
-                        } catch (error) {
-                          toast.error("שגיאה בשיוך המטפל")
-                        }
-                      }}>
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="בחר מטפל..." />
                         </SelectTrigger>
@@ -675,4 +732,4 @@ export default function EnhancedBookingModal({
       </DialogContent>
     </Dialog>
   )
-} 
+}

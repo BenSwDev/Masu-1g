@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getBookingById } from "../actions"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "עריכת הזמנה | מנהל",
@@ -29,7 +29,7 @@ function BookingLoadingSkeleton() {
           <Skeleton className="h-10 w-24" />
         </div>
       </div>
-      
+
       {/* Tabs Skeleton */}
       <Card>
         <CardContent className="p-6">
@@ -38,7 +38,7 @@ function BookingLoadingSkeleton() {
               <Skeleton key={i} className="h-10 w-24" />
             ))}
           </div>
-          
+
           {/* Content Skeleton */}
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -62,9 +62,7 @@ async function BookingPageContent({ bookingId }: { bookingId: string }) {
       notFound()
     }
 
-    return (
-      <BookingEditPage booking={result.booking} />
-    )
+    return <BookingEditPage booking={result.booking} />
   } catch (error) {
     console.error("Error loading booking:", error)
     notFound()
@@ -73,7 +71,7 @@ async function BookingPageContent({ bookingId }: { bookingId: string }) {
 
 export default async function BookingPage({ params }: { params: { bookingId: string } }) {
   const session = await requireUserSession()
-  
+
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
@@ -85,4 +83,4 @@ export default async function BookingPage({ params }: { params: { bookingId: str
       </Suspense>
     </div>
   )
-} 
+}

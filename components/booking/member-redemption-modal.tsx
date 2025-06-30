@@ -12,7 +12,10 @@ interface MemberRedemptionModalProps {
   vouchers: BookingInitialData["usableGiftVouchers"]
 }
 
-export default function MemberRedemptionModal({ subscriptions, vouchers }: MemberRedemptionModalProps) {
+export default function MemberRedemptionModal({
+  subscriptions,
+  vouchers,
+}: MemberRedemptionModalProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
@@ -45,7 +48,11 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
           ))}
           {vouchers?.map((v: IGiftVoucher) => (
             <div key={v._id} className="border rounded p-3 space-y-1">
-              <div className="font-medium">{v.voucherType === "monetary" ? t("giftVouchers.types.monetary") || "שובר כספי" : t("giftVouchers.types.treatment") || "שובר טיפול"}</div>
+              <div className="font-medium">
+                {v.voucherType === "monetary"
+                  ? t("giftVouchers.types.monetary") || "שובר כספי"
+                  : t("giftVouchers.types.treatment") || "שובר טיפול"}
+              </div>
               <div className="mt-2 p-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-green-800">{v.code}</div>
                 <div className="text-xs text-green-600 mt-1">קוד השובר למימוש</div>
@@ -60,4 +67,3 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
     </Dialog>
   )
 }
-

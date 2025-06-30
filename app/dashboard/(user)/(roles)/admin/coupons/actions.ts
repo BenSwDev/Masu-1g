@@ -8,13 +8,13 @@ import User from "@/lib/db/models/user"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { Types } from "mongoose"
-import { 
-  getAllCoupons, 
-  createCoupon, 
-  updateCoupon, 
+import {
+  getAllCoupons,
+  createCoupon,
+  updateCoupon,
   deleteCoupon,
   getCouponById,
-  getAssignedPartnerCoupons
+  getAssignedPartnerCoupons,
 } from "@/actions/coupon-actions"
 
 // Types
@@ -87,11 +87,11 @@ export async function getAdminCoupons(
 
     const total = await Coupon.countDocuments(query)
 
-    const couponsWithStatus = (coupons.map(coupon => ({
+    const couponsWithStatus = coupons.map(coupon => ({
       ...coupon,
       _id: String(coupon._id),
       effectiveStatus: calculateCouponEffectiveStatus(coupon as ICoupon),
-    })) as unknown) as CouponWithStatus[]
+    })) as unknown as CouponWithStatus[]
 
     return {
       success: true,
@@ -152,9 +152,9 @@ function calculateCouponEffectiveStatus(coupon: ICoupon): string {
 
 export {
   getAllCoupons,
-  createCoupon, 
+  createCoupon,
   updateCoupon,
   deleteCoupon,
   getCouponById,
-  getAssignedPartnerCoupons
-} 
+  getAssignedPartnerCoupons,
+}

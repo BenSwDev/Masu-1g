@@ -13,10 +13,13 @@ export const UserQueries = {
   async findForLogin(phone: string) {
     // Use centralized phone normalization
     const variations = createPhoneVariations(phone)
-    
+
     return User.findOne({
-      phone: { $in: variations }
-    }).select("+password email name image roles phone").lean().exec()
+      phone: { $in: variations },
+    })
+      .select("+password email name image roles phone")
+      .lean()
+      .exec()
   },
 
   // Find user by ID (no password)
@@ -50,7 +53,7 @@ export const UserQueries = {
 
     // Search for any of the variations
     const user = await User.findOne({
-      phone: { $in: variations }
+      phone: { $in: variations },
     }).lean()
 
     return !!user

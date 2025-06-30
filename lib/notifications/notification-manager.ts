@@ -32,14 +32,23 @@ export class NotificationManager {
    * @param data Notification data
    * @returns Result of the send operation
    */
-  async sendNotification(recipient: NotificationRecipient, data: NotificationData): Promise<NotificationResult> {
+  async sendNotification(
+    recipient: NotificationRecipient,
+    data: NotificationData
+  ): Promise<NotificationResult> {
     const logId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
-    logger.info(`[${logId}] Sending ${data.type} notification to ${recipient.type}: ${this.obscureContact(recipient.value)}`)
+
+    logger.info(
+      `[${logId}] Sending ${data.type} notification to ${recipient.type}: ${this.obscureContact(recipient.value)}`
+    )
 
     // In development mode, just log the notification
     if (this.isDevelopment) {
-      logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, data as unknown as Record<string, unknown>)
+      logNotification(
+        recipient.type === "email" ? "email" : "sms",
+        recipient.value,
+        data as unknown as Record<string, unknown>
+      )
       logger.info(`[${logId}] Development mode - notification logged only`)
       return { success: true, messageId: `dev_${logId}` }
     }
@@ -51,28 +60,34 @@ export class NotificationManager {
         logger.error(`[${logId}] ${error}`)
         return { success: false, error }
       }
-      
+
       try {
         const result = await emailService.sendNotification(recipient as EmailRecipient, data)
-        logger.info(`[${logId}] Email notification result:`, { success: result.success, messageId: result.messageId })
+        logger.info(`[${logId}] Email notification result:`, {
+          success: result.success,
+          messageId: result.messageId,
+        })
         return result
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown email error"
         logger.error(`[${logId}] Email notification failed:`, { error: errorMessage })
         return { success: false, error: errorMessage }
       }
-    } 
-    
+    }
+
     if (recipient.type === "phone") {
       if (!smsService.isServiceConfigured()) {
         const error = "SMS service not configured"
         logger.error(`[${logId}] ${error}`)
         return { success: false, error }
       }
-      
+
       try {
         const result = await smsService.sendNotification(recipient as PhoneRecipient, data)
-        logger.info(`[${logId}] SMS notification result:`, { success: result.success, messageId: result.messageId })
+        logger.info(`[${logId}] SMS notification result:`, {
+          success: result.success,
+          messageId: result.messageId,
+        })
         return result
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown SMS error"
@@ -93,11 +108,11 @@ export class NotificationManager {
    * @returns Array of results for each recipient
    */
   async sendNotificationToMultiple(
-    recipients: NotificationRecipient[], 
+    recipients: NotificationRecipient[],
     data: NotificationData
   ): Promise<NotificationResult[]> {
     const logId = `multi_notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
+
     logger.info(`[${logId}] Sending ${data.type} notification to ${recipients.length} recipients`)
 
     if (recipients.length === 0) {
@@ -107,24 +122,27 @@ export class NotificationManager {
 
     try {
       // Send all notifications in parallel for better performance
-      const promises = recipients.map((recipient, index) => 
+      const promises = recipients.map((recipient, index) =>
         this.sendNotification(recipient, data).catch(error => {
-          logger.error(`[${logId}] Failed to send to recipient ${index}:`, { error, recipient: this.obscureContact(recipient.value) })
+          logger.error(`[${logId}] Failed to send to recipient ${index}:`, {
+            error,
+            recipient: this.obscureContact(recipient.value),
+          })
           return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
         })
       )
-      
+
       const results = await Promise.all(promises)
-      
+
       const successCount = results.filter(r => r.success).length
       logger.info(`[${logId}] Sent ${successCount}/${recipients.length} notifications successfully`)
-      
+
       return results
     } catch (error) {
       logger.error(`[${logId}] Error in batch notification send:`, { error })
-      return recipients.map(() => ({ 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown batch error" 
+      return recipients.map(() => ({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown batch error",
       }))
     }
   }
@@ -139,21 +157,23 @@ export class NotificationManager {
   async sendOTP(
     recipient: EmailRecipient | PhoneRecipient,
     length: number = 6,
-    expiryMinutes: number = 10,
+    expiryMinutes: number = 10
   ): Promise<{ code: string; expiryDate: Date; result: NotificationResult }> {
     const logId = `otp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
     const code = this.generateOTP(length)
     const expiryDate = new Date(Date.now() + expiryMinutes * 60 * 1000)
 
-    logger.info(`[${logId}] Generating OTP for ${recipient.type}: ${this.obscureContact(recipient.value)}`)
+    logger.info(
+      `[${logId}] Generating OTP for ${recipient.type}: ${this.obscureContact(recipient.value)}`
+    )
 
     // In development mode, store and log the OTP
     if (this.isDevelopment) {
       storeDevOTP(recipient.value, recipient.type, code)
-      logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, { 
-        code, 
+      logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, {
+        code,
         expiryDate,
-        expiresIn: expiryMinutes 
+        expiresIn: expiryMinutes,
       })
       logger.info(`[${logId}] Development mode - OTP: ${code}`)
       return { code, expiryDate, result: { success: true, messageId: `dev_otp_${logId}` } }
@@ -163,25 +183,25 @@ export class NotificationManager {
     try {
       const data: OTPNotificationData = { type: "otp", code, expiresIn: expiryMinutes }
       const result = await this.sendNotification(recipient, data)
-      
+
       if (result.success) {
         logger.info(`[${logId}] OTP sent successfully`)
       } else {
         logger.error(`[${logId}] Failed to send OTP:`, { error: result.error })
       }
-      
+
       return { code, expiryDate, result }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       logger.error(`[${logId}] Error sending OTP:`, { error: errorMessage })
-      
+
       return {
         code,
         expiryDate,
         result: {
           success: false,
-          error: errorMessage
-        }
+          error: errorMessage,
+        },
       }
     }
   }
@@ -194,22 +214,25 @@ export class NotificationManager {
    */
   async sendWelcome(recipient: EmailRecipient, name: string): Promise<NotificationResult> {
     const logId = `welcome_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
-    logger.info(`[${logId}] Sending welcome notification to: ${this.obscureContact(recipient.value)}`)
+
+    logger.info(
+      `[${logId}] Sending welcome notification to: ${this.obscureContact(recipient.value)}`
+    )
 
     try {
       const data: WelcomeNotificationData = { type: "welcome", name }
       const result = await this.sendNotification(recipient, data)
-      
+
       if (result.success) {
         logger.info(`[${logId}] Welcome notification sent successfully`)
       } else {
         logger.error(`[${logId}] Failed to send welcome notification:`, { error: result.error })
       }
-      
+
       return result
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send welcome notification"
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send welcome notification"
       logger.error(`[${logId}] Error sending welcome notification:`, { error: errorMessage })
       return { success: false, error: errorMessage }
     }
@@ -225,25 +248,34 @@ export class NotificationManager {
   async sendPasswordReset(
     recipient: EmailRecipient,
     resetUrl: string,
-    expiryMinutes: number = 60,
+    expiryMinutes: number = 60
   ): Promise<NotificationResult> {
     const logId = `pwd_reset_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
-    logger.info(`[${logId}] Sending password reset notification to: ${this.obscureContact(recipient.value)}`)
+
+    logger.info(
+      `[${logId}] Sending password reset notification to: ${this.obscureContact(recipient.value)}`
+    )
 
     try {
-      const data: PasswordResetNotificationData = { type: "password-reset", resetUrl, expiresIn: expiryMinutes }
+      const data: PasswordResetNotificationData = {
+        type: "password-reset",
+        resetUrl,
+        expiresIn: expiryMinutes,
+      }
       const result = await this.sendNotification(recipient, data)
-      
+
       if (result.success) {
         logger.info(`[${logId}] Password reset notification sent successfully`)
       } else {
-        logger.error(`[${logId}] Failed to send password reset notification:`, { error: result.error })
+        logger.error(`[${logId}] Failed to send password reset notification:`, {
+          error: result.error,
+        })
       }
-      
+
       return result
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset notification"
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send password reset notification"
       logger.error(`[${logId}] Error sending password reset notification:`, { error: errorMessage })
       return { success: false, error: errorMessage }
     }
@@ -267,27 +299,34 @@ export class NotificationManager {
       isForSomeoneElse: boolean
       isBookerForSomeoneElse?: boolean
       actualRecipientName?: string
-    },
+    }
   ): Promise<NotificationResult[]> {
     const logId = `booking_success_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
-    logger.info(`[${logId}] Sending booking success notifications to ${recipients.length} recipients`)
+
+    logger.info(
+      `[${logId}] Sending booking success notifications to ${recipients.length} recipients`
+    )
 
     try {
       const data: TreatmentBookingSuccessNotificationData = {
         type: "treatment-booking-success",
-        ...bookingData
+        ...bookingData,
       }
-      
+
       const results = await this.sendNotificationToMultiple(recipients, data)
-      
+
       const successCount = results.filter(r => r.success).length
-      logger.info(`[${logId}] Sent ${successCount}/${recipients.length} booking success notifications`)
-      
+      logger.info(
+        `[${logId}] Sent ${successCount}/${recipients.length} booking success notifications`
+      )
+
       return results
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send booking success notifications"
-      logger.error(`[${logId}] Error sending booking success notifications:`, { error: errorMessage })
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send booking success notifications"
+      logger.error(`[${logId}] Error sending booking success notifications:`, {
+        error: errorMessage,
+      })
       return recipients.map(() => ({ success: false, error: errorMessage }))
     }
   }
@@ -303,20 +342,27 @@ export class NotificationManager {
     message: string
   ): Promise<NotificationResult[]> {
     const logId = `purchase_success_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
-    logger.info(`[${logId}] Sending purchase success notifications to ${recipients.length} recipients`)
+
+    logger.info(
+      `[${logId}] Sending purchase success notifications to ${recipients.length} recipients`
+    )
 
     try {
       const data = { type: "purchase-success" as const, message }
       const results = await this.sendNotificationToMultiple(recipients, data)
-      
+
       const successCount = results.filter(r => r.success).length
-      logger.info(`[${logId}] Sent ${successCount}/${recipients.length} purchase success notifications`)
-      
+      logger.info(
+        `[${logId}] Sent ${successCount}/${recipients.length} purchase success notifications`
+      )
+
       return results
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send purchase success notifications"
-      logger.error(`[${logId}] Error sending purchase success notifications:`, { error: errorMessage })
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send purchase success notifications"
+      logger.error(`[${logId}] Error sending purchase success notifications:`, {
+        error: errorMessage,
+      })
       return recipients.map(() => ({ success: false, error: errorMessage }))
     }
   }
@@ -328,13 +374,13 @@ export class NotificationManager {
     return {
       email: {
         configured: emailService.isServiceConfigured(),
-        service: "NodeMailer"
+        service: "NodeMailer",
       },
       sms: {
         configured: smsService.isServiceConfigured(),
-        service: "Twilio"
+        service: "Twilio",
       },
-      environment: this.isDevelopment ? "development" : "production"
+      environment: this.isDevelopment ? "development" : "production",
     }
   }
 

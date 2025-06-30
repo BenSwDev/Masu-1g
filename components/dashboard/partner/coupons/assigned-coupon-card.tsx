@@ -1,7 +1,14 @@
 "use client"
 
 import type { ICoupon } from "@/lib/db/models/coupon"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
@@ -21,7 +28,8 @@ const StatusBadge = ({ status }: { status: string }) => {
     case "active":
       return (
         <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-xs">
-          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.active")}
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminCoupons.status.active")}
         </Badge>
       )
     case "scheduled":
@@ -64,7 +72,7 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
           description: t("partnerAssignedCoupons.toast.copySuccessDescription") + " " + coupon.code,
         })
       })
-      .catch((_err) => {
+      .catch(_err => {
         toast({
           title: t("common.error"),
           description: t("partnerAssignedCoupons.toast.copyErrorDescription"),
@@ -104,7 +112,9 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         <div className="flex justify-between">
           <span>{t("partnerAssignedCoupons.card.discountLabel")}</span>
           <span className="font-semibold">
-            {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)}
+            {coupon.discountType === "percentage"
+              ? `${coupon.discountValue}%`
+              : formatCurrency(coupon.discountValue)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -121,13 +131,16 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
           <span>{t("partnerAssignedCoupons.card.totalUsesLabel")}</span>
           <span className="font-semibold">
             {/* Ensuring usageLimit is treated as a number for comparison */}
-            {coupon.timesUsed} / {Number(coupon.usageLimit) === 0 ? t("common.unlimited") : coupon.usageLimit}
+            {coupon.timesUsed} /{" "}
+            {Number(coupon.usageLimit) === 0 ? t("common.unlimited") : coupon.usageLimit}
           </span>
         </div>
         <div className="flex justify-between">
           <span>{t("partnerAssignedCoupons.card.usesPerCustomerLabel")}</span>
           <span className="font-semibold">
-            {Number(coupon.usageLimitPerUser) === 0 ? t("common.unlimited") : coupon.usageLimitPerUser}
+            {Number(coupon.usageLimitPerUser) === 0
+              ? t("common.unlimited")
+              : coupon.usageLimitPerUser}
           </span>
         </div>
         {coupon.notesForPartner && (

@@ -72,15 +72,15 @@ export async function getUserProfile() {
 
     await dbConnect()
 
-    const user = await User.findById(session.user.id).select("-password") as {
-      _id: { toString(): string };
-      name: string;
-      email: string;
-      phone: string;
-      gender: string;
-      dateOfBirth: Date;
-      image: string;
-      createdAt: Date;
+    const user = (await User.findById(session.user.id).select("-password")) as {
+      _id: { toString(): string }
+      name: string
+      email: string
+      phone: string
+      gender: string
+      dateOfBirth: Date
+      image: string
+      createdAt: Date
     }
 
     if (!user) {

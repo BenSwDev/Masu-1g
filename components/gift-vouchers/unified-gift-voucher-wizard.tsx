@@ -7,13 +7,24 @@ import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { useTranslation } from "@/lib/translations/i18n"
 import { DollarSign, Gift, CheckCircle } from "lucide-react"
-import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import {
+  initiateGuestPurchaseGiftVoucher,
+  confirmGuestGiftVoucherPurchase,
+  saveAbandonedGiftVoucherPurchase,
+  type GiftVoucherPlain,
+} from "@/actions/gift-voucher-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
@@ -26,17 +37,17 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
   const router = useRouter()
   const { toast } = useToast()
   const { t, language, dir } = useTranslation()
-  
+
   // Wizard state - 3 steps total
   const [currentStep, setCurrentStep] = useState(1)
-  
+
   // Selection state
   const [voucherType, setVoucherType] = useState<"monetary" | "treatment">("monetary")
   const [monetaryValue, setMonetaryValue] = useState(150)
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [selectedCategory, setSelectedCategory] = useState<string>("")
-  
+
   // Form state
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
@@ -55,16 +66,22 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     setGuestInfo(prefilledGuestInfo)
   }, [prefilledGuestInfo])
 
-  const selectedTreatment = treatments.find(t => (typeof t._id === 'string' ? t._id : t._id?.toString()) === selectedTreatmentId)
-  const selectedDuration = selectedTreatment?.pricingType === "duration_based"
-    ? selectedTreatment.durations?.find(d => (typeof d._id === 'string' ? d._id : d._id?.toString()) === selectedDurationId)
-    : undefined
+  const selectedTreatment = treatments.find(
+    t => (typeof t._id === "string" ? t._id : t._id?.toString()) === selectedTreatmentId
+  )
+  const selectedDuration =
+    selectedTreatment?.pricingType === "duration_based"
+      ? selectedTreatment.durations?.find(
+          d => (typeof d._id === "string" ? d._id : d._id?.toString()) === selectedDurationId
+        )
+      : undefined
 
-  const price = voucherType === "monetary"
-    ? Math.max(monetaryValue, 150)
-    : selectedTreatment?.pricingType === "fixed"
-      ? selectedTreatment.fixedPrice || 0
-      : selectedDuration?.price || 0
+  const price =
+    voucherType === "monetary"
+      ? Math.max(monetaryValue, 150)
+      : selectedTreatment?.pricingType === "fixed"
+        ? selectedTreatment.fixedPrice || 0
+        : selectedDuration?.price || 0
 
   const calculatedPrice: CalculatedPriceDetails = {
     basePrice: price,
@@ -97,8 +114,9 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
         return category
     }
   }
-  const categoryTreatments = selectedCategory ? 
-    treatments.filter(t => t.category === selectedCategory) : []
+  const categoryTreatments = selectedCategory
+    ? treatments.filter(t => t.category === selectedCategory)
+    : []
 
   // Wizard navigation
   const nextStep = () => setCurrentStep(s => Math.min(s + 1, 3))
@@ -118,7 +136,15 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
         currentStep,
       })
     }
-  }, [guestUserId, guestInfo, voucherType, selectedTreatmentId, selectedDurationId, monetaryValue, currentStep])
+  }, [
+    guestUserId,
+    guestInfo,
+    voucherType,
+    selectedTreatmentId,
+    selectedDurationId,
+    monetaryValue,
+    currentStep,
+  ])
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
@@ -141,7 +167,12 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
   const handlePurchase = async () => {
     setIsLoading(true)
     let sendDateForPayload: string | undefined = "immediate"
-    if (guestInfo.isGift && guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime) {
+    if (
+      guestInfo.isGift &&
+      guestInfo.sendOption === "scheduled" &&
+      guestInfo.sendDate &&
+      guestInfo.sendTime
+    ) {
       const [h, m] = guestInfo.sendTime.split(":").map(Number)
       const combined = new Date(guestInfo.sendDate)
       combined.setHours(h, m, 0, 0)
@@ -152,10 +183,13 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       const initRes = await initiateGuestPurchaseGiftVoucher({
         voucherType,
         treatmentId: voucherType === "treatment" ? selectedTreatmentId : undefined,
-        selectedDurationId: voucherType === "treatment" ? selectedDurationId || undefined : undefined,
+        selectedDurationId:
+          voucherType === "treatment" ? selectedDurationId || undefined : undefined,
         monetaryValue: voucherType === "monetary" ? price : undefined,
         isGift: guestInfo.isGift || false,
-        recipientName: guestInfo.recipientFirstName ? guestInfo.recipientFirstName + " " + guestInfo.recipientLastName : undefined,
+        recipientName: guestInfo.recipientFirstName
+          ? guestInfo.recipientFirstName + " " + guestInfo.recipientLastName
+          : undefined,
         recipientPhone: guestInfo.recipientPhone,
         greetingMessage: guestInfo.greetingMessage,
         sendDate: sendDateForPayload,
@@ -163,7 +197,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
           phone: guestInfo.phone,
-        }
+        },
       })
 
       if (!initRes.success || !initRes.voucherId) {
@@ -181,7 +215,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
           phone: guestInfo.phone,
-        }
+        },
       })
 
       setIsLoading(false)
@@ -191,7 +225,11 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
         if (voucherId) {
           router.push(`/purchase/gift-voucher/confirmation?voucherId=${voucherId}&status=success`)
         } else {
-          toast({ variant: "destructive", title: "שגיאה", description: "לא ניתן למצוא מזהה השובר. אנא פנה לתמיכה." })
+          toast({
+            variant: "destructive",
+            title: "שגיאה",
+            description: "לא ניתן למצוא מזהה השובר. אנא פנה לתמיכה.",
+          })
         }
       } else {
         toast({ variant: "destructive", title: "שגיאה", description: confirmRes.error || "" })
@@ -205,9 +243,11 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
   }
 
   // Validation for each step
-  const canProceedToStep2 = (voucherType === "monetary" && monetaryValue >= 150) ||
-    (voucherType === "treatment" && selectedTreatmentId && 
-     (selectedTreatment?.pricingType !== "duration_based" || selectedDurationId))
+  const canProceedToStep2 =
+    (voucherType === "monetary" && monetaryValue >= 150) ||
+    (voucherType === "treatment" &&
+      selectedTreatmentId &&
+      (selectedTreatment?.pricingType !== "duration_based" || selectedDurationId))
 
   // Step 1: Selection (Voucher Type + Details)
   const renderStep1 = () => (
@@ -226,10 +266,12 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div
               className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                voucherType === 'monetary' ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                voucherType === "monetary"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
               }`}
               onClick={() => {
-                setVoucherType('monetary')
+                setVoucherType("monetary")
                 setSelectedTreatmentId("")
                 setSelectedDurationId("")
                 setSelectedCategory("")
@@ -237,22 +279,28 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
             >
               <div className="flex items-center justify-center mb-2">
                 <DollarSign className="w-6 h-6 text-blue-600" />
-                {voucherType === 'monetary' && <CheckCircle className="w-5 h-5 text-blue-500 ml-2" />}
+                {voucherType === "monetary" && (
+                  <CheckCircle className="w-5 h-5 text-blue-500 ml-2" />
+                )}
               </div>
               <div className="font-medium">שובר כספי</div>
               <div className="text-sm text-gray-600 mt-1">סכום קבוע</div>
             </div>
             <div
               className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                voucherType === 'treatment' ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                voucherType === "treatment"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
               }`}
               onClick={() => {
-                setVoucherType('treatment')
+                setVoucherType("treatment")
               }}
             >
               <div className="flex items-center justify-center mb-2">
                 <Gift className="w-6 h-6 text-blue-600" />
-                {voucherType === 'treatment' && <CheckCircle className="w-5 h-5 text-blue-500 ml-2" />}
+                {voucherType === "treatment" && (
+                  <CheckCircle className="w-5 h-5 text-blue-500 ml-2" />
+                )}
               </div>
               <div className="font-medium">שובר טיפול</div>
               <div className="text-sm text-gray-600 mt-1">טיפול ספציפי</div>
@@ -262,33 +310,39 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       </Card>
 
       {/* סכום השובר */}
-      {voucherType === 'monetary' && (
+      {voucherType === "monetary" && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">סכום השובר</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
-              {[200, 300, 500, 1000].map((presetAmount) => (
+              {[200, 300, 500, 1000].map(presetAmount => (
                 <div
                   key={presetAmount}
                   className={`p-3 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                    monetaryValue === presetAmount ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                    monetaryValue === presetAmount
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
                   }`}
                   onClick={() => setMonetaryValue(presetAmount)}
                 >
                   <div className="font-bold text-blue-600">₪{presetAmount}</div>
-                  {monetaryValue === presetAmount && <CheckCircle className="w-4 h-4 text-blue-500 mx-auto mt-1" />}
+                  {monetaryValue === presetAmount && (
+                    <CheckCircle className="w-4 h-4 text-blue-500 mx-auto mt-1" />
+                  )}
                 </div>
               ))}
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">או הכנס סכום מותאם אישית (מינימום ₪150)</label>
+              <label className="text-sm font-medium mb-2 block">
+                או הכנס סכום מותאם אישית (מינימום ₪150)
+              </label>
               <Input
                 type="number"
                 min={150}
                 value={monetaryValue}
-                onChange={(e) => setMonetaryValue(Math.max(150, parseInt(e.target.value) || 150))}
+                onChange={e => setMonetaryValue(Math.max(150, parseInt(e.target.value) || 150))}
                 placeholder="150"
               />
             </div>
@@ -297,7 +351,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       )}
 
       {/* בחירת טיפול */}
-      {voucherType === 'treatment' && (
+      {voucherType === "treatment" && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">בחירת טיפול</CardTitle>
@@ -311,7 +365,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent>
-                  {treatmentCategories.map((category) => (
+                  {treatmentCategories.map(category => (
                     <SelectItem key={category} value={category}>
                       {getCategoryDisplayName(category)}
                     </SelectItem>
@@ -325,13 +379,28 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
               <div>
                 <label className="text-sm font-medium mb-2 block">טיפול</label>
                 <div className="grid gap-2">
-                  {categoryTreatments.map((treatment) => (
+                  {categoryTreatments.map(treatment => (
                     <div
-                      key={typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()}
+                      key={
+                        typeof treatment._id === "string"
+                          ? treatment._id
+                          : treatment._id?.toString()
+                      }
                       className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedTreatmentId === (typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                        selectedTreatmentId ===
+                        (typeof treatment._id === "string"
+                          ? treatment._id
+                          : treatment._id?.toString())
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-blue-300"
                       }`}
-                      onClick={() => setSelectedTreatmentId(typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString() || '')}
+                      onClick={() =>
+                        setSelectedTreatmentId(
+                          typeof treatment._id === "string"
+                            ? treatment._id
+                            : treatment._id?.toString() || ""
+                        )
+                      }
                     >
                       <div className="flex justify-between items-start">
                         <div>
@@ -343,7 +412,10 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                             <p className="text-sm text-blue-600 mt-1">₪{treatment.fixedPrice}</p>
                           )}
                         </div>
-                        {selectedTreatmentId === (typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()) && (
+                        {selectedTreatmentId ===
+                          (typeof treatment._id === "string"
+                            ? treatment._id
+                            : treatment._id?.toString()) && (
                           <CheckCircle className="w-5 h-5 text-blue-500" />
                         )}
                       </div>
@@ -360,19 +432,35 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                 <div className="grid gap-2">
                   {selectedTreatment.durations
                     .filter(d => d.isActive)
-                    .map((duration) => (
+                    .map(duration => (
                       <div
-                        key={typeof duration._id === 'string' ? duration._id : duration._id?.toString()}
+                        key={
+                          typeof duration._id === "string" ? duration._id : duration._id?.toString()
+                        }
                         className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedDurationId === (typeof duration._id === 'string' ? duration._id : duration._id?.toString()) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                          selectedDurationId ===
+                          (typeof duration._id === "string"
+                            ? duration._id
+                            : duration._id?.toString())
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-blue-300"
                         }`}
-                        onClick={() => setSelectedDurationId(typeof duration._id === 'string' ? duration._id : duration._id?.toString() || '')}
+                        onClick={() =>
+                          setSelectedDurationId(
+                            typeof duration._id === "string"
+                              ? duration._id
+                              : duration._id?.toString() || ""
+                          )
+                        }
                       >
                         <div className="flex justify-between items-center">
                           <span>{duration.minutes} דקות</span>
                           <div className="flex items-center gap-2">
                             <span className="text-blue-600 font-medium">₪{duration.price}</span>
-                            {selectedDurationId === (typeof duration._id === 'string' ? duration._id : duration._id?.toString()) && (
+                            {selectedDurationId ===
+                              (typeof duration._id === "string"
+                                ? duration._id
+                                : duration._id?.toString()) && (
                               <CheckCircle className="w-5 h-5 text-blue-500" />
                             )}
                           </div>
@@ -394,8 +482,9 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
               <div>
                 <h3 className="font-semibold">סה"כ לשובר</h3>
                 <p className="text-sm text-gray-600">
-                  {voucherType === 'monetary' ? `סכום: ₪${monetaryValue}` : 
-                   `טיפול: ${selectedTreatment?.name}${selectedDuration ? ` (${selectedDuration.minutes} דקות)` : ''}`}
+                  {voucherType === "monetary"
+                    ? `סכום: ₪${monetaryValue}`
+                    : `טיפול: ${selectedTreatment?.name}${selectedDuration ? ` (${selectedDuration.minutes} דקות)` : ""}`}
                 </p>
               </div>
               <div className="text-right">
@@ -407,11 +496,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       )}
 
       <div className="flex justify-end mt-6">
-        <Button 
-          onClick={nextStep} 
-          disabled={!canProceedToStep2}
-          className="min-w-32"
-        >
+        <Button onClick={nextStep} disabled={!canProceedToStep2} className="min-w-32">
           המשך לפרטים אישיים
         </Button>
       </div>
@@ -425,7 +510,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
         <h2 className="text-3xl font-bold text-gray-900 mb-2">פרטים אישיים</h2>
         <p className="text-gray-600">מלא את הפרטים שלך ופרטי המתנה</p>
       </div>
-      
+
       <Card className="shadow-sm">
         <CardContent className="pt-6">
           <GuestInfoStep
@@ -450,7 +535,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
         <h2 className="text-3xl font-bold text-gray-900 mb-2">תשלום</h2>
         <p className="text-gray-600">סיים את הרכישה</p>
       </div>
-      
+
       <Card className="shadow-sm">
         <CardContent className="pt-6">
           <GuestPaymentStep
@@ -487,4 +572,4 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       {renderCurrentStep()}
     </div>
   )
-} 
+}

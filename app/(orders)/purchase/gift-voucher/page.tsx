@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
 // Force dynamic rendering for database access
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 // Convert serialized treatment to ITreatment
 function convertToTreatment(treatment: SerializedTreatment): ITreatment {
@@ -47,4 +47,4 @@ export default async function GuestBookGiftVoucherPage() {
       <UnifiedGiftVoucherWizard treatments={treatments} />
     </GuestLayout>
   )
-} 
+}

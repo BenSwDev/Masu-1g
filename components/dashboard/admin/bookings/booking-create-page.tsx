@@ -48,17 +48,17 @@ interface BookingFormData {
     birthDate?: Date
     gender?: "male" | "female" | "other"
   }
-  
+
   // Treatment selection
   treatmentId?: string
   selectedDurationId?: string
-  
+
   // Scheduling
   bookingDateTime?: Date
   isFlexibleTime: boolean
   flexibilityRangeHours?: number
   therapistGenderPreference: "male" | "female" | "any"
-  
+
   // Address
   addressType: "existing" | "custom"
   addressId?: string
@@ -72,14 +72,14 @@ interface BookingFormData {
     notes?: string
     parking: boolean
   }
-  
+
   // Payment
   paymentType: "immediate" | "cash" | "invoice"
   paymentMethodId?: string
   appliedCouponCode?: string
   appliedGiftVoucherId?: string
   redeemedSubscriptionId?: string
-  
+
   // Additional
   notes?: string
   notificationPreferences: {
@@ -89,20 +89,13 @@ interface BookingFormData {
 }
 
 const TOTAL_STEPS = 6
-const STEP_NAMES = [
-  "לקוח",
-  "טיפול", 
-  "תזמון",
-  "כתובת",
-  "תשלום",
-  "אישור"
-]
+const STEP_NAMES = ["לקוח", "טיפול", "תזמון", "כתובת", "תשלום", "אישור"]
 
 export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
-  
+
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<BookingFormData>({
     customerType: "guest",
@@ -113,8 +106,8 @@ export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
     isFlexibleTime: false,
     notificationPreferences: {
       customerMethod: "email",
-      recipientMethod: "email"
-    }
+      recipientMethod: "email",
+    },
   })
   const [isLoading, setIsLoading] = useState(false)
   const [calculatedPrice, setCalculatedPrice] = useState<any>(null)
@@ -145,18 +138,18 @@ export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
       // Here we would call the create booking API
       // For now, just simulate success
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       toast({
         title: "הצלחה",
-        description: "ההזמנה נוצרה בהצלחה"
+        description: "ההזמנה נוצרה בהצלחה",
       })
-      
+
       router.push("/dashboard/admin/bookings")
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה ביצירת ההזמנה"
+        description: "שגיאה ביצירת ההזמנה",
       })
     } finally {
       setIsLoading(false)
@@ -263,10 +256,8 @@ export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
             <Progress value={progress} className="h-2" />
           </div>
         </CardHeader>
-        <CardContent className="p-6">
-          {renderStep()}
-        </CardContent>
+        <CardContent className="p-6">{renderStep()}</CardContent>
       </Card>
     </div>
   )
-} 
+}

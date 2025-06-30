@@ -76,10 +76,10 @@ export function createPhoneVariations(phone: string): string[] {
   // For Israeli numbers, create additional variations
   if (normalized.startsWith("+972")) {
     const nationalNumber = normalized.substring(4)
-    
+
     // Add variation with leading zero
     variations.push(`+9720${nationalNumber}`)
-    
+
     // Add variation without country code (for legacy data)
     variations.push(`0${nationalNumber}`)
     variations.push(nationalNumber)
@@ -118,10 +118,10 @@ export function obscurePhoneNumber(phone: string): string {
   if (!phone) return ""
 
   const normalized = normalizePhoneNumber(phone)
-  
+
   if (normalized.length > 6) {
     return `${normalized.substring(0, 3)}***${normalized.substring(normalized.length - 3)}`
   }
-  
+
   return normalized
-} 
+}

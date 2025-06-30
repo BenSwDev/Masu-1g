@@ -5,12 +5,29 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createPaymentMethod, updatePaymentMethod, type PaymentMethodFormData } from "@/actions/payment-method-actions"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  createPaymentMethod,
+  updatePaymentMethod,
+  type PaymentMethodFormData,
+} from "@/actions/payment-method-actions"
 import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 import { toast } from "sonner"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -91,7 +108,7 @@ export function PaymentMethodForm({
 
   const onSubmit = async (formValues: PaymentMethodFormValues) => {
     setIsLoading(true)
-    
+
     const data = {
       cardNumber: formValues.cardNumber,
       expiryMonth: formValues.expiryMonth,
@@ -115,7 +132,10 @@ export function PaymentMethodForm({
         onOpenChange(false)
         // No need to call form.reset() here if useEffect handles it based on 'open'
       } else {
-        toast.error(result.error || (isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError")))
+        toast.error(
+          result.error ||
+            (isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError"))
+        )
       }
     } catch (error) {
       console.error("Payment method form submission error:", error)
@@ -151,7 +171,9 @@ export function PaymentMethodForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? t("paymentMethods.edit") : t("paymentMethods.addNew")}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t("paymentMethods.edit") : t("paymentMethods.addNew")}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -167,7 +189,7 @@ export function PaymentMethodForm({
                       {...field}
                       placeholder="1234 5678 9012 3456"
                       value={formatCardNumber(field.value)}
-                      onChange={(e) => handleCardNumberChange(e.target.value)}
+                      onChange={e => handleCardNumberChange(e.target.value)}
                       maxLength={19}
                       className="text-center"
                     />
@@ -184,14 +206,20 @@ export function PaymentMethodForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("paymentMethods.fields.expiryMonth")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("paymentMethods.fields.monthPlaceholder") || "חודש"} />
+                          <SelectValue
+                            placeholder={t("paymentMethods.fields.monthPlaceholder") || "חודש"}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {months.map((month) => (
+                        {months.map(month => (
                           <SelectItem key={month.value} value={month.value}>
                             {month.label}
                           </SelectItem>
@@ -209,14 +237,20 @@ export function PaymentMethodForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("paymentMethods.fields.expiryYear")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("paymentMethods.fields.yearPlaceholder") || "שנה"} />
+                          <SelectValue
+                            placeholder={t("paymentMethods.fields.yearPlaceholder") || "שנה"}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {years.map((year) => (
+                        {years.map(year => (
                           <SelectItem key={year.value} value={year.value}>
                             {year.label}
                           </SelectItem>
@@ -240,7 +274,7 @@ export function PaymentMethodForm({
                       {...field}
                       placeholder="123"
                       maxLength={4}
-                      onChange={(e) => {
+                      onChange={e => {
                         const value = e.target.value.replace(/\D/g, "")
                         field.onChange(value)
                       }}
@@ -261,7 +295,9 @@ export function PaymentMethodForm({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder={t("paymentMethods.fields.cardHolderNamePlaceholder") || "שם בעל הכרטיס"}
+                      placeholder={
+                        t("paymentMethods.fields.cardHolderNamePlaceholder") || "שם בעל הכרטיס"
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -278,7 +314,9 @@ export function PaymentMethodForm({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder={t("paymentMethods.fields.cardNamePlaceholder") || "שם הכרטיס (אופציונלי)"}
+                      placeholder={
+                        t("paymentMethods.fields.cardNamePlaceholder") || "שם הכרטיס (אופציונלי)"
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -302,10 +340,19 @@ export function PaymentMethodForm({
             />
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="bg-turquoise-500 hover:bg-turquoise-600"
+              >
                 {isLoading ? t("common.loading") : t("common.save")}
               </Button>
             </div>

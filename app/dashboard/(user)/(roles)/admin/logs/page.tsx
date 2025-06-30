@@ -15,8 +15,8 @@ export default function AdminLogsPage() {
           צפייה מפורטת בכל שלבי תהליך ההזמנה, לוגים ואבחון בעיות במערכת
         </p>
       </div>
-      
+
       <BookingLogsViewer />
     </div>
   )
-} 
+}

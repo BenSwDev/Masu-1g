@@ -5,7 +5,13 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Stethoscope, Clock, DollarSign, ArrowLeft } from "lucide-react"
 
@@ -22,7 +28,7 @@ export default function BookingCreateTreatmentStep({
   onUpdate,
   treatments,
   onNext,
-  onPrev
+  onPrev,
 }: BookingCreateTreatmentStepProps) {
   const { t, dir } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -80,7 +86,7 @@ export default function BookingCreateTreatmentStep({
 
   const getTreatmentPrice = () => {
     if (!selectedTreatment) return null
-    
+
     if (selectedTreatment.pricingType === "fixed") {
       return selectedTreatment.fixedPrice
     } else if (selectedTreatment.pricingType === "duration_based") {
@@ -90,13 +96,16 @@ export default function BookingCreateTreatmentStep({
     return null
   }
 
-  const groupedTreatments = treatments.reduce((acc, treatment) => {
-    if (!acc[treatment.category]) {
-      acc[treatment.category] = []
-    }
-    acc[treatment.category].push(treatment)
-    return acc
-  }, {} as Record<string, any[]>)
+  const groupedTreatments = treatments.reduce(
+    (acc, treatment) => {
+      if (!acc[treatment.category]) {
+        acc[treatment.category] = []
+      }
+      acc[treatment.category].push(treatment)
+      return acc
+    },
+    {} as Record<string, any[]>
+  )
 
   const getCategoryDisplayName = (category: string) => {
     switch (category) {
@@ -122,10 +131,7 @@ export default function BookingCreateTreatmentStep({
           {/* Treatment Selection */}
           <div className="space-y-2">
             <Label htmlFor="treatment">בחר טיפול *</Label>
-            <Select
-              value={formData.treatmentId || ""}
-              onValueChange={handleTreatmentChange}
-            >
+            <Select value={formData.treatmentId || ""} onValueChange={handleTreatmentChange}>
               <SelectTrigger className={errors.treatmentId ? "border-red-500" : ""}>
                 <SelectValue placeholder="בחר טיפול..." />
               </SelectTrigger>
@@ -153,9 +159,7 @@ export default function BookingCreateTreatmentStep({
                 ))}
               </SelectContent>
             </Select>
-            {errors.treatmentId && (
-              <p className="text-sm text-red-500">{errors.treatmentId}</p>
-            )}
+            {errors.treatmentId && <p className="text-sm text-red-500">{errors.treatmentId}</p>}
           </div>
 
           {/* Duration Selection for Duration-based Treatments */}
@@ -174,9 +178,7 @@ export default function BookingCreateTreatmentStep({
                     <SelectItem key={duration._id} value={duration._id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{duration.minutes} דקות</span>
-                        <span className="text-sm text-muted-foreground">
-                          ₪{duration.price}
-                        </span>
+                        <span className="text-sm text-muted-foreground">₪{duration.price}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -221,18 +223,19 @@ export default function BookingCreateTreatmentStep({
                     </>
                   )}
 
-                  {selectedTreatment.pricingType === "duration_based" && formData.selectedDurationId && (
-                    <>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Clock className="h-4 w-4" />
-                        <span>{getSelectedDurationDetails()?.minutes} דקות</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm">
-                        <DollarSign className="h-4 w-4" />
-                        <span>₪{getSelectedDurationDetails()?.price}</span>
-                      </div>
-                    </>
-                  )}
+                  {selectedTreatment.pricingType === "duration_based" &&
+                    formData.selectedDurationId && (
+                      <>
+                        <div className="flex items-center gap-1 text-sm">
+                          <Clock className="h-4 w-4" />
+                          <span>{getSelectedDurationDetails()?.minutes} דקות</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm">
+                          <DollarSign className="h-4 w-4" />
+                          <span>₪{getSelectedDurationDetails()?.price}</span>
+                        </div>
+                      </>
+                    )}
                 </div>
 
                 {/* Therapist Gender Selection */}
@@ -245,19 +248,23 @@ export default function BookingCreateTreatmentStep({
                 )}
 
                 {/* Duration-based Options */}
-                {selectedTreatment.pricingType === "duration_based" && !formData.selectedDurationId && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">אפשרויות זמן זמינות:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {getAvailableDurations().map((duration: any) => (
-                        <div key={duration._id} className="flex justify-between items-center p-2 bg-white rounded border">
-                          <span className="text-sm">{duration.minutes} דקות</span>
-                          <span className="text-sm font-medium">₪{duration.price}</span>
-                        </div>
-                      ))}
+                {selectedTreatment.pricingType === "duration_based" &&
+                  !formData.selectedDurationId && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">אפשרויות זמן זמינות:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {getAvailableDurations().map((duration: any) => (
+                          <div
+                            key={duration._id}
+                            className="flex justify-between items-center p-2 bg-white rounded border"
+                          >
+                            <span className="text-sm">{duration.minutes} דקות</span>
+                            <span className="text-sm font-medium">₪{duration.price}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </CardContent>
             </Card>
           )}
@@ -268,9 +275,7 @@ export default function BookingCreateTreatmentStep({
               <CardContent className="pt-6">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium">סה"כ מחיר טיפול:</span>
-                  <span className="text-2xl font-bold text-green-600">
-                    ₪{getTreatmentPrice()}
-                  </span>
+                  <span className="text-2xl font-bold text-green-600">₪{getTreatmentPrice()}</span>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
                   * המחיר כולל את כל העלויות - ציוד, הגעה ואספקת חומרים
@@ -287,10 +292,8 @@ export default function BookingCreateTreatmentStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           חזור
         </Button>
-        <Button onClick={handleNext}>
-          המשך
-        </Button>
+        <Button onClick={handleNext}>המשך</Button>
       </div>
     </div>
   )
-} 
+}

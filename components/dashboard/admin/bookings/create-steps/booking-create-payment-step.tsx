@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CreditCard, ArrowLeft, Banknote, FileText, Gift, Info } from "lucide-react"
 
@@ -28,7 +34,7 @@ export default function BookingCreatePaymentStep({
   coupons,
   giftVouchers,
   onNext,
-  onPrev
+  onPrev,
 }: BookingCreatePaymentStepProps) {
   const { t, dir } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -68,7 +74,7 @@ export default function BookingCreatePaymentStep({
     // Evening/weekend surcharge
     const isEvening = formData.bookingDateTime && formData.bookingDateTime.getHours() >= 20
     const isWeekend = formData.bookingDateTime && [5, 6].includes(formData.bookingDateTime.getDay())
-    
+
     if (isEvening || isWeekend) {
       additionalFees += 50
     }
@@ -77,7 +83,7 @@ export default function BookingCreatePaymentStep({
       basePrice,
       discount,
       additionalFees,
-      finalPrice: basePrice - discount + additionalFees
+      finalPrice: basePrice - discount + additionalFees,
     }
   }
 
@@ -98,7 +104,7 @@ export default function BookingCreatePaymentStep({
             <Label>סוג תשלום</Label>
             <RadioGroup
               value={formData.paymentType}
-              onValueChange={(value) => onUpdate({ paymentType: value })}
+              onValueChange={value => onUpdate({ paymentType: value })}
               className="space-y-3"
             >
               <div className="flex items-center space-x-2">
@@ -131,7 +137,7 @@ export default function BookingCreatePaymentStep({
               <Label htmlFor="paymentMethod">אמצעי תשלום *</Label>
               <Select
                 value={formData.paymentMethodId || ""}
-                onValueChange={(value) => onUpdate({ paymentMethodId: value })}
+                onValueChange={value => onUpdate({ paymentMethodId: value })}
               >
                 <SelectTrigger className={errors.paymentMethodId ? "border-red-500" : ""}>
                   <SelectValue placeholder="בחר אמצעי תשלום..." />
@@ -156,7 +162,7 @@ export default function BookingCreatePaymentStep({
               <Input
                 id="couponCode"
                 value={formData.appliedCouponCode || ""}
-                onChange={(e) => onUpdate({ appliedCouponCode: e.target.value })}
+                onChange={e => onUpdate({ appliedCouponCode: e.target.value })}
                 placeholder="הכנס קוד קופון"
               />
               <Button variant="outline" size="sm">
@@ -170,7 +176,7 @@ export default function BookingCreatePaymentStep({
             <Label htmlFor="giftVoucher">שובר מתנה</Label>
             <Select
               value={formData.appliedGiftVoucherId || ""}
-              onValueChange={(value) => onUpdate({ appliedGiftVoucherId: value })}
+              onValueChange={value => onUpdate({ appliedGiftVoucherId: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="בחר שובר מתנה..." />
@@ -188,7 +194,7 @@ export default function BookingCreatePaymentStep({
             <Label htmlFor="subscription">פדיון מנוי</Label>
             <Select
               value={formData.redeemedSubscriptionId || ""}
-              onValueChange={(value) => onUpdate({ redeemedSubscriptionId: value })}
+              onValueChange={value => onUpdate({ redeemedSubscriptionId: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="בחר מנוי לפדיון..." />
@@ -249,36 +255,36 @@ export default function BookingCreatePaymentStep({
             <span>מחיר בסיס:</span>
             <span>₪{priceBreakdown.basePrice}</span>
           </div>
-          
+
           {priceBreakdown.discount > 0 && (
             <div className="flex justify-between text-green-600">
               <span>הנחה:</span>
               <span>-₪{priceBreakdown.discount}</span>
             </div>
           )}
-          
+
           {priceBreakdown.additionalFees > 0 && (
             <div className="flex justify-between text-orange-600">
               <span>תוספת שעות מיוחדות:</span>
               <span>+₪{priceBreakdown.additionalFees}</span>
             </div>
           )}
-          
+
           <hr className="border-gray-300" />
-          
+
           <div className="flex justify-between text-lg font-bold">
             <span>סה"כ לתשלום:</span>
             <span className="text-green-600">₪{priceBreakdown.finalPrice}</span>
           </div>
-          
-          <p className="text-xs text-gray-600 mt-2">
-            * המחיר כולל מע"מ, ציוד, חומרים והגעת המטפל
-          </p>
+
+          <p className="text-xs text-gray-600 mt-2">* המחיר כולל מע"מ, ציוד, חומרים והגעת המטפל</p>
         </CardContent>
       </Card>
 
       {/* Applied Discounts Summary */}
-      {(formData.appliedCouponCode || formData.appliedGiftVoucherId || formData.redeemedSubscriptionId) && (
+      {(formData.appliedCouponCode ||
+        formData.appliedGiftVoucherId ||
+        formData.redeemedSubscriptionId) && (
         <Card className="bg-blue-50 border-blue-200">
           <CardHeader>
             <CardTitle className="text-lg">הנחות מופעלות</CardTitle>
@@ -332,15 +338,11 @@ export default function BookingCreatePaymentStep({
             <AlertDescription className="text-sm leading-relaxed">
               <div className="space-y-2">
                 <div className="font-medium">מדיניות ביטול:</div>
-                <div>
-                  • ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.
-                </div>
+                <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
                 <div>
                   • ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.
                 </div>
-                <div>
-                  • ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.
-                </div>
+                <div>• ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.</div>
               </div>
             </AlertDescription>
           </Alert>
@@ -353,10 +355,8 @@ export default function BookingCreatePaymentStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           חזור
         </Button>
-        <Button onClick={handleNext}>
-          המשך
-        </Button>
+        <Button onClick={handleNext}>המשך</Button>
       </div>
     </div>
   )
-} 
+}

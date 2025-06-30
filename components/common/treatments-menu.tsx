@@ -8,7 +8,7 @@ import {
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuTrigger,
-  NavigationMenuContent
+  NavigationMenuContent,
 } from "@/components/ui/navigation-menu"
 
 interface CategoryData {
@@ -28,17 +28,17 @@ export function TreatmentsMenu({ mobile = false, onNavigate }: TreatmentsMenuPro
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/treatments')
+        const res = await fetch("/api/treatments")
         const _data = await res.json()
         const map: Record<string, { _id: string; name: string }[]> = {}
         ;(_data.treatments || []).forEach((tr: any) => {
-          const c = tr.category || 'other'
+          const c = tr.category || "other"
           if (!map[c]) map[c] = []
           map[c].push({ _id: tr._id, name: tr.name })
         })
         setCategories(Object.entries(map).map(([name, treatments]) => ({ name, treatments })))
       } catch (err) {
-        console.error('Failed to load treatments', err)
+        console.error("Failed to load treatments", err)
       }
     }
     load()
@@ -49,12 +49,14 @@ export function TreatmentsMenu({ mobile = false, onNavigate }: TreatmentsMenuPro
   if (mobile) {
     return (
       <div className="space-y-2" dir={dir}>
-        <div className="px-3 py-2 font-semibold text-gray-700">
-          {t('navigation.ourTreatments')}
-        </div>
+        <div className="px-3 py-2 font-semibold text-gray-700">{t("navigation.ourTreatments")}</div>
         {categories.map(cat => (
           <div key={cat.name} className="pl-4 space-y-1">
-            <Link href={`/our-treatments/${cat.name}`} onClick={onNavigate} className="font-medium text-gray-700 hover:text-gray-900">
+            <Link
+              href={`/our-treatments/${cat.name}`}
+              onClick={onNavigate}
+              className="font-medium text-gray-700 hover:text-gray-900"
+            >
               {t(`treatments.categories.${cat.name}`)}
             </Link>
             <div className="pl-4 space-y-1">
@@ -80,13 +82,17 @@ export function TreatmentsMenu({ mobile = false, onNavigate }: TreatmentsMenuPro
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger className="bg-transparent hover:bg-gray-100">
-            {t('navigation.ourTreatments')}
+            {t("navigation.ourTreatments")}
           </NavigationMenuTrigger>
           <NavigationMenuContent className="p-4 bg-white shadow" dir={dir}>
             <div className="grid gap-4">
               {categories.map(cat => (
                 <div key={cat.name}>
-                  <Link href={`/our-treatments/${cat.name}`} className="font-medium hover:underline" onClick={onNavigate}>
+                  <Link
+                    href={`/our-treatments/${cat.name}`}
+                    className="font-medium hover:underline"
+                    onClick={onNavigate}
+                  >
                     {t(`treatments.categories.${cat.name}`)}
                   </Link>
                   <ul className="pl-4 mt-1 space-y-1">

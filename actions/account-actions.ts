@@ -1,13 +1,23 @@
 "use server"
 
 import { getServerSession } from "next-auth/next"
-import { authOptions, hashPassword, verifyPassword, validateEmail, validatePhone } from "@/lib/auth/auth"
+import {
+  authOptions,
+  hashPassword,
+  verifyPassword,
+  validateEmail,
+  validatePhone,
+} from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import { sendOTP, verifyOTP } from "./notification-service"
 import type { NotificationLanguage } from "@/lib/notifications/notification-types"
 
-export async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

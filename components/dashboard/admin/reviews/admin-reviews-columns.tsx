@@ -48,7 +48,7 @@ export function getAdminReviewColumns(
         if (!review?.bookingId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         return (
           <div className="space-y-1">
             <div className="font-medium">{(review.bookingId as any).bookingNumber || "-"}</div>
@@ -60,14 +60,14 @@ export function getAdminReviewColumns(
       },
     },
     {
-      accessorKey: "bookingId.bookingDateTime", 
+      accessorKey: "bookingId.bookingDateTime",
       header: t("adminReviews.columns.treatmentTime"),
       cell: ({ row }) => {
         const review = row.original
         if (!review?.bookingId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         return (
           <div className="text-sm">
             {formatDateTimeSafe((review.bookingId as any).bookingDateTime, language)}
@@ -83,7 +83,7 @@ export function getAdminReviewColumns(
         if (!review?.treatmentId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         const treatment = review.treatmentId as any
         const duration = treatment.duration
         return (
@@ -106,7 +106,7 @@ export function getAdminReviewColumns(
         if (!review?.professionalId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         const professional = review.professionalId as any
         return (
           <div className="space-y-1">
@@ -114,9 +114,7 @@ export function getAdminReviewColumns(
             <div className="text-xs text-muted-foreground">
               {formatPhoneForDisplay(professional.phone || "")}
             </div>
-            <div className="text-xs text-muted-foreground">
-              {professional.email || "-"}
-            </div>
+            <div className="text-xs text-muted-foreground">{professional.email || "-"}</div>
           </div>
         )
       },
@@ -129,7 +127,7 @@ export function getAdminReviewColumns(
         if (!review?.userId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         const user = review.userId as any
         return (
           <div className="space-y-1">
@@ -137,9 +135,7 @@ export function getAdminReviewColumns(
             <div className="text-xs text-muted-foreground">
               {formatPhoneForDisplay(user.phone || "")}
             </div>
-            <div className="text-xs text-muted-foreground">
-              {user.email || "-"}
-            </div>
+            <div className="text-xs text-muted-foreground">{user.email || "-"}</div>
           </div>
         )
       },
@@ -152,14 +148,14 @@ export function getAdminReviewColumns(
         if (!review?.bookingId) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         const booking = review.bookingId as any
         const recipient = booking.recipientName
-        
+
         if (!recipient) {
           return <span className="text-muted-foreground">-</span>
         }
-        
+
         return (
           <div className="space-y-1">
             <div className="font-medium">{recipient}</div>
@@ -169,9 +165,7 @@ export function getAdminReviewColumns(
               </div>
             )}
             {booking.recipientEmail && (
-              <div className="text-xs text-muted-foreground">
-                {booking.recipientEmail}
-              </div>
+              <div className="text-xs text-muted-foreground">{booking.recipientEmail}</div>
             )}
           </div>
         )
@@ -182,22 +176,22 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.rating"),
       cell: ({ row }) => {
         const review = row.original
-        
+
         // COMPREHENSIVE NULL SAFETY CHECK
         if (!review) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         const rating = review.rating || 0
         const hasComment = !!(review.comment && review.comment.trim())
         // SAFE ACCESS TO professionalResponse with multiple null checks
         const hasResponse = !!(
-          review.professionalResponse && 
-          typeof review.professionalResponse === 'string' && 
+          review.professionalResponse &&
+          typeof review.professionalResponse === "string" &&
           review.professionalResponse.trim().length > 0
         )
         const isLowRating = rating < 5
-        
+
         return (
           <div className="space-y-2">
             <div className="flex items-center space-x-1">
@@ -211,7 +205,7 @@ export function getAdminReviewColumns(
               ))}
               <span className="ml-2 text-sm font-medium">{rating}/5</span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               {hasComment && (
                 <Badge variant="secondary" className="text-xs">
@@ -219,7 +213,7 @@ export function getAdminReviewColumns(
                   {t("adminReviews.hasComment")}
                 </Badge>
               )}
-              
+
               {isLowRating && (
                 <Badge variant="destructive" className="text-xs">
                   <AlertTriangle className="h-3 w-3 mr-1" />
@@ -227,7 +221,7 @@ export function getAdminReviewColumns(
                 </Badge>
               )}
             </div>
-            
+
             {hasResponse && (
               <Badge variant="outline" className="text-xs">
                 {t("adminReviews.hasResponse")}
@@ -242,16 +236,16 @@ export function getAdminReviewColumns(
       header: t("common.actions"),
       cell: ({ row }) => {
         const review = row.original
-        
+
         if (!review) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
-        
+
         return (
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               onReviewClick(review)
             }}
@@ -264,4 +258,4 @@ export function getAdminReviewColumns(
       },
     },
   ]
-} 
+}

@@ -2,9 +2,26 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List, Plus } from "lucide-react" // Renamed Calendar to CalendarIcon
+import {
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  Users,
+  TrendingUp,
+  CalendarIcon,
+  CreditCard,
+  List,
+  Plus,
+} from "lucide-react" // Renamed Calendar to CalendarIcon
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from "@/components/ui/button" // Corrected path
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
@@ -14,7 +31,11 @@ import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User } from "next-auth"
-import { getAllUserSubscriptions, updateUserSubscription, createUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
+import {
+  getAllUserSubscriptions,
+  updateUserSubscription,
+  createUserSubscription,
+} from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/components/ui/use-mobile" // Corrected import
@@ -24,7 +45,8 @@ import UserSubscriptionForm from "./user-subscription-form"
 import CreateUserSubscriptionForm from "./create-user-subscription-form"
 import { useRouter } from "next/navigation"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+interface PopulatedUserSubscription
+  extends Omit<IUserSubscription, "userId" | "subscriptionId" | "treatmentId" | "paymentMethodId"> {
   userId?: {
     _id: string
     name: string
@@ -89,15 +111,18 @@ const AdminUserSubscriptionsClient = ({
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [currentSubscription, setCurrentSubscription] = useState<PopulatedUserSubscription | null>(null)
+  const [currentSubscription, setCurrentSubscription] = useState<PopulatedUserSubscription | null>(
+    null
+  )
 
-  const [userSubscriptions, setUserSubscriptions] = useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
+  const [userSubscriptions, setUserSubscriptions] =
+    useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
   const [pagination, setPagination] = useState(initialPagination)
 
   const stats = {
     total: pagination?.total || 0,
-    active: userSubscriptions.filter((sub) => sub.status === "active").length,
-    expired: userSubscriptions.filter((sub) => sub.status === "expired").length,
+    active: userSubscriptions.filter(sub => sub.status === "active").length,
+    expired: userSubscriptions.filter(sub => sub.status === "expired").length,
     revenue: userSubscriptions.reduce((sum, sub) => sum + (sub.paymentAmount || 0), 0),
   }
 
@@ -106,7 +131,7 @@ const AdminUserSubscriptionsClient = ({
     currentLimit: number,
     search: string,
     status: string,
-    showRefreshToast = false,
+    showRefreshToast = false
   ) => {
     setIsLoading(true)
     if (showRefreshToast) setIsRefreshing(true)
@@ -176,9 +201,9 @@ const AdminUserSubscriptionsClient = ({
 
   const handleUpdate = async (data: FormData) => {
     if (!currentSubscription) return
-    
+
     const result = await updateUserSubscription(String(currentSubscription._id), data)
-    
+
     if (result.success) {
       toast.success(t("userSubscriptions.updateSuccessToast"))
       setCurrentSubscription(null)
@@ -190,7 +215,7 @@ const AdminUserSubscriptionsClient = ({
 
   const handleCreate = async (data: FormData) => {
     const result = await createUserSubscription(data)
-    
+
     if (result.success) {
       toast.success(t("userSubscriptions.createSuccessToast"))
       setIsCreateDialogOpen(false)
@@ -210,7 +235,10 @@ const AdminUserSubscriptionsClient = ({
                 {Array(8)
                   .fill(0)
                   .map((_, i) => (
-                    <th key={i} className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                    <th
+                      key={i}
+                      className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400"
+                    >
                       <Skeleton className="h-4 w-20 float-right" />
                     </th>
                   ))}
@@ -252,15 +280,25 @@ const AdminUserSubscriptionsClient = ({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("userSubscriptions.pageTitle")}</h1>
-          <p className="text-gray-600 dark:text-gray-300">{t("userSubscriptions.pageDescription")}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {t("userSubscriptions.pageTitle")}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            {t("userSubscriptions.pageDescription")}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             {t("userSubscriptions.createNew")}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="gap-2"
+          >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             {t("common.refresh")}
           </Button>
@@ -294,7 +332,9 @@ const AdminUserSubscriptionsClient = ({
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {t("userSubscriptions.stats.active")}
                 </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {stats.active}
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -324,7 +364,9 @@ const AdminUserSubscriptionsClient = ({
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {t("userSubscriptions.stats.revenue")}
                 </p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">₪{stats.revenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  ₪{stats.revenue.toFixed(2)}
+                </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
                 <CreditCard className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -338,7 +380,10 @@ const AdminUserSubscriptionsClient = ({
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div className="relative md:col-span-2">
-              <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="search-input"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 {t("common.search")}
               </label>
               <Search className="absolute rtl:right-2.5 ltr:left-2.5 top-9 h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -347,8 +392,8 @@ const AdminUserSubscriptionsClient = ({
                 placeholder={t("userSubscriptions.searchPlaceholder")}
                 className="rtl:pr-8 ltr:pl-8"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearchAndFilter()}
+                onChange={e => setSearchTerm(e.target.value)}
+                onKeyPress={e => e.key === "Enter" && handleSearchAndFilter()}
               />
             </div>
             <div className="w-full">
@@ -420,7 +465,7 @@ const AdminUserSubscriptionsClient = ({
         </Card>
       ) : isMobile ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {userSubscriptions.map((subscription) => (
+          {userSubscriptions.map(subscription => (
             <UserSubscriptionAdminCard
               key={String(subscription._id)}
               userSubscription={subscription}
@@ -465,11 +510,13 @@ const AdminUserSubscriptionsClient = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {userSubscriptions.map((subscription) => (
+                  {userSubscriptions.map(subscription => (
                     <UserSubscriptionRow
                       key={String(subscription._id)}
                       userSubscription={subscription}
-                      onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+                      onSubscriptionUpdate={() =>
+                        fetchData(currentPage, limit, searchTerm, statusFilter)
+                      }
                       onEdit={handleEdit}
                     />
                   ))}
@@ -483,7 +530,9 @@ const AdminUserSubscriptionsClient = ({
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page}, {t("common.pagination.total")}: {pagination.total}, {t("common.pagination.totalResults")}: {pagination.totalResults}
+            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page},{" "}
+            {t("common.pagination.total")}: {pagination.total},{" "}
+            {t("common.pagination.totalResults")}: {pagination.totalResults}
           </div>
           <div className="flex gap-2 items-center">
             <Button
@@ -502,7 +551,7 @@ const AdminUserSubscriptionsClient = ({
 
             <Select
               value={limit.toString()}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 setLimit(Number.parseInt(value))
                 setCurrentPage(1) // Reset to page 1 when limit changes
                 fetchData(1, Number.parseInt(value), searchTerm, statusFilter)
@@ -512,7 +561,7 @@ const AdminUserSubscriptionsClient = ({
                 <SelectValue placeholder={limit.toString()} />
               </SelectTrigger>
               <SelectContent>
-                {[5, 10, 20, 50].map((l) => (
+                {[5, 10, 20, 50].map(l => (
                   <SelectItem key={l} value={l.toString()}>
                     {t("common.pagination.showPerPage")} {l}
                   </SelectItem>

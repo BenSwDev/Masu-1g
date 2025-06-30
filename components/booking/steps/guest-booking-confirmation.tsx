@@ -18,16 +18,13 @@ interface GuestBookingConfirmationProps {
   initialData: BookingInitialData
 }
 
-function GuestBookingConfirmation({
-  bookingResult,
-  initialData,
-}: GuestBookingConfirmationProps) {
+function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingConfirmationProps) {
   const { t, language, dir } = useTranslation()
 
   const bookingTreatment = useMemo(() => {
     if (!bookingResult?.treatmentId) return null
     return (initialData?.activeTreatments || []).find(
-      (t) => t._id.toString() === bookingResult.treatmentId.toString()
+      t => t._id.toString() === bookingResult.treatmentId.toString()
     )
   }, [bookingResult?.treatmentId, initialData?.activeTreatments])
 
@@ -54,13 +51,13 @@ function GuestBookingConfirmation({
 
   const getTreatmentDurationText = () => {
     if (!bookingTreatment) return ""
-    
+
     if (bookingTreatment.pricingType === "fixed") {
-      return bookingTreatment.defaultDuration 
+      return bookingTreatment.defaultDuration
         ? `${bookingTreatment.defaultDuration} ${t("common.minutes")}`
         : t("treatments.standardDuration")
     }
-    
+
     if (bookingResult?.selectedDurationId && bookingTreatment.durations) {
       const duration = bookingTreatment.durations.find(
         (d: any) => d._id.toString() === bookingResult.selectedDurationId?.toString()
@@ -115,7 +112,8 @@ function GuestBookingConfirmation({
       <Alert className="bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{t("confirmation.bookingReference")}:</strong> {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
+          <strong>{t("confirmation.bookingReference")}:</strong>{" "}
+          {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
         </AlertDescription>
       </Alert>
 
@@ -123,7 +121,9 @@ function GuestBookingConfirmation({
         {/* Guest Information */}
         <Card>
           <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <CardTitle
+              className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <Phone className="h-5 w-5" />
               {t("confirmation.contactInformation")}
             </CardTitle>
@@ -137,38 +137,54 @@ function GuestBookingConfirmation({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <span
+                  className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                >
                   <Mail className="h-4 w-4" />
                   {t("confirmation.recipientEmail")}:
                 </span>
-                <span className="font-medium">{bookingResult.recipientEmail || bookingResult.bookedByUserEmail}</span>
+                <span className="font-medium">
+                  {bookingResult.recipientEmail || bookingResult.bookedByUserEmail}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <span
+                  className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                >
                   <Phone className="h-4 w-4" />
                   {t("confirmation.recipientPhone")}:
                 </span>
-                <span className="font-medium">{formatPhoneForDisplay(bookingResult.recipientPhone || bookingResult.bookedByUserPhone || "")}</span>
+                <span className="font-medium">
+                  {formatPhoneForDisplay(
+                    bookingResult.recipientPhone || bookingResult.bookedByUserPhone || ""
+                  )}
+                </span>
               </div>
               {bookingResult.recipientBirthDate && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t("confirmation.birthDate")}:</span>
-                  <span className="font-medium">{formatBirthDate(bookingResult.recipientBirthDate)}</span>
+                  <span className="font-medium">
+                    {formatBirthDate(bookingResult.recipientBirthDate)}
+                  </span>
                 </div>
               )}
               {bookingResult.recipientGender && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t("confirmation.gender")}:</span>
                   <span className="font-medium">
-                    {bookingResult.recipientGender === "male" ? t("guestInfo.genderMale") : 
-                     bookingResult.recipientGender === "female" ? t("guestInfo.genderFemale") : 
-                     t("guestInfo.genderOther")}
+                    {bookingResult.recipientGender === "male"
+                      ? t("guestInfo.genderMale")
+                      : bookingResult.recipientGender === "female"
+                        ? t("guestInfo.genderFemale")
+                        : t("guestInfo.genderOther")}
                   </span>
                 </div>
               )}
-              {(bookingResult.bookedByUserName !== bookingResult.recipientName) && (
+              {bookingResult.bookedByUserName !== bookingResult.recipientName && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground mb-2">{t("confirmation.bookerDetails")}:</div>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    {t("confirmation.bookerDetails")}:
+                  </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>{t("common.name")}:</span>
@@ -198,7 +214,9 @@ function GuestBookingConfirmation({
         {/* Appointment Details */}
         <Card>
           <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <CardTitle
+              className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <Calendar className="h-5 w-5" />
               {t("confirmation.appointmentDetails")}
             </CardTitle>
@@ -207,7 +225,9 @@ function GuestBookingConfirmation({
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.treatment")}:</span>
-                <span className="font-medium">{bookingTreatment?.name || t("common.unknownTreatment")}</span>
+                <span className="font-medium">
+                  {bookingTreatment?.name || t("common.unknownTreatment")}
+                </span>
               </div>
               {getTreatmentDurationText() && (
                 <div className="flex justify-between">
@@ -216,19 +236,27 @@ function GuestBookingConfirmation({
                 </div>
               )}
               <div className="flex justify-between">
-                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <span
+                  className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                >
                   <Calendar className="h-4 w-4" />
                   {t("bookings.date")}:
                 </span>
-                <span className="font-medium">{formatDateString(bookingResult.bookingDateTime)}</span>
+                <span className="font-medium">
+                  {formatDateString(bookingResult.bookingDateTime)}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <span
+                  className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                >
                   <Clock className="h-4 w-4" />
                   {t("bookings.time")}:
                 </span>
                 <span className="font-medium">
-                  {bookingResult.isFlexibleTime ? t("bookings.flexibleTime") : formatTimeString(bookingResult.bookingDateTime)}
+                  {bookingResult.isFlexibleTime
+                    ? t("bookings.flexibleTime")
+                    : formatTimeString(bookingResult.bookingDateTime)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -237,7 +265,9 @@ function GuestBookingConfirmation({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.totalAmount")}:</span>
-                <span className="font-medium text-lg">{formatPrice(bookingResult.priceDetails?.finalAmount || 0)}</span>
+                <span className="font-medium text-lg">
+                  {formatPrice(bookingResult.priceDetails?.finalAmount || 0)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -246,7 +276,9 @@ function GuestBookingConfirmation({
         {/* Address Information */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <CardTitle
+              className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <MapPin className="h-5 w-5" />
               {t("bookings.address")}
             </CardTitle>
@@ -254,31 +286,46 @@ function GuestBookingConfirmation({
           <CardContent>
             <div className="bg-muted p-4 rounded-lg">
               <p className="font-medium">
-                {bookingResult.bookingAddressSnapshot?.fullAddress || 
-                 bookingResult.customAddressDetails?.fullAddress || 
-                 [
-                   bookingResult.bookingAddressSnapshot?.street || bookingResult.customAddressDetails?.street,
-                   bookingResult.bookingAddressSnapshot?.streetNumber || bookingResult.customAddressDetails?.streetNumber,
-                   bookingResult.bookingAddressSnapshot?.city || bookingResult.customAddressDetails?.city
-                 ].filter(Boolean).join(", ")}
+                {bookingResult.bookingAddressSnapshot?.fullAddress ||
+                  bookingResult.customAddressDetails?.fullAddress ||
+                  [
+                    bookingResult.bookingAddressSnapshot?.street ||
+                      bookingResult.customAddressDetails?.street,
+                    bookingResult.bookingAddressSnapshot?.streetNumber ||
+                      bookingResult.customAddressDetails?.streetNumber,
+                    bookingResult.bookingAddressSnapshot?.city ||
+                      bookingResult.customAddressDetails?.city,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
               </p>
-              {((bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor) || 
-                (bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment) || 
-                (bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance)) && (
+              {(bookingResult.bookingAddressSnapshot?.floor ||
+                bookingResult.customAddressDetails?.floor ||
+                bookingResult.bookingAddressSnapshot?.apartment ||
+                bookingResult.customAddressDetails?.apartment ||
+                bookingResult.bookingAddressSnapshot?.entrance ||
+                bookingResult.customAddressDetails?.entrance) && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {[
-                    (bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor) && 
+                    (bookingResult.bookingAddressSnapshot?.floor ||
+                      bookingResult.customAddressDetails?.floor) &&
                       `${t("bookings.floor")} ${bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor}`,
-                    (bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment) && 
+                    (bookingResult.bookingAddressSnapshot?.apartment ||
+                      bookingResult.customAddressDetails?.apartment) &&
                       `${t("bookings.apartment")} ${bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment}`,
-                    (bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance) && 
-                      `${t("bookings.entrance")} ${bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance}`
-                  ].filter(Boolean).join(", ")}
+                    (bookingResult.bookingAddressSnapshot?.entrance ||
+                      bookingResult.customAddressDetails?.entrance) &&
+                      `${t("bookings.entrance")} ${bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance}`,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </p>
               )}
-              {(bookingResult.bookingAddressSnapshot?.notes || bookingResult.customAddressDetails?.notes) && (
+              {(bookingResult.bookingAddressSnapshot?.notes ||
+                bookingResult.customAddressDetails?.notes) && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  {bookingResult.bookingAddressSnapshot?.notes || bookingResult.customAddressDetails?.notes}
+                  {bookingResult.bookingAddressSnapshot?.notes ||
+                    bookingResult.customAddressDetails?.notes}
                 </p>
               )}
             </div>
@@ -291,7 +338,7 @@ function GuestBookingConfirmation({
         <Button asChild size="lg">
           <Link href="/">
             <Home className="mr-2 h-4 w-4" />
-                          {t("confirmation.backToHome")}
+            {t("confirmation.backToHome")}
           </Link>
         </Button>
       </div>
@@ -300,4 +347,4 @@ function GuestBookingConfirmation({
 }
 
 export default GuestBookingConfirmation
-export { GuestBookingConfirmation } 
+export { GuestBookingConfirmation }

@@ -2,26 +2,19 @@ import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "לוח בקרה למנהל",
-  description: "סקירה מהירה של משימות הדורשות טיפול מיידי"
+  description: "סקירה מהירה של משימות הדורשות טיפול מיידי",
 }
 
-import {
-  getPurchaseStats,
-} from "@/actions/purchase-summary-actions"
+import { getPurchaseStats } from "@/actions/purchase-summary-actions"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -43,7 +36,13 @@ export default async function AdminDashboardPage() {
 
   const [statsRes, pendingProsRes] = await Promise.all([
     getPurchaseStats(),
-    getProfessionals({ page: 1, limit: 5, status: "pending_admin_approval", sortBy: "appliedAt", sortOrder: "asc" }),
+    getProfessionals({
+      page: 1,
+      limit: 5,
+      status: "pending_admin_approval",
+      sortBy: "appliedAt",
+      sortOrder: "asc",
+    }),
   ])
 
   const stats = statsRes.success && statsRes.data ? statsRes.data : null
@@ -55,10 +54,7 @@ export default async function AdminDashboardPage() {
   return (
     <ScrollArea className="h-full">
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Heading
-          title="לוח בקרה למנהל"
-          description="סקירה מהירה של משימות הדורשות טיפול מיידי"
-        />
+        <Heading title="לוח בקרה למנהל" description="סקירה מהירה של משימות הדורשות טיפול מיידי" />
         <Separator />
 
         {stats && <PurchaseStatsOverview stats={stats} />}
@@ -94,9 +90,7 @@ export default async function AdminDashboardPage() {
                         <TableCell>{p.userId?.name ?? "-"}</TableCell>
                         <TableCell>{p.userId?.email ?? "-"}</TableCell>
                         <TableCell>{formatPhoneForDisplay(p.userId?.phone || "")}</TableCell>
-                        <TableCell>
-                          {new Date(p.appliedAt).toLocaleDateString("he-IL")}
-                        </TableCell>
+                        <TableCell>{new Date(p.appliedAt).toLocaleDateString("he-IL")}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -115,4 +109,3 @@ export default async function AdminDashboardPage() {
     </ScrollArea>
   )
 }
-

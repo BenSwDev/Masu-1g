@@ -17,4 +17,4 @@ export interface NotificationData {
   bookingDateTime?: Date
   address?: string
   message?: string
-} 
+}

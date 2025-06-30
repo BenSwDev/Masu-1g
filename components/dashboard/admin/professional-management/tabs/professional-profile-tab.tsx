@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
@@ -21,33 +27,35 @@ export default function ProfessionalProfileTab({
   onUpdate,
   loading,
   isCreatingNew = false,
-  onCreated
+  onCreated,
 }: ProfessionalProfileTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [userDetails, setUserDetails] = useState({
     name: professional.userId.name || "",
     email: professional.userId.email || "",
     phone: professional.userId.phone || "",
     gender: professional.userId.gender || "",
-    birthDate: professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
+    birthDate: professional.userId.dateOfBirth
+      ? new Date(professional.userId.dateOfBirth).toISOString().split("T")[0]
+      : "",
   })
-  
+
   const [professionalDetails, setProfessionalDetails] = useState({
     status: professional.status,
     isActive: professional.isActive,
     adminNotes: professional.adminNotes || "",
-    rejectionReason: professional.rejectionReason || ""
+    rejectionReason: professional.rejectionReason || "",
   })
-  
+
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
   const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
     setUserDetails(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
     setHasChanges(true)
   }
@@ -55,28 +63,30 @@ export default function ProfessionalProfileTab({
   const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
     setProfessionalDetails(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
     setHasChanges(true)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    
+
     try {
       // Validate required fields
       if (!userDetails.name.trim() || !userDetails.email.trim()) {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "שם ואימייל הם שדות חובה"
+          description: "שם ואימייל הם שדות חובה",
         })
         return
       }
 
       // Import and call the update function
-      const { updateProfessionalBasicInfo } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
-      
+      const { updateProfessionalBasicInfo } = await import(
+        "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+      )
+
       const result = await updateProfessionalBasicInfo(
         professional._id,
         userDetails,
@@ -87,7 +97,7 @@ export default function ProfessionalProfileTab({
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון פרופיל המטפל"
+          description: result.error || "שגיאה בעדכון פרופיל המטפל",
         })
         return
       }
@@ -97,17 +107,17 @@ export default function ProfessionalProfileTab({
         onUpdate(result.professional)
       }
       setHasChanges(false)
-      
+
       toast({
         title: "הצלחה",
-        description: "פרופיל המטפל עודכן בהצלחה"
+        description: "פרופיל המטפל עודכן בהצלחה",
       })
     } catch (error) {
       console.error("Error saving profile:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בשמירת פרופיל המטפל"
+        description: "שגיאה בשמירת פרופיל המטפל",
       })
     } finally {
       setSaving(false)
@@ -116,30 +126,42 @@ export default function ProfessionalProfileTab({
 
   const getStatusColor = (status: ProfessionalStatus) => {
     switch (status) {
-      case "active": return "text-green-600"
-      case "pending_admin_approval": return "text-orange-600"
-      case "pending_user_action": return "text-blue-600"
-      case "rejected": return "text-red-600"
-      case "suspended": return "text-red-600"
-      default: return "text-gray-600"
+      case "active":
+        return "text-green-600"
+      case "pending_admin_approval":
+        return "text-orange-600"
+      case "pending_user_action":
+        return "text-blue-600"
+      case "rejected":
+        return "text-red-600"
+      case "suspended":
+        return "text-red-600"
+      default:
+        return "text-gray-600"
     }
   }
 
   const getStatusText = (status: ProfessionalStatus) => {
     switch (status) {
-      case "active": return "פעיל"
-      case "pending_admin_approval": return "ממתין לאישור אדמין"
-      case "pending_user_action": return "ממתין לפעולת משתמש"
-      case "rejected": return "נדחה"
-      case "suspended": return "מושהה"
-      default: return "לא ידוע"
+      case "active":
+        return "פעיל"
+      case "pending_admin_approval":
+        return "ממתין לאישור אדמין"
+      case "pending_user_action":
+        return "ממתין לפעולת משתמש"
+      case "rejected":
+        return "נדחה"
+      case "suspended":
+        return "מושהה"
+      default:
+        return "לא ידוע"
     }
   }
 
   const formatDate = (date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL")
     } catch {
       return "-"
@@ -154,9 +176,7 @@ export default function ProfessionalProfileTab({
             <User className="h-5 w-5" />
             פרופיל המטפל
           </h3>
-          <p className="text-sm text-muted-foreground">
-            עריכת פרטי המשתמש וסטטוס המטפל
-          </p>
+          <p className="text-sm text-muted-foreground">עריכת פרטי המשתמש וסטטוס המטפל</p>
         </div>
         {hasChanges && (
           <Button onClick={handleSave} disabled={saving}>
@@ -187,7 +207,7 @@ export default function ProfessionalProfileTab({
               <Input
                 id="name"
                 value={userDetails.name}
-                onChange={(e) => handleUserDetailChange("name", e.target.value)}
+                onChange={e => handleUserDetailChange("name", e.target.value)}
                 placeholder="הכנס שם מלא"
                 className="text-right"
                 dir={dir}
@@ -200,7 +220,7 @@ export default function ProfessionalProfileTab({
                 id="email"
                 type="email"
                 value={userDetails.email}
-                onChange={(e) => handleUserDetailChange("email", e.target.value)}
+                onChange={e => handleUserDetailChange("email", e.target.value)}
                 placeholder="הכנס כתובת אימייל"
                 className="text-right"
                 dir={dir}
@@ -214,7 +234,7 @@ export default function ProfessionalProfileTab({
               <Input
                 id="phone"
                 value={userDetails.phone}
-                onChange={(e) => handleUserDetailChange("phone", e.target.value)}
+                onChange={e => handleUserDetailChange("phone", e.target.value)}
                 placeholder="הכנס מספר טלפון"
                 className="text-right"
                 dir={dir}
@@ -223,7 +243,10 @@ export default function ProfessionalProfileTab({
 
             <div className="space-y-2">
               <Label htmlFor="gender">מגדר</Label>
-              <Select value={userDetails.gender} onValueChange={(value) => handleUserDetailChange("gender", value)}>
+              <Select
+                value={userDetails.gender}
+                onValueChange={value => handleUserDetailChange("gender", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר מגדר" />
                 </SelectTrigger>
@@ -240,7 +263,7 @@ export default function ProfessionalProfileTab({
                 id="birthDate"
                 type="date"
                 value={userDetails.birthDate}
-                onChange={(e) => handleUserDetailChange("birthDate", e.target.value)}
+                onChange={e => handleUserDetailChange("birthDate", e.target.value)}
                 className="text-right"
                 dir={dir}
               />
@@ -258,9 +281,11 @@ export default function ProfessionalProfileTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="status">סטטוס</Label>
-              <Select 
-                value={professionalDetails.status} 
-                onValueChange={(value: ProfessionalStatus) => handleProfessionalDetailChange("status", value)}
+              <Select
+                value={professionalDetails.status}
+                onValueChange={(value: ProfessionalStatus) =>
+                  handleProfessionalDetailChange("status", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -283,7 +308,7 @@ export default function ProfessionalProfileTab({
                 <Switch
                   id="isActive"
                   checked={professionalDetails.isActive}
-                  onCheckedChange={(checked) => handleProfessionalDetailChange("isActive", checked)}
+                  onCheckedChange={checked => handleProfessionalDetailChange("isActive", checked)}
                 />
                 <span className={professionalDetails.isActive ? "text-green-600" : "text-red-600"}>
                   {professionalDetails.isActive ? "פעיל" : "לא פעיל"}
@@ -297,7 +322,7 @@ export default function ProfessionalProfileTab({
             <Textarea
               id="adminNotes"
               value={professionalDetails.adminNotes}
-              onChange={(e) => handleProfessionalDetailChange("adminNotes", e.target.value)}
+              onChange={e => handleProfessionalDetailChange("adminNotes", e.target.value)}
               placeholder="הכנס הערות אדמין..."
               className="text-right min-h-[80px]"
               dir={dir}
@@ -310,7 +335,7 @@ export default function ProfessionalProfileTab({
               <Textarea
                 id="rejectionReason"
                 value={professionalDetails.rejectionReason}
-                onChange={(e) => handleProfessionalDetailChange("rejectionReason", e.target.value)}
+                onChange={e => handleProfessionalDetailChange("rejectionReason", e.target.value)}
                 placeholder="הכנס סיבת דחייה..."
                 className="text-right min-h-[80px]"
                 dir={dir}
@@ -366,4 +391,4 @@ export default function ProfessionalProfileTab({
       </Card>
     </div>
   )
-} 
+}

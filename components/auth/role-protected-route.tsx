@@ -13,7 +13,11 @@ interface RoleProtectedRouteProps {
   redirectTo?: string
 }
 
-export function RoleProtectedRoute({ children, requiredRole, redirectTo = "/dashboard" }: RoleProtectedRouteProps) {
+export function RoleProtectedRoute({
+  children,
+  requiredRole,
+  redirectTo = "/dashboard",
+}: RoleProtectedRouteProps) {
   const { _data: session, status } = useSession()
   const router = useRouter()
   const { t } = useTranslation()

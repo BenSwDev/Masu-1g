@@ -4,7 +4,14 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
@@ -177,14 +184,17 @@ export default function ProfessionalBookingManagementPage() {
         <Alert>
           <Hourglass className="h-4 w-4" />
           <AlertTitle>{t("professionalBookingManagement.status.noBookingFound.title")}</AlertTitle>
-          <AlertDescription>{t("professionalBookingManagement.status.noBookingFound.description")}</AlertDescription>
+          <AlertDescription>
+            {t("professionalBookingManagement.status.noBookingFound.description")}
+          </AlertDescription>
         </Alert>
       </div>
     )
   }
 
   const isAssignedToCurrentPro = booking.professionalId?._id.toString() === currentProfessionalId
-  const clientName = booking.userId?.name || t("professionalBookingManagement.details.anonymousClient")
+  const clientName =
+    booking.userId?.name || t("professionalBookingManagement.details.anonymousClient")
   const clientPhone = booking.userId?.phone || t("common.notAvailable")
   const clientEmail = booking.userId?.email || t("common.notAvailable")
 
@@ -192,7 +202,8 @@ export default function ProfessionalBookingManagementPage() {
     if (booking.status === "in_process") {
       return (
         <Button onClick={handleAcceptBooking} disabled={actionLoading} className="w-full">
-          <CheckCircle2 className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.acceptBooking")}
+          <CheckCircle2 className="mr-2 h-4 w-4" />{" "}
+          {t("professionalBookingManagement.actions.acceptBooking")}
         </Button>
       )
     }
@@ -201,10 +212,12 @@ export default function ProfessionalBookingManagementPage() {
         return (
           <div className="space-y-2 w-full">
             <Button onClick={handleMarkEnRoute} disabled={actionLoading} className="w-full">
-              <Send className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markEnRoute")}
+              <Send className="mr-2 h-4 w-4" />{" "}
+              {t("professionalBookingManagement.actions.markEnRoute")}
             </Button>
             <Button onClick={handleMarkCompleted} disabled={actionLoading} className="w-full">
-              <Check className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markCompleted")}
+              <Check className="mr-2 h-4 w-4" />{" "}
+              {t("professionalBookingManagement.actions.markCompleted")}
             </Button>
           </div>
         )
@@ -219,7 +232,7 @@ export default function ProfessionalBookingManagementPage() {
     const translated = t(translationKey)
     // If translation returns the key itself, it means it's missing. Fallback.
     return translated === translationKey
-      ? statusKey.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+      ? statusKey.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())
       : translated
   }
 
@@ -228,7 +241,8 @@ export default function ProfessionalBookingManagementPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {t("professionalBookingManagement.title")}: {booking.treatmentId?.name || t("common.unknownTreatment")}
+            {t("professionalBookingManagement.title")}:{" "}
+            {booking.treatmentId?.name || t("common.unknownTreatment")}
           </CardTitle>
           <CardDescription>
             {t("professionalBookingManagement.bookingId")}: {booking._id.toString()}
@@ -236,7 +250,9 @@ export default function ProfessionalBookingManagementPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-lg mb-2">{t("professionalBookingManagement.details.title")}</h3>
+            <h3 className="font-semibold text-lg mb-2">
+              {t("professionalBookingManagement.details.title")}
+            </h3>
             <p>
               <strong>{t("professionalBookingManagement.details.status")}:</strong>{" "}
               <span
@@ -258,7 +274,9 @@ export default function ProfessionalBookingManagementPage() {
             </p>
             <p>
               <strong>{t("professionalBookingManagement.details.address")}:</strong>{" "}
-              {booking.addressId?.fullAddress || booking.customAddressDetails?.fullAddress || t("common.notAvailable")}
+              {booking.addressId?.fullAddress ||
+                booking.customAddressDetails?.fullAddress ||
+                t("common.notAvailable")}
             </p>
             {booking.notes && (
               <p>
@@ -270,15 +288,20 @@ export default function ProfessionalBookingManagementPage() {
           {((booking.status !== "pending_professional_assignment" && isAssignedToCurrentPro) ||
             session?.user.roles.includes("admin")) && (
             <div>
-              <h3 className="font-semibold text-lg mb-2">{t("professionalBookingManagement.clientDetails.title")}</h3>
+              <h3 className="font-semibold text-lg mb-2">
+                {t("professionalBookingManagement.clientDetails.title")}
+              </h3>
               <p>
-                <strong>{t("professionalBookingManagement.clientDetails.name")}:</strong> {clientName}
+                <strong>{t("professionalBookingManagement.clientDetails.name")}:</strong>{" "}
+                {clientName}
               </p>
               <p>
-                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong> {formatPhoneForDisplay(clientPhone || "")}
+                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong>{" "}
+                {formatPhoneForDisplay(clientPhone || "")}
               </p>
               <p>
-                <strong>{t("professionalBookingManagement.clientDetails.email")}:</strong> {clientEmail}
+                <strong>{t("professionalBookingManagement.clientDetails.email")}:</strong>{" "}
+                {clientEmail}
               </p>
             </div>
           )}
@@ -286,7 +309,9 @@ export default function ProfessionalBookingManagementPage() {
           {booking.status === "in_process" && !isAssignedToCurrentPro && (
             <Alert>
               <Hourglass className="h-4 w-4" />
-              <AlertTitle>{t("professionalBookingManagement.status.pendingAssignment.title")}</AlertTitle>
+              <AlertTitle>
+                {t("professionalBookingManagement.status.pendingAssignment.title")}
+              </AlertTitle>
               <AlertDescription>
                 {t("professionalBookingManagement.status.pendingAssignment.description")}
               </AlertDescription>
@@ -296,7 +321,9 @@ export default function ProfessionalBookingManagementPage() {
           {booking.status === "confirmed" && !isAssignedToCurrentPro && (
             <Alert variant="destructive">
               <X className="h-4 w-4" />
-              <AlertTitle>{t("professionalBookingManagement.status.alreadyAssigned.title")}</AlertTitle>
+              <AlertTitle>
+                {t("professionalBookingManagement.status.alreadyAssigned.title")}
+              </AlertTitle>
               <AlertDescription>
                 {t("professionalBookingManagement.status.alreadyAssigned.description")}
               </AlertDescription>

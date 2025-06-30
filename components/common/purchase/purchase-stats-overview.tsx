@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PurchaseStats } from "@/lib/types/purchase-summary"
 import {
@@ -32,11 +26,11 @@ export default function PurchaseStatsOverview({
   const { t, dir } = useTranslation()
 
   const formatCurrency = (amount: number) => {
-    return `${amount.toLocaleString('he-IL')} ש״ח`
+    return `${amount.toLocaleString("he-IL")} ש״ח`
   }
 
   const formatPercentage = (value: number) => {
-    return `${value?.toFixed(1) || '0.0'}%`
+    return `${value?.toFixed(1) || "0.0"}%`
   }
 
   if (isLoading) {
@@ -44,7 +38,9 @@ export default function PurchaseStatsOverview({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" dir={dir}>
         {[...Array(8)].map((_, index) => (
           <Card key={index}>
-            <CardHeader className={`flex ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between space-y-0 pb-2`}>
+            <CardHeader
+              className={`flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"} items-center justify-between space-y-0 pb-2`}
+            >
               <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
               <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
             </CardHeader>
@@ -60,67 +56,67 @@ export default function PurchaseStatsOverview({
 
   const statCards = [
     {
-      title: t('purchaseStats.totalRevenue') || 'סה״כ הכנסות',
+      title: t("purchaseStats.totalRevenue") || "סה״כ הכנסות",
       value: formatCurrency(stats.totalRevenue),
-      description: t('purchaseStats.totalRevenueDesc') || 'מכל המקורות',
+      description: t("purchaseStats.totalRevenueDesc") || "מכל המקורות",
       icon: DollarSign,
-      trend: '+20.1%',
+      trend: "+20.1%",
       trendUp: true,
     },
     {
-      title: t('purchaseStats.totalTransactions') || 'סה״כ עסקאות',
-      value: stats.totalTransactions.toLocaleString('he-IL'),
-      description: t('purchaseStats.totalTransactionsDesc') || 'הזמנות, מנויים ושוברים',
+      title: t("purchaseStats.totalTransactions") || "סה״כ עסקאות",
+      value: stats.totalTransactions.toLocaleString("he-IL"),
+      description: t("purchaseStats.totalTransactionsDesc") || "הזמנות, מנויים ושוברים",
       icon: CreditCard,
-      trend: '+12.5%',
+      trend: "+12.5%",
       trendUp: true,
     },
     {
-      title: t('purchaseStats.totalCustomers') || 'סה״כ לקוחות',
-      value: stats.totalCustomers.toLocaleString('he-IL'),
-      description: `+${stats.newCustomersThisMonth} ${t('purchaseStats.thisMonth') || 'החודש'}`,
+      title: t("purchaseStats.totalCustomers") || "סה״כ לקוחות",
+      value: stats.totalCustomers.toLocaleString("he-IL"),
+      description: `+${stats.newCustomersThisMonth} ${t("purchaseStats.thisMonth") || "החודש"}`,
       icon: Users,
-      trend: '+5.2%',
+      trend: "+5.2%",
       trendUp: true,
     },
     {
-      title: t('purchaseStats.averageTransaction') || 'ממוצע עסקה',
+      title: t("purchaseStats.averageTransaction") || "ממוצע עסקה",
       value: formatCurrency(stats.averageTransactionValue),
-      description: t('purchaseStats.averageTransactionDesc') || 'ערך ממוצע לעסקה',
+      description: t("purchaseStats.averageTransactionDesc") || "ערך ממוצע לעסקה",
       icon: TrendingUp,
-      trend: '+8.3%',
+      trend: "+8.3%",
       trendUp: true,
     },
     {
-      title: t('purchaseStats.bookings') || 'הזמנות',
-      value: stats.bookingStats.total.toLocaleString('he-IL'),
-      description: `${stats.bookingStats.completed} ${t('purchaseStats.completed') || 'הושלמו'}`,
+      title: t("purchaseStats.bookings") || "הזמנות",
+      value: stats.bookingStats.total.toLocaleString("he-IL"),
+      description: `${stats.bookingStats.completed} ${t("purchaseStats.completed") || "הושלמו"}`,
       icon: Calendar,
       trend: formatCurrency(stats.bookingStats.revenue),
       trendUp: true,
     },
     {
-      title: t('purchaseStats.subscriptions') || 'מנויים',
-      value: stats.subscriptionStats.total.toLocaleString('he-IL'),
-      description: `${stats.subscriptionStats.active} ${t('purchaseStats.active') || 'פעילים'}`,
+      title: t("purchaseStats.subscriptions") || "מנויים",
+      value: stats.subscriptionStats.total.toLocaleString("he-IL"),
+      description: `${stats.subscriptionStats.active} ${t("purchaseStats.active") || "פעילים"}`,
       icon: Stethoscope,
       trend: formatCurrency(stats.subscriptionStats.revenue),
       trendUp: true,
     },
     {
-      title: t('purchaseStats.vouchers') || 'שוברי מתנה',
-      value: stats.voucherStats.total.toLocaleString('he-IL'),
-      description: `${stats.voucherStats.active} ${t('purchaseStats.active') || 'פעילים'}`,
+      title: t("purchaseStats.vouchers") || "שוברי מתנה",
+      value: stats.voucherStats.total.toLocaleString("he-IL"),
+      description: `${stats.voucherStats.active} ${t("purchaseStats.active") || "פעילים"}`,
       icon: Gift,
       trend: formatPercentage(stats.voucherStats.redemptionRate),
       trendUp: stats.voucherStats.redemptionRate > 50,
     },
     {
-      title: t('purchaseStats.monthlyGrowth') || 'צמיחה חודשית',
-      value: '+15.2%',
-      description: t('purchaseStats.monthlyGrowthDesc') || 'לעומת החודש הקודם',
+      title: t("purchaseStats.monthlyGrowth") || "צמיחה חודשית",
+      value: "+15.2%",
+      description: t("purchaseStats.monthlyGrowthDesc") || "לעומת החודש הקודם",
       icon: TrendingUp,
-      trend: '+2.4%',
+      trend: "+2.4%",
       trendUp: true,
     },
   ]
@@ -130,15 +126,17 @@ export default function PurchaseStatsOverview({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card key={index}>
-            <CardHeader className={`flex ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between space-y-0 pb-2`}>
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
+            <CardHeader
+              className={`flex ${dir === "rtl" ? "flex-row-reverse" : "flex-row"} items-center justify-between space-y-0 pb-2`}
+            >
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className={`text-xs text-muted-foreground flex items-center gap-1 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+              <p
+                className={`text-xs text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
                 {stat.trendUp ? (
                   <TrendingUp className="h-3 w-3 text-green-500" />
                 ) : (
@@ -157,9 +155,9 @@ export default function PurchaseStatsOverview({
       {/* Monthly Revenue Chart Placeholder */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>{t('purchaseStats.monthlyRevenue') || 'הכנסות חודשיות'}</CardTitle>
+          <CardTitle>{t("purchaseStats.monthlyRevenue") || "הכנסות חודשיות"}</CardTitle>
           <CardDescription>
-            {t('purchaseStats.monthlyRevenueDesc') || 'פירוט הכנסות לפי חודש וסוג'}
+            {t("purchaseStats.monthlyRevenueDesc") || "פירוט הכנסות לפי חודש וסוג"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -167,9 +165,9 @@ export default function PurchaseStatsOverview({
             {/* Placeholder for chart - can be replaced with actual chart library */}
             <div className="text-center">
               <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t('purchaseStats.chartPlaceholder') || 'גרף הכנסות חודשיות'}</p>
+              <p>{t("purchaseStats.chartPlaceholder") || "גרף הכנסות חודשיות"}</p>
               <p className="text-sm mt-2">
-                {t('purchaseStats.chartDataAvailable') || 'נתונים זמינים עבור 12 חודשים אחרונים'}
+                {t("purchaseStats.chartDataAvailable") || "נתונים זמינים עבור 12 חודשים אחרונים"}
               </p>
             </div>
           </div>
@@ -180,9 +178,11 @@ export default function PurchaseStatsOverview({
       <div className="grid gap-4 md:grid-cols-3 mt-6">
         <Card>
           <CardHeader>
-            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <CardTitle
+              className={`text-lg flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <Calendar className="h-5 w-5 text-primary" />
-              {t('purchaseStats.bookingRevenue') || 'הכנסות מהזמנות'}
+              {t("purchaseStats.bookingRevenue") || "הכנסות מהזמנות"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -190,16 +190,22 @@ export default function PurchaseStatsOverview({
               {formatCurrency(stats.bookingStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.totalBookings') || 'סה״כ הזמנות'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.totalBookings") || "סה״כ הזמנות"}:</span>
                 <span>{stats.bookingStats.total}</span>
               </div>
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.completedBookings') || 'הזמנות שהושלמו'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.completedBookings") || "הזמנות שהושלמו"}:</span>
                 <span className="text-green-600">{stats.bookingStats.completed}</span>
               </div>
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.cancelledBookings') || 'הזמנות שבוטלו'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.cancelledBookings") || "הזמנות שבוטלו"}:</span>
                 <span className="text-red-600">{stats.bookingStats.cancelled}</span>
               </div>
             </div>
@@ -208,9 +214,11 @@ export default function PurchaseStatsOverview({
 
         <Card>
           <CardHeader>
-            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <CardTitle
+              className={`text-lg flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <Stethoscope className="h-5 w-5 text-blue-600" />
-              {t('purchaseStats.subscriptionRevenue') || 'הכנסות ממנויים'}
+              {t("purchaseStats.subscriptionRevenue") || "הכנסות ממנויים"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -218,12 +226,16 @@ export default function PurchaseStatsOverview({
               {formatCurrency(stats.subscriptionStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.totalSubscriptions') || 'סה״כ מנויים'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.totalSubscriptions") || "סה״כ מנויים"}:</span>
                 <span>{stats.subscriptionStats.total}</span>
               </div>
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.activeSubscriptions') || 'מנויים פעילים'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.activeSubscriptions") || "מנויים פעילים"}:</span>
                 <span className="text-green-600">{stats.subscriptionStats.active}</span>
               </div>
             </div>
@@ -232,9 +244,11 @@ export default function PurchaseStatsOverview({
 
         <Card>
           <CardHeader>
-            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <CardTitle
+              className={`text-lg flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+            >
               <Gift className="h-5 w-5 text-purple-600" />
-              {t('purchaseStats.voucherRevenue') || 'הכנסות משוברי מתנה'}
+              {t("purchaseStats.voucherRevenue") || "הכנסות משוברי מתנה"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -242,17 +256,27 @@ export default function PurchaseStatsOverview({
               {formatCurrency(stats.voucherStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.totalVouchers') || 'סה״כ שוברים'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.totalVouchers") || "סה״כ שוברים"}:</span>
                 <span>{stats.voucherStats.total}</span>
               </div>
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.activeVouchers') || 'שוברים פעילים'}:</span>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.activeVouchers") || "שוברים פעילים"}:</span>
                 <span className="text-green-600">{stats.voucherStats.active}</span>
               </div>
-              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
-                <span>{t('purchaseStats.redemptionRate') || 'שיעור מימוש'}:</span>
-                <span className={stats.voucherStats.redemptionRate > 50 ? "text-green-600" : "text-orange-500"}>
+              <div
+                className={`flex justify-between text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
+                <span>{t("purchaseStats.redemptionRate") || "שיעור מימוש"}:</span>
+                <span
+                  className={
+                    stats.voucherStats.redemptionRate > 50 ? "text-green-600" : "text-orange-500"
+                  }
+                >
                   {formatPercentage(stats.voucherStats.redemptionRate)}
                 </span>
               </div>
@@ -262,4 +286,4 @@ export default function PurchaseStatsOverview({
       </div>
     </div>
   )
-} 
+}

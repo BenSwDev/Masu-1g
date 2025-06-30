@@ -1,4 +1,4 @@
-import type { Types } from 'mongoose'
+import type { Types } from "mongoose"
 
 /**
  * CORE BOOKING TYPES - SINGLE SOURCE OF TRUTH
@@ -16,7 +16,7 @@ import type { Types } from 'mongoose'
 export interface Booking {
   _id: string
   userId?: string
-  
+
   // Treatment Information
   treatmentId: string
   treatmentName?: string
@@ -24,22 +24,22 @@ export interface Booking {
   selectedDurationId?: string
   selectedDurationName?: string
   treatmentDuration?: number // Duration in minutes
-  
+
   // Scheduling
   bookingDateTime: string
   isFlexibleTime: boolean
   flexibilityRangeHours?: number
-  
+
   // Address Information
   addressId?: string
   bookingAddressSnapshot: BookingAddress
-  
+
   // Professional Assignment
   professionalId?: string
   professionalName?: string
-  therapistGenderPreference: 'male' | 'female' | 'any'
+  therapistGenderPreference: "male" | "female" | "any"
   suitableProfessionals?: BookingProfessional[]
-  
+
   // Pricing
   priceDetails: BookingPriceDetails
   staticTreatmentPrice?: number
@@ -48,33 +48,33 @@ export interface Booking {
   staticTimeSurchargeReason?: string
   staticTherapistPayExtra?: number
   companyFee?: number
-  
+
   // Payment
   paymentDetails: BookingPaymentDetails
   enhancedPaymentDetails?: BookingEnhancedPaymentDetails
-  
+
   // Gift Information
   isGift: boolean
   giftGreeting?: string
-  giftSendWhen?: 'now' | string
+  giftSendWhen?: "now" | string
   giftHidePrice?: boolean
-  
+
   // Status & Workflow
   status: BookingStatus
   step?: number
-  
+
   // Guest Information (for non-user bookings)
   guestInfo?: BookingGuestInfo
-  
+
   // Consents & Preferences
   consents?: BookingConsents
-  
+
   // Communication
   notificationPreferences: BookingNotificationPreferences
-  
+
   // Review
   review?: BookingReview
-  
+
   // Administrative
   notes?: string
   internalNotes?: string
@@ -135,8 +135,8 @@ export interface BookingPriceDetails {
  * Booking Payment Details
  */
 export interface BookingPaymentDetails {
-  method: 'cash' | 'card' | 'bank_transfer' | 'gift_voucher' | 'subscription'
-  status: 'pending' | 'paid' | 'failed' | 'refunded' | 'partial'
+  method: "cash" | "card" | "bank_transfer" | "gift_voucher" | "subscription"
+  status: "pending" | "paid" | "failed" | "refunded" | "partial"
   amount: number
   currency: string
   transactionId?: string
@@ -166,13 +166,13 @@ export interface BookingEnhancedPaymentDetails {
  * Booking Status Enum
  */
 export type BookingStatus =
-  | 'pending_payment'
-  | 'in_process'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled'
-  | 'refunded'
-  | 'no_show'
+  | "pending_payment"
+  | "in_process"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "refunded"
+  | "no_show"
 
 /**
  * Guest Information for Bookings
@@ -183,14 +183,14 @@ export interface BookingGuestInfo {
   email: string
   phone: string
   birthDate?: string
-  gender?: 'male' | 'female' | 'other'
+  gender?: "male" | "female" | "other"
   isBookingForSomeoneElse?: boolean
   recipientFirstName?: string
   recipientLastName?: string
   recipientEmail?: string
   recipientPhone?: string
   recipientBirthDate?: string
-  recipientGender?: 'male' | 'female' | 'other'
+  recipientGender?: "male" | "female" | "other"
 }
 
 /**
@@ -209,10 +209,10 @@ export interface BookingConsents {
  * Booking Notification Preferences
  */
 export interface BookingNotificationPreferences {
-  bookerMethod: 'email' | 'sms' | 'both' | 'none'
-  bookerLanguage: 'he' | 'en' | 'ru'
-  recipientMethod?: 'email' | 'sms' | 'both' | 'none'
-  recipientLanguage?: 'he' | 'en' | 'ru'
+  bookerMethod: "email" | "sms" | "both" | "none"
+  bookerLanguage: "he" | "en" | "ru"
+  recipientMethod?: "email" | "sms" | "both" | "none"
+  recipientLanguage?: "he" | "en" | "ru"
 }
 
 /**
@@ -236,20 +236,20 @@ export interface BookingReview {
 export interface IBookingDocument {
   _id: Types.ObjectId
   userId?: Types.ObjectId
-  
+
   treatmentId: Types.ObjectId
   treatmentCategory?: Types.ObjectId
   selectedDurationId?: Types.ObjectId
-  
+
   bookingDateTime: Date
   isFlexibleTime: boolean
   flexibilityRangeHours?: number
-  
+
   addressId?: Types.ObjectId
   bookingAddressSnapshot: BookingAddress
-  
+
   professionalId?: Types.ObjectId
-  therapistGenderPreference: 'male' | 'female' | 'any'
+  therapistGenderPreference: "male" | "female" | "any"
   suitableProfessionals?: Array<{
     professionalId: Types.ObjectId
     name: string
@@ -259,7 +259,7 @@ export interface IBookingDocument {
     profileId: Types.ObjectId
     calculatedAt: Date
   }>
-  
+
   priceDetails: BookingPriceDetails
   staticTreatmentPrice?: number
   staticTherapistPay?: number
@@ -267,23 +267,23 @@ export interface IBookingDocument {
   staticTimeSurchargeReason?: string
   staticTherapistPayExtra?: number
   companyFee?: number
-  
+
   paymentDetails: BookingPaymentDetails
   enhancedPaymentDetails?: BookingEnhancedPaymentDetails
-  
+
   isGift: boolean
   giftGreeting?: string
-  giftSendWhen?: 'now' | Date
+  giftSendWhen?: "now" | Date
   giftHidePrice?: boolean
-  
+
   status: BookingStatus
   step?: number
-  
+
   guestInfo?: BookingGuestInfo
   consents?: BookingConsents
   notificationPreferences: BookingNotificationPreferences
   review?: BookingReview
-  
+
   notes?: string
   internalNotes?: string
   createdAt: Date
@@ -299,32 +299,32 @@ export interface IBookingDocument {
  */
 export interface BookingCreateForm {
   // Customer Information
-  customerType: 'guest' | 'existing'
+  customerType: "guest" | "existing"
   guestInfo?: BookingGuestInfo
   existingCustomerId?: string
-  
+
   // Treatment Selection
   treatmentId: string
   selectedDurationId?: string
-  
+
   // Scheduling
   bookingDateTime: string
   isFlexibleTime: boolean
   flexibilityRangeHours?: number
-  therapistGenderPreference: 'male' | 'female' | 'any'
-  
+  therapistGenderPreference: "male" | "female" | "any"
+
   // Address
-  addressType: 'existing' | 'custom'
+  addressType: "existing" | "custom"
   addressId?: string
   customAddress?: BookingAddress
-  
+
   // Payment
-  paymentType: 'immediate' | 'cash' | 'invoice'
+  paymentType: "immediate" | "cash" | "invoice"
   paymentMethodId?: string
   appliedCouponCode?: string
   appliedGiftVoucherId?: string
   redeemedSubscriptionId?: string
-  
+
   // Additional
   notes?: string
   notificationPreferences: BookingNotificationPreferences
@@ -383,8 +383,8 @@ export interface BookingFilters {
 export interface BookingListOptions {
   page?: number
   limit?: number
-  sortBy?: 'bookingDateTime' | 'createdAt' | 'status' | 'totalPrice'
-  sortOrder?: 'asc' | 'desc'
+  sortBy?: "bookingDateTime" | "createdAt" | "status" | "totalPrice"
+  sortOrder?: "asc" | "desc"
   filters?: BookingFilters
 }
 
@@ -433,14 +433,14 @@ export interface BookingCreateResponse {
  */
 export type BookingSummary = Pick<
   Booking,
-  | '_id'
-  | 'bookingDateTime'
-  | 'treatmentName'
-  | 'status'
-  | 'professionalName'
-  | 'priceDetails'
-  | 'isGift'
-  | 'createdAt'
+  | "_id"
+  | "bookingDateTime"
+  | "treatmentName"
+  | "status"
+  | "professionalName"
+  | "priceDetails"
+  | "isGift"
+  | "createdAt"
 >
 
 /**
@@ -480,10 +480,9 @@ export function canCancelBooking(booking: Booking): boolean {
   const bookingTime = new Date(booking.bookingDateTime)
   const now = new Date()
   const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-  
+
   return (
-    ['pending_payment', 'in_process', 'confirmed'].includes(booking.status) &&
-    hoursDifference >= 24 // At least 24 hours before booking
+    ["pending_payment", "in_process", "confirmed"].includes(booking.status) && hoursDifference >= 24 // At least 24 hours before booking
   )
 }
 
@@ -494,10 +493,9 @@ export function canRescheduleBooking(booking: Booking): boolean {
   const bookingTime = new Date(booking.bookingDateTime)
   const now = new Date()
   const hoursDifference = (bookingTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-  
+
   return (
-    ['in_process', 'confirmed'].includes(booking.status) &&
-    hoursDifference >= 12 // At least 12 hours before booking
+    ["in_process", "confirmed"].includes(booking.status) && hoursDifference >= 12 // At least 12 hours before booking
   )
 }
 
@@ -506,9 +504,9 @@ export function canRescheduleBooking(booking: Booking): boolean {
  */
 export function requiresPayment(booking: Booking): boolean {
   return (
-    booking.status === 'pending_payment' ||
-    booking.paymentDetails.status === 'pending' ||
-    booking.paymentDetails.status === 'failed'
+    booking.status === "pending_payment" ||
+    booking.paymentDetails.status === "pending" ||
+    booking.paymentDetails.status === "failed"
   )
 }
 
@@ -516,12 +514,12 @@ export function requiresPayment(booking: Booking): boolean {
  * Get booking display status
  */
 export function getBookingDisplayStatus(booking: Booking): string {
-  if (booking.status === 'pending_payment') return 'ממתין לתשלום'
-  if (booking.status === 'in_process') return 'בעיבוד'
-  if (booking.status === 'confirmed') return 'מאושר'
-  if (booking.status === 'completed') return 'הושלם'
-  if (booking.status === 'cancelled') return 'בוטל'
-  if (booking.status === 'refunded') return 'הוחזר'
-  if (booking.status === 'no_show') return 'לא הגיע'
+  if (booking.status === "pending_payment") return "ממתין לתשלום"
+  if (booking.status === "in_process") return "בעיבוד"
+  if (booking.status === "confirmed") return "מאושר"
+  if (booking.status === "completed") return "הושלם"
+  if (booking.status === "cancelled") return "בוטל"
+  if (booking.status === "refunded") return "הוחזר"
+  if (booking.status === "no_show") return "לא הגיע"
   return booking.status
-} 
+}

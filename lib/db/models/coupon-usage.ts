@@ -16,7 +16,7 @@ const CouponUsageSchema: Schema<ICouponUsage> = new Schema(
   },
   {
     timestamps: { createdAt: "usageDate", updatedAt: false },
-  },
+  }
 )
 
 CouponUsageSchema.index({ couponId: 1, userId: 1 })

@@ -7,29 +7,26 @@ import bookingLogger from "@/lib/logs/booking-logger"
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     // Only admins can view logs
     if (!session?.user?.roles?.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type') || 'general' // 'general' | 'booking'
-    const level = searchParams.get('level') as 'info' | 'warn' | 'error' | 'debug' | null
-    const userId = searchParams.get('userId')
-    const bookingId = searchParams.get('bookingId')
-    const sessionId = searchParams.get('sessionId')
-    const phase = searchParams.get('phase') as any
-    const limit = parseInt(searchParams.get('limit') || '100')
-    const format = searchParams.get('format') || 'json' // 'json' | 'text'
+    const type = searchParams.get("type") || "general" // 'general' | 'booking'
+    const level = searchParams.get("level") as "info" | "warn" | "error" | "debug" | null
+    const userId = searchParams.get("userId")
+    const bookingId = searchParams.get("bookingId")
+    const sessionId = searchParams.get("sessionId")
+    const phase = searchParams.get("phase") as any
+    const limit = parseInt(searchParams.get("limit") || "100")
+    const format = searchParams.get("format") || "json" // 'json' | 'text'
 
     let logs
     let summary = null
 
-    if (type === 'booking') {
+    if (type === "booking") {
       // Booking-specific logs
       if (bookingId) {
         logs = bookingLogger.getBookingLogs(bookingId)
@@ -38,7 +35,7 @@ export async function GET(request: NextRequest) {
         logs = bookingLogger.getSessionLogs(sessionId)
       } else if (phase) {
         logs = bookingLogger.getLogsByPhase(phase, limit)
-      } else if (level === 'error') {
+      } else if (level === "error") {
         logs = bookingLogger.getErrorLogs(limit)
       } else {
         logs = bookingLogger.getRecentBookingLogs(limit)
@@ -54,27 +51,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (format === 'text') {
+    if (format === "text") {
       // Return logs as formatted text for easy copying
-      const textLogs = logs.map((log: any) => {
-        if (type === 'booking') {
-          return `[${log.timestamp}] [${log.level.toUpperCase()}] [${log.phase || 'unknown'}] ${log.message}${
-            log.bookingId ? ` (Booking: ${log.bookingId})` : ''
-          }${
-            log.error ? `\nError: ${JSON.stringify(log.error, null, 2)}` : ''
-          }`
-        } else {
-          return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${
-            log.context ? `\nContext: ${JSON.stringify(log.context, null, 2)}` : ''
-          }`
-        }
-      }).join('\n\n')
+      const textLogs = logs
+        .map((log: any) => {
+          if (type === "booking") {
+            return `[${log.timestamp}] [${log.level.toUpperCase()}] [${log.phase || "unknown"}] ${log.message}${
+              log.bookingId ? ` (Booking: ${log.bookingId})` : ""
+            }${log.error ? `\nError: ${JSON.stringify(log.error, null, 2)}` : ""}`
+          } else {
+            return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${
+              log.context ? `\nContext: ${JSON.stringify(log.context, null, 2)}` : ""
+            }`
+          }
+        })
+        .join("\n\n")
 
       return new Response(textLogs, {
         headers: {
-          'Content-Type': 'text/plain',
-          'Content-Disposition': `attachment; filename="logs_${type}_${new Date().toISOString().split('T')[0]}.txt"`
-        }
+          "Content-Type": "text/plain",
+          "Content-Disposition": `attachment; filename="logs_${type}_${new Date().toISOString().split("T")[0]}.txt"`,
+        },
       })
     }
 
@@ -90,16 +87,12 @@ export async function GET(request: NextRequest) {
         bookingId,
         sessionId,
         phase,
-        limit
-      }
+        limit,
+      },
     })
-
   } catch (error) {
     console.error("Error fetching logs:", error)
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch logs" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Failed to fetch logs" }, { status: 500 })
   }
 }
 
@@ -107,18 +100,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.roles?.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
     const { action, bookingId, sessionId } = body
 
-    if (action === 'export') {
+    if (action === "export") {
       // Export logs to a downloadable format
       let logs
       if (bookingId) {
@@ -133,47 +123,43 @@ export async function POST(request: NextRequest) {
         exportedAt: new Date().toISOString(),
         exportedBy: session.user.email,
         filters: { bookingId, sessionId },
-        logs
+        logs,
       }
 
       return NextResponse.json({
         success: true,
         data: exportData,
-        filename: `booking_logs_${bookingId || sessionId || 'all'}_${new Date().toISOString().split('T')[0]}.json`
+        filename: `booking_logs_${bookingId || sessionId || "all"}_${new Date().toISOString().split("T")[0]}.json`,
       })
     }
 
-    if (action === 'summary') {
+    if (action === "summary") {
       // Get booking flow summaries
       if (bookingId) {
         const summary = bookingLogger.generateBookingFlowSummary(bookingId)
         return NextResponse.json({
           success: true,
-          summary
+          summary,
         })
       } else {
         // Get summaries for recent bookings
         const recentLogs = bookingLogger.getRecentBookingLogs(100)
         const bookingIds = [...new Set(recentLogs.map(log => log.bookingId).filter(Boolean))]
         const summaries = bookingIds.map(id => bookingLogger.generateBookingFlowSummary(id!))
-        
+
         return NextResponse.json({
           success: true,
-          summaries
+          summaries,
         })
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: "Invalid action"
+      message: "Invalid action",
     })
-
   } catch (error) {
     console.error("Error in logs POST:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
-} 
+}

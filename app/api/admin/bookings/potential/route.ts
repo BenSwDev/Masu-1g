@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     await dbConnect()
@@ -31,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Get professional profile
     const professionalProfile = await ProfessionalProfile.findOne({
-      userId: new Types.ObjectId(professionalId)
+      userId: new Types.ObjectId(professionalId),
     }).populate("userId")
 
     if (!professionalProfile) {
@@ -49,7 +46,7 @@ export async function GET(request: NextRequest) {
       name: professionalUser.name,
       gender: professionalUser.gender,
       treatments: professionalProfile.treatments?.length || 0,
-      workAreas: professionalProfile.workAreas?.length || 0
+      workAreas: professionalProfile.workAreas?.length || 0,
     })
 
     // Build query for potential bookings
@@ -76,22 +73,27 @@ export async function GET(request: NextRequest) {
       // Check gender preference
       if (booking.therapistGenderPreference && booking.therapistGenderPreference !== "any") {
         if (professionalUser.gender !== booking.therapistGenderPreference) {
-          console.log(`Booking ${booking.bookingNumber}: Gender mismatch - needs ${booking.therapistGenderPreference}, professional is ${professionalUser.gender}`)
+          console.log(
+            `Booking ${booking.bookingNumber}: Gender mismatch - needs ${booking.therapistGenderPreference}, professional is ${professionalUser.gender}`
+          )
           return false
         }
       }
 
       // Check if professional handles this treatment
-      const treatmentId = typeof booking.treatmentId === 'object' 
-        ? booking.treatmentId._id.toString() 
-        : booking.treatmentId.toString()
+      const treatmentId =
+        typeof booking.treatmentId === "object"
+          ? booking.treatmentId._id.toString()
+          : booking.treatmentId.toString()
 
-      const canHandleTreatment = professionalProfile.treatments.some(treatment => 
-        treatment.treatmentId.toString() === treatmentId
+      const canHandleTreatment = professionalProfile.treatments.some(
+        treatment => treatment.treatmentId.toString() === treatmentId
       )
 
       if (!canHandleTreatment) {
-        console.log(`Booking ${booking.bookingNumber}: Treatment not handled - needs ${treatmentId}`)
+        console.log(
+          `Booking ${booking.bookingNumber}: Treatment not handled - needs ${treatmentId}`
+        )
         return false
       }
 
@@ -102,14 +104,14 @@ export async function GET(request: NextRequest) {
         // Check if any of the professional's work areas covers this city
         const coversCity = professionalProfile.workAreas.some(workArea => {
           // Check if the city is in the covered cities list
-          const cityMatch = workArea.coveredCities.some(city => 
-            city.toLowerCase() === bookingCity.toLowerCase()
+          const cityMatch = workArea.coveredCities.some(
+            city => city.toLowerCase() === bookingCity.toLowerCase()
           )
-          
+
           // Also check if it's the main city of the work area
-          const isMainCity = workArea.cityName && 
-            workArea.cityName.toLowerCase() === bookingCity.toLowerCase()
-          
+          const isMainCity =
+            workArea.cityName && workArea.cityName.toLowerCase() === bookingCity.toLowerCase()
+
           return cityMatch || isMainCity
         })
 
@@ -123,21 +125,27 @@ export async function GET(request: NextRequest) {
       return true
     })
 
-    console.log(`Found ${potentialBookings.length} potential bookings for professional ${professionalUser.name}`)
+    console.log(
+      `Found ${potentialBookings.length} potential bookings for professional ${professionalUser.name}`
+    )
 
     return NextResponse.json({
       success: true,
       bookings: potentialBookings.map(booking => ({
         ...booking,
         _id: booking._id.toString(),
-        userId: booking.userId ? {
-          ...booking.userId,
-          _id: booking.userId._id.toString()
-        } : null,
-        treatmentId: booking.treatmentId ? {
-          ...booking.treatmentId,
-          _id: booking.treatmentId._id.toString()
-        } : null,
+        userId: booking.userId
+          ? {
+              ...booking.userId,
+              _id: booking.userId._id.toString(),
+            }
+          : null,
+        treatmentId: booking.treatmentId
+          ? {
+              ...booking.treatmentId,
+              _id: booking.treatmentId._id.toString(),
+            }
+          : null,
       })),
       debug: {
         professionalId,
@@ -145,8 +153,8 @@ export async function GET(request: NextRequest) {
         totalUnassigned: unassignedBookings.length,
         totalPotential: potentialBookings.length,
         professionalTreatments: professionalProfile.treatments?.length || 0,
-        professionalWorkAreas: professionalProfile.workAreas?.length || 0
-      }
+        professionalWorkAreas: professionalProfile.workAreas?.length || 0,
+      },
     })
   } catch (error) {
     console.error("Error in potential bookings API:", error)
@@ -155,4 +163,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

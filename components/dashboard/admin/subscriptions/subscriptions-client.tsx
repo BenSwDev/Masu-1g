@@ -17,7 +17,13 @@ import {
 } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 import { toast } from "sonner"
 import SubscriptionForm from "./subscription-form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface SubscriptionPlain {
   _id: string
@@ -42,7 +48,11 @@ interface SubscriptionsClientProps {
   }
 }
 
-const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagination }: SubscriptionsClientProps) => {
+const SubscriptionsClient = ({
+  initialSubscriptions = [],
+  treatments = [],
+  pagination,
+}: SubscriptionsClientProps) => {
   const { t } = useTranslation()
   const [subscriptions, setSubscriptions] = useState<SubscriptionPlain[]>(initialSubscriptions)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -82,7 +92,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
             isActive: obj.isActive ?? false,
             createdAt: obj.createdAt,
             updatedAt: obj.updatedAt,
-          })),
+          }))
         )
         setPaginationData(result.pagination)
       } else {
@@ -99,13 +109,15 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
   useEffect(() => {
     // Only fetch if we're not on the initial load
     if (searchTerm || activeFilter !== "all" || currentPage > 1) {
-      const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+      const isActive =
+        activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
       fetchSubscriptions(currentPage, searchTerm, isActive)
     }
   }, [currentPage, activeFilter])
 
   const handleSearch = () => {
-    const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+    const isActive =
+      activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
     setCurrentPage(1) // Reset to first page on new search
     fetchSubscriptions(1, searchTerm, isActive)
   }
@@ -129,7 +141,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
         fetchSubscriptions(
           currentPage,
           searchTerm,
-          activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
+          activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
         )
       } else {
         toast.error(result.error || t("subscriptions.createError"))
@@ -147,7 +159,9 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     try {
       const result = await updateSubscription(currentSubscription._id as string, data)
       if (result.success && result.subscription) {
-        setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)))
+        setSubscriptions(
+          subscriptions.map(s => (s._id === currentSubscription._id ? result.subscription : s))
+        )
         toast.success(t("subscriptions.updateSuccess"))
         setIsEditDialogOpen(false)
       } else {
@@ -176,7 +190,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     try {
       const result = await deleteSubscription(currentSubscription._id as string)
       if (result.success) {
-        setSubscriptions(subscriptions.filter((s) => s._id !== currentSubscription._id))
+        setSubscriptions(subscriptions.filter(s => s._id !== currentSubscription._id))
         toast.success(t("subscriptions.deleteSuccess"))
         setIsDeleteDialogOpen(false)
         if (subscriptions.length === 1 && currentPage > 1) {
@@ -184,7 +198,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
           fetchSubscriptions(
             currentPage - 1,
             searchTerm,
-            activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
+            activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
           )
         }
       } else {
@@ -199,7 +213,8 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+    const isActive =
+      activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
     fetchSubscriptions(page, searchTerm, isActive)
   }
 
@@ -225,8 +240,8 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
                 placeholder={t("subscriptions.searchPlaceholder") || t("common.search")}
                 className="pl-8"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                onChange={e => setSearchTerm(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSearch()}
               />
             </div>
             <div className="w-full md:w-48">
@@ -266,7 +281,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {subscriptions.map((subscription) => (
+          {subscriptions.map(subscription => (
             <SubscriptionCard
               key={String(subscription._id)}
               subscription={{

@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Only import City model on server side
 let City: any = null
-if (typeof window === 'undefined') {
+if (typeof window === "undefined") {
   // Dynamic import only on server side to prevent client-side loading
   City = require("@/lib/db/models/city-distance").City
 }
@@ -17,22 +17,22 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
  */
 async function getActiveCities(): Promise<Set<string>> {
   // Return empty set on client side
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     return new Set()
   }
 
   const now = Date.now()
-  
+
   // Use cache if it's still valid
-  if (activeCitiesCache && (now - cacheTimestamp) < CACHE_DURATION) {
+  if (activeCitiesCache && now - cacheTimestamp < CACHE_DURATION) {
     return activeCitiesCache
   }
-  
+
   try {
     if (!City) {
       return new Set()
     }
-    const cities = await City.find({ isActive: true }).select('name').lean()
+    const cities = await City.find({ isActive: true }).select("name").lean()
     activeCitiesCache = new Set(cities.map((city: any) => city.name))
     cacheTimestamp = now
     return activeCitiesCache
@@ -54,14 +54,18 @@ export function clearCitiesCache(): void {
 /**
  * Zod schema for validating city names against active cities in database
  */
-export const citySchema = z.string()
+export const citySchema = z
+  .string()
   .min(1, { message: "City is required" })
-  .refine(async (cityName) => {
-    const activeCities = await getActiveCities()
-    return activeCities.has(cityName)
-  }, {
-    message: "העיר שנבחרה אינה פעילה במערכת. אנא בחר עיר מהרשימה הזמינה",
-  })
+  .refine(
+    async cityName => {
+      const activeCities = await getActiveCities()
+      return activeCities.has(cityName)
+    },
+    {
+      message: "העיר שנבחרה אינה פעילה במערכת. אנא בחר עיר מהרשימה הזמינה",
+    }
+  )
 
 /**
  * Sync version of city validation (for cases where async is not possible)
@@ -88,4 +92,4 @@ export async function preloadCitiesCache(): Promise<void> {
 export async function getActiveCityNames(): Promise<string[]> {
   const activeCities = await getActiveCities()
   return Array.from(activeCities).sort()
-} 
+}

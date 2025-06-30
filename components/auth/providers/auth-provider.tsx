@@ -21,7 +21,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // We could potentially pre-render UI elements based on cached data
         // while the actual session is being fetched
         // TODO: Remove debug log
-
       }
     }
   }, [])

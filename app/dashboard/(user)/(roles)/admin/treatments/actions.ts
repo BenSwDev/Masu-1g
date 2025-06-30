@@ -12,7 +12,13 @@ import { getTreatments as getAllTreatments } from "@/actions/treatment-actions"
  * Fetches treatments with optional filtering and pagination
  */
 export async function getTreatments(
-  options: { page?: number; limit?: number; search?: string; category?: string; isActive?: boolean } = {},
+  options: {
+    page?: number
+    limit?: number
+    search?: string
+    category?: string
+    isActive?: boolean
+  } = {}
 ) {
   const requestId = `get_treatments_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
@@ -40,10 +46,10 @@ export async function getTreatments(
 
     const total = await Treatment.countDocuments(query)
 
-    const serializedTreatments = treatments.map((treatment) => ({
+    const serializedTreatments = treatments.map(treatment => ({
       ...treatment,
       _id: String(treatment._id),
-      durations: treatment.durations?.map((d) => ({ ...d, _id: String(d._id) })) || [],
+      durations: treatment.durations?.map(d => ({ ...d, _id: String(d._id) })) || [],
     }))
 
     logger.info(`[${requestId}] Successfully fetched ${serializedTreatments.length} treatments`)
@@ -84,7 +90,7 @@ export async function createTreatment(data: Omit<ITreatment, "_id" | "createdAt"
     const serializedTreatment = {
       ...newTreatment.toObject(),
       _id: String(newTreatment._id),
-      durations: newTreatment.durations?.map((d) => ({ ...d, _id: String(d._id) })) || [],
+      durations: newTreatment.durations?.map(d => ({ ...d, _id: String(d._id) })) || [],
     }
 
     revalidatePath("/dashboard/admin/treatments")
@@ -120,7 +126,7 @@ export async function updateTreatment(id: string, data: Partial<ITreatment>) {
     const serializedTreatment = {
       ...treatment.toObject(),
       _id: String(treatment._id),
-      durations: treatment.durations?.map((d) => ({ ...d, _id: String(d._id) })) || [],
+      durations: treatment.durations?.map(d => ({ ...d, _id: String(d._id) })) || [],
     }
 
     revalidatePath("/dashboard/admin/treatments")
@@ -166,13 +172,13 @@ export async function deleteTreatment(id: string) {
 /**
  * Gets a treatment by ID
  */
-export async function getTreatmentById(id: string): Promise<{ 
-  success: boolean; 
-  treatment?: Omit<ITreatment, '_id' | 'durations'> & { 
-    _id: string; 
-    durations: Array<Omit<ITreatmentDuration, '_id'> & { _id: string }> 
-  }; 
-  error?: string 
+export async function getTreatmentById(id: string): Promise<{
+  success: boolean
+  treatment?: Omit<ITreatment, "_id" | "durations"> & {
+    _id: string
+    durations: Array<Omit<ITreatmentDuration, "_id"> & { _id: string }>
+  }
+  error?: string
 }> {
   const requestId = `get_treatment_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
@@ -188,7 +194,7 @@ export async function getTreatmentById(id: string): Promise<{
     const serializedTreatment = {
       ...treatment,
       _id: String(treatment._id),
-      durations: treatment.durations?.map((d) => ({ ...d, _id: String(d._id) })) || [],
+      durations: treatment.durations?.map(d => ({ ...d, _id: String(d._id) })) || [],
     }
 
     logger.info(`[${requestId}] Successfully fetched treatment ${id}`)
@@ -227,7 +233,7 @@ export async function toggleTreatmentStatus(id: string) {
     const serializedTreatment = {
       ...treatment.toObject(),
       _id: String(treatment._id),
-      durations: treatment.durations?.map((d) => ({ ...d, _id: String(d._id) })) || [],
+      durations: treatment.durations?.map(d => ({ ...d, _id: String(d._id) })) || [],
     }
 
     revalidatePath("/dashboard/admin/treatments")
@@ -240,4 +246,4 @@ export async function toggleTreatmentStatus(id: string) {
   }
 }
 
-export { getAllTreatments } 
+export { getAllTreatments }

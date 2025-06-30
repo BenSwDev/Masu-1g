@@ -12,7 +12,13 @@ import { Heading } from "@/components/ui/heading"
 import { getAllBookings } from "@/actions/booking-actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Search, RefreshCw, Filter, X, Plus } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +31,7 @@ import { Separator } from "@/components/ui/separator"
  */
 export default function AdminBookingsClient() {
   const { t, language, dir } = useTranslation()
-  
+
   // Search and filters state
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -34,7 +40,7 @@ export default function AdminBookingsClient() {
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all")
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>("all")
   const [addressFilter, setAddressFilter] = useState<string>("all")
-  
+
   // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedBooking, setSelectedBooking] = useState<PopulatedBooking | null>(null)
@@ -47,18 +53,32 @@ export default function AdminBookingsClient() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter])
+  }, [
+    debouncedSearchTerm,
+    statusFilter,
+    professionalFilter,
+    treatmentFilter,
+    dateRangeFilter,
+    priceRangeFilter,
+    addressFilter,
+  ])
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<
+  const { data, isLoading, error, refetch } = useQuery<
     { bookings: PopulatedBooking[]; totalPages: number; totalBookings: number },
     Error
   >({
-    queryKey: ["adminBookings", language, debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter, currentPage],
+    queryKey: [
+      "adminBookings",
+      language,
+      debouncedSearchTerm,
+      statusFilter,
+      professionalFilter,
+      treatmentFilter,
+      dateRangeFilter,
+      priceRangeFilter,
+      addressFilter,
+      currentPage,
+    ],
     queryFn: async () => {
       try {
         console.log("Fetching bookings with filters:", {
@@ -115,7 +135,10 @@ export default function AdminBookingsClient() {
     window.location.href = "/dashboard/admin/bookings/new"
   }
 
-  const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language, handleRowClick])
+  const columns = useMemo(
+    () => getAdminBookingColumns(t, language, handleRowClick),
+    [t, language, handleRowClick]
+  )
 
   const handleRefresh = () => {
     refetch()
@@ -148,7 +171,9 @@ export default function AdminBookingsClient() {
     return (
       <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("adminBookings.title")}
+          </h2>
         </div>
         <BookingsTableSkeleton />
         <p className="mt-4 text-center text-muted-foreground">{t("common.loading")}</p>
@@ -160,10 +185,14 @@ export default function AdminBookingsClient() {
     return (
       <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("adminBookings.title")}
+          </h2>
         </div>
         <div className="text-center py-8">
-          <p className="text-destructive">{t("common.error")}: {error.message}</p>
+          <p className="text-destructive">
+            {t("common.error")}: {error.message}
+          </p>
           <Button onClick={handleRefresh} className="mt-4">
             {t("common.tryAgain")}
           </Button>
@@ -180,15 +209,14 @@ export default function AdminBookingsClient() {
       {/* Header with Create Button */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("adminBookings.title")}
+          </h2>
           <p className="text-muted-foreground">
             ניהול כל ההזמנות במערכת - סה"כ {totalBookings} הזמנות
           </p>
         </div>
-        <Button 
-          onClick={handleCreateNewBooking}
-          className="flex items-center gap-2"
-        >
+        <Button onClick={handleCreateNewBooking} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           הזמנה חדשה
         </Button>
@@ -203,7 +231,7 @@ export default function AdminBookingsClient() {
             <Input
               placeholder={t("adminBookings.searchPlaceholder")}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -249,11 +277,13 @@ export default function AdminBookingsClient() {
                     )}
                   </div>
                   <Separator />
-                  
+
                   {/* Additional filter controls would go here */}
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium">{t("adminBookings.filterByProfessional")}</label>
+                      <label className="text-sm font-medium">
+                        {t("adminBookings.filterByProfessional")}
+                      </label>
                       <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
                         <SelectTrigger className="w-full mt-1">
                           <SelectValue placeholder={t("common.selectProfessional")} />
@@ -291,7 +321,8 @@ export default function AdminBookingsClient() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-muted-foreground">
-            {t("common.pagination.showing")} {((currentPage - 1) * 20) + 1} - {Math.min(currentPage * 20, totalBookings)} {t("common.pagination.of")} {totalBookings}
+            {t("common.pagination.showing")} {(currentPage - 1) * 20 + 1} -{" "}
+            {Math.min(currentPage * 20, totalBookings)} {t("common.pagination.of")} {totalBookings}
           </div>
           <div className="flex gap-2">
             <Button
@@ -339,4 +370,4 @@ export default function AdminBookingsClient() {
       />
     </div>
   )
-} 
+}

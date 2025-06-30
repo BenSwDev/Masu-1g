@@ -6,7 +6,21 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, UserCheck, UserX, CheckCircle, XCircle, AlertCircle, DollarSign } from "lucide-react"
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  CreditCard,
+  UserCheck,
+  UserX,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  DollarSign,
+} from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { Professional } from "@/lib/types/professional"
@@ -32,9 +46,9 @@ interface ProfessionalMatchInfoProps {
   professional: Professional
 }
 
-export default function ProfessionalBookingsTab({ 
-  professional, 
-  onUpdate 
+export default function ProfessionalBookingsTab({
+  professional,
+  onUpdate,
 }: ProfessionalBookingsTabProps) {
   const { toast } = useToast()
   const [assignedBookings, setAssignedBookings] = useState<PopulatedBooking[]>([])
@@ -51,30 +65,32 @@ export default function ProfessionalBookingsTab({
   const fetchBookings = async () => {
     try {
       setLoading(true)
-      
+
       console.log("Fetching bookings for professional:", professional._id)
-      
+
       // Fetch assigned bookings
       const assignedResponse = await fetch(`/api/admin/bookings?professional=${professional._id}`)
       console.log("Assigned bookings response status:", assignedResponse.status)
-      
+
       const assignedData = await assignedResponse.json()
       console.log("Assigned bookings data:", assignedData)
-      
+
       // Fetch potential bookings (unassigned bookings that match professional criteria)
-      const potentialResponse = await fetch(`/api/admin/bookings/potential?professionalId=${professional._id}`)
+      const potentialResponse = await fetch(
+        `/api/admin/bookings/potential?professionalId=${professional._id}`
+      )
       console.log("Potential bookings response status:", potentialResponse.status)
-      
+
       const potentialData = await potentialResponse.json()
       console.log("Potential bookings data:", potentialData)
-      
+
       if (assignedData.success) {
         setAssignedBookings(assignedData.bookings || [])
         console.log(`Set ${assignedData.bookings?.length || 0} assigned bookings`)
       } else {
         console.error("Failed to fetch assigned bookings:", assignedData.error)
       }
-      
+
       if (potentialData.success) {
         setPotentialBookings(potentialData.bookings || [])
         console.log(`Set ${potentialData.bookings?.length || 0} potential bookings`)
@@ -86,7 +102,7 @@ export default function ProfessionalBookingsTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בטעינת ההזמנות"
+        description: "אירעה שגיאה בטעינת ההזמנות",
       })
     } finally {
       setLoading(false)
@@ -96,23 +112,23 @@ export default function ProfessionalBookingsTab({
   const handleAssignBooking = async (bookingId: string) => {
     try {
       setAssigningBooking(bookingId)
-      
+
       const response = await fetch(`/api/admin/bookings/${bookingId}/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          professionalId: professional._id
-        })
+          professionalId: professional._id,
+        }),
       })
-      
+
       const data = await response.json()
-      
+
       if (data.success) {
         toast({
           title: "הצלחה",
-          description: "ההזמנה שוייכה למטפל בהצלחה"
+          description: "ההזמנה שוייכה למטפל בהצלחה",
         })
         await fetchBookings() // Refresh bookings
       } else {
@@ -123,7 +139,7 @@ export default function ProfessionalBookingsTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: error instanceof Error ? error.message : "אירעה שגיאה בשיוך ההזמנה"
+        description: error instanceof Error ? error.message : "אירעה שגיאה בשיוך ההזמנה",
       })
     } finally {
       setAssigningBooking(null)
@@ -133,20 +149,20 @@ export default function ProfessionalBookingsTab({
   const handleUnassignBooking = async (bookingId: string) => {
     try {
       setUnassigningBooking(bookingId)
-      
+
       const response = await fetch(`/api/admin/bookings/${bookingId}/unassign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       })
-      
+
       const data = await response.json()
-      
+
       if (data.success) {
         toast({
           title: "הצלחה",
-          description: "ההזמנה בוטלה מהמטפל בהצלחה"
+          description: "ההזמנה בוטלה מהמטפל בהצלחה",
         })
         await fetchBookings() // Refresh bookings
       } else {
@@ -157,7 +173,7 @@ export default function ProfessionalBookingsTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: error instanceof Error ? error.message : "אירעה שגיאה בביטול שיוך ההזמנה"
+        description: error instanceof Error ? error.message : "אירעה שגיאה בביטול שיוך ההזמנה",
       })
     } finally {
       setUnassigningBooking(null)
@@ -170,7 +186,7 @@ export default function ProfessionalBookingsTab({
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
@@ -216,16 +232,16 @@ export default function ProfessionalBookingsTab({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {assignedBookings.map((booking) => (
-                                         <BookingCard
-                       key={booking._id}
-                       booking={booking}
-                       type="assigned"
-                       onUnassign={handleUnassignBooking}
-                       assigningBooking={assigningBooking}
-                       unassigningBooking={unassigningBooking}
-                       professional={professional}
-                     />
+                  {assignedBookings.map(booking => (
+                    <BookingCard
+                      key={booking._id}
+                      booking={booking}
+                      type="assigned"
+                      onUnassign={handleUnassignBooking}
+                      assigningBooking={assigningBooking}
+                      unassigningBooking={unassigningBooking}
+                      professional={professional}
+                    />
                   ))}
                 </div>
               )}
@@ -249,16 +265,16 @@ export default function ProfessionalBookingsTab({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {potentialBookings.map((booking) => (
-                                         <BookingCard
-                       key={booking._id}
-                       booking={booking}
-                       type="potential"
-                       onAssign={handleAssignBooking}
-                       assigningBooking={assigningBooking}
-                       unassigningBooking={unassigningBooking}
-                       professional={professional}
-                     />
+                  {potentialBookings.map(booking => (
+                    <BookingCard
+                      key={booking._id}
+                      booking={booking}
+                      type="potential"
+                      onAssign={handleAssignBooking}
+                      assigningBooking={assigningBooking}
+                      unassigningBooking={unassigningBooking}
+                      professional={professional}
+                    />
                   ))}
                 </div>
               )}
@@ -270,15 +286,47 @@ export default function ProfessionalBookingsTab({
   )
 }
 
-function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, unassigningBooking, professional }: BookingCardProps) {
+function BookingCard({
+  booking,
+  type,
+  onAssign,
+  onUnassign,
+  assigningBooking,
+  unassigningBooking,
+  professional,
+}: BookingCardProps) {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending_payment: { variant: "secondary" as const, text: "ממתין לתשלום", color: "bg-yellow-100 text-yellow-800" },
-      in_process: { variant: "default" as const, text: "בטיפול", color: "bg-blue-100 text-blue-800" },
-      confirmed: { variant: "default" as const, text: "מאושר", color: "bg-green-100 text-green-800" },
-      completed: { variant: "default" as const, text: "הושלם", color: "bg-green-100 text-green-800" },
-      cancelled: { variant: "destructive" as const, text: "בוטל", color: "bg-red-100 text-red-800" },
-      refunded: { variant: "destructive" as const, text: "הוחזר", color: "bg-red-100 text-red-800" }
+      pending_payment: {
+        variant: "secondary" as const,
+        text: "ממתין לתשלום",
+        color: "bg-yellow-100 text-yellow-800",
+      },
+      in_process: {
+        variant: "default" as const,
+        text: "בטיפול",
+        color: "bg-blue-100 text-blue-800",
+      },
+      confirmed: {
+        variant: "default" as const,
+        text: "מאושר",
+        color: "bg-green-100 text-green-800",
+      },
+      completed: {
+        variant: "default" as const,
+        text: "הושלם",
+        color: "bg-green-100 text-green-800",
+      },
+      cancelled: {
+        variant: "destructive" as const,
+        text: "בוטל",
+        color: "bg-red-100 text-red-800",
+      },
+      refunded: {
+        variant: "destructive" as const,
+        text: "הוחזר",
+        color: "bg-red-100 text-red-800",
+      },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -293,11 +341,11 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
 
   const formatDate = (date: string | Date) => {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric"
+        year: "numeric",
       })
     } catch {
       return "-"
@@ -306,10 +354,10 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
 
   const formatTime = (date: string | Date) => {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleTimeString("he-IL", {
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       })
     } catch {
       return "-"
@@ -322,17 +370,11 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-lg font-bold text-blue-900">
-                #{booking.bookingNumber}
-              </div>
-              <div className="text-xs text-blue-600">
-                מספר הזמנה
-              </div>
+              <div className="text-lg font-bold text-blue-900">#{booking.bookingNumber}</div>
+              <div className="text-xs text-blue-600">מספר הזמנה</div>
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                {getStatusBadge(booking.status)}
-              </div>
+              <div className="flex items-center gap-2 mb-1">{getStatusBadge(booking.status)}</div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
@@ -345,7 +387,7 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {type === "potential" && onAssign && (
               <Button
@@ -385,7 +427,11 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
               {(booking.recipientPhone || booking.bookedByUserPhone) && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{formatPhoneForDisplay(booking.recipientPhone || booking.bookedByUserPhone || "")}</span>
+                  <span>
+                    {formatPhoneForDisplay(
+                      booking.recipientPhone || booking.bookedByUserPhone || ""
+                    )}
+                  </span>
                 </div>
               )}
               {(booking.recipientEmail || booking.bookedByUserEmail) && (
@@ -402,7 +448,9 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
             <h4 className="font-medium text-sm">פרטי טיפול וכתובת</h4>
             <div className="space-y-1 text-sm">
               <div className="font-medium text-base">
-                {typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'טיפול לא ידוע'}
+                {typeof booking.treatmentId === "object"
+                  ? booking.treatmentId.name
+                  : "טיפול לא ידוע"}
               </div>
               {booking.bookingAddressSnapshot && (
                 <div className="flex items-start gap-2">
@@ -439,12 +487,16 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
             <div className="flex justify-between">
               <span>תשלום למטפל:</span>
               <span className="font-medium text-green-600">
-                ₪{booking.priceDetails.totalProfessionalPayment || 
-                  professional.treatments.find(t => 
-                    t.treatmentId.toString() === (typeof booking.treatmentId === 'object' 
-                      ? booking.treatmentId._id?.toString() 
-                      : booking.treatmentId?.toString())
-                  )?.professionalPrice || 0}
+                ₪
+                {booking.priceDetails.totalProfessionalPayment ||
+                  professional.treatments.find(
+                    t =>
+                      t.treatmentId.toString() ===
+                      (typeof booking.treatmentId === "object"
+                        ? booking.treatmentId._id?.toString()
+                        : booking.treatmentId?.toString())
+                  )?.professionalPrice ||
+                  0}
               </span>
             </div>
           </div>
@@ -466,38 +518,40 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
 
 function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoProps) {
   // Get professional user data
-  const professionalUser = typeof professional.userId === 'object' ? professional.userId : null
+  const professionalUser = typeof professional.userId === "object" ? professional.userId : null
 
   // Check gender match
-  const genderMatch = !booking.therapistGenderPreference || 
-    booking.therapistGenderPreference === "any" || 
+  const genderMatch =
+    !booking.therapistGenderPreference ||
+    booking.therapistGenderPreference === "any" ||
     (professionalUser && professionalUser.gender === booking.therapistGenderPreference)
 
   // Check treatment match
-  const treatmentId = typeof booking.treatmentId === 'object' 
-    ? booking.treatmentId._id?.toString() 
-    : booking.treatmentId?.toString()
+  const treatmentId =
+    typeof booking.treatmentId === "object"
+      ? booking.treatmentId._id?.toString()
+      : booking.treatmentId?.toString()
 
-  const treatmentMatch = professional.treatments.some(treatment => 
-    treatment.treatmentId.toString() === treatmentId
+  const treatmentMatch = professional.treatments.some(
+    treatment => treatment.treatmentId.toString() === treatmentId
   )
 
   // Get professional payment for this treatment
-  const professionalTreatment = professional.treatments.find(treatment => 
-    treatment.treatmentId.toString() === treatmentId
+  const professionalTreatment = professional.treatments.find(
+    treatment => treatment.treatmentId.toString() === treatmentId
   )
 
   // Check city coverage
   const bookingCity = booking.bookingAddressSnapshot?.city
-  const cityMatch = !bookingCity || professional.workAreas.some(workArea => {
-    return workArea.coveredCities.some(city => 
-      city.toLowerCase() === bookingCity.toLowerCase()
-    )
-  })
+  const cityMatch =
+    !bookingCity ||
+    professional.workAreas.some(workArea => {
+      return workArea.coveredCities.some(city => city.toLowerCase() === bookingCity.toLowerCase())
+    })
 
   // Calculate professional payment
-  const professionalPayment = booking.priceDetails.totalProfessionalPayment || 
-    professionalTreatment?.professionalPrice || 0
+  const professionalPayment =
+    booking.priceDetails.totalProfessionalPayment || professionalTreatment?.professionalPrice || 0
 
   return (
     <div className="space-y-2">
@@ -509,8 +563,12 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
           <XCircle className="w-4 h-4 text-red-600" />
         )}
         <span className={genderMatch ? "text-green-700" : "text-red-700"}>
-          מגדר: {booking.therapistGenderPreference === "any" ? "ללא העדפה" : 
-            booking.therapistGenderPreference === "male" ? "זכר" : "נקבה"}
+          מגדר:{" "}
+          {booking.therapistGenderPreference === "any"
+            ? "ללא העדפה"
+            : booking.therapistGenderPreference === "male"
+              ? "זכר"
+              : "נקבה"}
         </span>
       </div>
 
@@ -522,7 +580,7 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
           <XCircle className="w-4 h-4 text-red-600" />
         )}
         <span className={treatmentMatch ? "text-green-700" : "text-red-700"}>
-          טיפול: {typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'לא ידוע'}
+          טיפול: {typeof booking.treatmentId === "object" ? booking.treatmentId.name : "לא ידוע"}
         </span>
       </div>
 
@@ -541,9 +599,7 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
       {/* Professional Payment */}
       <div className="flex items-center gap-2">
         <DollarSign className="w-4 h-4 text-blue-600" />
-        <span className="text-blue-700 font-medium">
-          תשלום למטפל: ₪{professionalPayment}
-        </span>
+        <span className="text-blue-700 font-medium">תשלום למטפל: ₪{professionalPayment}</span>
       </div>
 
       {/* Treatment Cost */}
@@ -570,4 +626,4 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
       </div>
     </div>
   )
-} 
+}

@@ -33,7 +33,7 @@ export function QueryProvider({ children }: QueryProviderProps) {
             retry: false,
           },
         },
-      }),
+      })
   )
 
   return (

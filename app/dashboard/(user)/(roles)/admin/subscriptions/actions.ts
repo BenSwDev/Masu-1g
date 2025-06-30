@@ -122,7 +122,10 @@ export async function createSubscription(formData: FormData): Promise<CreateSubs
 
     revalidatePath("/dashboard/admin/subscriptions")
 
-    return { success: true, subscription: { ...subscription.toObject(), _id: String(subscription._id) } }
+    return {
+      success: true,
+      subscription: { ...subscription.toObject(), _id: String(subscription._id) },
+    }
   } catch (error) {
     logger.error("Error creating subscription:", error)
     if (error instanceof z.ZodError) {
@@ -138,7 +141,10 @@ export async function createSubscription(formData: FormData): Promise<CreateSubs
  * @param formData Form data containing updated subscription details
  * @returns UpdateSubscriptionResult
  */
-export async function updateSubscription(id: string, formData: FormData): Promise<UpdateSubscriptionResult> {
+export async function updateSubscription(
+  id: string,
+  formData: FormData
+): Promise<UpdateSubscriptionResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
@@ -166,11 +172,11 @@ export async function updateSubscription(id: string, formData: FormData): Promis
     })
 
     // Update subscription
-    const subscription = await Subscription.findByIdAndUpdate(
+    const subscription = (await Subscription.findByIdAndUpdate(
       id,
       { ...validatedData, updatedAt: new Date() },
-      { new: true },
-    ) as SubscriptionDocument | null
+      { new: true }
+    )) as SubscriptionDocument | null
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -179,12 +185,12 @@ export async function updateSubscription(id: string, formData: FormData): Promis
     revalidatePath("/dashboard/admin/subscriptions")
 
     const subscriptionObj = subscription.toObject()
-    return { 
-      success: true, 
-      subscription: { 
+    return {
+      success: true,
+      subscription: {
         ...subscriptionObj,
-        _id: subscriptionObj._id.toString()
-      } 
+        _id: subscriptionObj._id.toString(),
+      },
     }
   } catch (error) {
     logger.error("Error updating subscription:", error)
@@ -229,7 +235,9 @@ export async function deleteSubscription(id: string): Promise<DeleteSubscription
  * @param options Filtering, searching, and pagination options
  * @returns GetSubscriptionsResult
  */
-export async function getSubscriptions(options: GetSubscriptionsOptions = {}): Promise<GetSubscriptionsResult> {
+export async function getSubscriptions(
+  options: GetSubscriptionsOptions = {}
+): Promise<GetSubscriptionsResult> {
   try {
     await dbConnect()
 
@@ -262,11 +270,11 @@ export async function getSubscriptions(options: GetSubscriptionsOptions = {}): P
     }
 
     // Execute query
-    const subscriptions = await Subscription.find(query)
+    const subscriptions = (await Subscription.find(query)
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .lean() as unknown as (ISubscription & { _id: Types.ObjectId })[]
+      .lean()) as unknown as (ISubscription & { _id: Types.ObjectId })[]
 
     const total = await Subscription.countDocuments(query)
 
@@ -298,7 +306,9 @@ export async function getSubscriptionById(id: string): Promise<GetSubscriptionsR
   try {
     await dbConnect()
 
-    const subscription = await Subscription.findById(id).lean() as unknown as (ISubscription & { _id: Types.ObjectId })
+    const subscription = (await Subscription.findById(id).lean()) as unknown as ISubscription & {
+      _id: Types.ObjectId
+    }
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -306,10 +316,12 @@ export async function getSubscriptionById(id: string): Promise<GetSubscriptionsR
 
     return {
       success: true,
-      subscriptions: [{
-        ...subscription,
-        _id: subscription._id.toString(),
-      }],
+      subscriptions: [
+        {
+          ...subscription,
+          _id: subscription._id.toString(),
+        },
+      ],
     }
   } catch (error) {
     logger.error("Error fetching subscription:", error)
@@ -331,7 +343,7 @@ export async function toggleSubscriptionStatus(id: string): Promise<UpdateSubscr
 
     await dbConnect()
 
-    const subscription = await Subscription.findById(id) as SubscriptionDocument | null
+    const subscription = (await Subscription.findById(id)) as SubscriptionDocument | null
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -344,12 +356,12 @@ export async function toggleSubscriptionStatus(id: string): Promise<UpdateSubscr
     revalidatePath("/dashboard/admin/subscriptions")
 
     const subscriptionObj = subscription.toObject()
-    return { 
-      success: true, 
-      subscription: { 
+    return {
+      success: true,
+      subscription: {
         ...subscriptionObj,
-        _id: subscriptionObj._id.toString()
-      } 
+        _id: subscriptionObj._id.toString(),
+      },
     }
   } catch (error) {
     logger.error("Error toggling subscription status:", error)
@@ -365,9 +377,9 @@ export async function getActiveSubscriptions(): Promise<GetSubscriptionsResult> 
   try {
     await dbConnect()
 
-    const subscriptions = await Subscription.find({ isActive: true })
+    const subscriptions = (await Subscription.find({ isActive: true })
       .sort({ createdAt: -1 })
-      .lean() as unknown as (ISubscription & { _id: Types.ObjectId })[]
+      .lean()) as unknown as (ISubscription & { _id: Types.ObjectId })[]
 
     return {
       success: true,
@@ -390,10 +402,12 @@ export async function getActiveSubscriptionsForPurchase(): Promise<GetSubscripti
   try {
     await dbConnect()
 
-    const subscriptions = await Subscription.find({ isActive: true })
-      .select("_id name description quantity bonusQuantity validityMonths isActive createdAt updatedAt")
+    const subscriptions = (await Subscription.find({ isActive: true })
+      .select(
+        "_id name description quantity bonusQuantity validityMonths isActive createdAt updatedAt"
+      )
       .sort({ createdAt: -1 })
-      .lean() as unknown as (ISubscription & { _id: Types.ObjectId })[]
+      .lean()) as unknown as (ISubscription & { _id: Types.ObjectId })[]
 
     return {
       success: true,
@@ -432,4 +446,4 @@ export async function getAllTreatments() {
     logger.error("Error fetching treatments:", error)
     return { success: false, error: "Failed to fetch treatments" }
   }
-} 
+}

@@ -12,15 +12,7 @@ import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { PhoneInput } from "@/components/common/phone-input"
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar,
-  UserCheck,
-  Edit,
-  Users
-} from "lucide-react"
+import { User, Mail, Phone, Calendar, UserCheck, Edit, Users } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
 interface BookingCustomerTabProps {
@@ -63,11 +55,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
             <User className="w-5 h-5" />
             פרטי המזמין
           </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
             <Edit className="w-4 h-4 mr-2" />
             {isEditing ? "ביטול" : "עריכה"}
           </Button>
@@ -80,7 +68,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               {isEditing ? (
                 <Input
                   value={booking.bookedByUserName || ""}
-                  onChange={(e) => onUpdate({ bookedByUserName: e.target.value })}
+                  onChange={e => onUpdate({ bookedByUserName: e.target.value })}
                   placeholder="שם מלא"
                 />
               ) : (
@@ -98,7 +86,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                 <Input
                   type="email"
                   value={booking.bookedByUserEmail || ""}
-                  onChange={(e) => onUpdate({ bookedByUserEmail: e.target.value })}
+                  onChange={e => onUpdate({ bookedByUserEmail: e.target.value })}
                   placeholder="כתובת אימייל"
                 />
               ) : (
@@ -115,7 +103,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               {isEditing ? (
                 <PhoneInput
                   fullNumberValue={booking.bookedByUserPhone || ""}
-                  onPhoneChange={(value) => onUpdate({ bookedByUserPhone: value })}
+                  onPhoneChange={value => onUpdate({ bookedByUserPhone: value })}
                   placeholder="מספר טלפון"
                 />
               ) : (
@@ -150,9 +138,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                 <Users className="w-5 h-5" />
                 מקבל הטיפול
               </CardTitle>
-              <Badge variant="outline">
-                הזמנה עבור אדם אחר
-              </Badge>
+              <Badge variant="outline">הזמנה עבור אדם אחר</Badge>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,7 +148,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                   {isEditing ? (
                     <Input
                       value={booking.recipientName || ""}
-                      onChange={(e) => onUpdate({ recipientName: e.target.value })}
+                      onChange={e => onUpdate({ recipientName: e.target.value })}
                       placeholder="שם מקבל הטיפול"
                     />
                   ) : (
@@ -180,7 +166,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                     <Input
                       type="email"
                       value={booking.recipientEmail || ""}
-                      onChange={(e) => onUpdate({ recipientEmail: e.target.value })}
+                      onChange={e => onUpdate({ recipientEmail: e.target.value })}
                       placeholder="כתובת אימייל"
                     />
                   ) : (
@@ -197,7 +183,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                   {isEditing ? (
                     <PhoneInput
                       fullNumberValue={booking.recipientPhone || ""}
-                      onPhoneChange={(value) => onUpdate({ recipientPhone: value })}
+                      onPhoneChange={value => onUpdate({ recipientPhone: value })}
                       placeholder="מספר טלפון"
                     />
                   ) : (
@@ -281,4 +267,4 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
       )}
     </div>
   )
-} 
+}

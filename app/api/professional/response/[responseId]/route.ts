@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { handleProfessionalResponse } from "@/actions/notification-service"
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { responseId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { responseId: string } }) {
   try {
     const { responseId } = params
     const { action, responseMethod } = await request.json()
@@ -23,18 +20,11 @@ export async function POST(
       )
     }
 
-    const result = await handleProfessionalResponse(
-      responseId, 
-      action, 
-      responseMethod || "sms"
-    )
-    
+    const result = await handleProfessionalResponse(responseId, action, responseMethod || "sms")
+
     return NextResponse.json(result)
   } catch (error) {
     console.error("Error in professional response API:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
-} 
+}

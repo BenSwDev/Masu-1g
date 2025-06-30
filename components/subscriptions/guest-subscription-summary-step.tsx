@@ -33,13 +33,15 @@ export default function GuestSubscriptionSummaryStep({
   onPrev,
 }: Props) {
   const { t, language, dir } = useTranslation()
-  const totalPrice = subscription ? (subscription.quantity * durationPrice) : 0
+  const totalPrice = subscription ? subscription.quantity * durationPrice : 0
 
   return (
     <div className="space-y-6 px-4 sm:px-6" dir={dir} lang={language}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold">{t("subscriptions.purchase.summary")}</h2>
-        <p className="text-muted-foreground mt-2">{t("subscriptions.purchase.reviewBeforePurchase")}</p>
+        <p className="text-muted-foreground mt-2">
+          {t("subscriptions.purchase.reviewBeforePurchase")}
+        </p>
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -54,7 +56,8 @@ export default function GuestSubscriptionSummaryStep({
             <CardContent>
               <p className="text-gray-600 mb-2">{subscription?.description}</p>
               <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                {subscription ? subscription.quantity + subscription.bonusQuantity : 0} {t("subscriptions.treatmentsLabel")}
+                {subscription ? subscription.quantity + subscription.bonusQuantity : 0}{" "}
+                {t("subscriptions.treatmentsLabel")}
               </span>
             </CardContent>
           </Card>
@@ -76,7 +79,9 @@ export default function GuestSubscriptionSummaryStep({
                 <span className="text-muted-foreground flex items-center gap-1">
                   <User className="h-4 w-4" /> {t("common.name")}:
                 </span>
-                <span className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</span>
+                <span className="font-medium">
+                  {guestInfo.firstName} {guestInfo.lastName}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
@@ -119,7 +124,9 @@ export default function GuestSubscriptionSummaryStep({
         </div>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={onPrev}>{t("common.back")}</Button>
+        <Button variant="outline" onClick={onPrev}>
+          {t("common.back")}
+        </Button>
         <Button onClick={onNext}>{t("subscriptions.purchase.confirmAndPay")}</Button>
       </div>
     </div>

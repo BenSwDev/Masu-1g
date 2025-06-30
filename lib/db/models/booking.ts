@@ -111,7 +111,8 @@ export interface IBooking extends Document {
   recipientBirthDate?: Date // Birth date of the person receiving the treatment
   recipientGender?: "male" | "female" | "other" // Gender of the person receiving the treatment
   isBookingForSomeoneElse?: boolean // NEW FIELD
-  formState?: { // NEW FIELD for storing form data for recovery
+  formState?: {
+    // NEW FIELD for storing form data for recovery
     currentStep: number
     guestInfo?: any
     guestAddress?: any
@@ -148,31 +149,43 @@ export interface IBooking extends Document {
   review?: IBookingReview
 }
 
-const ProfessionalShareSchema = new Schema<IProfessionalShare>({
-  amount: { type: Number, default: 0 },
-  type: { type: String, enum: ["fixed", "percentage"], default: "percentage" },
-}, { _id: false })
+const ProfessionalShareSchema = new Schema<IProfessionalShare>(
+  {
+    amount: { type: Number, default: 0 },
+    type: { type: String, enum: ["fixed", "percentage"], default: "percentage" },
+  },
+  { _id: false }
+)
 
 // ➕ סכמות חדשות
-const BookingConsentsSchema = new Schema<IBookingConsents>({
-  customerAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
-  patientAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
-  marketingOptIn: { type: Boolean, required: true },
-  termsAccepted: { type: Boolean, required: true },
-}, { _id: false })
+const BookingConsentsSchema = new Schema<IBookingConsents>(
+  {
+    customerAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
+    patientAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
+    marketingOptIn: { type: Boolean, required: true },
+    termsAccepted: { type: Boolean, required: true },
+  },
+  { _id: false }
+)
 
-const EnhancedPaymentDetailsSchema = new Schema<IEnhancedPaymentDetails>({
-  transactionId: { type: Schema.Types.ObjectId, ref: "Transaction" },
-  amountPaid: { type: Number, min: 0 },
-  cardLast4: { type: String, maxlength: 4 },
-  cardHolder: { type: String, trim: true },
-  paymentStatus: { type: String, enum: ["success", "fail"] },
-}, { _id: false })
+const EnhancedPaymentDetailsSchema = new Schema<IEnhancedPaymentDetails>(
+  {
+    transactionId: { type: Schema.Types.ObjectId, ref: "Transaction" },
+    amountPaid: { type: Number, min: 0 },
+    cardLast4: { type: String, maxlength: 4 },
+    cardHolder: { type: String, trim: true },
+    paymentStatus: { type: String, enum: ["success", "fail"] },
+  },
+  { _id: false }
+)
 
-const BookingReviewSchema = new Schema<IBookingReview>({
-  rating: { type: Number, enum: [1, 2, 3, 4, 5], required: true },
-  comment: { type: String, trim: true },
-}, { _id: false })
+const BookingReviewSchema = new Schema<IBookingReview>(
+  {
+    rating: { type: Number, enum: [1, 2, 3, 4, 5], required: true },
+    comment: { type: String, trim: true },
+  },
+  { _id: false }
+)
 
 const PriceDetailsSchema = new Schema<IPriceDetails>(
   {
@@ -200,7 +213,7 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     baseProfessionalPayment: { type: Number, min: 0 },
     surchargesProfessionalPayment: { type: Number, min: 0 },
   },
-  { _id: false },
+  { _id: false }
 )
 
 const PaymentDetailsSchema = new Schema<IPaymentDetails>(
@@ -213,7 +226,7 @@ const PaymentDetailsSchema = new Schema<IPaymentDetails>(
       required: true,
     },
   },
-  { _id: false },
+  { _id: false }
 )
 
 const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
@@ -233,7 +246,7 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     otherInstructions: { type: String },
     hasPrivateParking: { type: Boolean },
   },
-  { _id: false },
+  { _id: false }
 )
 
 const BookingSchema: Schema<IBooking> = new Schema(
@@ -253,14 +266,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
     notes: { type: String, trim: true },
     status: {
       type: String,
-      enum: [
-        "pending_payment",
-        "in_process",
-        "confirmed",
-        "completed",
-        "cancelled",
-        "refunded",
-      ],
+      enum: ["pending_payment", "in_process", "confirmed", "completed", "cancelled", "refunded"],
       default: "pending_payment",
       required: true,
       index: true,
@@ -325,7 +331,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
     enhancedPaymentDetails: { type: EnhancedPaymentDetailsSchema },
     review: { type: BookingReviewSchema },
   },
-  { timestamps: true },
+  { timestamps: true }
 )
 
 // Indexes for performance (bookingNumber unique index is automatically created by unique: true)
@@ -337,7 +343,8 @@ BookingSchema.index({ recipientEmail: 1 }) // For recipient searches
 BookingSchema.index({ treatmentId: 1, bookingDateTime: 1 }) // For treatment-based queries
 BookingSchema.index({ step: 1 }) // For wizard step tracking
 
-const Booking: Model<IBooking> = mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)
+const Booking: Model<IBooking> =
+  mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)
 
 export default Booking
 export { Booking }

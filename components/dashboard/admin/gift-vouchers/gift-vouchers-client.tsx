@@ -1,13 +1,37 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Filter, RotateCcw, Loader2, Gift, RefreshCw, Download, TrendingUp, Users, List, Grid3x3 } from "lucide-react"
+import {
+  Plus,
+  Filter,
+  RotateCcw,
+  Loader2,
+  Gift,
+  RefreshCw,
+  Download,
+  TrendingUp,
+  Users,
+  List,
+  Grid3x3,
+} from "lucide-react"
 import { format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +54,11 @@ import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
-import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import {
+  getGiftVouchers,
+  deleteGiftVoucher,
+  type GiftVoucherPlain,
+} from "@/actions/gift-voucher-actions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
@@ -58,7 +86,10 @@ const VOUCHER_STATUSES: GiftVoucherPlain["status"][] = [
 ]
 const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment"]
 
-export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftVouchersClientProps) {
+export function GiftVouchersClient({
+  initialVouchers,
+  initialPagination,
+}: GiftVouchersClientProps) {
   const { toast } = useToast()
   const isMobile = useIsMobile()
   const [vouchers, setVouchers] = useState<GiftVoucherPlain[]>(initialVouchers)
@@ -68,10 +99,12 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
 
   // Filters
   const [search, setSearch] = useState("")
-  const [filterVoucherType, setFilterVoucherType] = useState<GiftVoucherPlain["voucherType"] | "all">("all")
+  const [filterVoucherType, setFilterVoucherType] = useState<
+    GiftVoucherPlain["voucherType"] | "all"
+  >("all")
   const [filterStatus, setFilterStatus] = useState<GiftVoucherPlain["status"] | "all">("all")
   const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>(undefined)
-  
+
   // View state
   const [viewMode, setViewMode] = useState<"table" | "cards">(isMobile ? "cards" : "table")
 
@@ -87,9 +120,9 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   // Calculate statistics
   const stats = {
     total: pagination?.total || 0,
-    active: vouchers.filter((v) => v.status === "active").length,
-    used: vouchers.filter((v) => ["fully_used", "partially_used"].includes(v.status)).length,
-    pending: vouchers.filter((v) => ["pending_payment", "pending_send"].includes(v.status)).length,
+    active: vouchers.filter(v => v.status === "active").length,
+    used: vouchers.filter(v => ["fully_used", "partially_used"].includes(v.status)).length,
+    pending: vouchers.filter(v => ["pending_payment", "pending_send"].includes(v.status)).length,
     revenue: vouchers.reduce((sum, v) => sum + (v.paymentAmount || 0), 0),
   }
 
@@ -97,7 +130,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
     async (page = 1, newSearch = search, newFilters?: any, showRefreshToast = false) => {
       setIsLoading(true)
       if (showRefreshToast) setIsRefreshing(true)
-      
+
       try {
         const currentFilters = newFilters || {
           voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
@@ -115,10 +148,17 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           setVouchers(result.giftVouchers)
           setPagination(result.pagination)
           if (showRefreshToast) {
-            toast({ title: t("common.success"), description: t("giftVouchers.notifications.dataRefreshed") })
+            toast({
+              title: t("common.success"),
+              description: t("giftVouchers.notifications.dataRefreshed"),
+            })
           }
         } else {
-          toast({ title: "Error", description: result.error || "Failed to load gift vouchers", variant: "destructive" })
+          toast({
+            title: "Error",
+            description: result.error || "Failed to load gift vouchers",
+            variant: "destructive",
+          })
         }
       } catch (error) {
         toast({
@@ -131,7 +171,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         setIsRefreshing(false)
       }
     },
-    [search, filterVoucherType, filterStatus, filterDateRange, pagination.limit, toast, t],
+    [search, filterVoucherType, filterStatus, filterDateRange, pagination.limit, toast, t]
   )
 
   // Auto-detect mobile view
@@ -246,17 +286,23 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   const TableSkeleton = () => (
     <div className="rounded-md border bg-card">
       <div className="hidden md:grid grid-cols-8 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
-        {Array(8).fill(0).map((_, i) => (
-          <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
-        ))}
-      </div>
-      {Array(pagination.limit || 10).fill(0).map((_, i) => (
-        <div key={i} className="grid grid-cols-1 md:grid-cols-8 gap-4 p-4 border-b">
-          {Array(8).fill(0).map((_, j) => (
-            <div key={j} className="h-4 bg-gray-200 rounded animate-pulse" />
+        {Array(8)
+          .fill(0)
+          .map((_, i) => (
+            <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
           ))}
-        </div>
-      ))}
+      </div>
+      {Array(pagination.limit || 10)
+        .fill(0)
+        .map((_, i) => (
+          <div key={i} className="grid grid-cols-1 md:grid-cols-8 gap-4 p-4 border-b">
+            {Array(8)
+              .fill(0)
+              .map((_, j) => (
+                <div key={j} className="h-4 bg-gray-200 rounded animate-pulse" />
+              ))}
+          </div>
+        ))}
     </div>
   )
 
@@ -299,7 +345,9 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("giftVouchers.statuses.active")}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("giftVouchers.statuses.active")}
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -339,13 +387,13 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
             <Input
               placeholder={t("giftVouchers.searchPlaceholder")}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               className="lg:col-span-2"
               disabled={isLoading}
             />
             <Select
               value={filterVoucherType}
-              onValueChange={(value) => setFilterVoucherType(value as any)}
+              onValueChange={value => setFilterVoucherType(value as any)}
               disabled={isLoading}
             >
               <SelectTrigger>
@@ -353,20 +401,24 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {VOUCHER_TYPES.map((type) => (
+                {VOUCHER_TYPES.map(type => (
                   <SelectItem key={type} value={type}>
                     {t(`giftVouchers.types.${type}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} disabled={isLoading}>
+            <Select
+              value={filterStatus}
+              onValueChange={value => setFilterStatus(value as any)}
+              disabled={isLoading}
+            >
               <SelectTrigger>
                 <SelectValue placeholder={t("giftVouchers.filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {VOUCHER_STATUSES.map((status) => (
+                {VOUCHER_STATUSES.map(status => (
                   <SelectItem key={status} value={status}>
                     {t(`giftVouchers.statuses.${status}`)}
                   </SelectItem>
@@ -375,12 +427,17 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
             </Select>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant={"outline"} className="w-full justify-start text-left font-normal" disabled={isLoading}>
+                <Button
+                  variant={"outline"}
+                  className="w-full justify-start text-left font-normal"
+                  disabled={isLoading}
+                >
                   <Filter className="mr-2 h-4 w-4" />
                   {filterDateRange?.from ? (
                     filterDateRange.to ? (
                       <>
-                        {format(filterDateRange.from, "LLL dd, y")} - {format(filterDateRange.to, "LLL dd, y")}
+                        {format(filterDateRange.from, "LLL dd, y")} -{" "}
+                        {format(filterDateRange.to, "LLL dd, y")}
                       </>
                     ) : (
                       format(filterDateRange.from, "LLL dd, y")
@@ -439,8 +496,12 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <Gift className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{t("giftVouchers.noGiftVouchers")}</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("giftVouchers.noVouchers")}</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+              {t("giftVouchers.noGiftVouchers")}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t("giftVouchers.noVouchers")}
+            </p>
             <div className="mt-6">
               <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
                 <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
@@ -454,12 +515,16 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       {vouchers.length > 0 && (
         <>
           {isLoading ? (
-            viewMode === "cards" ? <CardListSkeleton /> : <TableSkeleton />
+            viewMode === "cards" ? (
+              <CardListSkeleton />
+            ) : (
+              <TableSkeleton />
+            )
           ) : (
             <>
               {viewMode === "cards" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {vouchers.map((voucher) => (
+                  {vouchers.map(voucher => (
                     <GiftVoucherAdminCard
                       key={voucher._id}
                       voucher={voucher}
@@ -482,7 +547,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
                     <div className="col-span-1">{t("giftVouchers.purchase.sendAsGift")}</div>
                     <div className="col-span-1 text-right">{t("common.actions")}</div>
                   </div>
-                  {vouchers.map((voucher) => (
+                  {vouchers.map(voucher => (
                     <GiftVoucherRow
                       key={voucher._id}
                       voucher={voucher}
@@ -511,7 +576,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
 
       <Dialog
         open={isFormModalOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setEditingVoucher(null)
           }
@@ -520,9 +585,13 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingVoucher ? t("giftVouchers.edit") : t("giftVouchers.addNew")}</DialogTitle>
+            <DialogTitle>
+              {editingVoucher ? t("giftVouchers.edit") : t("giftVouchers.addNew")}
+            </DialogTitle>
             <DialogDescription>
-              {editingVoucher ? `${t("giftVouchers.edit")} ${editingVoucher.code}.` : t("giftVouchers.description")}
+              {editingVoucher
+                ? `${t("giftVouchers.edit")} ${editingVoucher.code}.`
+                : t("giftVouchers.description")}
             </DialogDescription>
           </DialogHeader>
           <GiftVoucherForm
@@ -540,7 +609,9 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("giftVouchers.deleteConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("giftVouchers.deleteConfirmDescription")}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {t("giftVouchers.deleteConfirmDescription")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>

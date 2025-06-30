@@ -37,15 +37,20 @@ export default function MemberGiftVouchersClient({
   const router = useRouter()
 
   const [ownedVouchers, setOwnedVouchers] = useState<GiftVoucherPlain[]>(initialOwnedVouchers)
-  const [purchasedVouchers, setPurchasedVouchers] = useState<GiftVoucherPlain[]>(initialPurchasedVouchers)
+  const [purchasedVouchers, setPurchasedVouchers] =
+    useState<GiftVoucherPlain[]>(initialPurchasedVouchers)
   const [loading, setLoading] = useState(false)
-  const [selectedVoucherForDetails, setSelectedVoucherForDetails] = useState<GiftVoucherPlain | null>(null)
+  const [selectedVoucherForDetails, setSelectedVoucherForDetails] =
+    useState<GiftVoucherPlain | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   const refreshVouchers = async () => {
     setLoading(true)
     try {
-      const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(), getMemberPurchasedVouchers()])
+      const [ownedResult, purchasedResult] = await Promise.all([
+        getMemberOwnedVouchers(),
+        getMemberPurchasedVouchers(),
+      ])
 
       if (ownedResult.success) {
         setOwnedVouchers(ownedResult.giftVouchers)
@@ -83,9 +88,9 @@ export default function MemberGiftVouchersClient({
   }
 
   const getVoucherStats = (vouchers: GiftVoucherPlain[]) => {
-    const active = vouchers.filter((v) => ["active", "partially_used"].includes(v.status)).length
-    const used = vouchers.filter((v) => v.status === "fully_used").length
-    const expired = vouchers.filter((v) => new Date(v.validUntil) < new Date()).length
+    const active = vouchers.filter(v => ["active", "partially_used"].includes(v.status)).length
+    const used = vouchers.filter(v => v.status === "fully_used").length
+    const expired = vouchers.filter(v => new Date(v.validUntil) < new Date()).length
 
     return { active, used, expired, total: vouchers.length }
   }
@@ -166,11 +171,15 @@ export default function MemberGiftVouchersClient({
             <Gift className="w-8 h-8 text-primary" />
             {t("memberGiftVouchers.title")}
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">{t("memberGiftVouchers.description")}</p>
+          <p className="text-muted-foreground mt-2 text-lg">
+            {t("memberGiftVouchers.description")}
+          </p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={refreshVouchers} disabled={loading} className="px-6">
-            <RefreshCw className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2", loading && "animate-spin")} />
+            <RefreshCw
+              className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2", loading && "animate-spin")}
+            />
             {t("common.refresh")}
           </Button>
           <Button onClick={() => router.push("/purchase/gift-voucher")} className="px-6">
@@ -211,14 +220,24 @@ export default function MemberGiftVouchersClient({
               label={t("memberGiftVouchers.activeVouchers")}
               color="green"
             />
-            <StatCard icon={Clock} value={ownedStats.used} label={t("memberGiftVouchers.usedVouchers")} color="gray" />
+            <StatCard
+              icon={Clock}
+              value={ownedStats.used}
+              label={t("memberGiftVouchers.usedVouchers")}
+              color="gray"
+            />
             <StatCard
               icon={XCircle}
               value={ownedStats.expired}
               label={t("memberGiftVouchers.expiredVouchers")}
               color="red"
             />
-            <StatCard icon={Gift} value={ownedStats.total} label={t("memberGiftVouchers.totalVouchers")} color="blue" />
+            <StatCard
+              icon={Gift}
+              value={ownedStats.total}
+              label={t("memberGiftVouchers.totalVouchers")}
+              color="blue"
+            />
           </div>
 
           {/* Vouchers Grid */}
@@ -232,7 +251,7 @@ export default function MemberGiftVouchersClient({
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {ownedVouchers.map((voucher) => (
+              {ownedVouchers.map(voucher => (
                 <MemberGiftVoucherCard
                   key={voucher._id}
                   voucher={voucher}
@@ -285,8 +304,12 @@ export default function MemberGiftVouchersClient({
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {purchasedVouchers.map((voucher) => (
-                <MemberGiftVoucherCard key={voucher._id} voucher={voucher} onViewDetails={handleViewDetails} />
+              {purchasedVouchers.map(voucher => (
+                <MemberGiftVoucherCard
+                  key={voucher._id}
+                  voucher={voucher}
+                  onViewDetails={handleViewDetails}
+                />
               ))}
             </div>
           )}

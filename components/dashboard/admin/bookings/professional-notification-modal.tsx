@@ -1,14 +1,31 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Send, Mail, MessageSquare, User, Phone, MapPin, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
+import {
+  Loader2,
+  Send,
+  Mail,
+  MessageSquare,
+  User,
+  Phone,
+  MapPin,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
 interface Professional {
@@ -40,7 +57,7 @@ export function ProfessionalNotificationModal({
   open,
   onOpenChange,
   booking,
-  onSuccess
+  onSuccess,
 }: ProfessionalNotificationModalProps) {
   const { toast } = useToast()
   const [professionals, setProfessionals] = useState<Professional[]>([])
@@ -48,7 +65,9 @@ export function ProfessionalNotificationModal({
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [selectedProfessionals, setSelectedProfessionals] = useState<Set<string>>(new Set())
-  const [notificationPreferences, setNotificationPreferences] = useState<Record<string, NotificationPreferences>>({})
+  const [notificationPreferences, setNotificationPreferences] = useState<
+    Record<string, NotificationPreferences>
+  >({})
   const [showAll, setShowAll] = useState(false)
 
   // Load professionals when modal opens
@@ -62,55 +81,56 @@ export function ProfessionalNotificationModal({
     setLoading(true)
     try {
       // Load suitable professionals first
-      const suitableResponse = await fetch(`/api/admin/bookings/${booking._id}/suitable-professionals`)
+      const suitableResponse = await fetch(
+        `/api/admin/bookings/${booking._id}/suitable-professionals`
+      )
       const suitableData = await suitableResponse.json()
-      
+
       let suitableProfs: Professional[] = []
       if (suitableData.success && suitableData.professionals) {
         suitableProfs = suitableData.professionals
         setSuitableProfessionals(suitableProfs)
-        
+
         // Pre-select all suitable professionals
         const suitableIds = new Set(suitableProfs.map(p => p._id))
         setSelectedProfessionals(suitableIds)
-        
+
         // Set default notification preferences (both email and SMS)
         const defaultPrefs: Record<string, NotificationPreferences> = {}
         suitableProfs.forEach(prof => {
           defaultPrefs[prof._id] = {
             email: !!prof.email,
-            sms: !!prof.phone
+            sms: !!prof.phone,
           }
         })
         setNotificationPreferences(defaultPrefs)
       }
-      
+
       // Load all professionals as fallback
       const allResponse = await fetch(`/api/admin/professionals/available`)
       const allData = await allResponse.json()
-      
+
       if (allData.success && allData.professionals) {
         setProfessionals(allData.professionals)
-        
+
         // Add notification preferences for all professionals
         const allPrefs = { ...notificationPreferences }
         allData.professionals.forEach((prof: Professional) => {
           if (!allPrefs[prof._id]) {
             allPrefs[prof._id] = {
               email: !!prof.email,
-              sms: !!prof.phone
+              sms: !!prof.phone,
             }
           }
         })
         setNotificationPreferences(allPrefs)
       }
-      
     } catch (error) {
       console.error("Error loading professionals:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בטעינת רשימת המטפלים"
+        description: "שגיאה בטעינת רשימת המטפלים",
       })
     } finally {
       setLoading(false)
@@ -128,16 +148,16 @@ export function ProfessionalNotificationModal({
   }
 
   const handleNotificationPreferenceChange = (
-    professionalId: string, 
-    type: 'email' | 'sms', 
+    professionalId: string,
+    type: "email" | "sms",
     enabled: boolean
   ) => {
     setNotificationPreferences(prev => ({
       ...prev,
       [professionalId]: {
         ...prev[professionalId],
-        [type]: enabled
-      }
+        [type]: enabled,
+      },
     }))
   }
 
@@ -156,7 +176,7 @@ export function ProfessionalNotificationModal({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נא לבחור לפחות מטפל אחד"
+        description: "נא לבחור לפחות מטפל אחד",
       })
       return
     }
@@ -169,16 +189,16 @@ export function ProfessionalNotificationModal({
         professionals: Array.from(selectedProfessionals).map(profId => ({
           professionalId: profId,
           email: notificationPreferences[profId]?.email || false,
-          sms: notificationPreferences[profId]?.sms || false
-        }))
+          sms: notificationPreferences[profId]?.sms || false,
+        })),
       }
 
       const response = await fetch(`/api/admin/bookings/${booking._id}/notify-professionals`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(notificationData)
+        body: JSON.stringify(notificationData),
       })
 
       const result = await response.json()
@@ -186,7 +206,7 @@ export function ProfessionalNotificationModal({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: `התראות נשלחו בהצלחה ל-${result.sentCount || selectedProfessionals.size} מטפלים`
+          description: `התראות נשלחו בהצלחה ל-${result.sentCount || selectedProfessionals.size} מטפלים`,
         })
         onSuccess?.()
         onOpenChange(false)
@@ -198,7 +218,7 @@ export function ProfessionalNotificationModal({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: error instanceof Error ? error.message : "שגיאה בשליחת התראות"
+        description: error instanceof Error ? error.message : "שגיאה בשליחת התראות",
       })
     } finally {
       setSending(false)
@@ -206,7 +226,8 @@ export function ProfessionalNotificationModal({
   }
 
   const professionalsList = showAll ? professionals : suitableProfessionals
-  const isSuitable = (professionalId: string) => suitableProfessionals.some(p => p._id === professionalId)
+  const isSuitable = (professionalId: string) =>
+    suitableProfessionals.some(p => p._id === professionalId)
 
   if (loading) {
     return (
@@ -251,12 +272,10 @@ export function ProfessionalNotificationModal({
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>{new Date(booking.bookingDateTime).toLocaleDateString('he-IL')}</span>
+                <span>{new Date(booking.bookingDateTime).toLocaleDateString("he-IL")}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-medium">
-                  {(booking.treatmentId as any)?.name || 'טיפול'}
-                </span>
+                <span className="font-medium">{(booking.treatmentId as any)?.name || "טיפול"}</span>
               </div>
             </div>
           </CardContent>
@@ -313,13 +332,13 @@ export function ProfessionalNotificationModal({
               <p>לא נמצאו מטפלים</p>
             </div>
           ) : (
-            professionalsList.map((professional) => (
-              <Card 
-                key={professional._id} 
+            professionalsList.map(professional => (
+              <Card
+                key={professional._id}
                 className={`transition-colors ${
-                  selectedProfessionals.has(professional._id) 
-                    ? 'border-primary bg-primary/5' 
-                    : 'hover:bg-muted/50'
+                  selectedProfessionals.has(professional._id)
+                    ? "border-primary bg-primary/5"
+                    : "hover:bg-muted/50"
                 }`}
               >
                 <CardContent className="p-4">
@@ -366,26 +385,34 @@ export function ProfessionalNotificationModal({
                       {selectedProfessionals.has(professional._id) && (
                         <div className="flex items-center gap-4 pt-2 border-t">
                           <span className="text-sm font-medium">שלח התראה:</span>
-                          
+
                           {professional.email && (
                             <label className="flex items-center gap-2 cursor-pointer">
                               <Checkbox
                                 checked={notificationPreferences[professional._id]?.email || false}
-                                onCheckedChange={(checked) => 
-                                  handleNotificationPreferenceChange(professional._id, 'email', !!checked)
+                                onCheckedChange={checked =>
+                                  handleNotificationPreferenceChange(
+                                    professional._id,
+                                    "email",
+                                    !!checked
+                                  )
                                 }
                               />
                               <Mail className="h-4 w-4" />
                               <span className="text-sm">אימייל</span>
                             </label>
                           )}
-                          
+
                           {professional.phone && (
                             <label className="flex items-center gap-2 cursor-pointer">
                               <Checkbox
                                 checked={notificationPreferences[professional._id]?.sms || false}
-                                onCheckedChange={(checked) => 
-                                  handleNotificationPreferenceChange(professional._id, 'sms', !!checked)
+                                onCheckedChange={checked =>
+                                  handleNotificationPreferenceChange(
+                                    professional._id,
+                                    "sms",
+                                    !!checked
+                                  )
                                 }
                               />
                               <MessageSquare className="h-4 w-4" />
@@ -409,13 +436,9 @@ export function ProfessionalNotificationModal({
           <div className="text-sm text-muted-foreground">
             נבחרו {selectedProfessionals.size} מטפלים
           </div>
-          
+
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={sending}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
               ביטול
             </Button>
             <Button
@@ -440,4 +463,4 @@ export function ProfessionalNotificationModal({
       </DialogContent>
     </Dialog>
   )
-} 
+}

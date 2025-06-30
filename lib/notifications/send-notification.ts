@@ -16,4 +16,4 @@ export async function sendNotification(data: NotificationData): Promise<boolean>
     logger.error("Error sending notification:", error)
     return false
   }
-} 
+}

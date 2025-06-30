@@ -58,7 +58,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
               ? "מספר הטלפון הזה כבר בשימוש"
               : language === "ru"
                 ? "Этот номер телефона уже используется"
-                : "This phone number is already in use",
+                : "This phone number is already in use"
           )
         } else {
           setError(t("errors.unknown"))
@@ -92,7 +92,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
             ? "מספר הטלפון שונה בהצלחה"
             : language === "ru"
               ? "Номер телефона успешно изменен"
-              : "Phone number changed successfully",
+              : "Phone number changed successfully"
         )
         setStep("phone")
         setNewPhone("")
@@ -101,14 +101,19 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
           onPhoneChanged(newPhone)
         }
         toast({
-          title: language === "he" ? "מספר הטלפון שונה בהצלחה" : language === "ru" ? "Номер телефона успешно изменен" : "Phone number changed successfully",
-          variant: "default"
+          title:
+            language === "he"
+              ? "מספר הטלפון שונה בהצלחה"
+              : language === "ru"
+                ? "Номер телефона успешно изменен"
+                : "Phone number changed successfully",
+          variant: "default",
         })
       } else {
         setError(result.message)
         toast({
           title: result.message,
-          variant: "destructive"
+          variant: "destructive",
         })
       }
     } catch (error) {
@@ -172,7 +177,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
                   inputMode="numeric"
                   maxLength={1}
                   value={digit}
-                  onChange={(e) => handleOtpChange(e, index)}
+                  onChange={e => handleOtpChange(e, index)}
                   className="w-10 h-12 text-center text-lg border-turquoise-200 focus-visible:ring-turquoise-500"
                 />
               ))}
@@ -182,7 +187,12 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
           {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
 
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setStep("phone")} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep("phone")}
+              className="flex-1"
+            >
               {language === "he" ? "חזור" : language === "ru" ? "Назад" : "Back"}
             </Button>
             <Button
@@ -208,9 +218,18 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
     <form onSubmit={handlePhoneSubmit} className="space-y-6">
       {/* Current Phone */}
       <div className="space-y-2">
-        <Label>{language === "he" ? "טלפון נוכחי" : language === "ru" ? "Текущий телефон" : "Current Phone"}</Label>
+        <Label>
+          {language === "he"
+            ? "טלפון נוכחי"
+            : language === "ru"
+              ? "Текущий телефон"
+              : "Current Phone"}
+        </Label>
         <Input
-          value={currentPhone || (language === "he" ? "לא הוגדר" : language === "ru" ? "Не установлен" : "Not set")}
+          value={
+            currentPhone ||
+            (language === "he" ? "לא הוגדר" : language === "ru" ? "Не установлен" : "Not set")
+          }
           disabled
           className="bg-gray-50 border-gray-200"
         />
@@ -224,16 +243,22 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
         <FormControl>
           <PhoneInput
             fullNumberValue={newPhone}
-            onPhoneChange={(value) => setNewPhone(value)}
+            onPhoneChange={value => setNewPhone(value)}
             placeholder={t("account.phonePlaceholder")}
           />
         </FormControl>
       </div>
 
       {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-      {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>}
+      {success && (
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{success}</div>
+      )}
 
-      <Button type="submit" className="w-full bg-turquoise-500 hover:bg-turquoise-600" disabled={isLoading}>
+      <Button
+        type="submit"
+        className="w-full bg-turquoise-500 hover:bg-turquoise-600"
+        disabled={isLoading}
+      >
         {isLoading
           ? t("common.loading")
           : language === "he"

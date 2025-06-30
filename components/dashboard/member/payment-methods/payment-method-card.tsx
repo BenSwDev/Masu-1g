@@ -34,7 +34,13 @@ interface PaymentMethodCardProps {
   onSetDefault?: (methodId: string) => void
 }
 
-export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, onSetDefault }: PaymentMethodCardProps) {
+export function PaymentMethodCard({
+  paymentMethod,
+  onEdit,
+  onUpdate,
+  onDelete,
+  onSetDefault,
+}: PaymentMethodCardProps) {
   const { t } = useTranslation()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -128,7 +134,9 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, o
                   <div className="font-medium">{paymentMethod.cardHolderName}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs opacity-75 uppercase tracking-wide">{t("paymentMethods.fields.expiry")}</div>
+                  <div className="text-xs opacity-75 uppercase tracking-wide">
+                    {t("paymentMethods.fields.expiry")}
+                  </div>
                   {/* Expiry date - centered for RTL */}
                   <div className="font-mono text-center">
                     {paymentMethod.expiryMonth}/{paymentMethod.expiryYear}
@@ -168,7 +176,10 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, o
                     {t("paymentMethods.setDefault")}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600 focus:text-red-600">
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-red-600 focus:text-red-600"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   {t("common.delete")}
                 </DropdownMenuItem>
@@ -182,11 +193,17 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, o
         <AlertDialogContent className="mx-4 sm:mx-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("paymentMethods.deleteConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("paymentMethods.deleteConfirmDescription")}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {t("paymentMethods.deleteConfirmDescription")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isLoading ? t("common.loading") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

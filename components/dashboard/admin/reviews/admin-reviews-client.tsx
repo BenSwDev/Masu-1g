@@ -11,7 +11,13 @@ import { Heading } from "@/components/ui/heading"
 import { getAllReviews } from "@/actions/review-actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Search, RefreshCw, Filter, X } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/ui/badge"
@@ -27,13 +33,13 @@ import { toast } from "sonner"
  */
 export default function AdminReviewsClient() {
   const { t, language, dir } = useTranslation()
-  
+
   // Search and filters state
   const [searchTerm, setSearchTerm] = useState("")
   const [ratingFilter, setRatingFilter] = useState<string>("all")
   const [responseFilter, setResponseFilter] = useState<string>("all")
   const [activeTab, setActiveTab] = useState("with-reviews")
-  
+
   // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedReview, setSelectedReview] = useState<PopulatedReview | null>(null)
@@ -65,16 +71,19 @@ export default function AdminReviewsClient() {
     }
   }
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<
+  const { data, isLoading, error, refetch } = useQuery<
     { reviews: PopulatedReview[]; totalPages: number; totalReviews: number },
     Error
   >({
-    queryKey: ["adminReviews", language, debouncedSearchTerm, ratingFilter, responseFilter, activeTab, currentPage],
+    queryKey: [
+      "adminReviews",
+      language,
+      debouncedSearchTerm,
+      ratingFilter,
+      responseFilter,
+      activeTab,
+      currentPage,
+    ],
     queryFn: async () => {
       try {
         const result = await getAllReviews(getFiltersForTab())
@@ -82,7 +91,7 @@ export default function AdminReviewsClient() {
         return {
           reviews: result.reviews || [],
           totalPages: result.totalPages || 1,
-          totalReviews: result.totalReviews || 0
+          totalReviews: result.totalReviews || 0,
         }
       } catch (error) {
         console.error("Error in getAllReviews query:", error)
@@ -145,9 +154,7 @@ export default function AdminReviewsClient() {
     if (activeTab === "without-reviews") {
       return (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">
-            {t("adminReviews.withoutReviewsNote")}
-          </p>
+          <p className="text-muted-foreground">{t("adminReviews.withoutReviewsNote")}</p>
         </div>
       )
     }
@@ -180,7 +187,7 @@ export default function AdminReviewsClient() {
           hideColumnsSelector={true}
           onRowClick={handleRowClick}
         />
-        
+
         {data && data.totalReviews > 0 && (
           <div className="mt-4 text-sm text-muted-foreground text-center">
             {t("adminReviews.totalReviews", { count: data.totalReviews })}
@@ -196,17 +203,15 @@ export default function AdminReviewsClient() {
         <div className="mb-6 text-center md:text-right">
           <h2 className="text-3xl font-bold tracking-tight">{t("adminReviews.title")}</h2>
         </div>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="with-reviews">
-              {t("adminReviews.tabs.withReviews")}
-            </TabsTrigger>
+            <TabsTrigger value="with-reviews">{t("adminReviews.tabs.withReviews")}</TabsTrigger>
             <TabsTrigger value="without-reviews">
               {t("adminReviews.tabs.withoutReviews")}
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="with-reviews" className="space-y-4">
             {/* Search and Filters Bar */}
             <div className="space-y-4">
@@ -217,11 +222,11 @@ export default function AdminReviewsClient() {
                   <Input
                     placeholder={t("adminReviews.searchPlaceholder")}
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-8"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                     <PopoverTrigger asChild>
@@ -246,12 +251,14 @@ export default function AdminReviewsClient() {
                             </Button>
                           )}
                         </div>
-                        
+
                         <Separator />
-                        
+
                         {/* Rating Filter */}
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">{t("adminReviews.filterByRating")}</label>
+                          <label className="text-sm font-medium">
+                            {t("adminReviews.filterByRating")}
+                          </label>
                           <Select value={ratingFilter} onValueChange={setRatingFilter}>
                             <SelectTrigger>
                               <SelectValue />
@@ -269,22 +276,28 @@ export default function AdminReviewsClient() {
 
                         {/* Response Filter */}
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">{t("adminReviews.filterByResponse")}</label>
+                          <label className="text-sm font-medium">
+                            {t("adminReviews.filterByResponse")}
+                          </label>
                           <Select value={responseFilter} onValueChange={setResponseFilter}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">{t("adminReviews.allResponses")}</SelectItem>
-                              <SelectItem value="with_response">{t("adminReviews.withResponse")}</SelectItem>
-                              <SelectItem value="without_response">{t("adminReviews.withoutResponse")}</SelectItem>
+                              <SelectItem value="with_response">
+                                {t("adminReviews.withResponse")}
+                              </SelectItem>
+                              <SelectItem value="without_response">
+                                {t("adminReviews.withoutResponse")}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
                     </PopoverContent>
                   </Popover>
-                  
+
                   <Button variant="outline" size="sm" onClick={handleRefresh}>
                     <RefreshCw className="h-4 w-4 mr-2" />
                     {t("common.refresh")}
@@ -298,46 +311,48 @@ export default function AdminReviewsClient() {
                   {ratingFilter !== "all" && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       {t("adminReviews.filterByRating")}: {ratingFilter} ⭐
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => setRatingFilter("all")} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => setRatingFilter("all")}
+                      />
                     </Badge>
                   )}
                   {responseFilter !== "all" && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       {t("adminReviews.filterByResponse")}: {t(`adminReviews.${responseFilter}`)}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => setResponseFilter("all")} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => setResponseFilter("all")}
+                      />
                     </Badge>
                   )}
                 </div>
               )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="without-reviews" className="space-y-4">
             <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {t("adminReviews.withoutReviewsNote")}
-              </p>
+              <p className="text-muted-foreground">{t("adminReviews.withoutReviewsNote")}</p>
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {renderContent()}
-      </div>
+      <div className="flex-1 min-h-0 flex flex-col">{renderContent()}</div>
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div className="flex-shrink-0 flex items-center justify-between border-t pt-4 bg-white">
           <div className="text-sm text-muted-foreground">
-            {t("adminReviews.showingPage", { 
-              current: currentPage, 
+            {t("adminReviews.showingPage", {
+              current: currentPage,
               total: data.totalPages,
-              totalReviews: data.totalReviews
+              totalReviews: data.totalReviews,
             })}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -355,12 +370,12 @@ export default function AdminReviewsClient() {
             >
               {t("common.pagination.previous")}
             </Button>
-            
+
             <div className="flex items-center space-x-1">
               {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
                 const page = Math.max(1, currentPage - 2) + i
                 if (page > data.totalPages) return null
-                
+
                 return (
                   <Button
                     key={page}
@@ -374,7 +389,7 @@ export default function AdminReviewsClient() {
                 )
               })}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -404,4 +419,4 @@ export default function AdminReviewsClient() {
       />
     </div>
   )
-} 
+}

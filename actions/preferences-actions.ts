@@ -3,7 +3,11 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import User, { type ITreatmentPreferences, type INotificationPreferences, type IUser } from "@/lib/db/models/user"
+import User, {
+  type ITreatmentPreferences,
+  type INotificationPreferences,
+  type IUser,
+} from "@/lib/db/models/user"
 import { revalidatePath } from "next/cache"
 
 const defaultTreatmentPreferences: ITreatmentPreferences = {
@@ -42,7 +46,8 @@ export async function getUserPreferences(): Promise<{
     // Ensure individual fields have defaults if the main object exists but fields are missing
     // This is more robust if schema defaults somehow didn't apply or for older documents
     const finalTreatmentPreferences: ITreatmentPreferences = {
-      therapistGender: treatmentPreferences.therapistGender ?? defaultTreatmentPreferences.therapistGender,
+      therapistGender:
+        treatmentPreferences.therapistGender ?? defaultTreatmentPreferences.therapistGender,
     }
 
     const finalNotificationPreferences: INotificationPreferences = {
@@ -65,7 +70,7 @@ export async function getUserPreferences(): Promise<{
 }
 
 export async function updateTreatmentPreferences(
-  preferences: Partial<ITreatmentPreferences>,
+  preferences: Partial<ITreatmentPreferences>
 ): Promise<{ success: boolean; message: string; treatmentPreferences?: ITreatmentPreferences }> {
   try {
     const session = await getServerSession(authOptions)
@@ -73,7 +78,10 @@ export async function updateTreatmentPreferences(
       return { success: false, message: "Not Authenticated" }
     }
 
-    if (!preferences.therapistGender || !["male", "female", "any"].includes(preferences.therapistGender)) {
+    if (
+      !preferences.therapistGender ||
+      !["male", "female", "any"].includes(preferences.therapistGender)
+    ) {
       return { success: false, message: "Invalid therapist gender preference" }
     }
 
@@ -81,7 +89,7 @@ export async function updateTreatmentPreferences(
     const updatedUser = (await User.findByIdAndUpdate(
       session.user.id,
       { $set: { "treatmentPreferences.therapistGender": preferences.therapistGender } },
-      { new: true, runValidators: true, upsert: true },
+      { new: true, runValidators: true, upsert: true }
     ).select("treatmentPreferences")) as IUser | null
 
     if (!updatedUser) {
@@ -102,8 +110,12 @@ export async function updateTreatmentPreferences(
 }
 
 export async function updateNotificationPreferences(
-  preferences: Partial<INotificationPreferences>,
-): Promise<{ success: boolean; message: string; notificationPreferences?: INotificationPreferences }> {
+  preferences: Partial<INotificationPreferences>
+): Promise<{
+  success: boolean
+  message: string
+  notificationPreferences?: INotificationPreferences
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -113,7 +125,7 @@ export async function updateNotificationPreferences(
     if (!preferences.methods || preferences.methods.length === 0) {
       return { success: false, message: "At least one notification method is required" }
     }
-    if (!preferences.methods.every((method) => ["email", "sms"].includes(method))) {
+    if (!preferences.methods.every(method => ["email", "sms"].includes(method))) {
       return { success: false, message: "Invalid notification method(s)" }
     }
     if (!preferences.language || !["he", "en", "ru"].includes(preferences.language)) {
@@ -129,7 +141,7 @@ export async function updateNotificationPreferences(
           "notificationPreferences.language": preferences.language,
         },
       },
-      { new: true, runValidators: true, upsert: true },
+      { new: true, runValidators: true, upsert: true }
     ).select("notificationPreferences")) as IUser | null
 
     if (!updatedUser) {
@@ -141,7 +153,8 @@ export async function updateNotificationPreferences(
     return {
       success: true,
       message: "Notification preferences updated successfully",
-      notificationPreferences: updatedUser.notificationPreferences || defaultNotificationPreferences,
+      notificationPreferences:
+        updatedUser.notificationPreferences || defaultNotificationPreferences,
     }
   } catch (error) {
     console.error("Error updating notification preferences:", error)

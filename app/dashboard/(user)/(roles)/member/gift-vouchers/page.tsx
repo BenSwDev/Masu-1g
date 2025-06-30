@@ -45,7 +45,10 @@ function MemberGiftVouchersLoading() {
 }
 
 async function MemberGiftVouchersData() {
-  const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(), getMemberPurchasedVouchers()])
+  const [ownedResult, purchasedResult] = await Promise.all([
+    getMemberOwnedVouchers(),
+    getMemberPurchasedVouchers(),
+  ])
 
   if (!ownedResult.success && !purchasedResult.success) {
     return (

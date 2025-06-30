@@ -40,9 +40,7 @@ export interface GetTreatmentsResult {
 export async function getTreatmentsForSelection(): Promise<GetTreatmentsResult> {
   try {
     await dbConnect()
-    const treatments = await Treatment.find({ isActive: true })
-      .sort({ name: 1 })
-      .lean()
+    const treatments = await Treatment.find({ isActive: true }).sort({ name: 1 }).lean()
 
     return {
       success: true,
@@ -69,4 +67,4 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsResult> 
     logger.error("Error fetching treatments for gift voucher:", error)
     return { success: false, error: "Failed to fetch treatments" }
   }
-} 
+}

@@ -8,15 +8,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useTranslation } from "@/lib/translations/i18n"
 import { LanguageSelector } from "@/components/common/language-selector"
 import { PhoneInput } from "@/components/common/phone-input"
 import { useRouter } from "next/navigation"
 import { registerUser } from "@/actions/auth-actions"
 import { signIn } from "next-auth/react"
-  import { Checkbox } from "@/components/ui/checkbox"
-  import { useToast } from "@/components/ui/use-toast"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
 
 export function RegisterForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const { t, dir } = useTranslation()
@@ -122,7 +128,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
         if (result.message === "userUpgraded") {
           toast({ title: t("errors.userUpgraded"), variant: "default" })
         } else {
-        toast({ title: t("success.registrationComplete"), variant: "default" })
+          toast({ title: t("success.registrationComplete"), variant: "default" })
         }
 
         const signInResult = await signIn("credentials", {
@@ -148,7 +154,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
           <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
             <LanguageSelector />
           </div>
-          <CardTitle className="text-xl font-bold text-turquoise-700">{t("register.welcome")}</CardTitle>
+          <CardTitle className="text-xl font-bold text-turquoise-700">
+            {t("register.welcome")}
+          </CardTitle>
           <CardDescription className="text-sm">{t("register.createAccount")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -159,7 +167,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
               <Checkbox
                 id="isProfessional"
                 checked={isProfessional}
-                onCheckedChange={(checked) => setIsProfessional(checked === true)}
+                onCheckedChange={checked => setIsProfessional(checked === true)}
               />
               <label
                 htmlFor="isProfessional"
@@ -173,7 +181,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Full Name */}
               <div className="space-y-1">
-                <Label htmlFor="fullName" className="text-sm">{t("register.fullName")}</Label>
+                <Label htmlFor="fullName" className="text-sm">
+                  {t("register.fullName")}
+                </Label>
                 <Input
                   id="fullName"
                   name="fullName"
@@ -185,7 +195,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
 
               {/* Email */}
               <div className="space-y-1">
-                <Label htmlFor="email" className="text-sm">{t("register.email")}</Label>
+                <Label htmlFor="email" className="text-sm">
+                  {t("register.email")}
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -199,7 +211,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
 
             {/* Phone */}
             <div className="space-y-1">
-              <Label htmlFor="phone" className="text-sm">{t("register.phone")}</Label>
+              <Label htmlFor="phone" className="text-sm">
+                {t("register.phone")}
+              </Label>
               <PhoneInput
                 id="phone"
                 name="phone"
@@ -212,7 +226,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Password */}
               <div className="space-y-1">
-                <Label htmlFor="password" className="text-sm">{t("register.password")}</Label>
+                <Label htmlFor="password" className="text-sm">
+                  {t("register.password")}
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -263,7 +279,9 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
 
               {/* Confirm Password */}
               <div className="space-y-1">
-                <Label htmlFor="confirmPassword" className="text-sm">{t("register.confirmPassword")}</Label>
+                <Label htmlFor="confirmPassword" className="text-sm">
+                  {t("register.confirmPassword")}
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -271,7 +289,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                     type={confirmPasswordVisible ? "text" : "password"}
                     className={cn(
                       "border-turquoise-200 focus-visible:ring-turquoise-500 h-9 pr-10",
-                      confirmPassword && !passwordMatch ? "border-red-500" : "",
+                      confirmPassword && !passwordMatch ? "border-red-500" : ""
                     )}
                     value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
@@ -334,7 +352,12 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       htmlFor="male"
                       className="flex cursor-pointer items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-turquoise-500 peer-data-[state=checked]:bg-turquoise-50 peer-data-[state=checked]:text-turquoise-700 [&:has([data-state=checked])]:border-turquoise-500 text-xs"
                     >
-                      <svg className={`h-4 w-4 ${iconSpacing}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className={`h-4 w-4 ${iconSpacing}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -351,7 +374,12 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       htmlFor="female"
                       className="flex cursor-pointer items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-turquoise-500 peer-data-[state=checked]:bg-turquoise-50 peer-data-[state=checked]:text-turquoise-700 [&:has([data-state=checked])]:border-turquoise-500 text-xs"
                     >
-                      <svg className={`h-4 w-4 ${iconSpacing}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className={`h-4 w-4 ${iconSpacing}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -368,7 +396,12 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       htmlFor="other"
                       className="flex cursor-pointer items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-turquoise-500 peer-data-[state=checked]:bg-turquoise-50 peer-data-[state=checked]:text-turquoise-700 [&:has([data-state=checked])]:border-turquoise-500 text-xs"
                     >
-                      <svg className={`h-4 w-4 ${iconSpacing}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className={`h-4 w-4 ${iconSpacing}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -392,7 +425,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       <SelectValue placeholder={t("register.day")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {days.map((day) => (
+                      {days.map(day => (
                         <SelectItem key={day} value={day.toString()}>
                           {day}
                         </SelectItem>
@@ -406,7 +439,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       <SelectValue placeholder={t("register.month")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {months.map((month) => (
+                      {months.map(month => (
                         <SelectItem key={month.value} value={month.value}>
                           {month.label}
                         </SelectItem>
@@ -420,7 +453,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                       <SelectValue placeholder={t("register.year")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {years.map((year) => (
+                      {years.map(year => (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
                         </SelectItem>
@@ -440,7 +473,11 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
             )}
 
             {/* Register Button */}
-            <Button type="submit" className="w-full bg-turquoise-500 hover:bg-turquoise-600 h-9" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-turquoise-500 hover:bg-turquoise-600 h-9"
+              disabled={isLoading}
+            >
               {isLoading ? t("common.loading") : t("register.registerButton")}
             </Button>
           </form>
@@ -448,21 +485,30 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
           {/* Login Link */}
           <div className="text-center text-sm">
             {t("register.alreadyHaveAccount")}{" "}
-            <a href="/auth/login" className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700">
+            <a
+              href="/auth/login"
+              className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700"
+            >
               {t("register.signIn")}
             </a>
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Terms and Conditions - Compact */}
       <div className="text-balance text-center text-xs text-muted-foreground">
         {t("register.termsAgreement")}{" "}
-        <a href="#" className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700">
+        <a
+          href="#"
+          className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700"
+        >
           {t("register.termsOfService")}
         </a>{" "}
         {t("register.and")}{" "}
-        <a href="#" className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700">
+        <a
+          href="#"
+          className="text-turquoise-600 underline underline-offset-4 hover:text-turquoise-700"
+        >
           {t("register.privacyPolicy")}
         </a>
         .

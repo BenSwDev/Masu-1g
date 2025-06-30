@@ -21,10 +21,10 @@ interface Props {
 async function getSubscriptionPurchaseData(subscriptionId: string) {
   try {
     await dbConnect()
-    
+
     const userSubscription = await UserSubscription.findById(subscriptionId)
-      .populate('subscriptionId')
-      .populate('treatmentId')
+      .populate("subscriptionId")
+      .populate("treatmentId")
       .lean()
 
     if (!userSubscription) {
@@ -33,12 +33,12 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
 
     const subscription = userSubscription.subscriptionId as any
     const treatment = userSubscription.treatmentId as any
-    
+
     // Get duration details if available
     let duration = null
     if (userSubscription.selectedDurationId && treatment.durations) {
-      duration = treatment.durations.find((d: any) => 
-        d._id.toString() === userSubscription.selectedDurationId?.toString()
+      duration = treatment.durations.find(
+        (d: any) => d._id.toString() === userSubscription.selectedDurationId?.toString()
       )
     }
 
@@ -56,10 +56,12 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
         pricingType: treatment.pricingType,
         fixedPrice: treatment.fixedPrice,
       },
-      duration: duration ? {
-        minutes: duration.minutes,
-        price: duration.price,
-      } : null,
+      duration: duration
+        ? {
+            minutes: duration.minutes,
+            price: duration.price,
+          }
+        : null,
       totalAmount: userSubscription.paymentAmount || 0,
       purchaseDate: userSubscription.purchaseDate,
       expiryDate: userSubscription.expiryDate,
@@ -92,4 +94,4 @@ export default async function SubscriptionConfirmationPage({ searchParams }: Pro
       </Suspense>
     </GuestLayout>
   )
-} 
+}

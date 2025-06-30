@@ -1,18 +1,18 @@
-const { MongoClient } = require('mongodb');
-const bcrypt = require('bcryptjs');
+const { MongoClient } = require("mongodb")
+const bcrypt = require("bcryptjs")
 
 // רשימת 30 הערים הראשיות בישראל (כולל התאמה לשם הקיים)
 const ISRAEL_CITIES = [
   { name: "תל אביב-יפו", lat: 32.0853, lng: 34.7818 }, // כבר קיים
   { name: "ירושלים", lat: 31.7683, lng: 35.2137 },
-  { name: "חיפה", lat: 32.7940, lng: 34.9896 },
-  { name: "ראשון לציון", lat: 31.9730, lng: 34.8047 },
-  { name: "אשדוד", lat: 31.7940, lng: 34.6426 },
+  { name: "חיפה", lat: 32.794, lng: 34.9896 },
+  { name: "ראשון לציון", lat: 31.973, lng: 34.8047 },
+  { name: "אשדוד", lat: 31.794, lng: 34.6426 },
   { name: "נתניה", lat: 32.3215, lng: 34.8532 },
-  { name: "באר שבע", lat: 31.2530, lng: 34.7915 },
+  { name: "באר שבע", lat: 31.253, lng: 34.7915 },
   { name: "בני ברק", lat: 32.0969, lng: 34.8263 },
   { name: "חולון", lat: 32.0104, lng: 34.7694 },
-  { name: "רמת גן", lat: 32.0820, lng: 34.8252 },
+  { name: "רמת גן", lat: 32.082, lng: 34.8252 },
   { name: "אשקלון", lat: 31.6688, lng: 34.5742 },
   { name: "רחובות", lat: 31.8969, lng: 34.8186 },
   { name: "בת ים", lat: 32.0204, lng: 34.7509 },
@@ -26,130 +26,128 @@ const ISRAEL_CITIES = [
   { name: "קריית אתא", lat: 32.8098, lng: 35.1013 },
   { name: "עכו", lat: 32.9215, lng: 35.0818 },
   { name: "אילת", lat: 29.5581, lng: 34.9482 },
-  { name: "נהריה", lat: 33.0078, lng: 35.0950 },
+  { name: "נהריה", lat: 33.0078, lng: 35.095 },
   { name: "טבריה", lat: 32.7922, lng: 35.5312 },
   { name: "צפת", lat: 32.9648, lng: 35.4956 },
-  { name: "קריית גת", lat: 31.6100, lng: 34.7642 },
+  { name: "קריית גת", lat: 31.61, lng: 34.7642 },
   { name: "דימונה", lat: 31.0695, lng: 35.0323 },
   { name: "קריית שמונה", lat: 33.2074, lng: 35.5695 },
-  { name: "לוד", lat: 31.9516, lng: 34.8969 }
-];
-
+  { name: "לוד", lat: 31.9516, lng: 34.8969 },
+]
 
 // מטפלים לדוגמה
 const SAMPLE_PROFESSIONALS = [
   {
-    name: "ד\"ר שרה כהן",
+    name: 'ד"ר שרה כהן',
     email: "sarah.cohen@masu.co.il",
     phone: "0508888881",
     gender: "female",
     specialization: "עיסוי רפואי ועיסוי נשים",
     experience: "מטפלת מוסמכת עם ניסיון של 10 שנים בעיסוי רפואי ועיסוי לנשים",
-    cityName: "תל אביב-יפו" // התאמה לשם הקיים
+    cityName: "תל אביב-יפו", // התאמה לשם הקיים
   },
   {
-    name: "ד\"ר יוסי לוי",
-    email: "yossi.levy@masu.co.il", 
+    name: 'ד"ר יוסי לוי',
+    email: "yossi.levy@masu.co.il",
     phone: "0508888882",
     gender: "male",
     specialization: "עיסוי ספורט ורקמות עמוקות",
     experience: "מטפל מוסמך עם ניסיון של 8 שנים בעיסוי ספורט",
-    cityName: "חיפה"
+    cityName: "חיפה",
   },
   {
-    name: "ד\"ר מיכל אברהם",
+    name: 'ד"ר מיכל אברהם',
     email: "michal.abraham@masu.co.il",
-    phone: "0508888883", 
+    phone: "0508888883",
     gender: "female",
     specialization: "עיסוי רילקסציה וטיפול הוליסטי",
     experience: "מטפלת מוסמכת עם ניסיון של 6 שנים בעיסוי רילקסציה",
-    cityName: "ירושלים"
-  }
-];
+    cityName: "ירושלים",
+  },
+]
 
 // חישוב מרחק בין שתי נקודות
 function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // רדיוס כדור הארץ בקילומטרים
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return Math.round(R * c * 100) / 100;
+  const R = 6371 // רדיוס כדור הארץ בקילומטרים
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return Math.round(R * c * 100) / 100
 }
 
 async function populateDatabase() {
-  const uri = "mongodb+srv://benswissa:6jHOmqKPEABnqvi3@masu-cluster.fzbdwcj.mongodb.net/?retryWrites=true&w=majority&appName=Masu-cluster";
-  const client = new MongoClient(uri);
+  const uri =
+    "mongodb+srv://benswissa:6jHOmqKPEABnqvi3@masu-cluster.fzbdwcj.mongodb.net/?retryWrites=true&w=majority&appName=Masu-cluster"
+  const client = new MongoClient(uri)
 
   try {
     // TODO: Remove debug log
 
-    await client.connect();
+    await client.connect()
     // TODO: Remove debug log
 
+    const db = client.db("test")
 
-    const db = client.db('test');
-    
     // יצירת אוספים
-    const citiesCollection = db.collection('cities');
-    const cityDistancesCollection = db.collection('citydistances');
-    const usersCollection = db.collection('users');
-    const professionalProfilesCollection = db.collection('professionalprofiles');
-    const treatmentsCollection = db.collection('treatments');
+    const citiesCollection = db.collection("cities")
+    const cityDistancesCollection = db.collection("citydistances")
+    const usersCollection = db.collection("users")
+    const professionalProfilesCollection = db.collection("professionalprofiles")
+    const treatmentsCollection = db.collection("treatments")
 
     // TODO: Remove debug log
 
-    
     // הוספת ערים שחסרות
-    const existingCities = await citiesCollection.find({}).toArray();
-    const existingCityNames = existingCities.map(city => city.name);
-    
-    const citiesToAdd = ISRAEL_CITIES.filter(city => !existingCityNames.includes(city.name));
-    
+    const existingCities = await citiesCollection.find({}).toArray()
+    const existingCityNames = existingCities.map(city => city.name)
+
+    const citiesToAdd = ISRAEL_CITIES.filter(city => !existingCityNames.includes(city.name))
+
     if (citiesToAdd.length > 0) {
       const cityDocs = citiesToAdd.map(city => ({
         name: city.name,
         coordinates: {
           lat: city.lat,
-          lng: city.lng
+          lng: city.lng,
         },
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }));
+        updatedAt: new Date(),
+      }))
 
-      const insertedCities = await citiesCollection.insertMany(cityDocs);
+      const insertedCities = await citiesCollection.insertMany(cityDocs)
       // TODO: Remove debug log
-
     } else {
       // TODO: Remove debug log
-
     }
 
     // חישוב מרחקים בין כל הערים
     // TODO: Remove debug log
 
-    const allCities = await citiesCollection.find({}).toArray();
-    
+    const allCities = await citiesCollection.find({}).toArray()
+
     // מחיקת מרחקים קיימים כדי לחשב מחדש
-    await cityDistancesCollection.deleteMany({});
-    
-    const distanceDocs = [];
+    await cityDistancesCollection.deleteMany({})
+
+    const distanceDocs = []
     for (let i = 0; i < allCities.length; i++) {
       for (let j = i + 1; j < allCities.length; j++) {
-        const city1 = allCities[i];
-        const city2 = allCities[j];
-        
+        const city1 = allCities[i]
+        const city2 = allCities[j]
+
         const distance = calculateDistance(
           city1.coordinates.lat,
           city1.coordinates.lng,
           city2.coordinates.lat,
           city2.coordinates.lng
-        );
-        
+        )
+
         // שני כיוונים
         distanceDocs.push(
           {
@@ -159,7 +157,7 @@ async function populateDatabase() {
             toCityName: city2.name,
             distanceKm: distance,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           },
           {
             fromCityId: city2._id,
@@ -168,44 +166,38 @@ async function populateDatabase() {
             toCityName: city1.name,
             distanceKm: distance,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           }
-        );
+        )
       }
     }
-    
-    if (distanceDocs.length > 0) {
-      await cityDistancesCollection.insertMany(distanceDocs);
-      // TODO: Remove debug log
 
+    if (distanceDocs.length > 0) {
+      await cityDistancesCollection.insertMany(distanceDocs)
+      // TODO: Remove debug log
     }
 
     // יצירת מטפלים (גם אם יש כבר מטפלים)
     // TODO: Remove debug log
 
-    
-    const treatments = await treatmentsCollection.find({ isActive: true }).toArray();
+    const treatments = await treatmentsCollection.find({ isActive: true }).toArray()
     // TODO: Remove debug log
 
-    
     for (const prof of SAMPLE_PROFESSIONALS) {
       // בדיקה אם המשתמש כבר קיים
-      const existingUser = await usersCollection.findOne({ 
-        $or: [
-          { email: prof.email },
-          { phone: prof.phone }
-        ]
-      });
-      
+      const existingUser = await usersCollection.findOne({
+        $or: [{ email: prof.email }, { phone: prof.phone }],
+      })
+
       if (existingUser) {
         // TODO: Remove debug log
 
-        continue;
+        continue
       }
-      
+
       // יצירת משתמש
-      const hashedPassword = await bcrypt.hash("Demo123456!", 10);
-      
+      const hashedPassword = await bcrypt.hash("Demo123456!", 10)
+
       const userDoc = {
         name: prof.name,
         email: prof.email,
@@ -216,16 +208,15 @@ async function populateDatabase() {
         activeRole: "professional",
         emailVerified: new Date(),
         createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      const insertedUser = await usersCollection.insertOne(userDoc);
+        updatedAt: new Date(),
+      }
+
+      const insertedUser = await usersCollection.insertOne(userDoc)
       // TODO: Remove debug log
 
-      
       // מציאת העיר
-      const city = allCities.find(c => c.name === prof.cityName);
-      
+      const city = allCities.find(c => c.name === prof.cityName)
+
       if (city) {
         // יצירת פרופיל מטפל
         const professionalDoc = {
@@ -234,21 +225,20 @@ async function populateDatabase() {
           isActive: true,
           specialization: prof.specialization,
           experience: prof.experience,
-          certifications: [
-            "תעודת עיסוי רפואי",
-            "תעודת עיסוי שוודי"
-          ],
+          certifications: ["תעודת עיסוי רפואי", "תעודת עיסוי שוודי"],
           bio: prof.experience,
           treatments: treatments.slice(0, Math.min(2, treatments.length)).map(treatment => ({
             treatmentId: treatment._id,
-            professionalPrice: treatment.fixedProfessionalPrice || 150
+            professionalPrice: treatment.fixedProfessionalPrice || 150,
           })),
-          workAreas: [{
-            cityId: city._id,
-            cityName: city.name,
-            distanceRadius: "40km",
-            coveredCities: []
-          }],
+          workAreas: [
+            {
+              cityId: city._id,
+              cityName: city.name,
+              distanceRadius: "40km",
+              coveredCities: [],
+            },
+          ],
           totalEarnings: 0,
           pendingPayments: 0,
           financialTransactions: [],
@@ -257,29 +247,24 @@ async function populateDatabase() {
           approvedAt: new Date(),
           lastActiveAt: new Date(),
           createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        await professionalProfilesCollection.insertOne(professionalDoc);
-        // TODO: Remove debug log
+          updatedAt: new Date(),
+        }
 
+        await professionalProfilesCollection.insertOne(professionalDoc)
+        // TODO: Remove debug log
       } else {
         // TODO: Remove debug log
-
       }
     }
 
     // TODO: Remove debug log
 
-    
     // סיכום סופי
-    const finalCitiesCount = await citiesCollection.countDocuments();
-    const finalDistancesCount = await cityDistancesCollection.countDocuments();
-    const finalProfessionalsCount = await professionalProfilesCollection.countDocuments();
-    const finalUsersCount = await usersCollection.countDocuments();
-    const finalTreatmentsCount = await treatmentsCollection.countDocuments();
-    
-    // TODO: Remove debug log
+    const finalCitiesCount = await citiesCollection.countDocuments()
+    const finalDistancesCount = await cityDistancesCollection.countDocuments()
+    const finalProfessionalsCount = await professionalProfilesCollection.countDocuments()
+    const finalUsersCount = await usersCollection.countDocuments()
+    const finalTreatmentsCount = await treatmentsCollection.countDocuments()
 
     // TODO: Remove debug log
 
@@ -291,15 +276,14 @@ async function populateDatabase() {
 
     // TODO: Remove debug log
 
-
+    // TODO: Remove debug log
   } catch (error) {
-    console.error("❌ שגיאה באתחול:", error);
+    console.error("❌ שגיאה באתחול:", error)
   } finally {
-    await client.close();
+    await client.close()
     // TODO: Remove debug log
-
   }
 }
 
 // הרצת הסקריפט
-populateDatabase(); 
+populateDatabase()

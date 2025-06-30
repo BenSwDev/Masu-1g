@@ -10,7 +10,10 @@ import { Switch } from "@/components/ui/switch"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { useState } from "react"
 import { toast } from "sonner"
-import { deleteSubscription, toggleSubscriptionStatus } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
+import {
+  deleteSubscription,
+  toggleSubscriptionStatus,
+} from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 
 interface Subscription {
   id: string
@@ -32,7 +35,11 @@ interface SubscriptionCardProps {
   onDelete: () => void
 }
 
-export default function SubscriptionCard({ subscription, onEdit, onDelete }: SubscriptionCardProps) {
+export default function SubscriptionCard({
+  subscription,
+  onEdit,
+  onDelete,
+}: SubscriptionCardProps) {
   const { t } = useTranslation()
 
   return (
@@ -68,7 +75,9 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Sub
           <div className="flex items-center text-sm">
             <Tag className="mr-2 h-4 w-4 text-gray-500" />
             <span className="font-medium">{t("subscriptions.price")}:</span>
-            <span className="ml-1">₪{typeof subscription.price === "number" ? subscription.price.toLocaleString() : "0"}</span>
+            <span className="ml-1">
+              ₪{typeof subscription.price === "number" ? subscription.price.toLocaleString() : "0"}
+            </span>
           </div>
         </div>
 

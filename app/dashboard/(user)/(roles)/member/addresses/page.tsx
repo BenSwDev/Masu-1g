@@ -93,7 +93,7 @@ export default function AddressesPage() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="bg-card rounded-lg p-6 shadow-sm">
               <Skeleton className="h-6 w-3/4 mb-4" />
               <Skeleton className="h-4 w-full mb-2" />
@@ -104,7 +104,7 @@ export default function AddressesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {addresses?.map((address) => (
+          {addresses?.map(address => (
             <AddressCard key={address._id.toString()} address={address} onEdit={handleEdit} />
           ))}
         </div>

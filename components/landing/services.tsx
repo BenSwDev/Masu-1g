@@ -3,7 +3,13 @@
 import { useTranslation } from "@/lib/translations/i18n"
 import { Home, Clock, Shield, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 
 export function LandingServices() {
   const { t, dir } = useTranslation()
@@ -12,35 +18,42 @@ export function LandingServices() {
     {
       icon: Home,
       title: dir === "rtl" ? "טיפולים בבית" : "Home Treatments",
-      description: dir === "rtl" 
-        ? "נהנה מעיסויים וטיפולי יופי מקצועיים בנוחות הבית שלך, ללא צורך לנסוע או להמתין בתורים"
-        : "Enjoy professional beauty treatments in the comfort of your home, no need to travel or wait in queues",
-      color: "from-turquoise-500 to-turquoise-600"
+      description:
+        dir === "rtl"
+          ? "נהנה מעיסויים וטיפולי יופי מקצועיים בנוחות הבית שלך, ללא צורך לנסוע או להמתין בתורים"
+          : "Enjoy professional beauty treatments in the comfort of your home, no need to travel or wait in queues",
+      color: "from-turquoise-500 to-turquoise-600",
     },
     {
       icon: Clock,
-      title: dir === "rtl" ? "זמינות 7 ימים בשבוע ואיכות מובטחת" : "7 Days Availability & Guaranteed Quality",
-      description: dir === "rtl"
-        ? "הזמן טיפולים 7 ימים בשבוע עם גמישות מלאה בתאריכים, ואיכות גבוהה מובטחת בכל טיפול"
-        : "Book treatments 7 days a week with full flexibility in dates, and guaranteed high quality in every treatment",
-      color: "from-blue-500 to-blue-600"
+      title:
+        dir === "rtl"
+          ? "זמינות 7 ימים בשבוע ואיכות מובטחת"
+          : "7 Days Availability & Guaranteed Quality",
+      description:
+        dir === "rtl"
+          ? "הזמן טיפולים 7 ימים בשבוע עם גמישות מלאה בתאריכים, ואיכות גבוהה מובטחת בכל טיפול"
+          : "Book treatments 7 days a week with full flexibility in dates, and guaranteed high quality in every treatment",
+      color: "from-blue-500 to-blue-600",
     },
     {
       icon: Shield,
       title: dir === "rtl" ? "מטפלים מוסמכים" : "Certified Therapists",
-      description: dir === "rtl"
-        ? "כל המטפלים שלנו עברו הכשרה מקצועית ומוסמכים, עם ביטוח מלא ובדיקות רקע יסודיות"
-        : "All our therapists are professionally trained and certified, with full insurance and thorough background checks",
-      color: "from-green-500 to-green-600"
+      description:
+        dir === "rtl"
+          ? "כל המטפלים שלנו עברו הכשרה מקצועית ומוסמכים, עם ביטוח מלא ובדיקות רקע יסודיות"
+          : "All our therapists are professionally trained and certified, with full insurance and thorough background checks",
+      color: "from-green-500 to-green-600",
     },
     {
       icon: Star,
       title: dir === "rtl" ? "חוויה מושלמת" : "Perfect Experience",
-      description: dir === "rtl"
-        ? "אנו מתמחים ביצירת חוויה מושלמת ומותאמת אישית לכל לקוח, עם תשומת לב לכל פרט"
-        : "We specialize in creating a perfect and personalized experience for every customer, with attention to every detail",
-      color: "from-purple-500 to-purple-600"
-    }
+      description:
+        dir === "rtl"
+          ? "אנו מתמחים ביצירת חוויה מושלמת ומותאמת אישית לכל לקוח, עם תשומת לב לכל פרט"
+          : "We specialize in creating a perfect and personalized experience for every customer, with attention to every detail",
+      color: "from-purple-500 to-purple-600",
+    },
   ]
 
   return (
@@ -54,8 +67,7 @@ export function LandingServices() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             {dir === "rtl"
               ? "אנחנו מציעים חוויה ייחודית הכוללת עיסויים, טיפולי פנים, איפור ועיצוב שיער בסטנדרטים הגבוהים ביותר של איכות ושירות"
-              : "We offer a unique experience including massages, facials, makeup, and hair styling with the highest standards of quality and service"
-            }
+              : "We offer a unique experience including massages, facials, makeup, and hair styling with the highest standards of quality and service"}
           </p>
         </div>
 
@@ -68,16 +80,16 @@ export function LandingServices() {
                 key={index}
                 className="group flex items-center bg-white rounded-xl border border-gray-100 p-4 hover:shadow-lg transition-all"
               >
-                <div className={`p-3 rounded-lg bg-gradient-to-r ${service.color} text-white shadow-lg mr-4 rtl:ml-4 rtl:mr-0`}> 
+                <div
+                  className={`p-3 rounded-lg bg-gradient-to-r ${service.color} text-white shadow-lg mr-4 rtl:ml-4 rtl:mr-0`}
+                >
                   <Icon className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 group-hover:text-turquoise-600 transition-colors">
                     {service.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {service.description}
-                  </p>
+                  <p className="text-gray-600 text-sm leading-relaxed">{service.description}</p>
                 </div>
               </div>
             )
@@ -105,9 +117,7 @@ export function LandingServices() {
                     allowFullScreen
                   ></iframe>
                 </div>
-                <p className="text-sm whitespace-pre-wrap">
-                  {t("landing.expectText")}
-                </p>
+                <p className="text-sm whitespace-pre-wrap">{t("landing.expectText")}</p>
               </div>
             </DrawerContent>
           </Drawer>
@@ -125,4 +135,4 @@ export function LandingServices() {
       </div>
     </section>
   )
-} 
+}

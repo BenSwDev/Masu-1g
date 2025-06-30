@@ -6,7 +6,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -28,15 +28,15 @@ interface City {
   isActive: boolean
 }
 
-export function CitySelect({ 
-  value, 
-  onValueChange, 
-  defaultValue, 
-  name, 
-  id, 
-  required, 
+export function CitySelect({
+  value,
+  onValueChange,
+  defaultValue,
+  name,
+  id,
+  required,
   className,
-  placeholder 
+  placeholder,
 }: CitySelectProps) {
   const { t } = useTranslation()
   const [cities, setCities] = useState<City[]>([])
@@ -47,7 +47,7 @@ export function CitySelect({
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('/api/cities')
+        const response = await fetch("/api/cities")
         if (response.ok) {
           const data = await response.json()
           const sorted = (data.cities || []).sort((a: City, b: City) =>
@@ -71,27 +71,16 @@ export function CitySelect({
   }
 
   if (loading) {
-    return (
-      <Input 
-        disabled 
-        placeholder="טוען ערים..." 
-        className={className}
-      />
-    )
+    return <Input disabled placeholder="טוען ערים..." className={className} />
   }
 
-  const filteredCities = cities
-    .filter((city) =>
-      city.isActive && city.name.toLowerCase().includes(search.toLowerCase())
-    )
+  const filteredCities = cities.filter(
+    city => city.isActive && city.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <>
-      <Select
-        value={selectedValue}
-        onValueChange={handleValueChange}
-        required={required}
-      >
+      <Select value={selectedValue} onValueChange={handleValueChange} required={required}>
         <SelectTrigger id={id} className={className}>
           <SelectValue placeholder={placeholder || "בחר עיר"} />
         </SelectTrigger>
@@ -100,11 +89,11 @@ export function CitySelect({
             <Input
               autoFocus
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder={t("admin.cities.searchPlaceholder")}
             />
           </div>
-          {filteredCities.map((city) => (
+          {filteredCities.map(city => (
             <SelectItem key={city._id} value={city.name}>
               {city.name}
             </SelectItem>
@@ -116,9 +105,7 @@ export function CitySelect({
           )}
         </SelectContent>
       </Select>
-      {name && (
-        <input type="hidden" name={name} value={selectedValue} />
-      )}
+      {name && <input type="hidden" name={name} value={selectedValue} />}
     </>
   )
 }

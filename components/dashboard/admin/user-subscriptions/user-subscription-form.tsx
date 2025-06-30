@@ -5,7 +5,14 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -35,7 +42,12 @@ interface UserSubscriptionFormProps {
   onCancel?: () => void
 }
 
-export default function UserSubscriptionForm({ onSubmit, isLoading = false, initialData, onCancel }: UserSubscriptionFormProps) {
+export default function UserSubscriptionForm({
+  onSubmit,
+  isLoading = false,
+  initialData,
+  onCancel,
+}: UserSubscriptionFormProps) {
   const { t } = useTranslation()
 
   const form = useForm<FormValues>({
@@ -95,10 +107,17 @@ export default function UserSubscriptionForm({ onSubmit, isLoading = false, init
                   <FormControl>
                     <Button
                       variant="outline"
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
                       disabled={isLoading}
                     >
-                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>{t("common.pickDate")}</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>

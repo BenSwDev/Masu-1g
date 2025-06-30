@@ -4,7 +4,7 @@ import { getAllBookings } from "@/app/dashboard/(user)/(roles)/admin/bookings/ac
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     const filters = {
       status: searchParams.get("status") || undefined,
       professional: searchParams.get("professional") || undefined,
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await getAllBookings(filters)
-    
+
     return NextResponse.json({
       success: true,
       bookings: result.bookings,
@@ -30,9 +30,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error in admin bookings API:", error)
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch bookings" },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: "Failed to fetch bookings" }, { status: 500 })
   }
-} 
+}

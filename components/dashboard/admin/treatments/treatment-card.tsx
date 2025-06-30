@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +28,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { updateTreatment, deleteTreatment, toggleTreatmentStatus, createTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
+import {
+  updateTreatment,
+  deleteTreatment,
+  toggleTreatmentStatus,
+  createTreatment,
+} from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { MoreVertical, Edit, Copy, Trash, Power } from "lucide-react"
 
@@ -42,7 +54,9 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
       setIsLoading(true)
       await toggleTreatmentStatus(treatment._id)
       toast({
-        title: treatment.isActive ? t("treatments.deactivateSuccess") : t("treatments.activateSuccess"),
+        title: treatment.isActive
+          ? t("treatments.deactivateSuccess")
+          : t("treatments.activateSuccess"),
         variant: "default",
       })
       onRefresh()
@@ -121,7 +135,9 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <CardTitle className="text-lg font-semibold">{treatment.name}</CardTitle>
-              <CardDescription className="text-sm">{t(`treatments.categories.${treatment.category}`)}</CardDescription>
+              <CardDescription className="text-sm">
+                {t(`treatments.categories.${treatment.category}`)}
+              </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant={treatment.isActive ? "default" : "outline"} className="capitalize">
@@ -134,11 +150,16 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" disabled={isLoading} className="hover:bg-muted">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isLoading}
+                    className="hover:bg-muted"
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align={dir === 'rtl' ? 'start' : 'end'} className="w-48">
+                <DropdownMenuContent align={dir === "rtl" ? "start" : "end"} className="w-48">
                   <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
                     <Edit className="h-4 w-4 mr-2" />
                     {t("common.edit")}
@@ -151,7 +172,10 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
                     <Copy className="h-4 w-4 mr-2" />
                     {t("common.duplicate")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="text-destructive cursor-pointer"
+                  >
                     <Trash className="h-4 w-4 mr-2" />
                     {t("common.delete")}
                   </DropdownMenuItem>
@@ -162,7 +186,9 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
         </CardHeader>
         <CardContent className="pt-4">
           {treatment.description && (
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{treatment.description}</p>
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+              {treatment.description}
+            </p>
           )}
 
           <div className="space-y-3">
@@ -174,19 +200,29 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
               </div>
             ) : (
               <div className="space-y-2">
-                {treatment.durations?.map((duration: { minutes: number; price: number; professionalPrice: number; isActive: boolean }) => (
-                  <div key={duration.minutes} className="flex justify-between text-sm items-center">
-                    <span className="text-muted-foreground">
-                      {duration.minutes} {t("treatments.minutes")}
-                      {!duration.isActive && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {t("common.inactive")}
-                        </Badge>
-                      )}
-                    </span>
-                    <span className="font-medium">{formatPrice(duration.price)}</span>
-                  </div>
-                ))}
+                {treatment.durations?.map(
+                  (duration: {
+                    minutes: number
+                    price: number
+                    professionalPrice: number
+                    isActive: boolean
+                  }) => (
+                    <div
+                      key={duration.minutes}
+                      className="flex justify-between text-sm items-center"
+                    >
+                      <span className="text-muted-foreground">
+                        {duration.minutes} {t("treatments.minutes")}
+                        {!duration.isActive && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {t("common.inactive")}
+                          </Badge>
+                        )}
+                      </span>
+                      <span className="font-medium">{formatPrice(duration.price)}</span>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
@@ -204,11 +240,17 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("treatments.deleteConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("treatments.deleteConfirmDescription")}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {t("treatments.deleteConfirmDescription")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               {isLoading ? t("common.loading") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

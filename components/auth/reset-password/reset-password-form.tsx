@@ -73,7 +73,7 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
           ? "הסיסמאות אינן תואמות"
           : language === "ru"
             ? "Пароли не совпадают"
-            : "Passwords do not match",
+            : "Passwords do not match"
       )
       return
     }
@@ -127,7 +127,11 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
           <CardHeader className="text-center">
             <AlertCircle className="h-16 w-16 mx-auto mb-4 text-red-500" />
             <CardTitle className="text-2xl font-bold text-red-700">
-              {language === "he" ? "קישור לא תקין" : language === "ru" ? "Недействительная ссылка" : "Invalid Link"}
+              {language === "he"
+                ? "קישור לא תקין"
+                : language === "ru"
+                  ? "Недействительная ссылка"
+                  : "Invalid Link"}
             </CardTitle>
             <CardDescription className="text-red-600">
               {language === "he"
@@ -163,7 +167,11 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
           <CardHeader className="text-center">
             <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
             <CardTitle className="text-2xl font-bold text-green-700">
-              {language === "he" ? "הסיסמה אופסה!" : language === "ru" ? "Пароль сброшен!" : "Password Reset!"}
+              {language === "he"
+                ? "הסיסמה אופסה!"
+                : language === "ru"
+                  ? "Пароль сброшен!"
+                  : "Password Reset!"}
             </CardTitle>
             <CardDescription className="text-green-600">
               {language === "he"
@@ -186,7 +194,11 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             <LanguageSelector />
           </div>
           <CardTitle className="text-2xl font-bold text-turquoise-700">
-            {language === "he" ? "איפוס סיסמה" : language === "ru" ? "Сброс пароля" : "Reset Password"}
+            {language === "he"
+              ? "איפוס סיסמה"
+              : language === "ru"
+                ? "Сброс пароля"
+                : "Reset Password"}
           </CardTitle>
           <CardDescription>
             {language === "he"
@@ -201,7 +213,11 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             {/* New Password */}
             <div className="space-y-2">
               <Label htmlFor="password">
-                {language === "he" ? "סיסמה חדשה" : language === "ru" ? "Новый пароль" : "New Password"}
+                {language === "he"
+                  ? "סיסמה חדשה"
+                  : language === "ru"
+                    ? "Новый пароль"
+                    : "New Password"}
               </Label>
               <div className="relative">
                 <Input
@@ -260,7 +276,11 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             {/* Confirm Password */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">
-                {language === "he" ? "אימות סיסמה" : language === "ru" ? "Подтвердите пароль" : "Confirm Password"}
+                {language === "he"
+                  ? "אימות סיסמה"
+                  : language === "ru"
+                    ? "Подтвердите пароль"
+                    : "Confirm Password"}
               </Label>
               <div className="relative">
                 <Input
@@ -268,7 +288,7 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
                   type={confirmPasswordVisible ? "text" : "password"}
                   className={cn(
                     "border-turquoise-200 focus-visible:ring-turquoise-500",
-                    confirmPassword && !passwordMatch ? "border-red-500" : "",
+                    confirmPassword && !passwordMatch ? "border-red-500" : ""
                   )}
                   value={confirmPassword}
                   onChange={handleConfirmPasswordChange}

@@ -6,7 +6,7 @@ import mongoose from "mongoose"
 
 /**
  * Unified Professional Notification System
- * 
+ *
  * This system handles all professional notifications in a consistent way:
  * 1. Automatic notifications when new bookings are created
  * 2. Manual notifications from admin interface
@@ -41,8 +41,8 @@ export async function sendUnifiedProfessionalNotifications(
 
     // Get booking details
     const booking = await Booking.findById(options.bookingId)
-      .populate('treatmentId', 'name')
-      .populate('selectedDurationId')
+      .populate("treatmentId", "name")
+      .populate("selectedDurationId")
       .lean()
 
     if (!booking) {
@@ -76,13 +76,13 @@ export async function sendUnifiedProfessionalNotifications(
       logger.info("Sending notifications to manually selected professionals", {
         bookingId: options.bookingId,
         count: professionalsToNotify.length,
-        adminId: options.adminId
+        adminId: options.adminId,
       })
     } else if (options.sendToAllSuitable) {
       // Automatic notifications to all suitable professionals
       const { getSuitableProfessionalsForBooking } = await import("@/actions/booking-actions")
       const suitableResult = await getSuitableProfessionalsForBooking(options.bookingId)
-      
+
       if (!suitableResult.success || !suitableResult.professionals) {
         return { success: false, error: "No suitable professionals found" }
       }
@@ -91,19 +91,21 @@ export async function sendUnifiedProfessionalNotifications(
       professionalsToNotify = suitableResult.professionals.map(prof => ({
         professionalId: prof._id.toString(),
         email: !!prof.email,
-        sms: !!prof.phone
+        sms: !!prof.phone,
       }))
 
       logger.info("Sending notifications to all suitable professionals", {
         bookingId: options.bookingId,
-        count: professionalsToNotify.length
+        count: professionalsToNotify.length,
       })
     } else {
       return { success: false, error: "No professionals specified for notification" }
     }
 
     // Import notification services
-    const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
+    const { unifiedNotificationService } = await import(
+      "@/lib/notifications/unified-notification-service"
+    )
     const { smsService } = await import("@/lib/notifications/sms-service")
 
     let sentCount = 0
@@ -117,7 +119,7 @@ export async function sendUnifiedProfessionalNotifications(
         results.push({
           professionalId,
           success: false,
-          error: "Invalid professional ID"
+          error: "Invalid professional ID",
         })
         continue
       }
@@ -132,7 +134,7 @@ export async function sendUnifiedProfessionalNotifications(
           results.push({
             professionalId,
             success: false,
-            error: "Professional not found"
+            error: "Professional not found",
           })
           continue
         }
@@ -142,7 +144,7 @@ export async function sendUnifiedProfessionalNotifications(
           {
             bookingId: new mongoose.Types.ObjectId(options.bookingId),
             professionalId: new mongoose.Types.ObjectId(professionalId),
-            status: "pending"
+            status: "pending",
           },
           { status: "expired" }
         )
@@ -153,7 +155,7 @@ export async function sendUnifiedProfessionalNotifications(
           professionalId: new mongoose.Types.ObjectId(professionalId),
           phoneNumber: professional.phone,
           status: "pending",
-          expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
         })
 
         await response.save()
@@ -169,7 +171,7 @@ export async function sendUnifiedProfessionalNotifications(
           address,
           price,
           responseLink,
-          responseId: response._id.toString()
+          responseId: response._id.toString(),
         }
 
         let emailSent = false
@@ -183,7 +185,7 @@ export async function sendUnifiedProfessionalNotifications(
                 type: "email",
                 value: professional.email,
                 name: professional.name,
-                language: userLanguage as any
+                language: userLanguage as any,
               },
               notificationData
             )
@@ -200,7 +202,7 @@ export async function sendUnifiedProfessionalNotifications(
               {
                 type: "phone",
                 value: professional.phone,
-                language: userLanguage as "he" | "en" | "ru"
+                language: userLanguage as "he" | "en" | "ru",
               },
               notificationData
             )
@@ -223,7 +225,7 @@ export async function sendUnifiedProfessionalNotifications(
             professionalName: professional.name,
             success: true,
             emailSent,
-            smsSent
+            smsSent,
           })
         } else {
           response.status = "expired"
@@ -232,16 +234,15 @@ export async function sendUnifiedProfessionalNotifications(
             professionalId,
             professionalName: professional.name,
             success: false,
-            error: "No notifications sent - check contact information"
+            error: "No notifications sent - check contact information",
           })
         }
-
       } catch (error) {
         logger.error(`Error processing professional ${professionalId}:`, error)
         results.push({
           professionalId,
           success: false,
-          error: error instanceof Error ? error.message : "Unknown error"
+          error: error instanceof Error ? error.message : "Unknown error",
         })
       }
     }
@@ -250,7 +251,7 @@ export async function sendUnifiedProfessionalNotifications(
       bookingId: options.bookingId,
       totalProfessionals: professionalsToNotify.length,
       sentCount,
-      results
+      results,
     })
 
     return {
@@ -258,12 +259,11 @@ export async function sendUnifiedProfessionalNotifications(
       sentCount,
       results,
     }
-
   } catch (error) {
     logger.error("Error in unified professional notifications:", error)
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Internal server error" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Internal server error",
     }
   }
 }
@@ -276,7 +276,7 @@ export async function sendAutomaticProfessionalNotifications(
 ): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   return await sendUnifiedProfessionalNotifications({
     bookingId,
-    sendToAllSuitable: true
+    sendToAllSuitable: true,
   })
 }
 
@@ -299,7 +299,7 @@ export async function sendManualProfessionalNotifications(
   return await sendUnifiedProfessionalNotifications({
     bookingId,
     selectedProfessionals,
-    adminId: session.user.id
+    adminId: session.user.id,
   })
 }
 
@@ -329,7 +329,7 @@ export async function resendProfessionalNotifications(
   await ProfessionalResponse.updateMany(
     {
       bookingId: new mongoose.Types.ObjectId(bookingId),
-      status: "pending"
+      status: "pending",
     },
     { status: "expired" }
   )
@@ -338,6 +338,6 @@ export async function resendProfessionalNotifications(
   return await sendUnifiedProfessionalNotifications({
     bookingId,
     sendToAllSuitable: true,
-    adminId: session.user.id
+    adminId: session.user.id,
   })
-} 
+}

@@ -34,12 +34,10 @@ interface Props {
   userSubscription: any | null
 }
 
-export default function GuestSubscriptionConfirmation({ 
-  userSubscription 
-}: Props) {
+export default function GuestSubscriptionConfirmation({ userSubscription }: Props) {
   const { t, language, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -55,7 +53,7 @@ export default function GuestSubscriptionConfirmation({
       })
     }
   }
-  
+
   if (!userSubscription) {
     return (
       <div className="text-center py-8" dir={dir} lang={language}>
@@ -81,9 +79,7 @@ export default function GuestSubscriptionConfirmation({
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
         <h1 className="text-3xl font-bold text-green-600 mb-2">רכישת המנוי הושלמה בהצלחה!</h1>
-        <p className="text-lg text-muted-foreground">
-          תודה על רכישתך. המנוי שלך מוכן לשימוש
-        </p>
+        <p className="text-lg text-muted-foreground">תודה על רכישתך. המנוי שלך מוכן לשימוש</p>
       </div>
 
       {/* Subscription Details */}
@@ -153,10 +149,7 @@ export default function GuestSubscriptionConfirmation({
           <div className="flex justify-between">
             <span className="font-medium">מחיר לטיפול:</span>
             <span>
-              {treatment.pricingType === "fixed" 
-                ? treatment.fixedPrice 
-                : duration?.price 
-              } ₪
+              {treatment.pricingType === "fixed" ? treatment.fixedPrice : duration?.price} ₪
             </span>
           </div>
         </CardContent>
@@ -170,11 +163,11 @@ export default function GuestSubscriptionConfirmation({
         <CardContent className="space-y-3">
           <div className="flex justify-between">
             <span className="font-medium">תאריך רכישה:</span>
-            <span>{purchaseDate.toLocaleDateString('he-IL')}</span>
+            <span>{purchaseDate.toLocaleDateString("he-IL")}</span>
           </div>
           <div className="flex justify-between">
             <span className="font-medium">תוקף עד:</span>
-            <span>{expiryDate.toLocaleDateString('he-IL')}</span>
+            <span>{expiryDate.toLocaleDateString("he-IL")}</span>
           </div>
           <div className="border-t pt-3">
             <div className="flex justify-between text-lg font-bold">
@@ -200,9 +193,9 @@ export default function GuestSubscriptionConfirmation({
                 </div>
               </div>
               <div className="flex gap-2 justify-center">
-                <Button 
+                <Button
                   onClick={() => copyToClipboard(subscriptionCode)}
-                  variant="outline" 
+                  variant="outline"
                   size="sm"
                   className="flex items-center gap-2"
                 >
@@ -210,9 +203,7 @@ export default function GuestSubscriptionConfirmation({
                   העתק קוד
                 </Button>
                 <Button asChild size="sm">
-                  <Link href="/bookings/treatment">
-                    הזמן טיפול כעת
-                  </Link>
+                  <Link href="/bookings/treatment">הזמן טיפול כעת</Link>
                 </Button>
               </div>
             </div>
@@ -223,16 +214,12 @@ export default function GuestSubscriptionConfirmation({
       {/* Action Buttons */}
       <div className="flex gap-4 justify-center">
         <Button asChild variant="outline">
-          <Link href="/dashboard">
-            לדשבורד
-          </Link>
+          <Link href="/dashboard">לדשבורד</Link>
         </Button>
         <Button asChild>
-          <Link href="/">
-            חזרה לעמוד הבית
-          </Link>
+          <Link href="/">חזרה לעמוד הבית</Link>
         </Button>
       </div>
     </div>
   )
-} 
+}

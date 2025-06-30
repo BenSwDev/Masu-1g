@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle, User, Stethoscope, Clock, MapPin, CreditCard, ArrowLeft, Send } from "lucide-react"
+import {
+  CheckCircle,
+  User,
+  Stethoscope,
+  Clock,
+  MapPin,
+  CreditCard,
+  ArrowLeft,
+  Send,
+} from "lucide-react"
 import { format } from "date-fns"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
@@ -23,7 +32,7 @@ export default function BookingCreateConfirmationStep({
   onUpdate,
   onCreateBooking,
   onPrev,
-  isLoading
+  isLoading,
 }: BookingCreateConfirmationStepProps) {
   const { t, dir } = useTranslation()
 
@@ -49,7 +58,7 @@ export default function BookingCreateConfirmationStep({
   const getAddressDisplay = () => {
     if (formData.addressType === "custom" && formData.customAddress) {
       const addr = formData.customAddress
-      return `${addr.street} ${addr.houseNumber}${addr.apartmentNumber ? `, דירה ${addr.apartmentNumber}` : ''}, ${addr.city}`
+      return `${addr.street} ${addr.houseNumber}${addr.apartmentNumber ? `, דירה ${addr.apartmentNumber}` : ""}, ${addr.city}`
     } else {
       return "כתובת קיימת"
     }
@@ -83,7 +92,7 @@ export default function BookingCreateConfirmationStep({
 
     const isEvening = formData.bookingDateTime && formData.bookingDateTime.getHours() >= 20
     const isWeekend = formData.bookingDateTime && [5, 6].includes(formData.bookingDateTime.getDay())
-    
+
     if (isEvening || isWeekend) {
       additionalFees += 50
     }
@@ -92,7 +101,7 @@ export default function BookingCreateConfirmationStep({
       basePrice,
       discount,
       additionalFees,
-      finalPrice: basePrice - discount + additionalFees
+      finalPrice: basePrice - discount + additionalFees,
     }
   }
 
@@ -124,7 +133,7 @@ export default function BookingCreateConfirmationStep({
             <span className="text-gray-600">שם לקוח:</span>
             <span className="font-medium">{getCustomerDisplayName()}</span>
           </div>
-          
+
           {formData.customerType === "guest" && formData.guestInfo && (
             <>
               <div className="flex justify-between">
@@ -133,7 +142,9 @@ export default function BookingCreateConfirmationStep({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">טלפון:</span>
-                <span className="font-medium">{formatPhoneForDisplay(formData.guestInfo.phone || "")}</span>
+                <span className="font-medium">
+                  {formatPhoneForDisplay(formData.guestInfo.phone || "")}
+                </span>
               </div>
             </>
           )}
@@ -148,7 +159,9 @@ export default function BookingCreateConfirmationStep({
               {formData.recipientInfo && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">טלפון מטופל:</span>
-                  <span className="font-medium">{formatPhoneForDisplay(formData.recipientInfo.phone || "")}</span>
+                  <span className="font-medium">
+                    {formatPhoneForDisplay(formData.recipientInfo.phone || "")}
+                  </span>
                 </div>
               )}
             </>
@@ -252,7 +265,9 @@ export default function BookingCreateConfirmationStep({
             <span className="font-medium">{getPaymentMethodDisplay()}</span>
           </div>
 
-          {(formData.appliedCouponCode || formData.appliedGiftVoucherId || formData.redeemedSubscriptionId) && (
+          {(formData.appliedCouponCode ||
+            formData.appliedGiftVoucherId ||
+            formData.redeemedSubscriptionId) && (
             <>
               <Separator />
               <div className="space-y-2">
@@ -285,23 +300,23 @@ export default function BookingCreateConfirmationStep({
               <span className="text-gray-600">מחיר בסיס:</span>
               <span>₪{priceBreakdown.basePrice}</span>
             </div>
-            
+
             {priceBreakdown.discount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>הנחה:</span>
                 <span>-₪{priceBreakdown.discount}</span>
               </div>
             )}
-            
+
             {priceBreakdown.additionalFees > 0 && (
               <div className="flex justify-between text-orange-600">
                 <span>תוספת שעות מיוחדות:</span>
                 <span>+₪{priceBreakdown.additionalFees}</span>
               </div>
             )}
-            
+
             <Separator />
-            
+
             <div className="flex justify-between text-lg font-bold">
               <span>סה"כ לתשלום:</span>
               <span className="text-green-600">₪{priceBreakdown.finalPrice}</span>
@@ -327,8 +342,8 @@ export default function BookingCreateConfirmationStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           חזור
         </Button>
-        <Button 
-          onClick={onCreateBooking} 
+        <Button
+          onClick={onCreateBooking}
           disabled={isLoading}
           size="lg"
           className="bg-green-600 hover:bg-green-700"
@@ -345,4 +360,4 @@ export default function BookingCreateConfirmationStep({
       </div>
     </div>
   )
-} 
+}

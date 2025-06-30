@@ -18,7 +18,13 @@ interface PurchaseSummaryProps {
   className?: string
 }
 
-export function PurchaseSummary({ title, items, totalPrice, currency = "₪", className }: PurchaseSummaryProps) {
+export function PurchaseSummary({
+  title,
+  items,
+  totalPrice,
+  currency = "₪",
+  className,
+}: PurchaseSummaryProps) {
   const { t } = useTranslation()
 
   return (
@@ -29,8 +35,12 @@ export function PurchaseSummary({ title, items, totalPrice, currency = "₪", cl
       <CardContent className="space-y-3">
         {items.map((item, index) => (
           <div key={index} className="flex justify-between items-center py-2">
-            <span className={`text-gray-600 ${item.highlight ? "font-medium" : ""}`}>{item.label}:</span>
-            <span className={`${item.highlight ? "font-semibold text-lg" : "font-medium"}`}>{item.value}</span>
+            <span className={`text-gray-600 ${item.highlight ? "font-medium" : ""}`}>
+              {item.label}:
+            </span>
+            <span className={`${item.highlight ? "font-semibold text-lg" : "font-medium"}`}>
+              {item.value}
+            </span>
           </div>
         ))}
 
@@ -40,7 +50,7 @@ export function PurchaseSummary({ title, items, totalPrice, currency = "₪", cl
             <div className="flex justify-between items-center pt-3 text-lg">
               <span className="font-semibold">{t("common.totalPrice")}:</span>
               <span className="font-bold text-xl text-primary">
-                {totalPrice?.toFixed(2) || '0.00'} {currency}
+                {totalPrice?.toFixed(2) || "0.00"} {currency}
               </span>
             </div>
           </>

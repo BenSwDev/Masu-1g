@@ -50,13 +50,14 @@ const PaymentMethodSchema = new Schema<IPaymentMethod>(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 // Index for efficient queries
 PaymentMethodSchema.index({ userId: 1, isDefault: 1 })
 
 export const PaymentMethod =
-  mongoose.models.PaymentMethod || mongoose.model<IPaymentMethod>("PaymentMethod", PaymentMethodSchema)
+  mongoose.models.PaymentMethod ||
+  mongoose.model<IPaymentMethod>("PaymentMethod", PaymentMethodSchema)
 
 export default PaymentMethod

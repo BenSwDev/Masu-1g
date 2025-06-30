@@ -5,7 +5,13 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -26,7 +32,7 @@ export default function BookingCreateSchedulingStep({
   onUpdate,
   workingHours,
   onNext,
-  onPrev
+  onPrev,
 }: BookingCreateSchedulingStepProps) {
   const { t, dir } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -53,10 +59,35 @@ export default function BookingCreateSchedulingStep({
   }
 
   const timeSlots = [
-    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-    "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-    "20:00", "20:30", "21:00", "21:30", "22:00"
+    "08:00",
+    "08:30",
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "12:00",
+    "12:30",
+    "13:00",
+    "13:30",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00",
+    "18:30",
+    "19:00",
+    "19:30",
+    "20:00",
+    "20:30",
+    "21:00",
+    "21:30",
+    "22:00",
   ]
 
   const flexibilityRanges = [
@@ -64,7 +95,7 @@ export default function BookingCreateSchedulingStep({
     { value: "2", label: "2 שעות" },
     { value: "3", label: "3 שעות" },
     { value: "4", label: "4 שעות" },
-    { value: "6", label: "6 שעות" }
+    { value: "6", label: "6 שעות" },
   ]
 
   return (
@@ -91,18 +122,14 @@ export default function BookingCreateSchedulingStep({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.bookingDateTime ? (
-                    format(formData.bookingDateTime, "PPP")
-                  ) : (
-                    "בחר תאריך"
-                  )}
+                  {formData.bookingDateTime ? format(formData.bookingDateTime, "PPP") : "בחר תאריך"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
                   selected={formData.bookingDateTime}
-                  onSelect={(date) => {
+                  onSelect={date => {
                     if (date && date instanceof Date) {
                       const newDate = new Date(date)
                       if (formData.bookingDateTime) {
@@ -112,7 +139,7 @@ export default function BookingCreateSchedulingStep({
                       onUpdate({ bookingDateTime: newDate })
                     }
                   }}
-                  disabled={(date) => date < new Date()}
+                  disabled={date => date < new Date()}
                   initialFocus
                 />
               </PopoverContent>
@@ -127,9 +154,11 @@ export default function BookingCreateSchedulingStep({
             <Label htmlFor="time">שעת הטיפול *</Label>
             <Select
               value={formData.bookingDateTime ? format(formData.bookingDateTime, "HH:mm") : ""}
-              onValueChange={(timeString) => {
-                const [hours, minutes] = timeString.split(':').map(Number)
-                const newDate = formData.bookingDateTime ? new Date(formData.bookingDateTime) : new Date()
+              onValueChange={timeString => {
+                const [hours, minutes] = timeString.split(":").map(Number)
+                const newDate = formData.bookingDateTime
+                  ? new Date(formData.bookingDateTime)
+                  : new Date()
                 newDate.setHours(hours, minutes, 0, 0)
                 onUpdate({ bookingDateTime: newDate })
               }}
@@ -138,7 +167,7 @@ export default function BookingCreateSchedulingStep({
                 <SelectValue placeholder="בחר שעה..." />
               </SelectTrigger>
               <SelectContent>
-                {timeSlots.map((time) => (
+                {timeSlots.map(time => (
                   <SelectItem key={time} value={time}>
                     {time}
                   </SelectItem>
@@ -153,7 +182,7 @@ export default function BookingCreateSchedulingStep({
               <Checkbox
                 id="flexibleTime"
                 checked={formData.isFlexibleTime}
-                onCheckedChange={(checked) => onUpdate({ isFlexibleTime: checked })}
+                onCheckedChange={checked => onUpdate({ isFlexibleTime: checked })}
               />
               <Label htmlFor="flexibleTime">גמישות בזמן הטיפול</Label>
             </div>
@@ -163,13 +192,13 @@ export default function BookingCreateSchedulingStep({
                 <Label htmlFor="flexibilityRange">טווח גמישות *</Label>
                 <Select
                   value={formData.flexibilityRangeHours?.toString() || ""}
-                  onValueChange={(value) => onUpdate({ flexibilityRangeHours: parseInt(value) })}
+                  onValueChange={value => onUpdate({ flexibilityRangeHours: parseInt(value) })}
                 >
                   <SelectTrigger className={errors.flexibilityRangeHours ? "border-red-500" : ""}>
                     <SelectValue placeholder="בחר טווח..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {flexibilityRanges.map((range) => (
+                    {flexibilityRanges.map(range => (
                       <SelectItem key={range.value} value={range.value}>
                         {range.label}
                       </SelectItem>
@@ -191,7 +220,7 @@ export default function BookingCreateSchedulingStep({
             <Label>העדפת מגדר מטפל</Label>
             <Select
               value={formData.therapistGenderPreference}
-              onValueChange={(value) => onUpdate({ therapistGenderPreference: value })}
+              onValueChange={value => onUpdate({ therapistGenderPreference: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="בחר העדפה..." />
@@ -268,10 +297,8 @@ export default function BookingCreateSchedulingStep({
           <ArrowLeft className="h-4 w-4 mr-2" />
           חזור
         </Button>
-        <Button onClick={handleNext}>
-          המשך
-        </Button>
+        <Button onClick={handleNext}>המשך</Button>
       </div>
     </div>
   )
-} 
+}

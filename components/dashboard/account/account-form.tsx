@@ -28,7 +28,11 @@ export function AccountForm({ user }: AccountFormProps) {
     <Card className="border-turquoise-200">
       <CardHeader>
         <CardTitle className="text-turquoise-700">
-          {language === "he" ? "הגדרות חשבון" : language === "ru" ? "Настройки аккаунта" : "Account Settings"}
+          {language === "he"
+            ? "הגדרות חשבון"
+            : language === "ru"
+              ? "Настройки аккаунта"
+              : "Account Settings"}
         </CardTitle>
         <CardDescription>
           {language === "he"

@@ -11,7 +11,13 @@ import { Heading } from "@/components/ui/heading"
 import { getUserBookings } from "@/actions/booking-actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Search, RefreshCw, Filter, X } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/ui/badge"
@@ -41,7 +47,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [treatmentFilter, setTreatmentFilter] = useState<string>("all")
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all")
-  
+
   // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -54,24 +60,29 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
     setCurrentPage(1)
   }, [debouncedSearchTerm, statusFilter, treatmentFilter, dateRangeFilter])
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<
+  const { data, isLoading, error, refetch } = useQuery<
     { bookings: PopulatedBooking[]; totalPages: number; totalBookings: number },
     Error
   >({
-    queryKey: ["memberBookings", userId, language, debouncedSearchTerm, statusFilter, treatmentFilter, dateRangeFilter, currentPage],
-    queryFn: () => getUserBookings(userId, {
-      search: debouncedSearchTerm || undefined,
-      status: statusFilter === "all" ? undefined : statusFilter,
-      treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
-      dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
-      page: currentPage,
-      limit: 20, // Increased from 5 to 20 bookings per page
-    }),
+    queryKey: [
+      "memberBookings",
+      userId,
+      language,
+      debouncedSearchTerm,
+      statusFilter,
+      treatmentFilter,
+      dateRangeFilter,
+      currentPage,
+    ],
+    queryFn: () =>
+      getUserBookings(userId, {
+        search: debouncedSearchTerm || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
+        dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
+        page: currentPage,
+        limit: 20, // Increased from 5 to 20 bookings per page
+      }),
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
   })
@@ -103,10 +114,14 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
     return (
       <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("memberBookings.client.title")}
+          </h2>
         </div>
         <BookingsTableSkeleton />
-        <p className="mt-4 text-center text-muted-foreground">{t("memberBookings.client.loading")}</p>
+        <p className="mt-4 text-center text-muted-foreground">
+          {t("memberBookings.client.loading")}
+        </p>
       </div>
     )
   }
@@ -115,7 +130,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
     return (
       <div className="text-center text-red-500 w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("memberBookings.client.title")}
+          </h2>
         </div>
         <p>
           {t("memberBookings.client.error")}: {error.message}
@@ -128,7 +145,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
     return (
       <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("memberBookings.client.title")}
+          </h2>
         </div>
         <p className="text-center text-muted-foreground">{t("memberBookings.client.noBookings")}</p>
       </div>
@@ -139,9 +158,11 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
     <div dir={dir} className="h-full flex flex-col space-y-4">
       <div className="flex-shrink-0">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {t("memberBookings.client.title")}
+          </h2>
         </div>
-        
+
         {/* Search and Filters Bar - Responsive */}
         <div className="space-y-4">
           {/* Main search bar */}
@@ -151,17 +172,17 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
               <Input
                 placeholder={t("memberBookings.searchPlaceholder")}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-8 w-full"
               />
             </div>
-            
+
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {t("common.refresh")}
               </Button>
-              
+
               <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -185,12 +206,14 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                         </Button>
                       )}
                     </div>
-                    
+
                     <Separator />
-                    
+
                     {/* Status Filter */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("memberBookings.filterByStatus")}</label>
+                      <label className="text-sm font-medium">
+                        {t("memberBookings.filterByStatus")}
+                      </label>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger>
                           <SelectValue />
@@ -208,7 +231,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
                     {/* Treatment Filter */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("memberBookings.filterByTreatment")}</label>
+                      <label className="text-sm font-medium">
+                        {t("memberBookings.filterByTreatment")}
+                      </label>
                       <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
                         <SelectTrigger>
                           <SelectValue />
@@ -222,7 +247,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
                     {/* Date Range Filter */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("memberBookings.filterByDate")}</label>
+                      <label className="text-sm font-medium">
+                        {t("memberBookings.filterByDate")}
+                      </label>
                       <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
                         <SelectTrigger>
                           <SelectValue />
@@ -231,8 +258,12 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                           <SelectItem value="all">{t("memberBookings.allDates")}</SelectItem>
                           <SelectItem value="today">{t("memberBookings.today")}</SelectItem>
                           <SelectItem value="this_week">{t("memberBookings.thisWeek")}</SelectItem>
-                          <SelectItem value="this_month">{t("memberBookings.thisMonth")}</SelectItem>
-                          <SelectItem value="last_month">{t("memberBookings.lastMonth")}</SelectItem>
+                          <SelectItem value="this_month">
+                            {t("memberBookings.thisMonth")}
+                          </SelectItem>
+                          <SelectItem value="last_month">
+                            {t("memberBookings.lastMonth")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -258,14 +289,16 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
           </div>
         </div>
       </div>
-      
+
       {/* Pagination and Footer - Fixed at Bottom */}
       {data && data.totalPages > 1 && (
         <div className="flex-shrink-0 flex items-center justify-between border-t pt-4 bg-white">
           <div className="text-sm text-muted-foreground">
-            {t("memberBookings.showingPage")} - {t("common.page")}: {currentPage}, {t("common.totalPages")}: {data.totalPages}, {t("common.totalBookings")}: {data.totalBookings}
+            {t("memberBookings.showingPage")} - {t("common.page")}: {currentPage},{" "}
+            {t("common.totalPages")}: {data.totalPages}, {t("common.totalBookings")}:{" "}
+            {data.totalBookings}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -283,12 +316,12 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
             >
               {t("common.pagination.previous")}
             </Button>
-            
+
             <div className="flex items-center space-x-1">
               {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
                 const page = Math.max(1, currentPage - 2) + i
                 if (page > data.totalPages) return null
-                
+
                 return (
                   <Button
                     key={page}
@@ -302,7 +335,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                 )
               })}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"

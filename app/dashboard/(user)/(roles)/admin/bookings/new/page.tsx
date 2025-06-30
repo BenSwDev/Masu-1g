@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { getBookingInitialData } from "../actions"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "יצירת הזמנה חדשה | מנהל",
@@ -29,7 +29,7 @@ function BookingCreateLoadingSkeleton() {
           <Skeleton className="h-10 w-24" />
         </div>
       </div>
-      
+
       {/* Wizard Skeleton */}
       <Card>
         <CardContent className="p-6">
@@ -37,7 +37,7 @@ function BookingCreateLoadingSkeleton() {
             <div className="flex justify-center">
               <Skeleton className="h-2 w-96" />
             </div>
-            
+
             {/* Form Content Skeleton */}
             <div className="space-y-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -47,7 +47,7 @@ function BookingCreateLoadingSkeleton() {
                 </div>
               ))}
             </div>
-            
+
             <div className="flex justify-between">
               <Skeleton className="h-10 w-20" />
               <Skeleton className="h-10 w-20" />
@@ -67,27 +67,27 @@ async function BookingCreatePageContent() {
       throw new Error(initialData.error || "Failed to load initial data")
     }
 
-    return (
-      <BookingCreatePage initialData={initialData.data!} />
-    )
+    return <BookingCreatePage initialData={initialData.data!} />
   } catch (error) {
     console.error("Error loading booking initial data:", error)
     // Return page with empty data on error
     return (
-      <BookingCreatePage initialData={{
-        treatments: [],
-        paymentMethods: [],
-        workingHours: null,
-        activeCoupons: [],
-        activeGiftVouchers: []
-      }} />
+      <BookingCreatePage
+        initialData={{
+          treatments: [],
+          paymentMethods: [],
+          workingHours: null,
+          activeCoupons: [],
+          activeGiftVouchers: [],
+        }}
+      />
     )
   }
 }
 
 export default async function BookingCreatePageRoute() {
   const session = await requireUserSession()
-  
+
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
@@ -99,4 +99,4 @@ export default async function BookingCreatePageRoute() {
       </Suspense>
     </div>
   )
-} 
+}

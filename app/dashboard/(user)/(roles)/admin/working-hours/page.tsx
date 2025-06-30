@@ -4,7 +4,7 @@ import WorkingHoursClient from "@/components/dashboard/admin/working-hours/worki
 import { requireUserSession } from "@/lib/auth/require-session"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Working Hours Management",

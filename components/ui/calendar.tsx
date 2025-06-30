@@ -4,7 +4,13 @@ import * as React from "react"
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useTranslation } from "@/lib/translations/i18n"
 
 export type CalendarProps = {
@@ -42,7 +48,9 @@ function Calendar({
   const isRTL = language === "he"
 
   const [currentMonth, setCurrentMonth] = React.useState(defaultMonth || new Date())
-  const [currentYear, setCurrentYear] = React.useState(defaultMonth?.getFullYear() || new Date().getFullYear())
+  const [currentYear, setCurrentYear] = React.useState(
+    defaultMonth?.getFullYear() || new Date().getFullYear()
+  )
 
   // Generate years array
   const years = React.useMemo(() => {
@@ -69,7 +77,7 @@ function Calendar({
       t("register.november"),
       t("register.december"),
     ],
-    [t],
+    [t]
   )
 
   // Day names (starting from Sunday)
@@ -167,7 +175,7 @@ function Calendar({
     }
 
     if (mode === "multiple" && Array.isArray(selected)) {
-      return selected.some((d) => d.toDateString() === date.toDateString())
+      return selected.some(d => d.toDateString() === date.toDateString())
     }
 
     if (mode === "range" && selected && typeof selected === "object" && "from" in selected) {
@@ -194,10 +202,10 @@ function Calendar({
       onSelect?.(date)
     } else if (mode === "multiple") {
       const currentSelected = (selected as Date[]) || []
-      const isAlreadySelected = currentSelected.some((d) => d.toDateString() === date.toDateString())
+      const isAlreadySelected = currentSelected.some(d => d.toDateString() === date.toDateString())
 
       if (isAlreadySelected) {
-        onSelect?.(currentSelected.filter((d) => d.toDateString() !== date.toDateString()))
+        onSelect?.(currentSelected.filter(d => d.toDateString() !== date.toDateString()))
       } else {
         onSelect?.([...currentSelected, date])
       }
@@ -217,7 +225,10 @@ function Calendar({
   }
 
   return (
-    <div className={cn("p-4 bg-background border rounded-lg shadow-sm", className)} dir={isRTL ? "rtl" : "ltr"}>
+    <div
+      className={cn("p-4 bg-background border rounded-lg shadow-sm", className)}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       {/* Header with navigation */}
       <div className="flex items-center justify-between mb-4">
         <Button
@@ -254,7 +265,7 @@ function Calendar({
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  {years.map((year) => (
+                  {years.map(year => (
                     <SelectItem key={year} value={year.toString()}>
                       {year}
                     </SelectItem>
@@ -283,7 +294,10 @@ function Calendar({
       <div className="grid grid-cols-7 gap-1">
         {/* Day headers */}
         {dayNames.map((day, index) => (
-          <div key={index} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+          <div
+            key={index}
+            className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground"
+          >
             {day}
           </div>
         ))}
@@ -306,9 +320,11 @@ function Calendar({
                 !day.isCurrentMonth && !showOutsideDays && "invisible",
                 isSelectedDay &&
                   "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-md",
-                isTodayDay && !isSelectedDay && "bg-accent text-accent-foreground font-semibold ring-1 ring-primary/20",
+                isTodayDay &&
+                  !isSelectedDay &&
+                  "bg-accent text-accent-foreground font-semibold ring-1 ring-primary/20",
                 isDisabled &&
-                  "text-muted-foreground opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100",
+                  "text-muted-foreground opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
               )}
               onClick={() => handleDateClick(day.date)}
               disabled={isDisabled}

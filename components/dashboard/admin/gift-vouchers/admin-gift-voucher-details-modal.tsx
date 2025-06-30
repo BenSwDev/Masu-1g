@@ -29,7 +29,7 @@ import {
   Package,
   Receipt,
   Info,
-  Link
+  Link,
 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { toast } from "sonner"
@@ -127,14 +127,22 @@ export default function AdminGiftVoucherDetailsModal({
     return format(dateObj, "dd/MM/yy", { locale: he })
   }
 
-  const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
-  const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
-  const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
+  const validFromDate =
+    typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
+  const validUntilDate =
+    typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
+  const purchaseDate =
+    typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
   // Calculate usage percentage for monetary vouchers
-  const usagePercentage = voucher.voucherType === "monetary" && voucher.monetaryValue 
-    ? ((voucher.monetaryValue - (voucher.remainingAmount || voucher.monetaryValue)) / voucher.monetaryValue) * 100
-    : voucher.voucherType === "treatment" && voucher.status === "fully_used" ? 100 : 0
+  const usagePercentage =
+    voucher.voucherType === "monetary" && voucher.monetaryValue
+      ? ((voucher.monetaryValue - (voucher.remainingAmount || voucher.monetaryValue)) /
+          voucher.monetaryValue) *
+        100
+      : voucher.voucherType === "treatment" && voucher.status === "fully_used"
+        ? 100
+        : 0
 
   // Days until expiry
   const daysUntilExpiry = validUntilDate ? differenceInDays(validUntilDate, new Date()) : null
@@ -173,11 +181,7 @@ export default function AdminGiftVoucherDetailsModal({
                     <QrCode className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     <span className="font-mono font-bold text-xl">{voucher.code}</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyCode}
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleCopyCode}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
@@ -248,10 +252,9 @@ export default function AdminGiftVoucherDetailsModal({
                   <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-yellow-800 dark:text-yellow-200">
                     <AlertTriangle className="h-4 w-4" />
                     <span className="text-sm">
-                      {daysUntilExpiry === 0 
+                      {daysUntilExpiry === 0
                         ? t("giftVouchers.expiringToday")
-                        : t("giftVouchers.expiringIn")
-                      }
+                        : t("giftVouchers.expiringIn")}
                     </span>
                   </div>
                 )}
@@ -307,13 +310,13 @@ export default function AdminGiftVoucherDetailsModal({
                         <Phone className="h-3 w-3" />
                         {t("common.phone")}
                       </span>
-                      <span className="font-medium">{formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}</span>
+                      <span className="font-medium">
+                        {formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}
+                      </span>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center text-gray-500 py-4">
-                    {t("common.unknownUser")}
-                  </div>
+                  <div className="text-center text-gray-500 py-4">{t("common.unknownUser")}</div>
                 )}
 
                 {/* Gift Information */}
@@ -402,7 +405,7 @@ export default function AdminGiftVoucherDetailsModal({
                       </div>
                     </div>
                   ))}
-                  
+
                   {/* Remaining balance display */}
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
                     <div className="flex items-center justify-between">
@@ -471,7 +474,9 @@ export default function AdminGiftVoucherDetailsModal({
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {t("giftVouchers.fields.paymentAmount")}
                       </span>
-                      <span className="font-bold text-lg">{voucher.paymentAmount.toFixed(2)} ₪</span>
+                      <span className="font-bold text-lg">
+                        {voucher.paymentAmount.toFixed(2)} ₪
+                      </span>
                     </div>
                   )}
                   {voucher.paymentMethodId && (

@@ -29,7 +29,7 @@ import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
+interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
   userId?: {
     _id: string
     name: string
@@ -57,7 +57,11 @@ interface UserSubscriptionRowProps {
   onEdit: (subscription: PopulatedUserSubscription) => void
 }
 
-export default function UserSubscriptionRow({ userSubscription, onSubscriptionUpdate, onEdit }: UserSubscriptionRowProps) {
+export default function UserSubscriptionRow({
+  userSubscription,
+  onSubscriptionUpdate,
+  onEdit,
+}: UserSubscriptionRowProps) {
   const { t } = useTranslation()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -68,20 +72,20 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
 
   const handleCancel = async () => {
     if (!userSubscription._id) return
-    
+
     const result = await cancelSubscription(String(userSubscription._id))
-    
+
     if (result.success) {
-      toast({ 
-        title: t("common.success"), 
-        description: t("userSubscriptions.cancelSuccessToast") 
+      toast({
+        title: t("common.success"),
+        description: t("userSubscriptions.cancelSuccessToast"),
       })
       router.refresh()
     } else {
-      toast({ 
-        title: t("common.error"), 
+      toast({
+        title: t("common.error"),
         description: result.error || t("common.unknownError"),
-        variant: "destructive" 
+        variant: "destructive",
       })
     }
     setShowCancelDialog(false)
@@ -89,20 +93,20 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
 
   const handleDelete = async () => {
     if (!userSubscription._id) return
-    
+
     const result = await deleteUserSubscription(String(userSubscription._id))
-    
+
     if (result.success) {
-      toast({ 
-        title: t("common.success"), 
-        description: t("userSubscriptions.deleteSuccessToast") 
+      toast({
+        title: t("common.success"),
+        description: t("userSubscriptions.deleteSuccessToast"),
       })
       router.refresh()
     } else {
-      toast({ 
-        title: t("common.error"), 
+      toast({
+        title: t("common.error"),
         description: result.error || t("common.unknownError"),
-        variant: "destructive" 
+        variant: "destructive",
       })
     }
     setShowDeleteDialog(false)
@@ -155,7 +159,8 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     return `**** ${cardNumber.slice(-4)}`
   }
 
-  const usagePercentage = (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
+  const usagePercentage =
+    (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
 
   return (
     <TooltipProvider>
@@ -172,7 +177,9 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                   <span className="font-medium text-gray-900 dark:text-gray-100">
                     {userSubscription.userId.name}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId.email}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {userSubscription.userId.email}
+                  </span>
                 </>
               ) : userSubscription.guestInfo ? (
                 <>
@@ -182,8 +189,12 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                       {t("userSubscriptions.guest")}
                     </Badge>
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {userSubscription.guestInfo.email}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}
+                  </span>
                 </>
               ) : (
                 <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -203,7 +214,10 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 {userSubscription.subscriptionId?.name}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                ID: {userSubscription.subscriptionId?._id ? String(userSubscription.subscriptionId._id).slice(-6) : "N/A"}
+                ID:{" "}
+                {userSubscription.subscriptionId?._id
+                  ? String(userSubscription.subscriptionId._id).slice(-6)
+                  : "N/A"}
               </span>
             </div>
           </div>
@@ -212,7 +226,9 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
         {/* Treatment Details */}
         <td className="py-4 px-4">
           <div className="flex flex-col">
-            <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.treatmentId?.name}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {userSubscription.treatmentId?.name}
+            </span>
             {userSubscription.selectedDurationDetails && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {userSubscription.selectedDurationDetails.minutes} {t("common.minutes")}
@@ -230,9 +246,13 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
         <td className="py-4 px-4">
           <div className="flex flex-col items-center space-y-1">
             <div className="flex items-center gap-1 text-sm">
-              <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.remainingQuantity}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {userSubscription.remainingQuantity}
+              </span>
               <span className="text-gray-500 dark:text-gray-400">/</span>
-              <span className="text-gray-700 dark:text-gray-300">{userSubscription.totalQuantity}</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {userSubscription.totalQuantity}
+              </span>
             </div>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -411,7 +431,11 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isDeleting ? (
                 <>
                   <Loader2 className="rtl:ml-2 ltr:mr-2 h-4 w-4 animate-spin" />

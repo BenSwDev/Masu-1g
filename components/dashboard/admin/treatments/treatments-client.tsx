@@ -59,7 +59,7 @@ export function TreatmentsClient() {
   }
 
   const filteredTreatments = Array.isArray(treatments)
-    ? treatments.filter((treatment) => {
+    ? treatments.filter(treatment => {
         const matchesSearch = treatment.name.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesCategory = activeCategory === "all" || treatment.category === activeCategory
         return matchesSearch && matchesCategory
@@ -81,7 +81,11 @@ export function TreatmentsClient() {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">{t("treatments.edit")}</h1>
-        <TreatmentForm treatment={editingTreatment} onSuccess={handleEditSuccess} onCancel={handleCancel} />
+        <TreatmentForm
+          treatment={editingTreatment}
+          onSuccess={handleEditSuccess}
+          onCancel={handleCancel}
+        />
       </div>
     )
   }
@@ -98,19 +102,21 @@ export function TreatmentsClient() {
 
       <div className="mb-8">
         <div className="relative max-w-md">
-          <SearchIcon className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+          <SearchIcon
+            className={`absolute ${dir === "rtl" ? "right-3" : "left-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground`}
+          />
           <Input
             placeholder={t("treatments.searchPlaceholder")}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} w-full`}
+            onChange={e => setSearchQuery(e.target.value)}
+            className={`${dir === "rtl" ? "pr-10" : "pl-10"} w-full`}
           />
         </div>
       </div>
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
         <TabsList className="mb-4 flex flex-wrap gap-2">
-          {categories.map((category) => (
+          {categories.map(category => (
             <TabsTrigger key={category} value={category} className="capitalize">
               {category === "all" ? t("common.all") : t(`treatments.categories.${category}`)}
             </TabsTrigger>
@@ -120,7 +126,7 @@ export function TreatmentsClient() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4].map(i => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <Skeleton className="h-6 w-3/4 mb-4" />
@@ -149,7 +155,7 @@ export function TreatmentsClient() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTreatments.map((treatment) => (
+          {filteredTreatments.map(treatment => (
             <TreatmentCard
               key={treatment._id}
               treatment={treatment}

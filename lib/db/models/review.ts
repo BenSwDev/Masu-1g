@@ -14,46 +14,46 @@ export interface IReview extends Document {
 
 const ReviewSchema: Schema<IReview> = new Schema(
   {
-    bookingId: { 
-      type: Schema.Types.ObjectId, 
-      ref: "Booking", 
-      required: true, 
+    bookingId: {
+      type: Schema.Types.ObjectId,
+      ref: "Booking",
+      required: true,
       unique: true, // כל הזמנה יכולה לקבל רק חוות דעת אחת
-      index: true 
+      index: true,
     },
-    userId: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true, 
-      index: true 
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
     },
-    professionalId: { 
-      type: Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true, 
-      index: true 
+    professionalId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
     },
-    treatmentId: { 
-      type: Schema.Types.ObjectId, 
-      ref: "Treatment", 
-      required: true 
+    treatmentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Treatment",
+      required: true,
     },
-    rating: { 
-      type: Number, 
-      required: true, 
-      min: 1, 
-      max: 5 
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
     },
-    comment: { 
-      type: String, 
+    comment: {
+      type: String,
       trim: true,
-      maxlength: 1000 
+      maxlength: 1000,
     },
-    professionalResponse: { 
-      type: String, 
+    professionalResponse: {
+      type: String,
       trim: true,
-      maxlength: 1000 
-    }
+      maxlength: 1000,
+    },
   },
   { timestamps: true }
 )
@@ -63,6 +63,7 @@ ReviewSchema.index({ userId: 1, createdAt: -1 })
 ReviewSchema.index({ professionalId: 1, rating: 1 })
 ReviewSchema.index({ treatmentId: 1, rating: 1 })
 
-const Review: Model<IReview> = mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema)
+const Review: Model<IReview> =
+  mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema)
 
-export default Review 
+export default Review

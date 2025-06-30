@@ -34,4 +34,4 @@ export function AuthRedirect({ children, redirectTo = "/" }: AuthRedirectProps) 
   }
 
   return session ? null : <>{children}</>
-} 
+}

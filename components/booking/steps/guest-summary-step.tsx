@@ -8,10 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag } from "lucide-react"
+import {
+  CheckCircle,
+  Calendar,
+  Clock,
+  User,
+  Mail,
+  Phone,
+  FileText,
+  CreditCard,
+  Tag,
+} from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
+import type {
+  BookingInitialData,
+  SelectedBookingOptions,
+  CalculatedPriceDetails,
+} from "@/types/booking"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface GuestInfo {
@@ -79,13 +93,15 @@ export function GuestSummaryStep({
 
   const selectedTreatment = useMemo(() => {
     return (initialData?.activeTreatments || []).find(
-      (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+      t => t._id.toString() === bookingOptions.selectedTreatmentId
     )
   }, [initialData?.activeTreatments, bookingOptions.selectedTreatmentId])
 
   const selectedDuration = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
-      return selectedTreatment.durations.find((d: any) => d._id.toString() === bookingOptions.selectedDurationId)
+      return selectedTreatment.durations.find(
+        (d: any) => d._id.toString() === bookingOptions.selectedDurationId
+      )
     }
     return null
   }, [selectedTreatment, bookingOptions.selectedDurationId])
@@ -97,7 +113,7 @@ export function GuestSummaryStep({
 
   const getTreatmentDurationText = () => {
     if (selectedTreatment?.pricingType === "fixed") {
-      return selectedTreatment.defaultDuration 
+      return selectedTreatment.defaultDuration
         ? `${selectedTreatment.defaultDuration} דקות`
         : "משך סטנדרטי"
     }
@@ -123,8 +139,6 @@ export function GuestSummaryStep({
     return `₪${amount.toFixed(2)}`
   }
 
-
-
   return (
     <div className="space-y-6" dir={dir}>
       <div className="text-center">
@@ -146,7 +160,9 @@ export function GuestSummaryStep({
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">שם:</span>
-                <span className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</span>
+                <span className="font-medium">
+                  {guestInfo.firstName} {guestInfo.lastName}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
@@ -167,14 +183,20 @@ export function GuestSummaryStep({
                   {guestInfo.birthDate && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">תאריך לידה:</span>
-                      <span className="font-medium">{format(guestInfo.birthDate, "dd/MM/yyyy")}</span>
+                      <span className="font-medium">
+                        {format(guestInfo.birthDate, "dd/MM/yyyy")}
+                      </span>
                     </div>
                   )}
                   {guestInfo.gender && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">מגדר:</span>
                       <span className="font-medium">
-                        {guestInfo.gender === "male" ? "גבר" : guestInfo.gender === "female" ? "אישה" : "אחר"}
+                        {guestInfo.gender === "male"
+                          ? "גבר"
+                          : guestInfo.gender === "female"
+                            ? "אישה"
+                            : "אחר"}
                       </span>
                     </div>
                   )}
@@ -206,7 +228,9 @@ export function GuestSummaryStep({
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">שם:</span>
-                  <span className="font-medium">{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span>
+                  <span className="font-medium">
+                    {guestInfo.recipientFirstName} {guestInfo.recipientLastName}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground flex items-center gap-1">
@@ -220,19 +244,27 @@ export function GuestSummaryStep({
                     <Phone className="h-4 w-4" />
                     טלפון:
                   </span>
-                  <span className="font-medium">{formatPhoneForDisplay(guestInfo.recipientPhone || "")}</span>
+                  <span className="font-medium">
+                    {formatPhoneForDisplay(guestInfo.recipientPhone || "")}
+                  </span>
                 </div>
                 {guestInfo.recipientBirthDate && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">תאריך לידה:</span>
-                    <span className="font-medium">{format(guestInfo.recipientBirthDate, "dd/MM/yyyy")}</span>
+                    <span className="font-medium">
+                      {format(guestInfo.recipientBirthDate, "dd/MM/yyyy")}
+                    </span>
                   </div>
                 )}
                 {guestInfo.recipientGender && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">מגדר:</span>
                     <span className="font-medium">
-                      {guestInfo.recipientGender === "male" ? "גבר" : guestInfo.recipientGender === "female" ? "אישה" : "אחר"}
+                      {guestInfo.recipientGender === "male"
+                        ? "גבר"
+                        : guestInfo.recipientGender === "female"
+                          ? "אישה"
+                          : "אחר"}
                     </span>
                   </div>
                 )}
@@ -300,8 +332,6 @@ export function GuestSummaryStep({
         </Card>
       </div>
 
-
-
       {/* Price Breakdown */}
       <Card>
         <CardHeader>
@@ -357,7 +387,7 @@ export function GuestSummaryStep({
                     <span>מחיר לאחר כיסוי מנוי/שובר:</span>
                     <span>
                       {formatPrice(
-                        calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
+                        calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher
                       )}
                     </span>
                   </div>
@@ -389,9 +419,11 @@ export function GuestSummaryStep({
               <Separator />
 
               {/* Final amount with emphasis if fully covered */}
-              <div className={`flex justify-between font-bold text-lg ${
-                calculatedPrice.isFullyCoveredByVoucherOrSubscription ? "text-green-600" : ""
-              }`}>
+              <div
+                className={`flex justify-between font-bold text-lg ${
+                  calculatedPrice.isFullyCoveredByVoucherOrSubscription ? "text-green-600" : ""
+                }`}
+              >
                 <span>מחיר סופי:</span>
                 <span>
                   {calculatedPrice.isFullyCoveredByVoucherOrSubscription ? (
@@ -424,16 +456,10 @@ export function GuestSummaryStep({
         <Button variant="outline" onClick={onPrev}>
           חזור
         </Button>
-        <Button 
-          onClick={onNext} 
-          disabled={isPriceCalculating || !calculatedPrice}
-        >
-          {calculatedPrice?.finalAmount === 0 
-            ? "אשר הזמנה" 
-            : "המשך לתשלום"
-          }
+        <Button onClick={onNext} disabled={isPriceCalculating || !calculatedPrice}>
+          {calculatedPrice?.finalAmount === 0 ? "אשר הזמנה" : "המשך לתשלום"}
         </Button>
       </div>
     </div>
   )
-} 
+}

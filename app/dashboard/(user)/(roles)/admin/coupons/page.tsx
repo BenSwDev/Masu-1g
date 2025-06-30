@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { getAdminCoupons, getPartnersForSelection } from "./actions"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
@@ -57,7 +57,10 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
     <div className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-4 sm:pt-6">
       <Heading titleKey="adminCoupons.title" descriptionKey="adminCoupons.description" />
       <Suspense fallback={<ClientAwareCouponsLoadingSkeleton />}>
-        <CouponsDataWrapper couponsDataPromise={couponsDataPromise} partnersPromise={partnersPromise} />
+        <CouponsDataWrapper
+          couponsDataPromise={couponsDataPromise}
+          partnersPromise={partnersPromise}
+        />
       </Suspense>
     </div>
   )

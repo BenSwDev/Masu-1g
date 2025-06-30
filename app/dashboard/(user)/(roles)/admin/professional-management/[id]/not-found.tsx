@@ -13,7 +13,7 @@ export default function ProfessionalNotFound() {
             חזור לרשימה
           </Button>
         </Link>
-        
+
         <h1 className="text-2xl font-bold">מטפל לא נמצא</h1>
       </div>
 
@@ -28,22 +28,18 @@ export default function ProfessionalNotFound() {
           <p className="text-muted-foreground">
             המטפל שאתה מחפש לא קיים במערכת או שהמזהה שלו אינו תקין.
           </p>
-          
+
           <div className="flex gap-3">
             <Link href="/dashboard/admin/professional-management">
-              <Button>
-                חזור לרשימת המטפלים
-              </Button>
+              <Button>חזור לרשימת המטפלים</Button>
             </Link>
-            
+
             <Link href="/dashboard/admin/professional-management/new">
-              <Button variant="outline">
-                צור מטפל חדש
-              </Button>
+              <Button variant="outline">צור מטפל חדש</Button>
             </Link>
           </div>
         </CardContent>
       </Card>
     </div>
   )
-} 
+}

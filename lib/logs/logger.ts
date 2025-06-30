@@ -41,7 +41,10 @@ class Logger {
           console.warn(`[${logEntry.timestamp}] WARN: ${message}`, data || "")
           break
         case "error":
-          if (data && (typeof data === "string" || (typeof data === "object" && Object.keys(data).length > 0))) {
+          if (
+            data &&
+            (typeof data === "string" || (typeof data === "object" && Object.keys(data).length > 0))
+          ) {
             console.error(`[${logEntry.timestamp}] ERROR: ${message}`, data)
           } else {
             console.error(`[${logEntry.timestamp}] ERROR: ${message}`)

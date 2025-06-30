@@ -89,10 +89,10 @@ export async function saveAbandonedBooking(
     // Clean up expired bookings
     cleanupExpiredAbandonedBookings()
 
-    logger.info("Abandoned booking saved", { 
-      userId, 
-      abandonedBookingId, 
-      step: abandonedBooking.step 
+    logger.info("Abandoned booking saved", {
+      userId,
+      abandonedBookingId,
+      step: abandonedBooking.step,
     })
 
     return { success: true, abandonedBookingId }
@@ -192,12 +192,14 @@ export async function deleteAbandonedBooking(
 /**
  * Get all abandoned bookings (admin only)
  */
-export async function getAbandonedBookings(filters: {
-  userId?: string
-  dateRange?: string
-  page?: number
-  limit?: number
-} = {}): Promise<{
+export async function getAbandonedBookings(
+  filters: {
+    userId?: string
+    dateRange?: string
+    page?: number
+    limit?: number
+  } = {}
+): Promise<{
   success: boolean
   abandonedBookings?: AbandonedBooking[]
   totalPages?: number
@@ -228,12 +230,12 @@ export async function getAbandonedBookings(filters: {
     if (dateRange) {
       const now = new Date()
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      
+
       switch (dateRange) {
         case "today":
           const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-          bookings = bookings.filter(booking => 
-            booking.abandonedAt >= today && booking.abandonedAt < endOfToday
+          bookings = bookings.filter(
+            booking => booking.abandonedAt >= today && booking.abandonedAt < endOfToday
           )
           break
         case "this_week":
@@ -241,15 +243,15 @@ export async function getAbandonedBookings(filters: {
           startOfWeek.setDate(today.getDate() - today.getDay())
           const endOfWeek = new Date(startOfWeek)
           endOfWeek.setDate(startOfWeek.getDate() + 7)
-          bookings = bookings.filter(booking => 
-            booking.abandonedAt >= startOfWeek && booking.abandonedAt < endOfWeek
+          bookings = bookings.filter(
+            booking => booking.abandonedAt >= startOfWeek && booking.abandonedAt < endOfWeek
           )
           break
         case "this_month":
           const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
           const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1)
-          bookings = bookings.filter(booking => 
-            booking.abandonedAt >= startOfMonth && booking.abandonedAt < endOfMonth
+          bookings = bookings.filter(
+            booking => booking.abandonedAt >= startOfMonth && booking.abandonedAt < endOfMonth
           )
           break
       }
@@ -269,7 +271,7 @@ export async function getAbandonedBookings(filters: {
       success: true,
       abandonedBookings: paginatedBookings,
       totalPages,
-      totalBookings
+      totalBookings,
     }
   } catch (error) {
     logger.error("Error getting abandoned bookings:", { error, filters })
@@ -316,10 +318,10 @@ export async function updateAbandonedBooking(
 
     abandonedBookingsCollection.set(abandonedBookingId, updatedBooking)
 
-    logger.info("Abandoned booking updated", { 
-      userId, 
-      abandonedBookingId, 
-      step: updatedBooking.step 
+    logger.info("Abandoned booking updated", {
+      userId,
+      abandonedBookingId,
+      step: updatedBooking.step,
     })
 
     return { success: true }
@@ -357,7 +359,7 @@ export async function hasAbandonedBookings(userId: string): Promise<{
     return {
       success: true,
       hasAbandoned: count > 0,
-      count
+      count,
     }
   } catch (error) {
     logger.error("Error checking abandoned bookings:", { error, userId })
@@ -423,7 +425,7 @@ export async function getAbandonedBookingStats(): Promise<{
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date()
       date.setDate(date.getDate() - i)
-      return date.toISOString().split('T')[0]
+      return date.toISOString().split("T")[0]
     })
 
     last7Days.forEach(date => {
@@ -431,7 +433,7 @@ export async function getAbandonedBookingStats(): Promise<{
     })
 
     bookings.forEach(booking => {
-      const date = booking.abandonedAt.toISOString().split('T')[0]
+      const date = booking.abandonedAt.toISOString().split("T")[0]
       if (byDay.hasOwnProperty(date)) {
         byDay[date]++
       }
@@ -447,8 +449,8 @@ export async function getAbandonedBookingStats(): Promise<{
         total,
         byStep,
         byDay,
-        avgTimeToAbandon
-      }
+        avgTimeToAbandon,
+      },
     }
   } catch (error) {
     logger.error("Error getting abandoned booking stats:", error)

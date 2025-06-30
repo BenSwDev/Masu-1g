@@ -20,23 +20,23 @@ interface CityFormDialogProps {
 export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialogProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     lat: "",
     lng: "",
-    isActive: true
+    isActive: true,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.name.trim() || !formData.lat || !formData.lng) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "יש למלא את כל השדות הנדרשים"
+        description: "יש למלא את כל השדות הנדרשים",
       })
       return
     }
@@ -48,7 +48,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "יש להזין קורדינטות תקינות"
+        description: "יש להזין קורדינטות תקינות",
       })
       return
     }
@@ -58,7 +58,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "הקורדינטות חייבות להיות בתחומי ישראל"
+        description: "הקורדינטות חייבות להיות בתחומי ישראל",
       })
       return
     }
@@ -77,22 +77,22 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "העיר נוצרה בהצלחה וחישוב המרחקים הושלם"
+          description: "העיר נוצרה בהצלחה וחישוב המרחקים הושלם",
         })
-        
+
         // Reset form
         setFormData({
           name: "",
           lat: "",
           lng: "",
-          isActive: true
+          isActive: true,
         })
-        
+
         onOpenChange(false)
         onSuccess?.()
       } else {
         let errorMessage = "שגיאה ביצירת העיר"
-        
+
         switch (result.message) {
           case "notAuthorized":
             errorMessage = "אין הרשאה לביצוע פעולה זו"
@@ -110,11 +110,11 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
             errorMessage = "שגיאה ביצירת העיר"
             break
         }
-        
+
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: errorMessage
+          description: errorMessage,
         })
       }
     } catch (error) {
@@ -122,7 +122,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה ביצירת העיר"
+        description: "שגיאה ביצירת העיר",
       })
     } finally {
       setLoading(false)
@@ -132,7 +132,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
@@ -153,7 +153,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
               id="name"
               type="text"
               value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
+              onChange={e => handleInputChange("name", e.target.value)}
               placeholder="הזן שם עיר"
               required
             />
@@ -167,7 +167,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
                 type="number"
                 step="any"
                 value={formData.lat}
-                onChange={(e) => handleInputChange("lat", e.target.value)}
+                onChange={e => handleInputChange("lat", e.target.value)}
                 placeholder="31.7683"
                 required
               />
@@ -180,7 +180,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
                 type="number"
                 step="any"
                 value={formData.lng}
-                onChange={(e) => handleInputChange("lng", e.target.value)}
+                onChange={e => handleInputChange("lng", e.target.value)}
                 placeholder="35.2137"
                 required
               />
@@ -191,7 +191,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
             <Switch
               id="isActive"
               checked={formData.isActive}
-              onCheckedChange={(checked) => handleInputChange("isActive", checked)}
+              onCheckedChange={checked => handleInputChange("isActive", checked)}
             />
             <Label htmlFor="isActive">עיר פעילה</Label>
           </div>

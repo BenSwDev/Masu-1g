@@ -17,27 +17,26 @@ export class EmailService {
   constructor() {
     // Robust development detection with multiple fallbacks
     // Default to production for safety unless explicitly in development
-    this.isDevelopment = (
-      process.env.NODE_ENV === "development" || 
+    this.isDevelopment =
+      process.env.NODE_ENV === "development" ||
       process.env.VERCEL_ENV === "development" ||
       process.env.NEXT_PUBLIC_VERCEL_ENV === "development" ||
       // Additional checks for local development
       (!process.env.VERCEL && !process.env.VERCEL_URL && process.env.NODE_ENV !== "production")
-    )
-    
+
     this.isConfigured = false
     this.fromEmail = process.env.EMAIL_FROM || "noreply@masu.co.il"
-    
+
     // Only log in development or if there are issues
     if (this.isDevelopment) {
       logger.info("EmailService constructor - Environment Detection", {
         nodeEnv: process.env.NODE_ENV,
         isDevelopment: this.isDevelopment,
         fromEmail: this.fromEmail,
-        finalDecision: "DEVELOPMENT - emails will be logged only"
+        finalDecision: "DEVELOPMENT - emails will be logged only",
       })
     }
-    
+
     // Initialize email transporter with proper validation
     this.initializeTransporter()
   }
@@ -58,7 +57,7 @@ export class EmailService {
         hasPort: !!port,
         hasUser: !!user,
         hasPassword: !!password,
-        environment: this.isDevelopment ? "development" : "production"
+        environment: this.isDevelopment ? "development" : "production",
       })
     }
 
@@ -74,21 +73,22 @@ export class EmailService {
         message: "Please configure these environment variables in Vercel:",
         required: [
           "EMAIL_SERVER_HOST=smtp.gmail.com",
-          "EMAIL_SERVER_PORT=465", 
+          "EMAIL_SERVER_PORT=465",
           "EMAIL_SERVER_USER=your-email@gmail.com",
           "EMAIL_SERVER_PASSWORD=your-app-password",
-          "EMAIL_FROM=noreply@masu.co.il"
-        ]
+          "EMAIL_FROM=noreply@masu.co.il",
+        ],
       })
       return
     }
 
     // Skip placeholder values in development
-    if (this.isDevelopment && (
-      host === "your-smtp-host" || 
-      user === "your-email@example.com" ||
-      password === "your-email-password"
-    )) {
+    if (
+      this.isDevelopment &&
+      (host === "your-smtp-host" ||
+        user === "your-email@example.com" ||
+        password === "your-email-password")
+    ) {
       logger.info("Development mode - Email service using placeholder values")
       return
     }
@@ -105,12 +105,12 @@ export class EmailService {
         },
         // Additional security options
         tls: {
-          rejectUnauthorized: false // Allow self-signed certificates in development
-        }
+          rejectUnauthorized: false, // Allow self-signed certificates in development
+        },
       })
 
       this.isConfigured = true
-      
+
       // Only log success in development
       if (this.isDevelopment) {
         logger.info("Email service initialized successfully", {
@@ -118,7 +118,7 @@ export class EmailService {
           port: Number(port),
           secure: Number(port) === 465,
           fromEmail: this.fromEmail,
-          environment: "development"
+          environment: "development",
         })
       }
     } catch (error) {
@@ -129,7 +129,7 @@ export class EmailService {
         port: Number(port),
         hasUser: !!user,
         hasPassword: !!password,
-        environment: this.isDevelopment ? "development" : "production"
+        environment: this.isDevelopment ? "development" : "production",
       })
       this.isConfigured = false
     }
@@ -141,17 +141,22 @@ export class EmailService {
    * @param data Notification data
    * @returns Result of the send operation
    */
-  async sendNotification(recipient: EmailRecipient, data: NotificationData): Promise<NotificationResult> {
+  async sendNotification(
+    recipient: EmailRecipient,
+    data: NotificationData
+  ): Promise<NotificationResult> {
     const logId = `email_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
+
     try {
       // Check if service is configured
       if (!this.isConfigured) {
-        const errorMessage = "❌ Email service not configured - missing environment variables in Vercel"
+        const errorMessage =
+          "❌ Email service not configured - missing environment variables in Vercel"
         logger.error(`[${logId}] ${errorMessage}`, {
           recipient: this.obscureEmail(recipient.value),
           notificationType: data.type,
-          instructions: "Go to Vercel Dashboard → Project Settings → Environment Variables and add EMAIL_* variables"
+          instructions:
+            "Go to Vercel Dashboard → Project Settings → Environment Variables and add EMAIL_* variables",
         })
         return { success: false, error: errorMessage }
       }
@@ -160,8 +165,8 @@ export class EmailService {
 
       // Get the template for this notification type
       const { subject, html, text } = getEmailTemplate(
-        data as EmailNotificationData, 
-        recipient.language || "he", 
+        data as EmailNotificationData,
+        recipient.language || "he",
         recipient.name
       )
 
@@ -175,7 +180,7 @@ export class EmailService {
       logger.info(`[${logId}] Production mode - sending actual email`, {
         isDevelopment: this.isDevelopment,
         nodeEnv: process.env.NODE_ENV,
-        vercelEnv: process.env.VERCEL_ENV
+        vercelEnv: process.env.VERCEL_ENV,
       })
 
       // Send mail with defined transport object
@@ -187,16 +192,16 @@ export class EmailService {
         html,
         // Additional headers
         headers: {
-          'X-Mailer': 'Masu Notification System',
-          'X-Priority': '3',
-        }
+          "X-Mailer": "Masu Notification System",
+          "X-Priority": "3",
+        },
       })
 
-      logger.info(`[${logId}] Email sent successfully`, { 
+      logger.info(`[${logId}] Email sent successfully`, {
         messageId: info.messageId,
         accepted: info.accepted,
         rejected: info.rejected,
-        response: info.response
+        response: info.response,
       })
 
       return {
@@ -206,21 +211,22 @@ export class EmailService {
           accepted: info.accepted,
           rejected: info.rejected,
           response: info.response,
-          envelope: info.envelope
-        }
+          envelope: info.envelope,
+        },
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown email error"
-      logger.error(`[${logId}] Email send failed:`, { 
+      logger.error(`[${logId}] Email send failed:`, {
         error: errorMessage,
         recipient: this.obscureEmail(recipient.value),
-        data: data.type 
+        data: data.type,
       })
-      
+
       return {
         success: false,
         error: errorMessage,
-        details: error instanceof Error ? { message: error.message, stack: error.stack } : { error }
+        details:
+          error instanceof Error ? { message: error.message, stack: error.stack } : { error },
       }
     }
   }
@@ -251,7 +257,7 @@ export class EmailService {
       configured: this.isConfigured,
       hasTransporter: !!this.transporter,
       fromEmail: this.fromEmail,
-      environment: this.isDevelopment ? "development" : "production"
+      environment: this.isDevelopment ? "development" : "production",
     }
   }
 
@@ -273,8 +279,6 @@ export class EmailService {
       return { success: false, error: errorMessage }
     }
   }
-
-
 }
 
 // Export a singleton instance

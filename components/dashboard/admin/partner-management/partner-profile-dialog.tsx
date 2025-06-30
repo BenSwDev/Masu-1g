@@ -23,7 +23,11 @@ interface PartnerData extends IPartnerProfile {
   userId: IUser
 }
 
-export default function PartnerProfileDialog({ partnerId, open, onOpenChange }: PartnerProfileDialogProps) {
+export default function PartnerProfileDialog({
+  partnerId,
+  open,
+  onOpenChange,
+}: PartnerProfileDialogProps) {
   const [partner, setPartner] = useState<PartnerData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

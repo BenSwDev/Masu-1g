@@ -23,9 +23,13 @@ export async function registerUser(formData: FormData) {
     const gender = formData.get("gender") as string
     const role = formData.get("role") as string
 
-    logger.info(`[${requestId}] Registration attempt for email: ${email.substring(0, 3)}***${email.split("@")[1]}`)
+    logger.info(
+      `[${requestId}] Registration attempt for email: ${email.substring(0, 3)}***${email.split("@")[1]}`
+    )
     if (phone) {
-      logger.info(`[${requestId}] Phone provided: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`)
+      logger.info(
+        `[${requestId}] Phone provided: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`
+      )
     }
 
     // Format phone number if provided
@@ -36,7 +40,7 @@ export async function registerUser(formData: FormData) {
       // Validate phone number format
       if (formattedPhone && !validatePhone(formattedPhone)) {
         logger.warn(`[${requestId}] Invalid phone format: ${formattedPhone}`)
-          return { success: false, message: "invalidPhone" }
+        return { success: false, message: "invalidPhone" }
       }
     }
 
@@ -55,9 +59,13 @@ export async function registerUser(formData: FormData) {
 
       if (birthDate >= minAge && birthDate <= maxAge) {
         dateOfBirth = birthDate
-        logger.info(`[${requestId}] Valid date of birth provided: ${dateOfBirth.toISOString().split("T")[0]}`)
+        logger.info(
+          `[${requestId}] Valid date of birth provided: ${dateOfBirth.toISOString().split("T")[0]}`
+        )
       } else {
-        logger.warn(`[${requestId}] Invalid date of birth: ${birthDate.toISOString().split("T")[0]}`)
+        logger.warn(
+          `[${requestId}] Invalid date of birth: ${birthDate.toISOString().split("T")[0]}`
+        )
         return { success: false, message: "invalidDateOfBirth" }
       }
     }
@@ -84,7 +92,7 @@ export async function registerUser(formData: FormData) {
     const passwordValidation = validatePassword(password)
     if (!passwordValidation.isValid) {
       logger.warn(
-        `[${requestId}] Registration failed: Password validation failed with ${passwordValidation.errors.length} errors`,
+        `[${requestId}] Registration failed: Password validation failed with ${passwordValidation.errors.length} errors`
       )
       return { success: false, message: "weakPassword", errors: passwordValidation.errors }
     }
@@ -98,14 +106,14 @@ export async function registerUser(formData: FormData) {
       logger.warn(`[${requestId}] Registration failed: Phone already exists for registered user`)
       return { success: false, message: "phoneExists" }
     }
-    
+
     // If existing user is a guest, upgrade them to registered user
     if (existingUser && existingUser.roles.includes("guest")) {
       logger.info(`[${requestId}] Upgrading guest user to registered user`)
-      
+
       // Hash password
       const hashedPassword = await hashPassword(password)
-      
+
       // Update existing guest user
       existingUser.name = name
       existingUser.email = email ? email.toLowerCase() : existingUser.email
@@ -114,13 +122,15 @@ export async function registerUser(formData: FormData) {
       existingUser.dateOfBirth = dateOfBirth
       existingUser.roles = role === "professional" ? ["professional"] : ["member"]
       existingUser.activeRole = undefined
-      
+
       await existingUser.save()
-      logger.info(`[${requestId}] Guest user successfully upgraded to registered user with ID: ${existingUser._id}`)
-      
+      logger.info(
+        `[${requestId}] Guest user successfully upgraded to registered user with ID: ${existingUser._id}`
+      )
+
       return { success: true, message: "userUpgraded" }
     }
-    
+
     logger.info(`[${requestId}] User does not exist, proceeding with registration`)
 
     // Hash password
@@ -153,10 +163,14 @@ export async function checkUserExists(phone: string) {
   const requestId = `check_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Checking if user exists with phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`)
+    logger.info(
+      `[${requestId}] Checking if user exists with phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`
+    )
     await dbConnect()
     const exists = await UserQueries.phoneExists(phone)
-    logger.info(`[${requestId}] User exists check result: ${exists ? "User found" : "User not found"}`)
+    logger.info(
+      `[${requestId}] User exists check result: ${exists ? "User found" : "User not found"}`
+    )
     return { exists: !!exists }
   } catch (error) {
     logger.error(`[${requestId}] Check user error:`, error)
@@ -165,16 +179,21 @@ export async function checkUserExists(phone: string) {
 }
 
 // פונקציה חדשה לניהול משתמשים לפי טלפון
-export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
-  name: string
-  email?: string
-  gender?: "male" | "female" | "other"
-  dateOfBirth?: Date
-}) {
+export async function findOrCreateUserByPhone(
+  phone: string,
+  guestInfo?: {
+    name: string
+    email?: string
+    gender?: "male" | "female" | "other"
+    dateOfBirth?: Date
+  }
+) {
   const requestId = `find_create_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Finding or creating user by phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`)
+    logger.info(
+      `[${requestId}] Finding or creating user by phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`
+    )
     await dbConnect()
 
     // נרמול טלפון
@@ -182,14 +201,14 @@ export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
 
     // בדיקה אם משתמש קיים
     const existingUser = await User.findOne({ phone: cleaned })
-    
+
     if (existingUser) {
       logger.info(`[${requestId}] User found with phone, returning existing user`)
-      return { 
-        success: true, 
+      return {
+        success: true,
         userId: existingUser._id.toString(),
         isNewUser: false,
-        userType: existingUser.roles.includes("guest") ? "guest" : "registered"
+        userType: existingUser.roles.includes("guest") ? "guest" : "registered",
       }
     }
 
@@ -211,40 +230,41 @@ export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
       await guestUser.save()
       logger.info(`[${requestId}] Guest user created successfully with ID: ${guestUser._id}`)
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         userId: guestUser._id.toString(),
         isNewUser: true,
-        userType: "guest"
+        userType: "guest",
       }
     }
 
     // אם אין guestInfo - החזר שאין משתמש
-    return { 
-      success: false, 
-      error: "User not found and no guest info provided" 
+    return {
+      success: false,
+      error: "User not found and no guest info provided",
     }
-
   } catch (error: any) {
     logger.error(`[${requestId}] Find or create user error:`, error)
-    
+
     // Handle duplicate key error (race condition)
     if (error.code === 11000 && error.message.includes("phone")) {
       logger.info(`[${requestId}] Duplicate phone detected, attempting to find existing user`)
       try {
         const cleaned = normalizePhoneNumber(phone)
         const existingUser = await User.findOne({ phone: cleaned })
-        
+
         if (existingUser) {
           logger.info(`[${requestId}] Found existing user after duplicate error`)
-          return { 
-            success: true, 
+          return {
+            success: true,
             userId: existingUser._id.toString(),
             isNewUser: false,
-            userType: existingUser.roles.includes("guest") ? "guest" : "registered"
+            userType: existingUser.roles.includes("guest") ? "guest" : "registered",
           }
         } else {
-          logger.error(`[${requestId}] User not found after duplicate error - this should not happen`)
+          logger.error(
+            `[${requestId}] User not found after duplicate error - this should not happen`
+          )
           return { success: false, error: "User creation failed due to race condition" }
         }
       } catch (retryError) {
@@ -252,7 +272,7 @@ export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
         return { success: false, error: "Failed to find existing user after duplicate error" }
       }
     }
-    
+
     return { success: false, error: "Failed to find or create user" }
   }
 }

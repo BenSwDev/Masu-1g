@@ -6,7 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, X, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText } from "lucide-react"
+import {
+  AlertTriangle,
+  X,
+  User,
+  Stethoscope,
+  MapPin,
+  CreditCard,
+  FileText,
+  DollarSign,
+  ScrollText,
+} from "lucide-react"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
 import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
@@ -56,11 +66,11 @@ interface ProfessionalEditModalProps {
   isCreatingNew?: boolean
 }
 
-export default function ProfessionalEditModal({ 
-  professional, 
-  open, 
+export default function ProfessionalEditModal({
+  professional,
+  open,
   onClose,
-  isCreatingNew = false
+  isCreatingNew = false,
 }: ProfessionalEditModalProps) {
   const { t, dir } = useTranslation()
   const [activeTab, setActiveTab] = useState("profile")
@@ -70,7 +80,7 @@ export default function ProfessionalEditModal({
   const handleUpdate = (updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({
       ...prev,
-      ...updatedData
+      ...updatedData,
     }))
     if (!isCreatingNew) {
       setHasUnsavedChanges(true)
@@ -89,15 +99,30 @@ export default function ProfessionalEditModal({
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
       active: { variant: "default" as const, icon: User, text: "פעיל", color: "text-green-600" },
-      pending_admin_approval: { variant: "secondary" as const, icon: AlertTriangle, text: "ממתין לאישור", color: "text-orange-600" },
-      pending_user_action: { variant: "outline" as const, icon: AlertTriangle, text: "ממתין למשתמש", color: "text-blue-600" },
+      pending_admin_approval: {
+        variant: "secondary" as const,
+        icon: AlertTriangle,
+        text: "ממתין לאישור",
+        color: "text-orange-600",
+      },
+      pending_user_action: {
+        variant: "outline" as const,
+        icon: AlertTriangle,
+        text: "ממתין למשתמש",
+        color: "text-blue-600",
+      },
       rejected: { variant: "destructive" as const, icon: X, text: "נדחה", color: "text-red-600" },
-      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה", color: "text-red-600" }
+      suspended: {
+        variant: "destructive" as const,
+        icon: AlertTriangle,
+        text: "מושהה",
+        color: "text-red-600",
+      },
     }
 
     const config = statusConfig[status]
     if (!config) return null
-    
+
     const Icon = config.icon
 
     return (
@@ -111,7 +136,7 @@ export default function ProfessionalEditModal({
   const formatDate = (date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL")
     } catch {
       return "-"
@@ -125,8 +150,10 @@ export default function ProfessionalEditModal({
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-xl">
-                {isCreatingNew ? "יצירת מטפל חדש" : `עריכת מטפל - ${updatedProfessional.userId.name}`}
-          </DialogTitle>
+                {isCreatingNew
+                  ? "יצירת מטפל חדש"
+                  : `עריכת מטפל - ${updatedProfessional.userId.name}`}
+              </DialogTitle>
               {!isCreatingNew && (
                 <div className="flex items-center gap-3 mt-2">
                   {getStatusBadge(updatedProfessional.status)}
@@ -146,7 +173,12 @@ export default function ProfessionalEditModal({
         </div>
 
         <div className="flex flex-col min-h-0 p-6 pt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="flex flex-col min-h-0 flex-1">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            dir={dir}
+            className="flex flex-col min-h-0 flex-1"
+          >
             <TabsList className="grid w-full grid-cols-7 flex-shrink-0 mb-4">
               <TabsTrigger value="profile" className="flex items-center gap-1">
                 <User className="w-4 h-4" />
@@ -163,43 +195,65 @@ export default function ProfessionalEditModal({
                 <span className="hidden sm:inline">איזורי פעילות</span>
                 <span className="sm:hidden">איזורים</span>
               </TabsTrigger>
-              <TabsTrigger value="bankDetails" className="flex items-center gap-1" disabled={isCreatingNew}>
+              <TabsTrigger
+                value="bankDetails"
+                className="flex items-center gap-1"
+                disabled={isCreatingNew}
+              >
                 <CreditCard className="w-4 h-4" />
                 <span className="hidden sm:inline">חשבון בנק</span>
                 <span className="sm:hidden">בנק</span>
               </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-1" disabled={isCreatingNew}>
+              <TabsTrigger
+                value="documents"
+                className="flex items-center gap-1"
+                disabled={isCreatingNew}
+              >
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">מסמכים</span>
                 <span className="sm:hidden">מסמכים</span>
               </TabsTrigger>
-              <TabsTrigger value="financial" className="flex items-center gap-1" disabled={isCreatingNew}>
+              <TabsTrigger
+                value="financial"
+                className="flex items-center gap-1"
+                disabled={isCreatingNew}
+              >
                 <DollarSign className="w-4 h-4" />
                 <span className="hidden sm:inline">כספים</span>
                 <span className="sm:hidden">כספים</span>
               </TabsTrigger>
-              <TabsTrigger value="contract" className="flex items-center gap-1" disabled={isCreatingNew}>
+              <TabsTrigger
+                value="contract"
+                className="flex items-center gap-1"
+                disabled={isCreatingNew}
+              >
                 <ScrollText className="w-4 h-4" />
                 <span className="hidden sm:inline">הסכמים</span>
                 <span className="sm:hidden">הסכמים</span>
               </TabsTrigger>
-          </TabsList>
+            </TabsList>
 
             <div className="flex-1 min-h-0">
-              <TabsContent value="profile" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="profile"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalProfileTab
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-              loading={false}
-              isCreatingNew={isCreatingNew}
-                  onCreated={(newProfessional) => {
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  loading={false}
+                  isCreatingNew={isCreatingNew}
+                  onCreated={newProfessional => {
                     setUpdatedProfessional(newProfessional)
                     setHasUnsavedChanges(false)
                   }}
                 />
               </TabsContent>
 
-              <TabsContent value="treatments" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="treatments"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalTreatmentsTabNew
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -207,7 +261,10 @@ export default function ProfessionalEditModal({
                 />
               </TabsContent>
 
-              <TabsContent value="workAreas" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="workAreas"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalWorkAreasTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -215,37 +272,49 @@ export default function ProfessionalEditModal({
                 />
               </TabsContent>
 
-              <TabsContent value="bankDetails" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="bankDetails"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalBankDetailsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
-            />
-          </TabsContent>
+                />
+              </TabsContent>
 
-              <TabsContent value="documents" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="documents"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalDocumentsTab
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-            />
-          </TabsContent>
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
+              </TabsContent>
 
-              <TabsContent value="financial" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="financial"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalFinancialTab
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-            />
-          </TabsContent>
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
+              </TabsContent>
 
-              <TabsContent value="contract" className="h-full overflow-y-auto data-[state=active]:block m-0">
+              <TabsContent
+                value="contract"
+                className="h-full overflow-y-auto data-[state=active]:block m-0"
+              >
                 <ProfessionalContractTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
-          </TabsContent>
+              </TabsContent>
             </div>
-        </Tabs>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
   )
-} 
+}

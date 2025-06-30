@@ -48,7 +48,7 @@ const TreatmentDurationSchema = new Schema<ITreatmentDuration>(
       default: true,
     },
   },
-  { _id: true }, // Ensure _id is created for subdocuments if needed, or manage manually
+  { _id: true } // Ensure _id is created for subdocuments if needed, or manage manually
 )
 
 const TreatmentSchema = new Schema<ITreatment>(
@@ -109,7 +109,7 @@ const TreatmentSchema = new Schema<ITreatment>(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 // Validation to ensure proper pricing data

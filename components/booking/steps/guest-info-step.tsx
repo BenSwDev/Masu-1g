@@ -7,10 +7,23 @@ import { z } from "zod"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PhoneInput } from "@/components/common/phone-input"
 import { Calendar } from "@/components/ui/calendar"
@@ -77,60 +90,72 @@ export function GuestInfoStep({
     const birthDate = new Date(date)
     const age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       return age - 1 >= 16
     }
     return age >= 16
   }
 
-  const guestInfoSchema = z.object({
-    firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
-    lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
-    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional(),
-    phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
-    birthDate: z.date().optional(),
-    gender: z.enum(["male", "female", "other"]).optional(),
-    notes: z.string().optional(),
-    isBookingForSomeoneElse: z.boolean().default(false),
-    recipientFirstName: z.string().optional(),
-    recipientLastName: z.string().optional(),
-    recipientEmail: z.string().optional(),
-    recipientPhone: z.string().optional(),
-    recipientBirthDate: z.date().optional(),
-    recipientGender: z.enum(["male", "female", "other"]).optional(),
-    isGift: z.boolean().default(false),
-    greetingMessage: z.string().optional(),
-    sendOption: z.enum(["immediate", "scheduled"]).optional(),
-    sendDate: z.date().optional(),
-    sendTime: z.string().optional(),
-  }).refine((data) => {
-    if (data.isBookingForSomeoneElse) {
-      return (
-        data.recipientFirstName &&
-        data.recipientLastName &&
-        data.recipientPhone &&
-        (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
-      )
-    }
-    return true
-  }, {
-    message: t("guestInfo.validation.recipientDetailsRequired"),
-    path: ["recipientFirstName"]
-  }).refine((data) => {
-    // Check age requirement for recipient when booking for someone else
-    if (!hideRecipientBirthGender && data.isBookingForSomeoneElse && data.recipientBirthDate) {
-      return isAtLeast16YearsOld(data.recipientBirthDate)
-    }
-    // Check age requirement for booker when not booking for someone else (only if provided)
-    if (!data.isBookingForSomeoneElse && data.birthDate) {
-      return isAtLeast16YearsOld(data.birthDate)
-    }
-    return true
-  }, {
-    message: "גיל מינימלי הוא 16 שנים",
-    path: ["recipientBirthDate"]
-  })
+  const guestInfoSchema = z
+    .object({
+      firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
+      lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
+      email: z
+        .string()
+        .email({ message: t("guestInfo.validation.emailInvalid") })
+        .optional(),
+      phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
+      birthDate: z.date().optional(),
+      gender: z.enum(["male", "female", "other"]).optional(),
+      notes: z.string().optional(),
+      isBookingForSomeoneElse: z.boolean().default(false),
+      recipientFirstName: z.string().optional(),
+      recipientLastName: z.string().optional(),
+      recipientEmail: z.string().optional(),
+      recipientPhone: z.string().optional(),
+      recipientBirthDate: z.date().optional(),
+      recipientGender: z.enum(["male", "female", "other"]).optional(),
+      isGift: z.boolean().default(false),
+      greetingMessage: z.string().optional(),
+      sendOption: z.enum(["immediate", "scheduled"]).optional(),
+      sendDate: z.date().optional(),
+      sendTime: z.string().optional(),
+    })
+    .refine(
+      data => {
+        if (data.isBookingForSomeoneElse) {
+          return (
+            data.recipientFirstName &&
+            data.recipientLastName &&
+            data.recipientPhone &&
+            (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
+          )
+        }
+        return true
+      },
+      {
+        message: t("guestInfo.validation.recipientDetailsRequired"),
+        path: ["recipientFirstName"],
+      }
+    )
+    .refine(
+      data => {
+        // Check age requirement for recipient when booking for someone else
+        if (!hideRecipientBirthGender && data.isBookingForSomeoneElse && data.recipientBirthDate) {
+          return isAtLeast16YearsOld(data.recipientBirthDate)
+        }
+        // Check age requirement for booker when not booking for someone else (only if provided)
+        if (!data.isBookingForSomeoneElse && data.birthDate) {
+          return isAtLeast16YearsOld(data.birthDate)
+        }
+        return true
+      },
+      {
+        message: "גיל מינימלי הוא 16 שנים",
+        path: ["recipientBirthDate"],
+      }
+    )
 
   type GuestInfoFormData = z.infer<typeof guestInfoSchema>
 
@@ -186,7 +211,7 @@ export function GuestInfoStep({
   const handleBookingForSomeoneElseChange = (checked: boolean) => {
     setIsBookingForSomeoneElse(checked)
     form.setValue("isBookingForSomeoneElse", checked)
-    
+
     // Clear recipient fields when unchecked
     if (!checked) {
       form.setValue("recipientFirstName", "")
@@ -195,7 +220,7 @@ export function GuestInfoStep({
       form.setValue("recipientPhone", "")
       form.setValue("recipientBirthDate", undefined)
       form.setValue("recipientGender", undefined)
-      
+
       // Also clear from parent state to prevent stale data
       setGuestInfo({
         ...guestInfo,
@@ -234,18 +259,22 @@ export function GuestInfoStep({
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          
           {/* Booking For Someone Else Option - Hide when redeeming voucher/subscription */}
           {!hideBookingForSomeoneElse && (
             <Card>
               <CardContent className="pt-6">
-                <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                <div
+                  className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                >
                   <Checkbox
                     id="isBookingForSomeoneElse"
                     checked={isBookingForSomeoneElse}
                     onCheckedChange={handleBookingForSomeoneElseChange}
                   />
-                  <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                  <label
+                    htmlFor="isBookingForSomeoneElse"
+                    className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                  >
                     <Users className="h-4 w-4" />
                     <span>{t("guestInfo.bookingForSomeoneElse")}</span>
                   </label>
@@ -257,9 +286,13 @@ export function GuestInfoStep({
           {/* Booker Details (Always required) */}
           <Card>
             <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+              <CardTitle
+                className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+              >
                 <User className="h-5 w-5" />
-                {isBookingForSomeoneElse ? t("guestInfo.bookerDetails") : t("guestInfo.yourDetails")}
+                {isBookingForSomeoneElse
+                  ? t("guestInfo.bookerDetails")
+                  : t("guestInfo.yourDetails")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -306,7 +339,9 @@ export function GuestInfoStep({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <FormLabel
+                      className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                    >
                       <Mail className="h-4 w-4" />
                       {t("guestInfo.email")}
                     </FormLabel>
@@ -328,7 +363,9 @@ export function GuestInfoStep({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <FormLabel
+                      className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                    >
                       <Phone className="h-4 w-4" />
                       {t("guestInfo.phone")} *
                     </FormLabel>
@@ -353,7 +390,9 @@ export function GuestInfoStep({
                     name="birthDate"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                        <FormLabel
+                          className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                        >
                           <CalendarIcon className="h-4 w-4" />
                           {t("guestInfo.birthDate")}
                         </FormLabel>
@@ -368,7 +407,9 @@ export function GuestInfoStep({
                                 )}
                               >
                                 {field.value ? (
-                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                  format(field.value, "PPP", {
+                                    locale: language === "he" ? he : undefined,
+                                  })
                                 ) : (
                                   <span>בחר תאריך לידה</span>
                                 )}
@@ -377,16 +418,16 @@ export function GuestInfoStep({
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={isDateDisabled}
-                                initialFocus
-                                captionLayout="dropdown-buttons"
-                                fromYear={1900}
-                                toYear={new Date().getFullYear() - 16}
-                              />
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={isDateDisabled}
+                              initialFocus
+                              captionLayout="dropdown-buttons"
+                              fromYear={1900}
+                              toYear={new Date().getFullYear() - 16}
+                            />
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -424,7 +465,9 @@ export function GuestInfoStep({
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <FormLabel
+                      className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                    >
                       <FileText className="h-4 w-4" />
                       {t("guestInfo.notes")}
                     </FormLabel>
@@ -442,7 +485,9 @@ export function GuestInfoStep({
           {isBookingForSomeoneElse && (
             <Card>
               <CardHeader>
-                <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <CardTitle
+                  className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                >
                   <Users className="h-5 w-5" />
                   {t("guestInfo.recipientDetails")}
                 </CardTitle>
@@ -491,17 +536,19 @@ export function GuestInfoStep({
                   name="recipientEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <FormLabel
+                        className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                      >
                         <Mail className="h-4 w-4" />
                         {t("guestInfo.recipientEmail")}
                       </FormLabel>
                       <FormControl>
-                      <Input
-                        type="email"
-                        placeholder={t("guestInfo.emailPlaceholder")}
-                        {...field}
-                        disabled={lockedFields.includes("recipientEmail")}
-                      />
+                        <Input
+                          type="email"
+                          placeholder={t("guestInfo.emailPlaceholder")}
+                          {...field}
+                          disabled={lockedFields.includes("recipientEmail")}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -513,7 +560,9 @@ export function GuestInfoStep({
                   name="recipientPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <FormLabel
+                        className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                      >
                         <Phone className="h-4 w-4" />
                         {t("guestInfo.recipientPhone")} *
                       </FormLabel>
@@ -537,7 +586,9 @@ export function GuestInfoStep({
                       name="recipientBirthDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                          <FormLabel
+                            className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                          >
                             <CalendarIcon className="h-4 w-4" />
                             {t("guestInfo.recipientBirthDate")} *
                           </FormLabel>
@@ -553,7 +604,9 @@ export function GuestInfoStep({
                                   disabled={lockedFields.includes("recipientBirthDate")}
                                 >
                                   {field.value ? (
-                                    format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                    format(field.value, "PPP", {
+                                      locale: language === "he" ? he : undefined,
+                                    })
                                   ) : (
                                     <span>בחר תאריך לידה</span>
                                   )}
@@ -566,7 +619,9 @@ export function GuestInfoStep({
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={isDateDisabled || lockedFields.includes("recipientBirthDate")}
+                                disabled={
+                                  isDateDisabled || lockedFields.includes("recipientBirthDate")
+                                }
                                 initialFocus
                                 captionLayout="dropdown-buttons"
                                 fromYear={1900}
@@ -624,7 +679,11 @@ export function GuestInfoStep({
                         <FormItem>
                           <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
                           <FormControl>
-                            <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
+                            <Textarea
+                              placeholder={t("purchaseGiftVoucher.greetingPlaceholder")}
+                              rows={3}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -638,10 +697,20 @@ export function GuestInfoStep({
                         <FormItem>
                           <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
                           <div className="flex gap-4">
-                            <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
+                            <Button
+                              type="button"
+                              variant={field.value === "immediate" ? "default" : "outline"}
+                              onClick={() => field.onChange("immediate")}
+                              className="flex-1"
+                            >
                               {t("purchaseGiftVoucher.sendNow")}
                             </Button>
-                            <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
+                            <Button
+                              type="button"
+                              variant={field.value === "scheduled" ? "default" : "outline"}
+                              onClick={() => field.onChange("scheduled")}
+                              className="flex-1"
+                            >
                               {t("purchaseGiftVoucher.sendOnDate")}
                             </Button>
                           </div>
@@ -660,14 +729,30 @@ export function GuestInfoStep({
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <FormControl>
-                                    <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                      {field.value ? format(field.value, "PPP") : <span>{t("purchaseGiftVoucher.pickDate")}</span>}
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(field.value, "PPP")
+                                      ) : (
+                                        <span>{t("purchaseGiftVoucher.pickDate")}</span>
+                                      )}
                                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
                                   </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} initialFocus />
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={date => date < new Date()}
+                                    initialFocus
+                                  />
                                 </PopoverContent>
                               </Popover>
                               <FormMessage />
@@ -686,8 +771,10 @@ export function GuestInfoStep({
                                   <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {timeOptions.map((time) => (
-                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  {timeOptions.map(time => (
+                                    <SelectItem key={time} value={time}>
+                                      {time}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -716,4 +803,4 @@ export function GuestInfoStep({
       </Form>
     </div>
   )
-} 
+}

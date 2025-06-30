@@ -25,13 +25,15 @@ export async function getSubscriptions(): Promise<{
       })
       .lean()
 
-    const serializedSubscriptions = subscriptions.map((sub) => ({
+    const serializedSubscriptions = subscriptions.map(sub => ({
       ...sub,
       _id: sub._id.toString(),
-      treatmentId: sub.treatmentId ? {
-        ...sub.treatmentId,
-        _id: sub.treatmentId._id.toString(),
-      } : null,
+      treatmentId: sub.treatmentId
+        ? {
+            ...sub.treatmentId,
+            _id: sub.treatmentId._id.toString(),
+          }
+        : null,
     }))
 
     return { success: true, subscriptions: serializedSubscriptions }
@@ -66,10 +68,12 @@ export async function getSubscriptionById(id: string): Promise<{
     const serializedSubscription = {
       ...subscription,
       _id: subscription._id.toString(),
-      treatmentId: subscription.treatmentId ? {
-        ...subscription.treatmentId,
-        _id: subscription.treatmentId._id.toString(),
-      } : null,
+      treatmentId: subscription.treatmentId
+        ? {
+            ...subscription.treatmentId,
+            _id: subscription.treatmentId._id.toString(),
+          }
+        : null,
     }
 
     return { success: true, subscription: serializedSubscription }
@@ -106,13 +110,13 @@ export async function createSubscription(data: {
     await subscription.save()
 
     revalidatePath("/dashboard/admin/subscriptions")
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       subscription: {
         ...subscription.toObject(),
         _id: subscription._id.toString(),
-      }
+      },
     }
   } catch (error) {
     logger.error("Error creating subscription:", error)
@@ -123,14 +127,17 @@ export async function createSubscription(data: {
 /**
  * Admin: Update subscription
  */
-export async function updateSubscription(id: string, data: Partial<{
-  name: string
-  description: string
-  treatmentId: string
-  sessionsCount: number
-  price: number
-  isActive: boolean
-}>): Promise<{
+export async function updateSubscription(
+  id: string,
+  data: Partial<{
+    name: string
+    description: string
+    treatmentId: string
+    sessionsCount: number
+    price: number
+    isActive: boolean
+  }>
+): Promise<{
   success: boolean
   subscription?: ISubscription
   error?: string
@@ -143,24 +150,23 @@ export async function updateSubscription(id: string, data: Partial<{
 
     await dbConnect()
 
-    const subscription = await Subscription.findByIdAndUpdate(
-      id,
-      data,
-      { new: true, runValidators: true }
-    )
+    const subscription = await Subscription.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    })
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
     }
 
     revalidatePath("/dashboard/admin/subscriptions")
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       subscription: {
         ...subscription.toObject(),
         _id: subscription._id.toString(),
-      }
+      },
     }
   } catch (error) {
     logger.error("Error updating subscription:", error)
@@ -190,7 +196,7 @@ export async function deleteSubscription(id: string): Promise<{
     }
 
     revalidatePath("/dashboard/admin/subscriptions")
-    
+
     return { success: true }
   } catch (error) {
     logger.error("Error deleting subscription:", error)
@@ -219,22 +225,25 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
     const serializedSubscriptions = subscriptions.map((sub: any) => ({
       ...sub,
       _id: sub._id.toString(),
-      treatmentId: sub.treatmentId ? {
-        ...sub.treatmentId,
-        _id: sub.treatmentId._id.toString(),
-        durations: sub.treatmentId.durations?.map((duration: any) => ({
-          ...duration,
-          _id: duration._id.toString(),
-        })) || [],
-      } : null,
+      treatmentId: sub.treatmentId
+        ? {
+            ...sub.treatmentId,
+            _id: sub.treatmentId._id.toString(),
+            durations:
+              sub.treatmentId.durations?.map((duration: any) => ({
+                ...duration,
+                _id: duration._id.toString(),
+              })) || [],
+          }
+        : null,
     }))
 
     return { success: true, subscriptions: serializedSubscriptions }
   } catch (error) {
-    logger.error("Error fetching active subscriptions:", { 
+    logger.error("Error fetching active subscriptions:", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     })
     return { success: false, error: "Failed to fetch subscriptions" }
   }
-} 
+}

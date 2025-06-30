@@ -154,14 +154,22 @@ export default function GiftVoucherAdminCard({
     return format(dateObj, "dd/MM/yy", { locale: he })
   }
 
-  const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
-  const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
-  const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
+  const validFromDate =
+    typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
+  const validUntilDate =
+    typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
+  const purchaseDate =
+    typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
   // Calculate usage percentage for monetary vouchers
-  const usagePercentage = voucher.voucherType === "monetary" && voucher.monetaryValue 
-    ? ((voucher.monetaryValue - (voucher.remainingAmount || voucher.monetaryValue)) / voucher.monetaryValue) * 100
-    : voucher.voucherType === "treatment" && voucher.status === "fully_used" ? 100 : 0
+  const usagePercentage =
+    voucher.voucherType === "monetary" && voucher.monetaryValue
+      ? ((voucher.monetaryValue - (voucher.remainingAmount || voucher.monetaryValue)) /
+          voucher.monetaryValue) *
+        100
+      : voucher.voucherType === "treatment" && voucher.status === "fully_used"
+        ? 100
+        : 0
 
   // Days until expiry
   const daysUntilExpiry = validUntilDate ? differenceInDays(validUntilDate, new Date()) : null
@@ -200,8 +208,12 @@ export default function GiftVoucherAdminCard({
                       </Badge>
                     )}
                   </CardTitle>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{(voucher as any).guestInfo.email}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(voucher as any).guestInfo.email}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}
+                  </p>
                 </>
               ) : (
                 <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>
@@ -220,7 +232,7 @@ export default function GiftVoucherAdminCard({
             </Badge>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4 text-sm">
           {/* Voucher Code */}
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -228,12 +240,7 @@ export default function GiftVoucherAdminCard({
               <QrCode className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <span className="font-mono font-bold text-lg">{voucher.code}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopyCode}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={handleCopyCode} className="h-8 w-8 p-0">
               <Copy className="h-3 w-3" />
             </Button>
           </div>
@@ -247,13 +254,12 @@ export default function GiftVoucherAdminCard({
                 <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               )}
               <span className="font-medium">
-                {voucher.voucherType === "monetary" 
+                {voucher.voucherType === "monetary"
                   ? `${voucher.monetaryValue?.toFixed(2)} ₪`
-                  : voucher.treatmentName || "N/A"
-                }
+                  : voucher.treatmentName || "N/A"}
               </span>
             </div>
-            
+
             {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-xs">
                 <Clock className="h-3 w-3" />
@@ -268,7 +274,8 @@ export default function GiftVoucherAdminCard({
               <div className="flex justify-between items-center text-xs">
                 <span>{t("giftVouchers.fields.remainingAmount")}</span>
                 <span className="font-medium">
-                  {(voucher.remainingAmount || voucher.monetaryValue).toFixed(2)} / {voucher.monetaryValue.toFixed(2)} ₪
+                  {(voucher.remainingAmount || voucher.monetaryValue).toFixed(2)} /{" "}
+                  {voucher.monetaryValue.toFixed(2)} ₪
                 </span>
               </div>
               <Progress value={100 - usagePercentage} className="h-2" />
@@ -284,7 +291,7 @@ export default function GiftVoucherAdminCard({
             <div className="text-right font-mono">
               {purchaseDate ? formatDate(purchaseDate) : "N/A"}
             </div>
-            
+
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
               <Calendar className="h-3 w-3" />
               <span>{t("giftVouchers.fields.validUntil")}</span>
@@ -299,10 +306,9 @@ export default function GiftVoucherAdminCard({
             <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-yellow-800 dark:text-yellow-200 text-xs">
               <AlertTriangle className="h-3 w-3" />
               <span>
-                {daysUntilExpiry === 0 
+                {daysUntilExpiry === 0
                   ? t("giftVouchers.expiringToday")
-                  : `${t("giftVouchers.expiringIn")} ${daysUntilExpiry} ימים`
-                }
+                  : `${t("giftVouchers.expiringIn")} ${daysUntilExpiry} ימים`}
               </span>
             </div>
           )}
@@ -328,12 +334,7 @@ export default function GiftVoucherAdminCard({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleEdit}
-                className="h-8 w-8 p-0"
-              >
+              <Button variant="ghost" size="sm" onClick={handleEdit} className="h-8 w-8 p-0">
                 <Edit className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -367,13 +368,13 @@ export default function GiftVoucherAdminCard({
               <AlertDialogDescription>
                 {t("giftVouchers.deleteConfirmDescription")}
                 <br />
-                <strong>{t("giftVouchers.fields.code")}: {voucher.code}</strong>
+                <strong>
+                  {t("giftVouchers.fields.code")}: {voucher.code}
+                </strong>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>
-                {t("common.cancel")}
-              </AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 disabled={isDeleting}
@@ -395,4 +396,4 @@ export default function GiftVoucherAdminCard({
       </Card>
     </TooltipProvider>
   )
-} 
+}

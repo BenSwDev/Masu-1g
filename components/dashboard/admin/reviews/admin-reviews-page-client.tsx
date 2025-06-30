@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { Suspense } from "react";
-import AdminReviewsClient from "./admin-reviews-client";
-import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
+import { Suspense } from "react"
+import AdminReviewsClient from "./admin-reviews-client"
+import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 
 /**
  * Wrapper client component for the admin reviews page
@@ -15,5 +15,5 @@ export default function AdminReviewsPageClient() {
         <AdminReviewsClient />
       </Suspense>
     </div>
-  );
+  )
 }

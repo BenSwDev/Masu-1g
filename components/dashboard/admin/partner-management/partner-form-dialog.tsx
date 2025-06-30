@@ -13,9 +13,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { PhoneInput } from "@/components/common/phone-input"
 import { useToast } from "@/components/ui/use-toast"
 import { createPartner, updatePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
@@ -40,8 +53,14 @@ interface PartnerFormDialogProps {
 const formSchema = z.object({
   name: z.string().min(2),
   email: z.string().email().optional(),
-  phone: z.preprocess(v => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().min(5).optional()),
-  password: z.preprocess(v => (typeof v === "string" && v === "" ? undefined : v), z.string().min(6).optional()),
+  phone: z.preprocess(
+    v => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().min(5).optional()
+  ),
+  password: z.preprocess(
+    v => (typeof v === "string" && v === "" ? undefined : v),
+    z.string().min(6).optional()
+  ),
   gender: z.enum(["male", "female", "other"]).default("male"),
   businessNumber: z.string().min(2),
   contactName: z.string().min(2),
@@ -49,7 +68,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, onSuccess }: PartnerFormDialogProps) {
+export default function PartnerFormDialog({
+  isOpen,
+  onOpenChange,
+  initialData,
+  onSuccess,
+}: PartnerFormDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
@@ -99,7 +123,11 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
         onSuccess()
         onOpenChange(false)
       } else {
-        toast({ title: "שגיאה", description: result.error || "שגיאה בשמירת השותף", variant: "destructive" })
+        toast({
+          title: "שגיאה",
+          description: result.error || "שגיאה בשמירת השותף",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       toast({ title: "שגיאה", description: "שגיאה בשמירת השותף", variant: "destructive" })
@@ -113,7 +141,9 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{initialData ? "עריכת שותף" : "יצירת שותף"}</DialogTitle>
-          <DialogDescription>{initialData ? "עדכון פרטי השותף" : "הוספת שותף חדש"}</DialogDescription>
+          <DialogDescription>
+            {initialData ? "עדכון פרטי השותף" : "הוספת שותף חדש"}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

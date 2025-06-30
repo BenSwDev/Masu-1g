@@ -1,9 +1,13 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { getPartnerCouponBatches, getPartnersForSelection, type GetPartnersForSelectionResult } from "./actions"
+import {
+  getPartnerCouponBatches,
+  getPartnersForSelection,
+  type GetPartnersForSelectionResult,
+} from "./actions"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 import PartnerCouponBatchesClient from "@/components/dashboard/admin/partner-coupon-batches/partner-coupon-batches-client"
 import { Heading } from "@/components/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"
@@ -24,7 +28,9 @@ interface AdminPartnerCouponBatchesPageProps {
   }
 }
 
-export default async function AdminPartnerCouponBatchesPage({ searchParams }: AdminPartnerCouponBatchesPageProps) {
+export default async function AdminPartnerCouponBatchesPage({
+  searchParams,
+}: AdminPartnerCouponBatchesPageProps) {
   const session = await requireUserSession()
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
@@ -45,9 +51,15 @@ export default async function AdminPartnerCouponBatchesPage({ searchParams }: Ad
 
   return (
     <div className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-4 sm:pt-6">
-      <Heading titleKey="adminPartnerCouponBatches.title" descriptionKey="adminPartnerCouponBatches.description" />
+      <Heading
+        titleKey="adminPartnerCouponBatches.title"
+        descriptionKey="adminPartnerCouponBatches.description"
+      />
       <Suspense fallback={<ClientAwarePartnerCouponBatchesLoadingSkeleton />}>
-        <PartnerCouponBatchesDataWrapper batchesDataPromise={batchesDataPromise} partnersPromise={partnersPromise} />
+        <PartnerCouponBatchesDataWrapper
+          batchesDataPromise={batchesDataPromise}
+          partnersPromise={partnersPromise}
+        />
       </Suspense>
     </div>
   )
@@ -64,5 +76,10 @@ async function PartnerCouponBatchesDataWrapper({
   if (!partnersResult.success) {
     throw new Error(partnersResult.error || "Failed to fetch partners")
   }
-  return <PartnerCouponBatchesClient initialData={batchesData} partnersForSelect={partnersResult.partners || []} />
-} 
+  return (
+    <PartnerCouponBatchesClient
+      initialData={batchesData}
+      partnersForSelect={partnersResult.partners || []}
+    />
+  )
+}

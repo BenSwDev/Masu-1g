@@ -5,15 +5,15 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Calendar, 
-  CreditCard, 
-  Gift, 
+import {
+  Calendar,
+  CreditCard,
+  Gift,
   Users,
   Receipt,
   TrendingUp,
   TrendingDown,
-  DollarSign
+  DollarSign,
 } from "lucide-react"
 import {
   Table,
@@ -27,7 +27,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface DailyTransactionDetail {
   id: string
-  type: 'booking' | 'voucher_new' | 'voucher_redeemed' | 'subscription_new' | 'subscription_redeemed' | 'coupon_new' | 'coupon_redeemed' | 'partner_coupon_new' | 'partner_coupon_redeemed'
+  type:
+    | "booking"
+    | "voucher_new"
+    | "voucher_redeemed"
+    | "subscription_new"
+    | "subscription_redeemed"
+    | "coupon_new"
+    | "coupon_redeemed"
+    | "partner_coupon_new"
+    | "partner_coupon_redeemed"
   time: string
   customerName?: string
   customerEmail?: string
@@ -79,32 +88,32 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
 
   // Helper function to format currency
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('he-IL', {
-      style: 'currency',
-      currency: 'ILS'
+    return new Intl.NumberFormat("he-IL", {
+      style: "currency",
+      currency: "ILS",
     }).format(amount)
   }
 
   // Helper function to format time
   const formatTime = (timeString: string): string => {
-    return new Date(timeString).toLocaleTimeString('he-IL', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(timeString).toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }
 
   // Get transaction type display name
   const getTransactionTypeLabel = (type: string): string => {
     const typeLabels: Record<string, string> = {
-      'booking': 'הזמנה',
-      'voucher_new': 'שובר חדש',
-      'voucher_redeemed': 'מימוש שובר',
-      'subscription_new': 'מנוי חדש',
-      'subscription_redeemed': 'מימוש מנוי',
-      'coupon_new': 'קופון חדש',
-      'coupon_redeemed': 'מימוש קופון',
-      'partner_coupon_new': 'קופון שותף חדש',
-      'partner_coupon_redeemed': 'מימוש קופון שותף'
+      booking: "הזמנה",
+      voucher_new: "שובר חדש",
+      voucher_redeemed: "מימוש שובר",
+      subscription_new: "מנוי חדש",
+      subscription_redeemed: "מימוש מנוי",
+      coupon_new: "קופון חדש",
+      coupon_redeemed: "מימוש קופון",
+      partner_coupon_new: "קופון שותף חדש",
+      partner_coupon_redeemed: "מימוש קופון שותף",
     }
     return typeLabels[type] || type
   }
@@ -112,44 +121,44 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
   // Get transaction type icon
   const getTransactionTypeIcon = (type: string) => {
     const iconMap: Record<string, React.ReactNode> = {
-      'booking': <Calendar className="h-4 w-4" />,
-      'voucher_new': <Gift className="h-4 w-4" />,
-      'voucher_redeemed': <Gift className="h-4 w-4" />,
-      'subscription_new': <CreditCard className="h-4 w-4" />,
-      'subscription_redeemed': <CreditCard className="h-4 w-4" />,
-      'coupon_new': <Receipt className="h-4 w-4" />,
-      'coupon_redeemed': <Receipt className="h-4 w-4" />,
-      'partner_coupon_new': <Users className="h-4 w-4" />,
-      'partner_coupon_redeemed': <Users className="h-4 w-4" />
+      booking: <Calendar className="h-4 w-4" />,
+      voucher_new: <Gift className="h-4 w-4" />,
+      voucher_redeemed: <Gift className="h-4 w-4" />,
+      subscription_new: <CreditCard className="h-4 w-4" />,
+      subscription_redeemed: <CreditCard className="h-4 w-4" />,
+      coupon_new: <Receipt className="h-4 w-4" />,
+      coupon_redeemed: <Receipt className="h-4 w-4" />,
+      partner_coupon_new: <Users className="h-4 w-4" />,
+      partner_coupon_redeemed: <Users className="h-4 w-4" />,
     }
     return iconMap[type] || <DollarSign className="h-4 w-4" />
   }
 
   // Get transaction type color
   const getTransactionTypeColor = (type: string): string => {
-    if (type.includes('_new')) return 'bg-green-100 text-green-800'
-    if (type.includes('_redeemed')) return 'bg-blue-100 text-blue-800'
-    if (type === 'booking') return 'bg-purple-100 text-purple-800'
-    return 'bg-gray-100 text-gray-800'
+    if (type.includes("_new")) return "bg-green-100 text-green-800"
+    if (type.includes("_redeemed")) return "bg-blue-100 text-blue-800"
+    if (type === "booking") return "bg-purple-100 text-purple-800"
+    return "bg-gray-100 text-gray-800"
   }
 
   // Load daily transaction data
   const loadDailyData = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await fetch(`/api/admin/transactions/daily?date=${date}`)
-      
+
       if (!response.ok) {
-        throw new Error('Failed to load daily transactions data')
+        throw new Error("Failed to load daily transactions data")
       }
-      
+
       const data = await response.json()
       setDailyData(data)
     } catch (err) {
-      setError(t('transactions.errors.dayDetailsFailed'))
-      console.error('Error loading daily transactions:', err)
+      setError(t("transactions.errors.dayDetailsFailed"))
+      console.error("Error loading daily transactions:", err)
     } finally {
       setIsLoading(false)
     }
@@ -164,7 +173,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center">{t('transactions.loadingData')}</div>
+          <div className="text-center">{t("transactions.loadingData")}</div>
         </CardContent>
       </Card>
     )
@@ -175,11 +184,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-red-600">{error}</div>
-          <Button 
-            onClick={loadDailyData} 
-            className="mt-4 mx-auto block"
-            variant="outline"
-          >
+          <Button onClick={loadDailyData} className="mt-4 mx-auto block" variant="outline">
             נסה שוב
           </Button>
         </CardContent>
@@ -191,9 +196,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-gray-500">
-            {t('transactions.noData')}
-          </div>
+          <div className="text-center text-gray-500">{t("transactions.noData")}</div>
         </CardContent>
       </Card>
     )
@@ -376,24 +379,24 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((transaction) => (
+                    {transactions.map(transaction => (
                       <TableRow key={transaction.id}>
                         <TableCell className="text-right font-medium">
                           {formatTime(transaction.time)}
                         </TableCell>
-                        
+
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2">
                             {getTransactionTypeIcon(transaction.type)}
-                            <Badge 
-                              variant="secondary" 
+                            <Badge
+                              variant="secondary"
                               className={getTransactionTypeColor(transaction.type)}
                             >
                               {getTransactionTypeLabel(transaction.type)}
                             </Badge>
                           </div>
                         </TableCell>
-                        
+
                         <TableCell className="text-right">
                           {transaction.customerName ? (
                             <div className="text-sm">
@@ -409,19 +412,21 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
-                        
+
                         <TableCell className="text-right">
                           <div className="max-w-xs truncate" title={transaction.description}>
                             {transaction.description}
                           </div>
                         </TableCell>
-                        
+
                         <TableCell className="text-center font-semibold">
-                          <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          <span
+                            className={transaction.amount >= 0 ? "text-green-600" : "text-red-600"}
+                          >
                             {formatCurrency(Math.abs(transaction.amount))}
                           </span>
                         </TableCell>
-                        
+
                         <TableCell className="text-center">
                           {transaction.professionalCost ? (
                             <span className="text-orange-600">
@@ -431,17 +436,21 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
-                        
+
                         <TableCell className="text-center">
-                          <Badge 
-                            variant={transaction.status === 'completed' ? 'default' : 'secondary'}
+                          <Badge
+                            variant={transaction.status === "completed" ? "default" : "secondary"}
                           >
-                            {transaction.status === 'completed' ? 'הושלם' : 
-                             transaction.status === 'pending' ? 'ממתין' : 
-                             transaction.status === 'failed' ? 'נכשל' : transaction.status}
+                            {transaction.status === "completed"
+                              ? "הושלם"
+                              : transaction.status === "pending"
+                                ? "ממתין"
+                                : transaction.status === "failed"
+                                  ? "נכשל"
+                                  : transaction.status}
                           </Badge>
                         </TableCell>
-                        
+
                         <TableCell className="text-right font-mono text-sm">
                           {transaction.transactionId}
                         </TableCell>
@@ -456,9 +465,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
           {transactions.length === 0 && (
             <Card>
               <CardContent className="p-6">
-                <div className="text-center text-gray-500">
-                  לא בוצעו עסקאות ביום זה
-                </div>
+                <div className="text-center text-gray-500">לא בוצעו עסקאות ביום זה</div>
               </CardContent>
             </Card>
           )}
@@ -466,4 +473,4 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
       </Tabs>
     </div>
   )
-} 
+}

@@ -2,7 +2,13 @@
 
 import * as React from "react"
 import { Check, Copy, Edit, CheckSquare, Square } from "lucide-react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -11,7 +17,10 @@ import { DataTable } from "@/components/ui/data-table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import type { ICoupon } from "@/lib/db/models/coupon"
-import { getBatchCoupons, updateCouponsInBatch } from "@/app/dashboard/(user)/(roles)/admin/partner-coupon-batches/actions"
+import {
+  getBatchCoupons,
+  updateCouponsInBatch,
+} from "@/app/dashboard/(user)/(roles)/admin/partner-coupon-batches/actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { StatusBadge } from "../coupons/coupons-columns"
@@ -96,13 +105,15 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
       const result = await updateCouponsInBatch({
         batchId: batch._id.toString(),
         couponIds: selectedCoupons,
-        updates: { isActive }
+        updates: { isActive },
       })
 
       if (result.success) {
         toast({
           title: t("common.success"),
-          description: t("adminPartnerCouponBatches.toast.bulkUpdateSuccess", { count: result.updatedCount }),
+          description: t("adminPartnerCouponBatches.toast.bulkUpdateSuccess", {
+            count: result.updatedCount,
+          }),
         })
         await loadCoupons() // Reload to see updated status
         setSelectedCoupons([])
@@ -124,60 +135,64 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
     }
   }
 
-  const columns: ColumnDef<ICoupon & { effectiveStatus: string }>[] = React.useMemo(() => [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={selectedCoupons.length === coupons.length && coupons.length > 0}
-          onCheckedChange={handleSelectAll}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedCoupons.includes(row.original._id.toString())}
-          onCheckedChange={(checked) => handleSelectCoupon(row.original._id.toString(), !!checked)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "code",
-      header: t("adminPartnerCouponBatches.couponModal.columns.code"),
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="font-mono text-xs">
-            {row.original.code}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleCopyCode(row.original.code)}
-            className="h-6 w-6 p-0"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "effectiveStatus",
-      header: t("adminPartnerCouponBatches.couponModal.columns.status"),
-      cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} t={t} dir={dir} />,
-    },
-    {
-      accessorKey: "timesUsed",
-      header: t("adminPartnerCouponBatches.couponModal.columns.usage"),
-      cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.timesUsed} / {Number(row.original.usageLimit) === 0 ? "∞" : row.original.usageLimit}
-        </span>
-      ),
-    },
-  ], [coupons, selectedCoupons, t, dir])
+  const columns: ColumnDef<ICoupon & { effectiveStatus: string }>[] = React.useMemo(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={selectedCoupons.length === coupons.length && coupons.length > 0}
+            onCheckedChange={handleSelectAll}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selectedCoupons.includes(row.original._id.toString())}
+            onCheckedChange={checked => handleSelectCoupon(row.original._id.toString(), !!checked)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: "code",
+        header: t("adminPartnerCouponBatches.couponModal.columns.code"),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="font-mono text-xs">
+              {row.original.code}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCopyCode(row.original.code)}
+              className="h-6 w-6 p-0"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "effectiveStatus",
+        header: t("adminPartnerCouponBatches.couponModal.columns.status"),
+        cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} t={t} dir={dir} />,
+      },
+      {
+        accessorKey: "timesUsed",
+        header: t("adminPartnerCouponBatches.couponModal.columns.usage"),
+        cell: ({ row }) => (
+          <span className="text-sm">
+            {row.original.timesUsed} /{" "}
+            {Number(row.original.usageLimit) === 0 ? "∞" : row.original.usageLimit}
+          </span>
+        ),
+      },
+    ],
+    [coupons, selectedCoupons, t, dir]
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,7 +200,9 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("adminPartnerCouponBatches.couponModal.title")}: {batch.name}
-            <Badge variant="secondary">{coupons.length} {t("adminPartnerCouponBatches.couponModal.totalCoupons")}</Badge>
+            <Badge variant="secondary">
+              {coupons.length} {t("adminPartnerCouponBatches.couponModal.totalCoupons")}
+            </Badge>
           </DialogTitle>
           <DialogDescription>
             {t("adminPartnerCouponBatches.couponModal.description")}
@@ -196,21 +213,31 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
           {/* Batch Info */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
             <div>
-              <p className="text-sm font-medium">{t("adminPartnerCouponBatches.couponModal.prefix")}:</p>
+              <p className="text-sm font-medium">
+                {t("adminPartnerCouponBatches.couponModal.prefix")}:
+              </p>
               <p className="text-sm text-muted-foreground">{batch.codePrefix}</p>
             </div>
             <div>
-              <p className="text-sm font-medium">{t("adminPartnerCouponBatches.couponModal.discount")}:</p>
+              <p className="text-sm font-medium">
+                {t("adminPartnerCouponBatches.couponModal.discount")}:
+              </p>
               <p className="text-sm text-muted-foreground">
-                {batch.discountType === "percentage" ? `${batch.discountValue}%` : formatCurrency(batch.discountValue)}
+                {batch.discountType === "percentage"
+                  ? `${batch.discountValue}%`
+                  : formatCurrency(batch.discountValue)}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium">{t("adminPartnerCouponBatches.couponModal.validFrom")}:</p>
+              <p className="text-sm font-medium">
+                {t("adminPartnerCouponBatches.couponModal.validFrom")}:
+              </p>
               <p className="text-sm text-muted-foreground">{formatDate(batch.validFrom)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium">{t("adminPartnerCouponBatches.couponModal.validUntil")}:</p>
+              <p className="text-sm font-medium">
+                {t("adminPartnerCouponBatches.couponModal.validUntil")}:
+              </p>
               <p className="text-sm text-muted-foreground">{formatDate(batch.validUntil)}</p>
             </div>
           </div>
@@ -219,7 +246,9 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
           {selectedCoupons.length > 0 && (
             <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <span className="text-sm font-medium">
-                {t("adminPartnerCouponBatches.couponModal.selectedCount", { count: selectedCoupons.length })}
+                {t("adminPartnerCouponBatches.couponModal.selectedCount", {
+                  count: selectedCoupons.length,
+                })}
               </span>
               <div className="flex gap-2 ml-auto">
                 <Button
@@ -267,15 +296,14 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
           {/* Footer */}
           <div className="flex justify-between items-center pt-4">
             <div className="text-sm text-muted-foreground">
-              {t("adminPartnerCouponBatches.couponModal.totalCoupons")}: {coupons.length} | {" "}
-              {t("adminPartnerCouponBatches.couponModal.activeCoupons")}: {coupons.filter(c => c.isActive).length}
+              {t("adminPartnerCouponBatches.couponModal.totalCoupons")}: {coupons.length} |{" "}
+              {t("adminPartnerCouponBatches.couponModal.activeCoupons")}:{" "}
+              {coupons.filter(c => c.isActive).length}
             </div>
-            <Button onClick={onClose}>
-              {t("common.close")}
-            </Button>
+            <Button onClick={onClose}>{t("common.close")}</Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   )
-} 
+}

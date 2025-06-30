@@ -4,8 +4,22 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CustomPagination } from "@/components/ui/pagination"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { CityFormDialog } from "./city-form-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getCities, toggleCityStatus } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
@@ -26,7 +40,12 @@ interface CityManagementProps {
   initialSearch?: string
 }
 
-export function CityManagement({ initialCities, totalPages: initialTotalPages, currentPage: initialPage, initialSearch = "" }: CityManagementProps) {
+export function CityManagement({
+  initialCities,
+  totalPages: initialTotalPages,
+  currentPage: initialPage,
+  initialSearch = "",
+}: CityManagementProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [cities, setCities] = useState(initialCities)
@@ -37,7 +56,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
   const [loading, setLoading] = useState(false)
 
   const handleToggleStatus = async (cityId: string) => {
-    const city = cities.find((c) => c.id === cityId)
+    const city = cities.find(c => c.id === cityId)
     if (!city) return
     try {
       await toggleCityStatus(cityId)
@@ -46,11 +65,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
           ? t("admin.cities.deactivateSuccess")
           : t("admin.cities.activateSuccess"),
       })
-      setCities((prev) =>
-        prev.map((c) =>
-          c.id === cityId ? { ...c, isActive: !c.isActive } : c
-        )
-      )
+      setCities(prev => prev.map(c => (c.id === cityId ? { ...c, isActive: !c.isActive } : c)))
     } catch (error) {
       toast({
         title: t("common.error"),
@@ -85,17 +100,13 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
       <div className="flex items-center justify-between gap-2">
         <Input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
           placeholder={t("admin.cities.searchPlaceholder") as string}
           className="max-w-xs"
         />
         <Button onClick={() => setOpen(true)}>{t("admin.cities.addCity")}</Button>
       </div>
-      <CityFormDialog 
-        open={open} 
-        onOpenChange={setOpen} 
-        onSuccess={() => loadCities(1, search)}
-      />
+      <CityFormDialog open={open} onOpenChange={setOpen} onSuccess={() => loadCities(1, search)} />
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
@@ -114,7 +125,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
                   </TableCell>
                 </TableRow>
               ) : (
-                cities.map((c) => (
+                cities.map(c => (
                   <TableRow key={c.id}>
                     <TableCell>{c.name}</TableCell>
                     <TableCell>
@@ -135,7 +146,33 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
         </CardContent>
       </Card>
       {pages > 1 && (
-        <CustomPagination currentPage={page} totalPages={pages} onPageChange={loadCities} isLoading={loading} />
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => page > 1 && loadCities(page - 1)}
+                className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => (
+              <PaginationItem key={pageNum}>
+                <PaginationLink
+                  onClick={() => loadCities(pageNum)}
+                  isActive={pageNum === page}
+                  className="cursor-pointer"
+                >
+                  {pageNum}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => page < pages && loadCities(page + 1)}
+                className={page >= pages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   )

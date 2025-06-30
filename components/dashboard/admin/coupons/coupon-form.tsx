@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, Loader2 } from "lucide-react"
@@ -31,12 +37,15 @@ const formSchema = z
     validFrom: z.date({ required_error: "Start date is required." }),
     validUntil: z.date({ required_error: "Expiration date is required." }),
     usageLimit: z.coerce.number().min(0, "Usage limit must be non-negative").default(1),
-    usageLimitPerUser: z.coerce.number().min(0, "Usage limit per user must be non-negative").default(1),
+    usageLimitPerUser: z.coerce
+      .number()
+      .min(0, "Usage limit per user must be non-negative")
+      .default(1),
     isActive: z.boolean().default(true),
     assignedPartnerId: z.string().optional().nullable(),
     notesForPartner: z.string().optional(),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],
   })
@@ -51,7 +60,13 @@ interface CouponFormProps {
   loading: boolean
 }
 
-export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel, loading }: CouponFormProps) {
+export function CouponForm({
+  initialData,
+  partnersForSelect,
+  onSubmit,
+  onCancel,
+  loading,
+}: CouponFormProps) {
   const { t, dir } = useTranslation()
 
   const defaultValues = React.useMemo(
@@ -70,7 +85,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       assignedPartnerId: initialData?.assignedPartnerId?.toString() || null,
       notesForPartner: initialData?.notesForPartner || "",
     }),
-    [initialData],
+    [initialData]
   )
 
   const form = useForm<CouponFormValues>({
@@ -82,7 +97,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
     form.reset(defaultValues) // Reset form when initialData changes
   }, [defaultValues, form])
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit(async data => {
     await onSubmit(data)
   })
 
@@ -111,20 +126,32 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                   <SelectValue placeholder={t("adminCoupons.form.discountTypePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">{t("adminCoupons.form.discountTypePercentage")}</SelectItem>
-                  <SelectItem value="fixedAmount">{t("adminCoupons.form.discountTypeFixedAmount")}</SelectItem>
+                  <SelectItem value="percentage">
+                    {t("adminCoupons.form.discountTypePercentage")}
+                  </SelectItem>
+                  <SelectItem value="fixedAmount">
+                    {t("adminCoupons.form.discountTypeFixedAmount")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
           {form.formState.errors.discountType && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountType.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.discountType.message}
+            </p>
           )}
         </div>
 
         <div>
           <Label htmlFor="discountValue">{t("adminCoupons.form.discountValueLabel")}</Label>
-          <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
+          <Input
+            id="discountValue"
+            type="number"
+            step="0.01"
+            {...form.register("discountValue")}
+            disabled={loading}
+          />
           {form.formState.errors.discountValue && (
             <p className="text-sm text-red-500 mt-1">
               {form.formState.errors.discountValue.message === "Discount value must be non-negative"
@@ -151,7 +178,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !field.value && "text-muted-foreground",
+                      !field.value && "text-muted-foreground"
                     )}
                     disabled={loading}
                   >
@@ -160,7 +187,12 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align={dir === "rtl" ? "end" : "start"}>
-                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             )}
@@ -185,7 +217,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !field.value && "text-muted-foreground",
+                      !field.value && "text-muted-foreground"
                     )}
                     disabled={loading}
                   >
@@ -198,7 +230,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date) => date < (form.getValues("validFrom") || new Date(0))} // Disable dates before validFrom
+                    disabled={date => date < (form.getValues("validFrom") || new Date(0))} // Disable dates before validFrom
                     initialFocus
                   />
                 </PopoverContent>
@@ -209,7 +241,8 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             <p className="text-sm text-red-500 mt-1">
               {form.formState.errors.validUntil.message === "Expiration date is required."
                 ? t("adminCoupons.form.validUntilError")
-                : form.formState.errors.validUntil.message === "Expiration date must be after or same as start date"
+                : form.formState.errors.validUntil.message ===
+                    "Expiration date must be after or same as start date"
                   ? t("adminCoupons.form.validUntilAfterValidFromError")
                   : form.formState.errors.validUntil.message}
             </p>
@@ -218,7 +251,12 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
 
         <div>
           <Label htmlFor="usageLimit">{t("adminCoupons.form.usageLimitLabel")}</Label>
-          <Input id="usageLimit" type="number" {...form.register("usageLimit")} disabled={loading} />
+          <Input
+            id="usageLimit"
+            type="number"
+            {...form.register("usageLimit")}
+            disabled={loading}
+          />
           {form.formState.errors.usageLimit && (
             <p className="text-sm text-red-500 mt-1">
               {form.formState.errors.usageLimit.message === "Usage limit must be non-negative"
@@ -229,10 +267,16 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
         </div>
         <div>
           <Label htmlFor="usageLimitPerUser">{t("adminCoupons.form.usageLimitPerUserLabel")}</Label>
-          <Input id="usageLimitPerUser" type="number" {...form.register("usageLimitPerUser")} disabled={loading} />
+          <Input
+            id="usageLimitPerUser"
+            type="number"
+            {...form.register("usageLimitPerUser")}
+            disabled={loading}
+          />
           {form.formState.errors.usageLimitPerUser && (
             <p className="text-sm text-red-500 mt-1">
-              {form.formState.errors.usageLimitPerUser.message === "Usage limit per user must be non-negative"
+              {form.formState.errors.usageLimitPerUser.message ===
+              "Usage limit per user must be non-negative"
                 ? t("adminCoupons.form.usageLimitPerUserErrorMin")
                 : form.formState.errors.usageLimitPerUser.message}
             </p>
@@ -246,11 +290,13 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             control={form.control}
             render={({ field }) => (
               <Select
-                onValueChange={(value) => {
+                onValueChange={value => {
                   field.onChange(value === NO_PARTNER_SELECTED_VALUE ? null : value)
                 }}
                 value={
-                  field.value === null || field.value === undefined ? NO_PARTNER_SELECTED_VALUE : field.value.toString()
+                  field.value === null || field.value === undefined
+                    ? NO_PARTNER_SELECTED_VALUE
+                    : field.value.toString()
                 }
                 disabled={loading || partnersForSelect.length === 0}
               >
@@ -259,7 +305,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
-                  {partnersForSelect.map((partner) => (
+                  {partnersForSelect.map(partner => (
                     <SelectItem key={partner.value} value={partner.value}>
                       {partner.label}
                     </SelectItem>
@@ -280,7 +326,12 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             name="isActive"
             control={form.control}
             render={({ field }) => (
-              <Checkbox id="isActive" checked={field.value} onCheckedChange={field.onChange} disabled={loading} />
+              <Checkbox
+                id="isActive"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={loading}
+              />
             )}
           />
           <Label
@@ -301,7 +352,11 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
           </Button>
           <Button type="submit" disabled={loading}>
             {loading && (
-              <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />
+              <Loader2
+                className={
+                  dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"
+                }
+              />
             )}
             {initialData ? t("adminCoupons.form.saveChanges") : t("adminCoupons.form.createCoupon")}
           </Button>

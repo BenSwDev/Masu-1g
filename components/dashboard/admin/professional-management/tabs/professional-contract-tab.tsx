@@ -14,7 +14,7 @@ interface ProfessionalContractTabProps {
 
 export default function ProfessionalContractTab({
   professional,
-  onUpdate
+  onUpdate,
 }: ProfessionalContractTabProps) {
   const { t, dir } = useTranslation()
 
@@ -26,18 +26,14 @@ export default function ProfessionalContractTab({
             <ScrollText className="h-5 w-5" />
             הסכם מטפל
           </h3>
-          <p className="text-sm text-muted-foreground">
-            ניהול הסכם העבודה עם המטפל
-          </p>
+          <p className="text-sm text-muted-foreground">ניהול הסכם העבודה עם המטפל</p>
         </div>
       </div>
 
       {/* Development Status */}
       <Alert>
         <Clock className="h-4 w-4" />
-        <AlertDescription className="text-center text-lg font-medium">
-          בטיפול
-        </AlertDescription>
+        <AlertDescription className="text-center text-lg font-medium">בטיפול</AlertDescription>
       </Alert>
 
       {/* Placeholder Content */}
@@ -104,16 +100,18 @@ export default function ProfessionalContractTab({
         <CardContent>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">שם המטפל:</span> {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
+              <span className="font-medium">שם המטפל:</span>{" "}
+              {typeof professional.userId === "object" ? professional.userId.name : "לא זמין"}
             </p>
-            {typeof professional.userId === 'object' && professional.userId.email && (
+            {typeof professional.userId === "object" && professional.userId.email && (
               <p>
                 <span className="font-medium">אימייל:</span> {professional.userId.email}
               </p>
             )}
-            {typeof professional.userId === 'object' && professional.userId.phone && (
+            {typeof professional.userId === "object" && professional.userId.phone && (
               <p>
-                <span className="font-medium">טלפון:</span> {formatPhoneForDisplay(professional.userId.phone || "")}
+                <span className="font-medium">טלפון:</span>{" "}
+                {formatPhoneForDisplay(professional.userId.phone || "")}
               </p>
             )}
             <p>
@@ -122,16 +120,24 @@ export default function ProfessionalContractTab({
             </p>
             <p>
               <span className="font-medium">סטטוס:</span>{" "}
-              <span className={`${
-                professional.status === "active" ? "text-green-600" :
-                professional.status === "pending_admin_approval" ? "text-orange-600" :
-                "text-red-600"
-              }`}>
-                {professional.status === "active" ? "פעיל" :
-                 professional.status === "pending_admin_approval" ? "ממתין לאישור" :
-                 professional.status === "rejected" ? "נדחה" :
-                 professional.status === "suspended" ? "מושהה" :
-                 "ממתין למשתמש"}
+              <span
+                className={`${
+                  professional.status === "active"
+                    ? "text-green-600"
+                    : professional.status === "pending_admin_approval"
+                      ? "text-orange-600"
+                      : "text-red-600"
+                }`}
+              >
+                {professional.status === "active"
+                  ? "פעיל"
+                  : professional.status === "pending_admin_approval"
+                    ? "ממתין לאישור"
+                    : professional.status === "rejected"
+                      ? "נדחה"
+                      : professional.status === "suspended"
+                        ? "מושהה"
+                        : "ממתין למשתמש"}
               </span>
             </p>
           </div>
@@ -139,4 +145,4 @@ export default function ProfessionalContractTab({
       </Card>
     </div>
   )
-} 
+}

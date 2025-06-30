@@ -83,7 +83,9 @@ export interface GetReviewStatisticsResult {
  * @param options Filtering, sorting, and pagination options
  * @returns GetAllReviewsResult
  */
-export async function getAllReviews(options: GetAllReviewsOptions = {}): Promise<GetAllReviewsResult> {
+export async function getAllReviews(
+  options: GetAllReviewsOptions = {}
+): Promise<GetAllReviewsResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
@@ -118,7 +120,7 @@ export async function getAllReviews(options: GetAllReviewsOptions = {}): Promise
         query.$or = [
           { professionalResponse: { $exists: false } },
           { professionalResponse: null },
-          { professionalResponse: "" }
+          { professionalResponse: "" },
         ]
       }
     }
@@ -135,7 +137,7 @@ export async function getAllReviews(options: GetAllReviewsOptions = {}): Promise
     if (search) {
       query.$or = [
         { comment: { $regex: search, $options: "i" } },
-        { professionalResponse: { $regex: search, $options: "i" } }
+        { professionalResponse: { $regex: search, $options: "i" } },
       ]
     }
 
@@ -242,7 +244,9 @@ export async function updateReviewResponse(
  * @param reviewId Review ID
  * @returns UpdateProfessionalResponseResult
  */
-export async function deleteProfessionalResponse(reviewId: string): Promise<UpdateProfessionalResponseResult> {
+export async function deleteProfessionalResponse(
+  reviewId: string
+): Promise<UpdateProfessionalResponseResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
@@ -310,33 +314,27 @@ export async function getReviewStatistics(): Promise<GetReviewStatisticsResult> 
 
     await dbConnect()
 
-    const [
-      totalReviews,
-      averageRatingResult,
-      ratingDistribution,
-      reviewsWithResponse,
-    ] = await Promise.all([
-      Review.countDocuments(),
-      Review.aggregate([
-        { $group: { _id: null, average: { $avg: "$rating" } } }
-      ]),
-      Review.aggregate([
-        { $group: { _id: "$rating", count: { $sum: 1 } } },
-        { $sort: { _id: 1 } }
-      ]),
-      Review.countDocuments({
-        professionalResponse: { $exists: true, $ne: null, $ne: "" }
-      }),
-    ])
+    const [totalReviews, averageRatingResult, ratingDistribution, reviewsWithResponse] =
+      await Promise.all([
+        Review.countDocuments(),
+        Review.aggregate([{ $group: { _id: null, average: { $avg: "$rating" } } }]),
+        Review.aggregate([
+          { $group: { _id: "$rating", count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+        ]),
+        Review.countDocuments({
+          professionalResponse: { $exists: true, $ne: null, $ne: "" },
+        }),
+      ])
 
     const averageRating = averageRatingResult[0]?.average || 0
     const ratingDist: { [key: number]: number } = {}
-    
+
     // Initialize all ratings to 0
     for (let i = 1; i <= 5; i++) {
       ratingDist[i] = 0
     }
-    
+
     // Fill in actual counts
     ratingDistribution.forEach((item: any) => {
       ratingDist[item._id] = item.count
@@ -379,14 +377,8 @@ export async function getReviewFilters(): Promise<{
     await dbConnect()
 
     const [professionals, treatments] = await Promise.all([
-      User.find({ roles: "professional" })
-        .select("name email")
-        .sort({ name: 1 })
-        .lean(),
-      Treatment.find({ isActive: true })
-        .select("name")
-        .sort({ name: 1 })
-        .lean(),
+      User.find({ roles: "professional" }).select("name email").sort({ name: 1 }).lean(),
+      Treatment.find({ isActive: true }).select("name").sort({ name: 1 }).lean(),
     ])
 
     return {
@@ -406,4 +398,4 @@ export async function getReviewFilters(): Promise<{
     logger.error("Error fetching review filters:", error)
     return { success: false, error: "Failed to fetch filter options" }
   }
-} 
+}

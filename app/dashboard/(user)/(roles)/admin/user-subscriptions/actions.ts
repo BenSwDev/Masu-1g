@@ -13,18 +13,21 @@ import PaymentMethod from "@/lib/db/models/payment-method"
 import mongoose from "mongoose"
 
 // Helper functions to check roles
-const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean => !!user?.roles?.includes("admin")
+const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean =>
+  !!user?.roles?.includes("admin")
 
 // Helper function to generate unique subscription code
 async function generateUniqueSubscriptionCode(): Promise<string> {
   await connectDB()
   for (let attempt = 0; attempt < 5; attempt++) {
     // Generate SB + 6 random alphanumeric characters
-    const code = 'SB' + Array.from({ length: 6 }, () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-      return chars.charAt(Math.floor(Math.random() * chars.length))
-    }).join('')
-    
+    const code =
+      "SB" +
+      Array.from({ length: 6 }, () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        return chars.charAt(Math.floor(Math.random() * chars.length))
+      }).join("")
+
     const exists = await UserSubscription.exists({ code })
     if (!exists) return code
   }
@@ -70,7 +73,7 @@ export interface GetAllUserSubscriptionsResult {
  * @returns GetAllUserSubscriptionsResult
  */
 export async function getAllUserSubscriptions(
-  options: GetAllUserSubscriptionsOptions = {},
+  options: GetAllUserSubscriptionsOptions = {}
 ): Promise<GetAllUserSubscriptionsResult> {
   const session = await getServerSession(authOptions)
   if (!session || !isAdminUser(session.user)) {
@@ -88,19 +91,19 @@ export async function getAllUserSubscriptions(
     if (subscriptionId) query.subscriptionId = subscriptionId
     if (treatmentId) query.treatmentId = treatmentId
     if (status) query.status = status
-    
+
     // Fix search to work for both users and guests
     if (search) {
-      const searchRegex = new RegExp(search, 'i')
-      
+      const searchRegex = new RegExp(search, "i")
+
       // For searching, we need to use aggregate pipeline because we need to search in both populated fields and guest info
       // However, for simplicity, we'll handle this in the client-side filtering or use a simpler approach
       // We'll search in both guest info and subscription/treatment names
       query.$or = [
         // Search in guest info for guest subscriptions
-        { 'guestInfo.name': searchRegex },
-        { 'guestInfo.email': searchRegex },
-        { 'guestInfo.phone': searchRegex },
+        { "guestInfo.name": searchRegex },
+        { "guestInfo.email": searchRegex },
+        { "guestInfo.phone": searchRegex },
       ]
     }
 
@@ -109,40 +112,40 @@ export async function getAllUserSubscriptions(
 
     if (search) {
       // Use aggregation pipeline for complex search across populated fields and guest info
-      const searchRegex = new RegExp(search, 'i')
-      
+      const searchRegex = new RegExp(search, "i")
+
       const pipeline: any[] = [
         {
           $lookup: {
             from: "users",
             localField: "userId",
             foreignField: "_id",
-            as: "user"
-          }
+            as: "user",
+          },
         },
         {
           $lookup: {
             from: "subscriptions",
             localField: "subscriptionId",
             foreignField: "_id",
-            as: "subscription"
-          }
+            as: "subscription",
+          },
         },
         {
           $lookup: {
             from: "treatments",
             localField: "treatmentId",
             foreignField: "_id",
-            as: "treatment"
-          }
+            as: "treatment",
+          },
         },
         {
           $lookup: {
             from: "paymentmethods",
             localField: "paymentMethodId",
             foreignField: "_id",
-            as: "paymentMethod"
-          }
+            as: "paymentMethod",
+          },
         },
         {
           $match: {
@@ -154,22 +157,22 @@ export async function getAllUserSubscriptions(
               { "guestInfo.email": searchRegex },
               { "guestInfo.phone": searchRegex },
               { "subscription.name": searchRegex },
-              { "treatment.name": searchRegex }
-            ]
-          }
+              { "treatment.name": searchRegex },
+            ],
+          },
         },
         {
           $addFields: {
             userId: { $arrayElemAt: ["$user", 0] },
             subscriptionId: { $arrayElemAt: ["$subscription", 0] },
             treatmentId: { $arrayElemAt: ["$treatment", 0] },
-            paymentMethodId: { $arrayElemAt: ["$paymentMethod", 0] }
-          }
+            paymentMethodId: { $arrayElemAt: ["$paymentMethod", 0] },
+          },
         },
         {
-          $unset: ["user", "subscription", "treatment", "paymentMethod"]
+          $unset: ["user", "subscription", "treatment", "paymentMethod"],
         },
-        { $sort: { purchaseDate: -1 } }
+        { $sort: { purchaseDate: -1 } },
       ]
 
       // Get total count
@@ -183,7 +186,7 @@ export async function getAllUserSubscriptions(
     } else {
       // Use regular query when no search term
       total = await UserSubscription.countDocuments(query)
-      
+
       userSubscriptions = await UserSubscription.find(query)
         .populate("userId", "name email phone")
         .populate("subscriptionId")
@@ -206,7 +209,7 @@ export async function getAllUserSubscriptions(
         const treatmentDoc = sub.treatmentId
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
-            (d: any) => d._id.toString() === sub.selectedDurationId.toString(),
+            (d: any) => d._id.toString() === sub.selectedDurationId.toString()
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -242,7 +245,9 @@ export interface CreateUserSubscriptionResult {
 /**
  * Creates a new user subscription (admin only)
  */
-export async function createUserSubscription(formData: FormData): Promise<CreateUserSubscriptionResult> {
+export async function createUserSubscription(
+  formData: FormData
+): Promise<CreateUserSubscriptionResult> {
   const session = await getServerSession(authOptions)
   if (!session || !isAdminUser(session.user)) {
     return { success: false, error: "Unauthorized" }
@@ -281,7 +286,7 @@ export async function createUserSubscription(formData: FormData): Promise<Create
     const [user, subscription, treatment] = await Promise.all([
       User.findById(userId),
       Subscription.findById(subscriptionId),
-      Treatment.findById(treatmentId)
+      Treatment.findById(treatmentId),
     ])
 
     if (!user) return { success: false, error: "User not found" }
@@ -297,22 +302,24 @@ export async function createUserSubscription(formData: FormData): Promise<Create
       userId: new mongoose.Types.ObjectId(userId),
       subscriptionId: new mongoose.Types.ObjectId(subscriptionId),
       treatmentId: new mongoose.Types.ObjectId(treatmentId),
-      selectedDurationId: selectedDurationId ? new mongoose.Types.ObjectId(selectedDurationId) : undefined,
+      selectedDurationId: selectedDurationId
+        ? new mongoose.Types.ObjectId(selectedDurationId)
+        : undefined,
       totalQuantity: remainingQuantity,
       remainingQuantity,
       expiryDate,
       status: "active",
       purchaseDate: new Date(),
       paymentAmount: 0, // Admin created, no payment
-      isGuestSubscription: false
+      isGuestSubscription: false,
     })
 
     await userSubscription.save()
 
     revalidatePath("/dashboard/admin/user-subscriptions")
-    return { 
-      success: true, 
-      userSubscription: JSON.parse(JSON.stringify(userSubscription))
+    return {
+      success: true,
+      userSubscription: JSON.parse(JSON.stringify(userSubscription)),
     }
   } catch (error) {
     logger.error("Error creating user subscription", error)
@@ -328,7 +335,10 @@ export interface UpdateUserSubscriptionResult {
 /**
  * Updates a user subscription (admin only)
  */
-export async function updateUserSubscription(id: string, formData: FormData): Promise<UpdateUserSubscriptionResult> {
+export async function updateUserSubscription(
+  id: string,
+  formData: FormData
+): Promise<UpdateUserSubscriptionResult> {
   const session = await getServerSession(authOptions)
   if (!session || !isAdminUser(session.user)) {
     return { success: false, error: "Unauthorized" }
@@ -353,7 +363,7 @@ export async function updateUserSubscription(id: string, formData: FormData): Pr
     const updated = await UserSubscription.findByIdAndUpdate(
       id,
       { remainingQuantity, expiryDate },
-      { new: true },
+      { new: true }
     )
 
     if (!updated) {

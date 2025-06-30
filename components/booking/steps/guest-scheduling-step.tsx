@@ -24,29 +24,31 @@ interface GuestSchedulingStepProps {
 }
 
 // Memoized time slot button component for better performance
-const TimeSlotButton = memo(({ 
-  slot, 
-  isSelected, 
-  onSelect 
-}: { 
-  slot: TimeSlot
-  isSelected: boolean
-  onSelect: (time: string) => void
-}) => (
-  <Button
-    variant={isSelected ? "default" : "outline"}
-    size="sm"
-    onClick={() => onSelect(slot.time)}
-    className="text-xs flex flex-col items-center py-2 min-h-[60px]"
-  >
-    <span>{slot.time}</span>
-    {slot.surcharge && (
-      <span className="text-orange-600 text-[10px] font-medium mt-1">
-        +{slot.surcharge.amount.toFixed(2)} ₪
-      </span>
-    )}
-  </Button>
-))
+const TimeSlotButton = memo(
+  ({
+    slot,
+    isSelected,
+    onSelect,
+  }: {
+    slot: TimeSlot
+    isSelected: boolean
+    onSelect: (time: string) => void
+  }) => (
+    <Button
+      variant={isSelected ? "default" : "outline"}
+      size="sm"
+      onClick={() => onSelect(slot.time)}
+      className="text-xs flex flex-col items-center py-2 min-h-[60px]"
+    >
+      <span>{slot.time}</span>
+      {slot.surcharge && (
+        <span className="text-orange-600 text-[10px] font-medium mt-1">
+          +{slot.surcharge.amount.toFixed(2)} ₪
+        </span>
+      )}
+    </Button>
+  )
+)
 
 TimeSlotButton.displayName = "TimeSlotButton"
 
@@ -64,13 +66,15 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
 
   const selectedTreatment = useMemo(() => {
     return (initialData?.activeTreatments || []).find(
-      (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+      t => t._id.toString() === bookingOptions.selectedTreatmentId
     )
   }, [initialData?.activeTreatments, bookingOptions.selectedTreatmentId])
 
   const selectedDuration = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
-      return selectedTreatment.durations.find((d: any) => d._id.toString() === bookingOptions.selectedDurationId)
+      return selectedTreatment.durations.find(
+        (d: any) => d._id.toString() === bookingOptions.selectedDurationId
+      )
     }
     return null
   }, [selectedTreatment, bookingOptions.selectedDurationId])
@@ -85,30 +89,39 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     return bookingOptions.bookingDate && bookingOptions.bookingTime
   }, [bookingOptions.bookingDate, bookingOptions.bookingTime])
 
-  const handleDateSelect = useCallback((date: Date | undefined) => {
-    if (date) {
-      setBookingOptions((prev) => ({
+  const handleDateSelect = useCallback(
+    (date: Date | undefined) => {
+      if (date) {
+        setBookingOptions(prev => ({
+          ...prev,
+          bookingDate: date.toISOString(),
+          bookingTime: undefined, // Reset time when date changes
+        }))
+      }
+    },
+    [setBookingOptions]
+  )
+
+  const handleTimeSelect = useCallback(
+    (time: string) => {
+      setBookingOptions(prev => ({
         ...prev,
-        bookingDate: date.toISOString(),
-        bookingTime: undefined, // Reset time when date changes
+        bookingTime: time,
       }))
-    }
-  }, [setBookingOptions])
+    },
+    [setBookingOptions]
+  )
 
-  const handleTimeSelect = useCallback((time: string) => {
-    setBookingOptions((prev) => ({
-      ...prev,
-      bookingTime: time,
-    }))
-  }, [setBookingOptions])
-
-  const formatDateString = useCallback((date: Date) => {
-    return format(date, "EEEE, d MMMM yyyy", { locale: language === "he" ? he : undefined })
-  }, [language])
+  const formatDateString = useCallback(
+    (date: Date) => {
+      return format(date, "EEEE, d MMMM yyyy", { locale: language === "he" ? he : undefined })
+    },
+    [language]
+  )
 
   const getTreatmentDurationText = useMemo(() => {
     if (selectedTreatment?.pricingType === "fixed") {
-      return selectedTreatment.defaultDuration 
+      return selectedTreatment.defaultDuration
         ? `${selectedTreatment.defaultDuration} ${t("common.minutes")}`
         : t("treatments.standardDuration")
     }
@@ -133,13 +146,14 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
 
   // Calculate base price and surcharge
   const priceCalculation = useMemo(() => {
-    const basePrice = selectedTreatment?.pricingType === "fixed"
-      ? selectedTreatment.fixedPrice || 0
-      : selectedDuration?.price || 0
+    const basePrice =
+      selectedTreatment?.pricingType === "fixed"
+        ? selectedTreatment.fixedPrice || 0
+        : selectedDuration?.price || 0
     const surchargeAmount = selectedTimeSlot?.surcharge?.amount || 0
     const surchargeReason = selectedTimeSlot?.surcharge?.description || ""
     const finalPrice = basePrice + surchargeAmount
-    
+
     return { basePrice, surchargeAmount, surchargeReason, finalPrice }
   }, [selectedTreatment, selectedDuration, selectedTimeSlot])
 
@@ -158,7 +172,9 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <CalendarIcon className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.scheduling.title")}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {t("bookings.steps.scheduling.title")}
+        </h2>
         <p className="text-muted-foreground mt-2">{t("bookings.steps.scheduling.description")}</p>
       </div>
 
@@ -180,9 +196,12 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
             <div className="flex justify-between">
               <span className="font-medium">{t("bookings.therapistPreference")}:</span>
               <span>
-                {bookingOptions.therapistGenderPreference === "any" && t("bookings.genderPreference.any")}
-                {bookingOptions.therapistGenderPreference === "male" && t("bookings.genderPreference.male")}
-                {bookingOptions.therapistGenderPreference === "female" && t("bookings.genderPreference.female")}
+                {bookingOptions.therapistGenderPreference === "any" &&
+                  t("bookings.genderPreference.any")}
+                {bookingOptions.therapistGenderPreference === "male" &&
+                  t("bookings.genderPreference.male")}
+                {bookingOptions.therapistGenderPreference === "female" &&
+                  t("bookings.genderPreference.female")}
               </span>
             </div>
           </div>
@@ -203,7 +222,11 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
             <Calendar
               mode="single"
               selected={bookingDateObj}
-              onSelect={(date) => handleDateSelect(Array.isArray(date) ? date[0] : (date && 'from' in date ? date.from : date))}
+              onSelect={date =>
+                handleDateSelect(
+                  Array.isArray(date) ? date[0] : date && "from" in date ? date.from : date
+                )
+              }
               disabled={isDateDisabled}
               className="rounded-md border"
             />
@@ -218,10 +241,11 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
               {t("bookings.selectTime")}
             </CardTitle>
             <CardDescription>
-              {bookingOptions.bookingDate 
-                ? t("bookings.availableTimesFor") + ' ' + formatDateString(new Date(bookingOptions.bookingDate as string))
-                : t("bookings.selectDateFirst")
-              }
+              {bookingOptions.bookingDate
+                ? t("bookings.availableTimesFor") +
+                  " " +
+                  formatDateString(new Date(bookingOptions.bookingDate as string))
+                : t("bookings.selectDateFirst")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -244,9 +268,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
               <div className="text-center text-muted-foreground py-8">
                 <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>{t("bookings.noAvailableTimes")}</p>
-                {workingHoursNote && (
-                  <p className="text-sm mt-2">{workingHoursNote}</p>
-                )}
+                {workingHoursNote && <p className="text-sm mt-2">{workingHoursNote}</p>}
               </div>
             ) : (
               <div className="space-y-4">
@@ -257,14 +279,14 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                   </h4>
                   <div className="max-h-80 overflow-y-auto border rounded-lg p-3">
                     <div className="grid grid-cols-3 gap-2">
-                    {availableTimeSlots.map((slot) => (
-                      <TimeSlotButton
-                        key={slot.time}
-                        slot={slot}
-                        isSelected={bookingOptions.bookingTime === slot.time}
-                        onSelect={handleTimeSelect}
-                      />
-                    ))}
+                      {availableTimeSlots.map(slot => (
+                        <TimeSlotButton
+                          key={slot.time}
+                          slot={slot}
+                          isSelected={bookingOptions.bookingTime === slot.time}
+                          onSelect={handleTimeSelect}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -277,17 +299,17 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                     </h4>
                     <div className="max-h-40 overflow-y-auto border rounded-lg p-3">
                       <div className="grid grid-cols-3 gap-2">
-                      {unavailableTimeSlots.map((slot) => (
-                        <Button
-                          key={slot.time}
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          className="text-xs opacity-50"
-                        >
-                          {slot.time}
-                        </Button>
-                      ))}
+                        {unavailableTimeSlots.map(slot => (
+                          <Button
+                            key={slot.time}
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="text-xs opacity-50"
+                          >
+                            {slot.time}
+                          </Button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -307,22 +329,28 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                     <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
                       <span>תוספת מחיר:</span>
-                      <span className="font-bold">{priceCalculation.surchargeReason || "תוספת זמן מיוחד"}</span>
+                      <span className="font-bold">
+                        {priceCalculation.surchargeReason || "תוספת זמן מיוחד"}
+                      </span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                      <span>מחיר בסיס:</span>
-                      <span>{priceCalculation.basePrice.toFixed(2)} ₪</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>תוספת:</span>
-                      <span className="text-orange-700">+{priceCalculation.surchargeAmount.toFixed(2)} ₪</span>
-                    </div>
-                    <hr className="my-2 border-orange-300" />
-                    <div className="flex justify-between font-bold text-base mt-2">
-                      <span>סך הכל:</span>
-                      <span className="text-primary">{priceCalculation.finalPrice.toFixed(2)} ₪</span>
-                    </div>
+                        <span>מחיר בסיס:</span>
+                        <span>{priceCalculation.basePrice.toFixed(2)} ₪</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>תוספת:</span>
+                        <span className="text-orange-700">
+                          +{priceCalculation.surchargeAmount.toFixed(2)} ₪
+                        </span>
+                      </div>
+                      <hr className="my-2 border-orange-300" />
+                      <div className="flex justify-between font-bold text-base mt-2">
+                        <span>סך הכל:</span>
+                        <span className="text-primary">
+                          {priceCalculation.finalPrice.toFixed(2)} ₪
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -343,4 +371,4 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
       </div>
     </div>
   )
-}) 
+})

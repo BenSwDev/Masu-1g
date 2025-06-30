@@ -4,7 +4,7 @@ import { TreatmentsClient } from "@/components/dashboard/admin/treatments/treatm
 import { requireUserSession } from "@/lib/auth/require-session"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Admin - Treatments",

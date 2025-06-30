@@ -4,7 +4,7 @@ async function initIndexes() {
   try {
     // Drop indexes and references to bundles
     // Get a list of all collections
-    const collections = await mongoose.connection.db?.listCollections().toArray() || []
+    const collections = (await mongoose.connection.db?.listCollections().toArray()) || []
 
     for (const collectionInfo of collections) {
       const collectionName = collectionInfo.name
@@ -13,7 +13,6 @@ async function initIndexes() {
       try {
         // Get existing indexes
         const indexes = await collection.indexes()
-
       } catch (indexError) {
         console.error(`Error getting indexes for collection ${collectionName}:`, indexError)
       }
@@ -25,7 +24,7 @@ async function initIndexes() {
       { isActive: 1 },
       { createdAt: -1 },
       { treatments: 1 },
-      { name: "text", description: "text" }
+      { name: "text", description: "text" },
     ] as const
 
     // Create Subscription indexes

@@ -1,4 +1,11 @@
-import type { ProfessionalStatus, ITreatmentPricing, IWorkArea, IBankDetails, IProfessionalDocument, IFinancialTransaction } from "@/lib/db/models/professional-profile"
+import type {
+  ProfessionalStatus,
+  ITreatmentPricing,
+  IWorkArea,
+  IBankDetails,
+  IProfessionalDocument,
+  IFinancialTransaction,
+} from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 
 // Professional interface for frontend use - matches the database model exactly
@@ -7,14 +14,14 @@ export interface Professional {
   userId: IUser | string // Allow flexibility for updates
   status: ProfessionalStatus
   isActive: boolean
-  
+
   // Professional details
   specialization?: string
   experience?: string
   certifications?: string[]
   bio?: string
   profileImage?: string
-  
+
   // Treatments and pricing
   treatments: Array<{
     treatmentId: string
@@ -22,7 +29,7 @@ export interface Professional {
     professionalPrice: number
     treatmentName?: string // Added for frontend display
   }>
-  
+
   // Work areas
   workAreas: Array<{
     cityId: string
@@ -30,7 +37,7 @@ export interface Professional {
     distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
     coveredCities: string[]
   }>
-  
+
   // Financial tracking
   totalEarnings: number
   pendingPayments: number
@@ -43,7 +50,7 @@ export interface Professional {
     adminUserId?: string
     adminNote?: string
   }>
-  
+
   // Bank details and documents
   bankDetails?: {
     bankName: string
@@ -61,11 +68,11 @@ export interface Professional {
     rejectionReason?: string
     fileUrl?: string
   }>
-  
+
   // Admin notes
   adminNotes?: string
   rejectionReason?: string
-  
+
   // Timestamps
   appliedAt: Date
   approvedAt?: Date
@@ -139,4 +146,4 @@ export interface ProfessionalTabProps {
   loading?: boolean
   isCreatingNew?: boolean
   onCreated?: (professional: Professional) => void
-} 
+}

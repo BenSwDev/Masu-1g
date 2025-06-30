@@ -9,26 +9,17 @@ import { sendManualProfessionalNotifications } from "@/actions/unified-professio
  * POST /api/admin/bookings/[bookingId]/notify-professionals
  * Send notifications to selected professionals using the unified system
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { bookingId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { bookingId: string } }) {
   try {
     // Check admin authorization
     const session = await getServerSession(authOptions)
     if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
     const { bookingId } = params
     if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid booking ID" },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "Invalid booking ID" }, { status: 400 })
     }
 
     const body = await request.json()
@@ -44,7 +35,7 @@ export async function POST(
     logger.info("Admin sending notifications to selected professionals", {
       bookingId,
       professionalCount: professionals.length,
-      adminId: session.user.id
+      adminId: session.user.id,
     })
 
     // Use the unified notification system
@@ -55,23 +46,19 @@ export async function POST(
         success: true,
         sentCount: result.sentCount,
         results: result.results,
-        message: `התראות נשלחו בהצלחה ל-${result.sentCount} מטפלים`
+        message: `התראות נשלחו בהצלחה ל-${result.sentCount} מטפלים`,
       })
     } else {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: result.error }, { status: 400 })
     }
-
   } catch (error) {
     logger.error("Error in notify-professionals endpoint:", error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Internal server error" 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal server error",
       },
       { status: 500 }
     )
   }
-} 
+}

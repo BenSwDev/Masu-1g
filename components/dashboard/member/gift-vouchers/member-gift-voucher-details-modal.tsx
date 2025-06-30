@@ -87,7 +87,9 @@ export default function MemberGiftVoucherDetailsModal({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className={cn("text-sm font-medium break-words", highlight && "text-primary")}>{String(value)}</p>
+          <p className={cn("text-sm font-medium break-words", highlight && "text-primary")}>
+            {String(value)}
+          </p>
         </div>
       </div>
     ) : null
@@ -122,7 +124,7 @@ export default function MemberGiftVoucherDetailsModal({
             <div
               className={cn(
                 "p-4 rounded-lg border-2",
-                isExpired ? "bg-red-50 border-red-200" : "bg-primary/5 border-primary/20",
+                isExpired ? "bg-red-50 border-red-200" : "bg-primary/5 border-primary/20"
               )}
             >
               <div className="text-center">
@@ -147,7 +149,12 @@ export default function MemberGiftVoucherDetailsModal({
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailItem icon={Tag} label={t("giftVouchers.fields.code")} value={voucher.code} highlight />
+                <DetailItem
+                  icon={Tag}
+                  label={t("giftVouchers.fields.code")}
+                  value={voucher.code}
+                  highlight
+                />
                 <DetailItem
                   icon={voucher.voucherType === "monetary" ? CreditCard : GiftIcon}
                   label={t("giftVouchers.fields.voucherType")}
@@ -286,8 +293,8 @@ export default function MemberGiftVoucherDetailsModal({
                       <div key={index} className="p-3 border rounded-lg bg-muted/20">
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-medium text-sm">
-                            {t("giftVouchers.myVouchers.amountUsed")}: {item.amountUsed?.toFixed(2) ?? "0.00"}{" "}
-                            {t("common.currency")}
+                            {t("giftVouchers.myVouchers.amountUsed")}:{" "}
+                            {item.amountUsed?.toFixed(2) ?? "0.00"} {t("common.currency")}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {format(parseISO(item.date as unknown as string), "PPP")}

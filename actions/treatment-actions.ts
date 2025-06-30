@@ -18,16 +18,16 @@ export async function getTreatments(): Promise<{
   try {
     await dbConnect()
 
-    const treatments = await Treatment.find({ isActive: true })
-      .lean()
+    const treatments = await Treatment.find({ isActive: true }).lean()
 
-    const serializedTreatments = treatments.map((treatment) => ({
+    const serializedTreatments = treatments.map(treatment => ({
       ...treatment,
       _id: treatment._id.toString(),
-      durations: treatment.durations?.map((duration) => ({
-        ...duration,
-        _id: duration._id.toString(),
-      })) || [],
+      durations:
+        treatment.durations?.map(duration => ({
+          ...duration,
+          _id: duration._id.toString(),
+        })) || [],
     }))
 
     return { success: true, treatments: serializedTreatments }
@@ -57,10 +57,11 @@ export async function getTreatmentById(id: string): Promise<{
     const serializedTreatment = {
       ...treatment,
       _id: treatment._id.toString(),
-      durations: treatment.durations?.map((duration) => ({
-        ...duration,
-        _id: duration._id.toString(),
-      })) || [],
+      durations:
+        treatment.durations?.map(duration => ({
+          ...duration,
+          _id: duration._id.toString(),
+        })) || [],
     }
 
     return { success: true, treatment: serializedTreatment }
@@ -103,13 +104,13 @@ export async function createTreatment(data: {
     await treatment.save()
 
     revalidatePath("/dashboard/admin/treatments")
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       treatment: {
         ...treatment.toObject(),
         _id: (treatment._id as any).toString(),
-      }
+      },
     }
   } catch (error) {
     logger.error("Error creating treatment:", error)
@@ -120,20 +121,23 @@ export async function createTreatment(data: {
 /**
  * Admin: Update treatment
  */
-export async function updateTreatment(id: string, data: Partial<{
-  name: string
-  description?: string
-  category: string
-  pricingType: "fixed" | "duration_based"
-  fixedPrice?: number
-  defaultDurationMinutes?: number
-  durations?: Array<{
-    minutes: number
-    price: number
+export async function updateTreatment(
+  id: string,
+  data: Partial<{
+    name: string
+    description?: string
+    category: string
+    pricingType: "fixed" | "duration_based"
+    fixedPrice?: number
+    defaultDurationMinutes?: number
+    durations?: Array<{
+      minutes: number
+      price: number
+      isActive: boolean
+    }>
     isActive: boolean
   }>
-  isActive: boolean
-}>): Promise<{
+): Promise<{
   success: boolean
   treatment?: any
   error?: string
@@ -146,24 +150,23 @@ export async function updateTreatment(id: string, data: Partial<{
 
     await dbConnect()
 
-    const treatment = await Treatment.findByIdAndUpdate(
-      id,
-      data,
-      { new: true, runValidators: true }
-    )
+    const treatment = await Treatment.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    })
 
     if (!treatment) {
       return { success: false, error: "Treatment not found" }
     }
 
     revalidatePath("/dashboard/admin/treatments")
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       treatment: {
         ...treatment.toObject(),
         _id: (treatment._id as any).toString(),
-      }
+      },
     }
   } catch (error) {
     logger.error("Error updating treatment:", error)
@@ -193,7 +196,7 @@ export async function deleteTreatment(id: string): Promise<{
     }
 
     revalidatePath("/dashboard/admin/treatments")
-    
+
     return { success: true }
   } catch (error) {
     logger.error("Error deleting treatment:", error)
@@ -226,16 +229,19 @@ export async function getTreatmentsForSelection(): Promise<{
       .select("name pricingType fixedPrice durations")
       .lean()
 
-    const serializedTreatments = treatments.map((treatment) => ({
+    const serializedTreatments = treatments.map(treatment => ({
       _id: treatment._id.toString(),
       name: treatment.name,
       pricingType: treatment.pricingType,
       fixedPrice: treatment.fixedPrice,
-      durations: treatment.durations?.filter(d => d.isActive).map((duration) => ({
-        _id: duration._id.toString(),
-        minutes: duration.minutes,
-        price: duration.price,
-      })) || [],
+      durations:
+        treatment.durations
+          ?.filter(d => d.isActive)
+          .map(duration => ({
+            _id: duration._id.toString(),
+            minutes: duration.minutes,
+            price: duration.price,
+          })) || [],
     }))
 
     return { success: true, treatments: serializedTreatments }
@@ -260,26 +266,29 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
       .select("name category pricingType fixedPrice durations defaultDurationMinutes")
       .lean()
 
-    const serializedTreatments = treatments.map((treatment) => ({
+    const serializedTreatments = treatments.map(treatment => ({
       _id: treatment._id.toString(),
       name: treatment.name,
       category: treatment.category,
       pricingType: treatment.pricingType,
       fixedPrice: treatment.fixedPrice,
       defaultDurationMinutes: treatment.defaultDurationMinutes,
-      durations: treatment.durations?.filter(d => d.isActive).map((duration) => ({
-        _id: duration._id.toString(),
-        minutes: duration.minutes,
-        price: duration.price,
-      })) || [],
+      durations:
+        treatment.durations
+          ?.filter(d => d.isActive)
+          .map(duration => ({
+            _id: duration._id.toString(),
+            minutes: duration.minutes,
+            price: duration.price,
+          })) || [],
     }))
 
     return { success: true, treatments: serializedTreatments }
   } catch (error) {
-    logger.error("Error fetching active treatments for purchase:", { 
+    logger.error("Error fetching active treatments for purchase:", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     })
     return { success: false, error: "Failed to fetch treatments" }
   }
-} 
+}

@@ -12,7 +12,7 @@ export interface IFixedHours {
     description?: string // Optional description for the surcharge
     // New fields for time-range based price addition
     priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
-    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
+    priceAdditionEndTime?: string | null // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
   // New fields for advanced booking control
@@ -41,7 +41,7 @@ export interface ISpecialDateEvent {
     description?: string
     // New fields for time-range based price addition
     priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
-    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
+    priceAdditionEndTime?: string | null // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
   // New fields for advanced booking control
@@ -67,7 +67,7 @@ export interface ISpecialDate {
     description?: string // Optional description for the surcharge
     // New fields for time-range based price addition
     priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
-    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
+    priceAdditionEndTime?: string | null // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
 }
@@ -117,7 +117,7 @@ const PriceAdditionSchema = new Schema(
       default: null,
     },
   },
-  { _id: false },
+  { _id: false }
 )
 
 const FixedHoursSchema = new Schema<IFixedHours>({
@@ -344,7 +344,7 @@ const WorkingHoursSettingsSchema = new Schema<IWorkingHoursSettings>(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 WorkingHoursSettingsSchema.pre("save", function (next) {
@@ -367,7 +367,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
   } else {
     // Ensure all days 0-6 exist if not new or not empty
     for (let i = 0; i < 7; i++) {
-      const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
+      const existingDay = this.fixedHours.find(day => day.dayOfWeek === i)
       if (!existingDay) {
         this.fixedHours.push({
           dayOfWeek: i,
@@ -388,7 +388,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
   this.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
 
   // Validate unique dates in legacy specialDates
-  const dates = this.specialDates.map((sd) => sd.date.toISOString().split("T")[0])
+  const dates = this.specialDates.map(sd => sd.date.toISOString().split("T")[0])
   const uniqueDates = [...new Set(dates)]
   if (dates.length !== uniqueDates.length) {
     return next(new Error("Duplicate special dates are not allowed"))
@@ -396,7 +396,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
 
   // Validate unique event names in specialDateEvents
   if (this.specialDateEvents) {
-    const eventNames = this.specialDateEvents.map((event) => event.name)
+    const eventNames = this.specialDateEvents.map(event => event.name)
     const uniqueEventNames = [...new Set(eventNames)]
     if (eventNames.length !== uniqueEventNames.length) {
       return next(new Error("Duplicate event names are not allowed"))
@@ -407,6 +407,8 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
 })
 
 // Create the model
-const WorkingHoursSettings = mongoose.models.WorkingHoursSettings || mongoose.model<IWorkingHoursSettings>("WorkingHoursSettings", WorkingHoursSettingsSchema)
+const WorkingHoursSettings =
+  mongoose.models.WorkingHoursSettings ||
+  mongoose.model<IWorkingHoursSettings>("WorkingHoursSettings", WorkingHoursSettingsSchema)
 
 export { WorkingHoursSettings }

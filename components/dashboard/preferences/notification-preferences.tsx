@@ -7,7 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Mail, MessageSquare, Globe, Bell, Save, CheckCircle } from "lucide-react"
@@ -22,7 +28,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
   const { data: session } = useSession()
   const [preferences, setPreferences] = useState<INotificationPreferences>({
     methods: ["email", "sms"],
-    language: "he"
+    language: "he",
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -41,7 +47,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
     try {
       const response = await fetch("/api/user/notification-preferences")
       const result = await response.json()
-      
+
       if (result.success && result.preferences) {
         setPreferences(result.preferences)
       }
@@ -55,10 +61,10 @@ export default function NotificationPreferences({ className }: NotificationPrefe
 
   const handleMethodChange = (method: "email" | "sms", checked: boolean) => {
     setPreferences(prev => {
-      const newMethods = checked 
+      const newMethods = checked
         ? [...prev.methods, method]
         : prev.methods.filter(m => m !== method)
-      
+
       // Ensure at least one method is selected
       if (newMethods.length === 0) {
         toast.error("חובה לבחור לפחות אמצעי תקשורת אחד")
@@ -88,7 +94,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
         body: JSON.stringify(preferences),
       })
       const result = await response.json()
-      
+
       if (result.success) {
         toast.success("העדפות ההתראות נשמרו בהצלחה")
         setHasChanges(false)
@@ -109,10 +115,14 @@ export default function NotificationPreferences({ className }: NotificationPrefe
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
-      case "he": return "עברית"
-      case "en": return "English"
-      case "ru": return "Русский"
-      default: return lang
+      case "he":
+        return "עברית"
+      case "en":
+        return "English"
+      case "ru":
+        return "Русский"
+      default:
+        return lang
     }
   }
 
@@ -146,11 +156,9 @@ export default function NotificationPreferences({ className }: NotificationPrefe
           <Bell className="h-5 w-5" />
           העדפות התראות
         </CardTitle>
-        <CardDescription>
-          בחר כיצד ובאיזו שפה תרצה לקבל התראות מהמערכת
-        </CardDescription>
+        <CardDescription>בחר כיצד ובאיזו שפה תרצה לקבל התראות מהמערכת</CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Communication Methods */}
         <div className="space-y-4">
@@ -160,18 +168,15 @@ export default function NotificationPreferences({ className }: NotificationPrefe
               בחר דרכי התקשורת שבהן תרצה לקבל התראות
             </p>
           </div>
-          
+
           <div className="space-y-3">
             <div className="flex items-center space-x-3 rtl:space-x-reverse">
               <Checkbox
                 id="email-method"
                 checked={preferences.methods.includes("email")}
-                onCheckedChange={(checked) => handleMethodChange("email", checked as boolean)}
+                onCheckedChange={checked => handleMethodChange("email", checked as boolean)}
               />
-              <Label 
-                htmlFor="email-method" 
-                className="flex items-center gap-2 cursor-pointer"
-              >
+              <Label htmlFor="email-method" className="flex items-center gap-2 cursor-pointer">
                 <Mail className="h-4 w-4" />
                 דואר אלקטרוני
                 <Badge variant={getMethodBadgeVariant("email")} className="text-xs">
@@ -179,17 +184,14 @@ export default function NotificationPreferences({ className }: NotificationPrefe
                 </Badge>
               </Label>
             </div>
-            
+
             <div className="flex items-center space-x-3 rtl:space-x-reverse">
               <Checkbox
                 id="sms-method"
                 checked={preferences.methods.includes("sms")}
-                onCheckedChange={(checked) => handleMethodChange("sms", checked as boolean)}
+                onCheckedChange={checked => handleMethodChange("sms", checked as boolean)}
               />
-              <Label 
-                htmlFor="sms-method" 
-                className="flex items-center gap-2 cursor-pointer"
-              >
+              <Label htmlFor="sms-method" className="flex items-center gap-2 cursor-pointer">
                 <MessageSquare className="h-4 w-4" />
                 הודעות SMS
                 <Badge variant={getMethodBadgeVariant("sms")} className="text-xs">
@@ -203,7 +205,8 @@ export default function NotificationPreferences({ className }: NotificationPrefe
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-xs text-blue-800">
-                <strong>טיפ:</strong> מומלץ להשאיר שני האמצעים פעילים כדי לוודא שתקבל את כל ההתראות החשובות
+                <strong>טיפ:</strong> מומלץ להשאיר שני האמצעים פעילים כדי לוודא שתקבל את כל ההתראות
+                החשובות
               </div>
             </div>
           </div>
@@ -219,7 +222,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
               בחר את השפה שבה תרצה לקבל את ההתראות
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Globe className="h-4 w-4 text-muted-foreground" />
             <Select
@@ -235,9 +238,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
                 <SelectItem value="ru">Русский</SelectItem>
               </SelectContent>
             </Select>
-            <Badge variant="secondary">
-              {getLanguageLabel(preferences.language)}
-            </Badge>
+            <Badge variant="secondary">{getLanguageLabel(preferences.language)}</Badge>
           </div>
         </div>
 
@@ -269,11 +270,7 @@ export default function NotificationPreferences({ className }: NotificationPrefe
         {/* Save Button */}
         {hasChanges && (
           <div className="pt-4">
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="w-full"
-            >
+            <Button onClick={handleSave} disabled={isSaving} className="w-full">
               {isSaving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -291,4 +288,4 @@ export default function NotificationPreferences({ className }: NotificationPrefe
       </CardContent>
     </Card>
   )
-} 
+}

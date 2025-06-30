@@ -8,16 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { 
-  MapPin,
-  Edit,
-  Save,
-  X,
-  Building,
-  Navigation,
-  FileText,
-  AlertTriangle
-} from "lucide-react"
+import { MapPin, Edit, Save, X, Building, Navigation, FileText, AlertTriangle } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import { CitySelectForm } from "@/components/ui/city-select-form"
@@ -30,13 +21,17 @@ interface BookingAddressTabProps {
 export default function BookingAddressTab({ booking, onUpdate }: BookingAddressTabProps) {
   const { t } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
-  const [tempAddress, setTempAddress] = useState<Partial<IBookingAddressSnapshot>>(booking.bookingAddressSnapshot || {})
+  const [tempAddress, setTempAddress] = useState<Partial<IBookingAddressSnapshot>>(
+    booking.bookingAddressSnapshot || {}
+  )
 
   const handleSave = () => {
     if (tempAddress.city && tempAddress.street) {
       // Ensure required fields are present and construct fullAddress if needed
       const updatedAddress: IBookingAddressSnapshot = {
-        fullAddress: tempAddress.fullAddress || `${tempAddress.street} ${tempAddress.streetNumber || ''} ${tempAddress.city}`.trim(),
+        fullAddress:
+          tempAddress.fullAddress ||
+          `${tempAddress.street} ${tempAddress.streetNumber || ""} ${tempAddress.city}`.trim(),
         city: tempAddress.city,
         street: tempAddress.street,
         streetNumber: tempAddress.streetNumber,
@@ -49,7 +44,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
         hotelName: tempAddress.hotelName,
         roomNumber: tempAddress.roomNumber,
         otherInstructions: tempAddress.otherInstructions,
-        hasPrivateParking: tempAddress.hasPrivateParking
+        hasPrivateParking: tempAddress.hasPrivateParking,
       }
       onUpdate({ bookingAddressSnapshot: updatedAddress })
       setIsEditing(false)
@@ -81,18 +76,12 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   <Badge variant="default" className="bg-green-100 text-green-800">
                     כתובת מאושרת
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    כתובת הטיפול זמינה ומלאה
-                  </span>
+                  <span className="text-sm text-muted-foreground">כתובת הטיפול זמינה ומלאה</span>
                 </>
               ) : (
                 <>
-                  <Badge variant="destructive">
-                    חסרה כתובת
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    לא הוגדרה כתובת לטיפול
-                  </span>
+                  <Badge variant="destructive">חסרה כתובת</Badge>
+                  <span className="text-sm text-muted-foreground">לא הוגדרה כתובת לטיפול</span>
                 </>
               )}
             </div>
@@ -107,8 +96,8 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
             <Building className="w-5 h-5" />
             פרטי כתובת
           </CardTitle>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => setIsEditing(!isEditing)}
             disabled={!address}
@@ -127,7 +116,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   {isEditing ? (
                     <Input
                       value={tempAddress.street || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, street: e.target.value})}
+                      onChange={e => setTempAddress({ ...tempAddress, street: e.target.value })}
                       placeholder="שם הרחוב"
                     />
                   ) : (
@@ -141,7 +130,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   {isEditing ? (
                     <Input
                       value={tempAddress.streetNumber || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, streetNumber: e.target.value})}
+                      onChange={e =>
+                        setTempAddress({ ...tempAddress, streetNumber: e.target.value })
+                      }
                       placeholder="מספר בית"
                     />
                   ) : (
@@ -155,7 +146,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   {isEditing ? (
                     <CitySelectForm
                       value={tempAddress.city || ""}
-                      onValueChange={(value) => setTempAddress({...tempAddress, city: value})}
+                      onValueChange={value => setTempAddress({ ...tempAddress, city: value })}
                       placeholder="בחר עיר"
                     />
                   ) : (
@@ -163,15 +154,13 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   )}
                 </div>
 
-
-
                 {/* Floor */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">קומה</Label>
                   {isEditing ? (
                     <Input
                       value={tempAddress.floor || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, floor: e.target.value})}
+                      onChange={e => setTempAddress({ ...tempAddress, floor: e.target.value })}
                       placeholder="מספר קומה"
                     />
                   ) : (
@@ -185,7 +174,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   {isEditing ? (
                     <Input
                       value={tempAddress.apartment || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, apartment: e.target.value})}
+                      onChange={e => setTempAddress({ ...tempAddress, apartment: e.target.value })}
                       placeholder="מספר דירה"
                     />
                   ) : (
@@ -199,7 +188,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   {isEditing ? (
                     <Input
                       value={tempAddress.entrance || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, entrance: e.target.value})}
+                      onChange={e => setTempAddress({ ...tempAddress, entrance: e.target.value })}
                       placeholder="מספר כניסה"
                     />
                   ) : (
@@ -215,7 +204,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                       <input
                         type="checkbox"
                         checked={tempAddress.hasPrivateParking || false}
-                        onChange={(e) => setTempAddress({...tempAddress, hasPrivateParking: e.target.checked})}
+                        onChange={e =>
+                          setTempAddress({ ...tempAddress, hasPrivateParking: e.target.checked })
+                        }
                         className="rounded"
                       />
                       <span className="text-sm">יש חניה פרטית</span>
@@ -234,7 +225,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     {isEditing ? (
                       <Input
                         value={tempAddress.doorName || ""}
-                        onChange={(e) => setTempAddress({...tempAddress, doorName: e.target.value})}
+                        onChange={e => setTempAddress({ ...tempAddress, doorName: e.target.value })}
                         placeholder="שם דלת (עבור בית פרטי)"
                       />
                     ) : (
@@ -250,7 +241,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     {isEditing ? (
                       <Input
                         value={tempAddress.buildingName || ""}
-                        onChange={(e) => setTempAddress({...tempAddress, buildingName: e.target.value})}
+                        onChange={e =>
+                          setTempAddress({ ...tempAddress, buildingName: e.target.value })
+                        }
                         placeholder="שם בניין (עבור משרד)"
                       />
                     ) : (
@@ -266,7 +259,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     {isEditing ? (
                       <Input
                         value={tempAddress.hotelName || ""}
-                        onChange={(e) => setTempAddress({...tempAddress, hotelName: e.target.value})}
+                        onChange={e =>
+                          setTempAddress({ ...tempAddress, hotelName: e.target.value })
+                        }
                         placeholder="שם מלון"
                       />
                     ) : (
@@ -282,7 +277,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     {isEditing ? (
                       <Input
                         value={tempAddress.roomNumber || ""}
-                        onChange={(e) => setTempAddress({...tempAddress, roomNumber: e.target.value})}
+                        onChange={e =>
+                          setTempAddress({ ...tempAddress, roomNumber: e.target.value })
+                        }
                         placeholder="מספר חדר במלון"
                       />
                     ) : (
@@ -302,8 +299,10 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     address.city,
                     address.floor && `קומה ${address.floor}`,
                     address.apartment && `דירה ${address.apartment}`,
-                    address.entrance && `כניסה ${address.entrance}`
-                  ].filter(Boolean).join(", ")}
+                    address.entrance && `כניסה ${address.entrance}`,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </p>
               </div>
 
@@ -324,9 +323,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
             <div className="flex items-center justify-center p-8 text-center">
               <div className="space-y-2">
                 <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
-                <p className="text-sm text-muted-foreground">
-                  לא הוגדרה כתובת עבור הזמנה זו
-                </p>
+                <p className="text-sm text-muted-foreground">לא הוגדרה כתובת עבור הזמנה זו</p>
               </div>
             </div>
           )}
@@ -347,7 +344,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
             {isEditing ? (
               <Textarea
                 value={tempAddress.notes || ""}
-                onChange={(e) => setTempAddress({...tempAddress, notes: e.target.value})}
+                onChange={e => setTempAddress({ ...tempAddress, notes: e.target.value })}
                 placeholder="הערות לכתובת (דירקטוריון, קוד כניסה, וכו')"
                 rows={3}
               />
@@ -367,7 +364,9 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
             {isEditing ? (
               <Textarea
                 value={tempAddress.otherInstructions || ""}
-                onChange={(e) => setTempAddress({...tempAddress, otherInstructions: e.target.value})}
+                onChange={e =>
+                  setTempAddress({ ...tempAddress, otherInstructions: e.target.value })
+                }
                 placeholder="הוראות מיוחדות למטפל"
                 rows={3}
               />
@@ -383,8 +382,6 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
           </div>
         </CardContent>
       </Card>
-
-
 
       {/* Guidelines */}
       <Card className="border-blue-200 bg-blue-50">
@@ -402,4 +399,4 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
       </Card>
     </div>
   )
-} 
+}

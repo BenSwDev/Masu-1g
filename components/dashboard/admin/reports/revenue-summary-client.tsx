@@ -3,8 +3,21 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 function getDateRange(frame: string) {
   const now = new Date()
@@ -47,7 +60,9 @@ export default function RevenueSummaryClient() {
     setError(null)
     try {
       const { start, end } = getDateRange(timeframe)
-      const res = await fetch(`/api/admin/reports/revenue-summary?start=${start.toISOString()}&end=${end.toISOString()}`)
+      const res = await fetch(
+        `/api/admin/reports/revenue-summary?start=${start.toISOString()}&end=${end.toISOString()}`
+      )
       if (!res.ok) throw new Error("failed")
       const json = await res.json()
       setTotals(json.totals)
@@ -90,7 +105,9 @@ export default function RevenueSummaryClient() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.revenueSummary.table.type")}</TableHead>
-                <TableHead className="text-center">{t("reports.revenueSummary.table.amount")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.revenueSummary.table.amount")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -107,7 +124,9 @@ export default function RevenueSummaryClient() {
                 <TableCell className="text-center">{totals.subscriptionPurchases}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-semibold">{t("reports.revenueSummary.table.totalRevenue")}</TableCell>
+                <TableCell className="font-semibold">
+                  {t("reports.revenueSummary.table.totalRevenue")}
+                </TableCell>
                 <TableCell className="text-center font-semibold">{totals.totalRevenue}</TableCell>
               </TableRow>
             </TableBody>

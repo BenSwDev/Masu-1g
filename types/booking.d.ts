@@ -1,6 +1,13 @@
 // types/booking.d.ts
 import type { Types } from "mongoose"
-import type { IBooking, IPriceDetails, IPaymentDetails, IBookingConsents, IEnhancedPaymentDetails, IBookingReview } from "@/lib/db/models/booking"
+import type {
+  IBooking,
+  IPriceDetails,
+  IPaymentDetails,
+  IBookingConsents,
+  IEnhancedPaymentDetails,
+  IBookingReview,
+} from "@/lib/db/models/booking"
 import type { IAddress } from "@/lib/db/models/address"
 import type { IUser } from "@/lib/db/models/user"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
@@ -53,7 +60,11 @@ export interface StaticPricingData {
 
 export interface CalculatedPriceDetails {
   basePrice: number
-  surcharges: { description: string; amount: number; professionalShare?: { amount: number; type: "fixed" | "percentage" } }[]
+  surcharges: {
+    description: string
+    amount: number
+    professionalShare?: { amount: number; type: "fixed" | "percentage" }
+  }[]
   totalSurchargesAmount: number
   treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
   couponDiscount: number
@@ -74,30 +85,49 @@ export interface CalculatedPriceDetails {
 }
 
 export interface PopulatedPriceDetails
-  extends Omit<IPriceDetails, "appliedCouponId" | "appliedGiftVoucherId" | "redeemedUserSubscriptionId"> {
+  extends Omit<
+    IPriceDetails,
+    "appliedCouponId" | "appliedGiftVoucherId" | "redeemedUserSubscriptionId"
+  > {
   appliedCouponId?: ICoupon | null
   appliedGiftVoucherId?: (IGiftVoucher & { usageHistory?: IGiftVoucherUsageHistory[] }) | null
   redeemedUserSubscriptionId?:
     | (IUserSubscription & {
         subscriptionId: Pick<ISubscription, "_id" | "name" | "description">
-        treatmentId: Pick<ITreatment, "_id" | "name" | "pricingType" | "defaultDurationMinutes" | "durations">
+        treatmentId: Pick<
+          ITreatment,
+          "_id" | "name" | "pricingType" | "defaultDurationMinutes" | "durations"
+        >
       })
     | null
 }
 
 export interface PopulatedPaymentDetails extends Omit<IPaymentDetails, "paymentMethodId"> {
-  paymentMethodId?: Pick<IPaymentMethod, "_id" | "type" | "last4" | "brand" | "isDefault" | "displayName"> | null
+  paymentMethodId?: Pick<
+    IPaymentMethod,
+    "_id" | "type" | "last4" | "brand" | "isDefault" | "displayName"
+  > | null
 }
 
 export interface PopulatedBookingTreatment
-  extends Pick<ITreatment, "_id" | "name" | "pricingType" | "defaultDurationMinutes" | "fixedPrice"> {
+  extends Pick<
+    ITreatment,
+    "_id" | "name" | "pricingType" | "defaultDurationMinutes" | "fixedPrice"
+  > {
   durations?: ITreatmentDuration[]
 }
 
 export interface PopulatedBooking
   extends Omit<
     IBooking,
-    "treatmentId" | "addressId" | "professionalId" | "selectedDurationId" | "priceDetails" | "paymentDetails" | "_id" | "userId"
+    | "treatmentId"
+    | "addressId"
+    | "professionalId"
+    | "selectedDurationId"
+    | "priceDetails"
+    | "paymentDetails"
+    | "_id"
+    | "userId"
   > {
   _id: string
   userId?: Types.ObjectId | null

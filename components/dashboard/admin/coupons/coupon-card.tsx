@@ -33,7 +33,10 @@ export function CouponCard({ coupon, onEdit, onDelete, t, dir }: CouponCardProps
   const iconMargin = dir === "rtl" ? "ml-2" : "mr-2"
 
   return (
-    <Card className={`w-full shadow-md hover:shadow-lg transition-shadow ${textAlign}`} dir={cardDir}>
+    <Card
+      className={`w-full shadow-md hover:shadow-lg transition-shadow ${textAlign}`}
+      dir={cardDir}
+    >
       <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-lg font-semibold">
@@ -78,7 +81,9 @@ export function CouponCard({ coupon, onEdit, onDelete, t, dir }: CouponCardProps
         <div>
           <p className="font-medium">{t("adminCoupons.columns.discount")}:</p>
           <p className="text-muted-foreground">
-            {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)}
+            {coupon.discountType === "percentage"
+              ? `${coupon.discountValue}%`
+              : formatCurrency(coupon.discountValue)}
           </p>
         </div>
         <div>

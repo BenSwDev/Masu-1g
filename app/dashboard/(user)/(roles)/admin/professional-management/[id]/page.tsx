@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getProfessionalById } from "../actions"
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   } catch (error) {
     console.error("Error generating metadata:", error)
   }
-  
+
   return {
     title: "עריכת מטפל | מנהל",
     description: "עריכת פרטי מטפל במערכת",
@@ -46,7 +46,7 @@ function ProfessionalEditLoadingSkeleton() {
           <Skeleton className="h-10 w-20" />
         </div>
       </div>
-      
+
       {/* Tabs Skeleton */}
       <Card>
         <CardHeader>
@@ -85,31 +85,34 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
     }
 
     return (
-      <ProfessionalEditPage 
+      <ProfessionalEditPage
         professional={{
           ...result.professional,
           _id: String(result.professional._id),
-          treatments: result.professional.treatments?.map(treatment => ({
-            treatmentId: String(treatment.treatmentId),
-            durationId: treatment.durationId ? String(treatment.durationId) : undefined,
-            professionalPrice: treatment.professionalPrice,
-            treatmentName: (treatment as any).treatmentName || ""
-          })) || [],
-          workAreas: result.professional.workAreas?.map(area => ({
-            cityId: String(area.cityId),
-            cityName: (area as any).cityName || "",
-            distanceRadius: area.distanceRadius,
-            coveredCities: area.coveredCities?.map(String) || []
-          })) || [],
-          financialTransactions: result.professional.financialTransactions?.map(transaction => ({
-            type: transaction.type,
-            amount: transaction.amount,
-            description: transaction.description,
-            date: transaction.date,
-            bookingId: transaction.bookingId ? String(transaction.bookingId) : undefined,
-            adminUserId: transaction.adminUserId ? String(transaction.adminUserId) : undefined,
-            adminNote: transaction.adminNote
-          })) || []
+          treatments:
+            result.professional.treatments?.map(treatment => ({
+              treatmentId: String(treatment.treatmentId),
+              durationId: treatment.durationId ? String(treatment.durationId) : undefined,
+              professionalPrice: treatment.professionalPrice,
+              treatmentName: (treatment as any).treatmentName || "",
+            })) || [],
+          workAreas:
+            result.professional.workAreas?.map(area => ({
+              cityId: String(area.cityId),
+              cityName: (area as any).cityName || "",
+              distanceRadius: area.distanceRadius,
+              coveredCities: area.coveredCities?.map(String) || [],
+            })) || [],
+          financialTransactions:
+            result.professional.financialTransactions?.map(transaction => ({
+              type: transaction.type,
+              amount: transaction.amount,
+              description: transaction.description,
+              date: transaction.date,
+              bookingId: transaction.bookingId ? String(transaction.bookingId) : undefined,
+              adminUserId: transaction.adminUserId ? String(transaction.adminUserId) : undefined,
+              adminNote: transaction.adminNote,
+            })) || [],
         }}
       />
     )
@@ -121,7 +124,7 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
 
 export default async function ProfessionalEditPageRoute({ params }: { params: { id: string } }) {
   const session = await requireUserSession()
-  
+
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
@@ -138,4 +141,4 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
       </Suspense>
     </div>
   )
-} 
+}

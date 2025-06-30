@@ -18,9 +18,17 @@ interface BookingLogContext {
 
 interface BookingLogEntry extends BookingLogContext {
   timestamp: string
-  level: 'info' | 'warn' | 'error' | 'debug'
+  level: "info" | "warn" | "error" | "debug"
   message: string
-  phase: 'initiation' | 'validation' | 'calculation' | 'creation' | 'payment' | 'confirmation' | 'completion' | 'error'
+  phase:
+    | "initiation"
+    | "validation"
+    | "calculation"
+    | "creation"
+    | "payment"
+    | "confirmation"
+    | "completion"
+    | "error"
   sessionId?: string
 }
 
@@ -41,8 +49,8 @@ class BookingLogger {
   }
 
   logBookingEvent(
-    level: 'info' | 'warn' | 'error' | 'debug',
-    phase: BookingLogEntry['phase'],
+    level: "info" | "warn" | "error" | "debug",
+    phase: BookingLogEntry["phase"],
     message: string,
     context: BookingLogContext = {}
   ) {
@@ -52,7 +60,7 @@ class BookingLogger {
       message,
       phase,
       sessionId: context.metadata?.sessionId || this.generateSessionId(),
-      ...context
+      ...context,
     }
 
     // Store by booking ID if available
@@ -77,7 +85,7 @@ class BookingLogger {
       bookingFlow: true,
       ...context,
       phase,
-      sessionId: logEntry.sessionId
+      sessionId: logEntry.sessionId,
     }
 
     logger[level](logMessage, logContext)
@@ -88,43 +96,49 @@ class BookingLogger {
   }
 
   // Specific booking phases
-  logInitiation(context: BookingLogContext & { treatmentId: string }, message = "Booking process initiated") {
-    this.logBookingEvent('info', 'initiation', message, context)
+  logInitiation(
+    context: BookingLogContext & { treatmentId: string },
+    message = "Booking process initiated"
+  ) {
+    this.logBookingEvent("info", "initiation", message, context)
   }
 
   logValidation(context: BookingLogContext, message: string, isError = false) {
-    this.logBookingEvent(isError ? 'error' : 'info', 'validation', message, context)
+    this.logBookingEvent(isError ? "error" : "info", "validation", message, context)
   }
 
   logCalculation(context: BookingLogContext & { amount?: number }, message: string) {
-    this.logBookingEvent('info', 'calculation', message, context)
+    this.logBookingEvent("info", "calculation", message, context)
   }
 
   logCreation(context: BookingLogContext & { bookingId: string }, message = "Booking created") {
-    this.logBookingEvent('info', 'creation', message, context)
+    this.logBookingEvent("info", "creation", message, context)
   }
 
   logPayment(context: BookingLogContext & { paymentStatus: string }, message: string) {
-    const level = context.paymentStatus === 'failed' ? 'error' : 'info'
-    this.logBookingEvent(level, 'payment', message, context)
+    const level = context.paymentStatus === "failed" ? "error" : "info"
+    this.logBookingEvent(level, "payment", message, context)
   }
 
   logConfirmation(context: BookingLogContext, message = "Booking confirmed") {
-    this.logBookingEvent('info', 'confirmation', message, context)
+    this.logBookingEvent("info", "confirmation", message, context)
   }
 
   logCompletion(context: BookingLogContext, message = "Booking process completed") {
-    this.logBookingEvent('info', 'completion', message, context)
+    this.logBookingEvent("info", "completion", message, context)
   }
 
   logError(context: BookingLogContext, error: any, message = "Booking error occurred") {
-    this.logBookingEvent('error', 'error', message, {
+    this.logBookingEvent("error", "error", message, {
       ...context,
-      error: error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : error
+      error:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
     })
   }
 
@@ -141,24 +155,24 @@ class BookingLogger {
   // Get all recent booking logs
   getRecentBookingLogs(limit = 50): BookingLogEntry[] {
     const allLogs: BookingLogEntry[] = []
-    
+
     for (const logs of this.bookingLogs.values()) {
       allLogs.push(...logs)
     }
-    
+
     return allLogs
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit)
   }
 
   // Get logs by phase
-  getLogsByPhase(phase: BookingLogEntry['phase'], limit = 50): BookingLogEntry[] {
+  getLogsByPhase(phase: BookingLogEntry["phase"], limit = 50): BookingLogEntry[] {
     const allLogs: BookingLogEntry[] = []
-    
+
     for (const logs of this.bookingLogs.values()) {
       allLogs.push(...logs.filter(log => log.phase === phase))
     }
-    
+
     return allLogs
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit)
@@ -166,7 +180,7 @@ class BookingLogger {
 
   // Get error logs
   getErrorLogs(limit = 50): BookingLogEntry[] {
-    return this.getLogsByPhase('error', limit)
+    return this.getLogsByPhase("error", limit)
   }
 
   // Generate booking flow summary
@@ -179,7 +193,7 @@ class BookingLogger {
     timeline: BookingLogEntry[]
   } {
     const logs = this.getBookingLogs(bookingId)
-    
+
     if (logs.length === 0) {
       return {
         bookingId,
@@ -187,7 +201,7 @@ class BookingLogger {
         duration: 0,
         errors: 0,
         warnings: 0,
-        timeline: []
+        timeline: [],
       }
     }
 
@@ -195,8 +209,8 @@ class BookingLogger {
     const firstLog = logs[0]
     const lastLog = logs[logs.length - 1]
     const duration = new Date(lastLog.timestamp).getTime() - new Date(firstLog.timestamp).getTime()
-    const errors = logs.filter(log => log.level === 'error').length
-    const warnings = logs.filter(log => log.level === 'warn').length
+    const errors = logs.filter(log => log.level === "error").length
+    const warnings = logs.filter(log => log.level === "warn").length
 
     return {
       bookingId,
@@ -204,7 +218,7 @@ class BookingLogger {
       duration,
       errors,
       warnings,
-      timeline: logs
+      timeline: logs,
     }
   }
 
@@ -236,4 +250,4 @@ class BookingLogger {
 }
 
 export const bookingLogger = BookingLogger.getInstance()
-export default bookingLogger 
+export default bookingLogger

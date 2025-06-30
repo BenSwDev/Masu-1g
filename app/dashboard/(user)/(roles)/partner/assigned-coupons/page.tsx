@@ -9,7 +9,7 @@ export const metadata = {
 }
 
 // Force dynamic rendering to prevent build-time static generation
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 interface PartnerAssignedCouponsPageProps {
   searchParams: {
@@ -20,7 +20,9 @@ interface PartnerAssignedCouponsPageProps {
   }
 }
 
-export default async function PartnerAssignedCouponsPage({ searchParams }: PartnerAssignedCouponsPageProps) {
+export default async function PartnerAssignedCouponsPage({
+  searchParams,
+}: PartnerAssignedCouponsPageProps) {
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
   const filters = {
@@ -33,7 +35,10 @@ export default async function PartnerAssignedCouponsPage({ searchParams }: Partn
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <Heading titleKey="partnerAssignedCoupons.title" descriptionKey="partnerAssignedCoupons.description" />
+      <Heading
+        titleKey="partnerAssignedCoupons.title"
+        descriptionKey="partnerAssignedCoupons.description"
+      />
       <Suspense fallback={<AssignedCouponsLoadingSkeleton />}>
         <AssignedCouponsDataWrapper couponsDataPromise={couponsDataPromise} />
       </Suspense>
@@ -43,7 +48,9 @@ export default async function PartnerAssignedCouponsPage({ searchParams }: Partn
 
 async function AssignedCouponsDataWrapper({
   couponsDataPromise,
-}: { couponsDataPromise: ReturnType<typeof getAssignedPartnerCoupons> }) {
+}: {
+  couponsDataPromise: ReturnType<typeof getAssignedPartnerCoupons>
+}) {
   const couponsData = await couponsDataPromise
   return <AssignedCouponsClient initialData={couponsData} />
 }

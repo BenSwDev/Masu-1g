@@ -19,7 +19,7 @@ async function getGiftVoucherData(voucherId: string) {
   try {
     await dbConnect()
     const result = await getGiftVoucherById(voucherId)
-    
+
     if (!result.success || !result.voucher) {
       return null
     }
@@ -52,4 +52,4 @@ export default async function GiftVoucherConfirmationPage({ searchParams }: Prop
       </Suspense>
     </GuestLayout>
   )
-} 
+}

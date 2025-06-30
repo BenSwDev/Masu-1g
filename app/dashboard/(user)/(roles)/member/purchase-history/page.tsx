@@ -7,11 +7,11 @@ import { Heading } from "@/components/ui/heading"
 import { Separator } from "@/components/ui/separator"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function PurchaseHistoryPage() {
   const session = await getServerSession(authOptions)
-  
+
   if (!session?.user) {
     redirect("/auth/login")
   }
@@ -19,13 +19,13 @@ export default async function PurchaseHistoryPage() {
   return (
     <ScrollArea className="h-full">
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Heading 
-          title="היסטוריית רכישות ומימושים" 
-          description="צפה בכל הרכישות והמימושים שלך - הזמנות, מנויים ושוברי מתנה" 
+        <Heading
+          title="היסטוריית רכישות ומימושים"
+          description="צפה בכל הרכישות והמימושים שלך - הזמנות, מנויים ושוברי מתנה"
         />
         <Separator />
         <PurchaseHistoryClient />
       </div>
     </ScrollArea>
   )
-} 
+}

@@ -1,7 +1,10 @@
 "use server"
 
 import dbConnect from "@/lib/db/mongoose"
-import ProfessionalProfile, { IProfessionalProfile, ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import ProfessionalProfile, {
+  IProfessionalProfile,
+  ProfessionalStatus,
+} from "@/lib/db/models/professional-profile"
 import User, { IUser } from "@/lib/db/models/user"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
@@ -17,9 +20,11 @@ const GetProfessionalsSchema = z.object({
   page: z.number().min(1).optional().default(1),
   limit: z.number().min(1).max(100).optional().default(10),
   search: z.string().optional().default(""),
-  status: z.enum(["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"]).optional(),
+  status: z
+    .enum(["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"])
+    .optional(),
   sortBy: z.string().optional().default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).optional().default("desc")
+  sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
 })
 
 const CreateProfessionalSchema = z.object({
@@ -27,13 +32,13 @@ const CreateProfessionalSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
   phone: z.string().min(10, "מספר טלפון חייב להכיל לפחות 10 ספרות"),
   gender: z.enum(["male", "female"]),
-  birthDate: z.string().optional()
+  birthDate: z.string().optional(),
 })
 
 const ProfessionalTreatmentPricingSchema = z.object({
   treatmentId: z.string().min(1, "מזהה טיפול נדרש"),
   durationId: z.string().optional(),
-  professionalPrice: z.number().min(0, "מחיר מטפל חייב להיות חיובי")
+  professionalPrice: z.number().min(0, "מחיר מטפל חייב להיות חיובי"),
 })
 
 interface GetProfessionalsOptions {
@@ -95,14 +100,14 @@ async function requireAdminAuth() {
 // Helper function to build search query
 function _buildSearchQuery(search: string, status?: ProfessionalStatus) {
   const query: any = {}
-  
+
   // Add search conditions if search term provided
   if (search.trim()) {
     const searchRegex = { $regex: search.trim(), $options: "i" }
     query.$or = [
       { "userId.name": searchRegex },
       { "userId.email": searchRegex },
-      { "userId.phone": searchRegex }
+      { "userId.phone": searchRegex },
     ]
   }
 
@@ -114,7 +119,9 @@ function _buildSearchQuery(search: string, status?: ProfessionalStatus) {
   return query
 }
 
-export async function getProfessionals(options: GetProfessionalsOptions = {}): Promise<GetProfessionalsResult> {
+export async function getProfessionals(
+  options: GetProfessionalsOptions = {}
+): Promise<GetProfessionalsResult> {
   try {
     // Authorize user
     await requireAdminAuth()
@@ -134,19 +141,19 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
           from: "users",
           localField: "userId",
           foreignField: "_id",
-          as: "userId"
-        }
+          as: "userId",
+        },
       },
       // Unwind user data
       {
-        $unwind: "$userId"
+        $unwind: "$userId",
       },
       // Match only users with professional role
       {
         $match: {
-          "userId.roles": "professional"
-        }
-      }
+          "userId.roles": "professional",
+        },
+      },
     ]
 
     // Add search and status filters
@@ -157,7 +164,7 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
       matchStage.$or = [
         { "userId.name": searchRegex },
         { "userId.email": searchRegex },
-        { "userId.phone": searchRegex }
+        { "userId.phone": searchRegex },
       ]
     }
 
@@ -185,10 +192,7 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
     pipeline.push({ $sort: sortStage })
 
     // Add pagination
-    pipeline.push(
-      { $skip: (page - 1) * limit },
-      { $limit: limit }
-    )
+    pipeline.push({ $skip: (page - 1) * limit }, { $limit: limit })
 
     // Execute query
     const professionals = await ProfessionalProfile.aggregate(pipeline)
@@ -204,21 +208,21 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
           page,
           limit,
           total,
-          pages
+          pages,
         },
-        stats
-      }
+        stats,
+      },
     }
   } catch (error) {
     console.error("Error getting professionals:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לצפות במטפלים" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפלים" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפלים",
     }
   }
 }
@@ -253,14 +257,14 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
     return { success: true, professional: professional as unknown as ProfessionalWithUser }
   } catch (error) {
     console.error("Error getting professional:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לצפות במטפל" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפל",
     }
   }
 }
@@ -276,7 +280,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       gender: formData.get("gender") as string,
-      birthDate: formData.get("birthDate") as string
+      birthDate: formData.get("birthDate") as string,
     }
 
     const validatedData = CreateProfessionalSchema.parse(rawData)
@@ -285,60 +289,67 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     await dbConnect()
 
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [
-        { email: validatedData.email },
-        { phone: validatedData.phone }
-      ]
+    const existingUser = await User.findOne({
+      $or: [{ email: validatedData.email }, { phone: validatedData.phone }],
     })
-    
+
     if (existingUser) {
-      return { 
-        success: false, 
-        error: "משתמש עם אימייל או טלפון זה כבר קיים במערכת" 
+      return {
+        success: false,
+        error: "משתמש עם אימייל או טלפון זה כבר קיים במערכת",
       }
     }
 
     // Create user with transaction
     const session = await User.startSession()
-    
+
     try {
       await session.withTransaction(async () => {
-    // Create user
-    const hashedPassword = await hash("123456", 12) // Default password
-        const user = await User.create([{
-          name: validatedData.name,
-          email: validatedData.email,
-          phone: validatedData.phone,
-          gender: validatedData.gender,
-          dateOfBirth: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
-      password: hashedPassword,
-      roles: ["professional"],
-          activeRole: "professional",
-          isEmailVerified: false,
-          isPhoneVerified: false
-        }], { session })
+        // Create user
+        const hashedPassword = await hash("123456", 12) // Default password
+        const user = await User.create(
+          [
+            {
+              name: validatedData.name,
+              email: validatedData.email,
+              phone: validatedData.phone,
+              gender: validatedData.gender,
+              dateOfBirth: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
+              password: hashedPassword,
+              roles: ["professional"],
+              activeRole: "professional",
+              isEmailVerified: false,
+              isPhoneVerified: false,
+            },
+          ],
+          { session }
+        )
 
-    // Create professional profile
-        await ProfessionalProfile.create([{
-          userId: user[0]._id,
-      status: "pending_admin_approval" as ProfessionalStatus,
-          isActive: true,
-          treatments: [],
-          workAreas: [],
-          totalEarnings: 0,
-          pendingPayments: 0,
-          financialTransactions: [],
-      appliedAt: new Date()
-        }], { session })
+        // Create professional profile
+        await ProfessionalProfile.create(
+          [
+            {
+              userId: user[0]._id,
+              status: "pending_admin_approval" as ProfessionalStatus,
+              isActive: true,
+              treatments: [],
+              workAreas: [],
+              totalEarnings: 0,
+              pendingPayments: 0,
+              financialTransactions: [],
+              appliedAt: new Date(),
+            },
+          ],
+          { session }
+        )
       })
     } finally {
       await session.endSession()
     }
 
     // Fetch the created professional with populated user data
-    const createdProfessionalQuery = await ProfessionalProfile.findOne({ 
-      "userId": { $in: await User.find({ email: validatedData.email }).select("_id") }
+    const createdProfessionalQuery = await ProfessionalProfile.findOne({
+      userId: { $in: await User.find({ email: validatedData.email }).select("_id") },
     })
       .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
@@ -350,25 +361,25 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { 
-      success: true, 
-      professional: createdProfessionalQuery as unknown as ProfessionalWithUser 
+    return {
+      success: true,
+      professional: createdProfessionalQuery as unknown as ProfessionalWithUser,
     }
   } catch (error) {
     console.error("Error creating professional:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה ליצור מטפל" }
     }
-    
+
     if (error instanceof z.ZodError) {
       const fieldErrors = error.errors.map(err => err.message).join(", ")
       return { success: false, error: `שגיאות בנתונים: ${fieldErrors}` }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה ביצירת המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה ביצירת המטפל",
     }
   }
 }
@@ -385,7 +396,15 @@ export async function updateProfessionalStatus(
       return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
-    if (!["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"].includes(status)) {
+    if (
+      ![
+        "active",
+        "pending_admin_approval",
+        "pending_user_action",
+        "rejected",
+        "suspended",
+      ].includes(status)
+    ) {
       return { success: false, error: "סטטוס לא תקין" }
     }
 
@@ -401,9 +420,9 @@ export async function updateProfessionalStatus(
     }
 
     // Prepare update data
-    const updateData: Partial<IProfessionalProfile> = { 
+    const updateData: Partial<IProfessionalProfile> = {
       status,
-      lastActiveAt: new Date()
+      lastActiveAt: new Date(),
     }
 
     // Add status-specific fields
@@ -415,7 +434,7 @@ export async function updateProfessionalStatus(
       updateData.rejectedAt = new Date()
       updateData.approvedAt = undefined
       if (rejectionReason) {
-      updateData.rejectionReason = rejectionReason
+        updateData.rejectionReason = rejectionReason
       }
     } else if (status === "pending_admin_approval" || status === "pending_user_action") {
       updateData.approvedAt = undefined
@@ -428,11 +447,10 @@ export async function updateProfessionalStatus(
       updateData.adminNotes = adminNote
     }
 
-    const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    )
+    const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    })
       .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
@@ -446,20 +464,20 @@ export async function updateProfessionalStatus(
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { 
-      success: true, 
-      professional: updatedProfessional as unknown as ProfessionalWithUser 
+    return {
+      success: true,
+      professional: updatedProfessional as unknown as ProfessionalWithUser,
     }
   } catch (error) {
     console.error("Error updating professional status:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לעדכן מטפל" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בעדכון סטטוס המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בעדכון סטטוס המטפל",
     }
   }
 }
@@ -473,28 +491,31 @@ export async function updateProfessionalTreatments(
   }>
 ): Promise<UpdateProfessionalResult> {
   try {
-    console.log('updateProfessionalTreatments called with:', { professionalId, treatmentsCount: treatments.length })
-    
+    console.log("updateProfessionalTreatments called with:", {
+      professionalId,
+      treatmentsCount: treatments.length,
+    })
+
     // Validate input
     if (!professionalId || !Array.isArray(treatments)) {
       return { success: false, error: "נתונים לא תקינים" }
     }
 
-    const validatedTreatments = treatments.map(treatment => 
+    const validatedTreatments = treatments.map(treatment =>
       ProfessionalTreatmentPricingSchema.parse(treatment)
     )
-    
-    console.log('Treatments validated successfully:', validatedTreatments.length)
+
+    console.log("Treatments validated successfully:", validatedTreatments.length)
 
     // Authorization check
-    console.log('Checking admin authorization...')
+    console.log("Checking admin authorization...")
     await requireAdminAuth()
-    console.log('Admin authorization passed')
+    console.log("Admin authorization passed")
 
     // Connect to database
-    console.log('Connecting to database...')
+    console.log("Connecting to database...")
     await dbConnect()
-    console.log('Database connected')
+    console.log("Database connected")
 
     // Verify professional exists
     const professional = await ProfessionalProfile.findById(professionalId)
@@ -502,36 +523,36 @@ export async function updateProfessionalTreatments(
       return { success: false, error: "מטפל לא נמצא" }
     }
 
-    console.log('Professional found:', professional._id)
+    console.log("Professional found:", professional._id)
 
     // Validate treatments exist and are active
     const treatmentIds = [...new Set(validatedTreatments.map(t => t.treatmentId))]
-    console.log('Validating treatments:', treatmentIds)
-    
+    console.log("Validating treatments:", treatmentIds)
+
     const existingTreatments = await Treatment.find({
       _id: { $in: treatmentIds },
-      isActive: true
+      isActive: true,
     })
 
-    console.log('Found treatments:', existingTreatments.length, 'expected:', treatmentIds.length)
+    console.log("Found treatments:", existingTreatments.length, "expected:", treatmentIds.length)
 
     if (existingTreatments.length !== treatmentIds.length) {
       return { success: false, error: "חלק מהטיפולים לא נמצאו או לא פעילים" }
     }
 
     // Update professional treatments
-    console.log('Updating professional treatments...')
+    console.log("Updating professional treatments...")
     const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
       professionalId,
       {
         $set: {
           treatments: validatedTreatments,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       },
-      { 
+      {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate("userId", "name email phone gender dateOfBirth roles")
@@ -541,31 +562,30 @@ export async function updateProfessionalTreatments(
       return { success: false, error: "שגיאה בעדכון הטיפולים" }
     }
 
-    console.log('Professional treatments updated successfully')
+    console.log("Professional treatments updated successfully")
 
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
     return {
       success: true,
-      professional: updatedProfessional as unknown as ProfessionalWithUser
+      professional: updatedProfessional as unknown as ProfessionalWithUser,
     }
-
   } catch (error) {
-    console.error('Error updating professional treatments:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available')
-    
+    console.error("Error updating professional treatments:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack available")
+
     if (error instanceof z.ZodError) {
-      console.error('Validation errors:', error.errors)
+      console.error("Validation errors:", error.errors)
       return {
         success: false,
-        error: error.errors.map(e => e.message).join(', ')
+        error: error.errors.map(e => e.message).join(", "),
       }
     }
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : "שגיאה בעדכון הטיפולים"
+      error: error instanceof Error ? error.message : "שגיאה בעדכון הטיפולים",
     }
   }
 }
@@ -592,13 +612,13 @@ export async function updateProfessionalBankDetails(
 
     const professional = await ProfessionalProfile.findByIdAndUpdate(
       id,
-      { 
+      {
         bankDetails: {
           bankName: bankDetails.bankName.trim(),
           branchNumber: bankDetails.branchNumber.trim(),
-          accountNumber: bankDetails.accountNumber.trim()
+          accountNumber: bankDetails.accountNumber.trim(),
         },
-        lastActiveAt: new Date()
+        lastActiveAt: new Date(),
       },
       { new: true, runValidators: true }
     )
@@ -612,20 +632,20 @@ export async function updateProfessionalBankDetails(
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { 
-      success: true, 
-      professional: professional as unknown as ProfessionalWithUser 
+    return {
+      success: true,
+      professional: professional as unknown as ProfessionalWithUser,
     }
   } catch (error) {
     console.error("Error updating professional bank details:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לעדכן פרטי חשבון הבנק" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי חשבון הבנק" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי חשבון הבנק",
     }
   }
 }
@@ -671,19 +691,19 @@ export async function updateProfessionalBasicInfo(
 
     // Use transaction for safe update of both user and professional
     const session = await ProfessionalProfile.startSession()
-    
+
     try {
       await session.withTransaction(async () => {
         // Update user details if provided
         if (userDetails && Object.keys(userDetails).length > 0) {
           const userUpdateData: any = {}
-          
+
           if (userDetails.name) userUpdateData.name = userDetails.name.trim()
           if (userDetails.email) {
             // Check if email is unique
-            const existingUser = await User.findOne({ 
+            const existingUser = await User.findOne({
               email: userDetails.email,
-              _id: { $ne: user._id }
+              _id: { $ne: user._id },
             })
             if (existingUser) {
               throw new Error("אימייל כבר קיים במערכת")
@@ -692,9 +712,9 @@ export async function updateProfessionalBasicInfo(
           }
           if (userDetails.phone) {
             // Check if phone is unique
-            const existingUser = await User.findOne({ 
+            const existingUser = await User.findOne({
               phone: userDetails.phone,
-              _id: { $ne: user._id }
+              _id: { $ne: user._id },
             })
             if (existingUser) {
               throw new Error("מספר טלפון כבר קיים במערכת")
@@ -703,7 +723,7 @@ export async function updateProfessionalBasicInfo(
           }
           if (userDetails.gender) userUpdateData.gender = userDetails.gender
           if (userDetails.birthDate) userUpdateData.dateOfBirth = new Date(userDetails.birthDate)
-          
+
           if (Object.keys(userUpdateData).length > 0) {
             await User.findByIdAndUpdate(user._id, userUpdateData, { session })
           }
@@ -712,10 +732,10 @@ export async function updateProfessionalBasicInfo(
         // Update professional details if provided
         if (professionalDetails && Object.keys(professionalDetails).length > 0) {
           const professionalUpdateData: any = { lastActiveAt: new Date() }
-          
+
           if (professionalDetails.status) {
             professionalUpdateData.status = professionalDetails.status
-            
+
             // Add status-specific fields
             if (professionalDetails.status === "active") {
               professionalUpdateData.approvedAt = new Date()
@@ -727,23 +747,29 @@ export async function updateProfessionalBasicInfo(
               if (professionalDetails.rejectionReason) {
                 professionalUpdateData.rejectionReason = professionalDetails.rejectionReason
               }
-            } else if (professionalDetails.status === "pending_admin_approval" || professionalDetails.status === "pending_user_action") {
+            } else if (
+              professionalDetails.status === "pending_admin_approval" ||
+              professionalDetails.status === "pending_user_action"
+            ) {
               professionalUpdateData.approvedAt = undefined
               professionalUpdateData.rejectedAt = undefined
               professionalUpdateData.rejectionReason = undefined
             }
           }
-          
+
           if (professionalDetails.isActive !== undefined) {
             professionalUpdateData.isActive = professionalDetails.isActive
           }
           if (professionalDetails.adminNotes !== undefined) {
             professionalUpdateData.adminNotes = professionalDetails.adminNotes
           }
-          if (professionalDetails.rejectionReason !== undefined && professionalDetails.status !== "rejected") {
+          if (
+            professionalDetails.rejectionReason !== undefined &&
+            professionalDetails.status !== "rejected"
+          ) {
             professionalUpdateData.rejectionReason = professionalDetails.rejectionReason
           }
-          
+
           await ProfessionalProfile.findByIdAndUpdate(id, professionalUpdateData, { session })
         }
       })
@@ -763,20 +789,20 @@ export async function updateProfessionalBasicInfo(
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { 
-      success: true, 
-      professional: updatedProfessional as unknown as ProfessionalWithUser 
+    return {
+      success: true,
+      professional: updatedProfessional as unknown as ProfessionalWithUser,
     }
   } catch (error) {
     console.error("Error updating professional basic info:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לעדכן פרטי המטפל" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי המטפל",
     }
   }
 }
@@ -806,26 +832,26 @@ export async function updateProfessionalWorkAreas(
       if (!workArea.cityId || !workArea.cityName) {
         throw new Error("נתוני איזור עבודה חסרים")
       }
-      
+
       const validDistanceRadii = ["20km", "40km", "60km", "80km", "unlimited"]
       if (!validDistanceRadii.includes(workArea.distanceRadius)) {
         throw new Error("רדיוס מרחק לא תקין")
       }
-      
+
       return {
         cityId: new Types.ObjectId(workArea.cityId),
         cityName: workArea.cityName,
         distanceRadius: workArea.distanceRadius,
-        coveredCities: Array.isArray(workArea.coveredCities) ? workArea.coveredCities : []
+        coveredCities: Array.isArray(workArea.coveredCities) ? workArea.coveredCities : [],
       }
     })
 
     // Update work areas
     const professional = await ProfessionalProfile.findByIdAndUpdate(
       id,
-      { 
+      {
         workAreas: validatedWorkAreas,
-        lastActiveAt: new Date()
+        lastActiveAt: new Date(),
       },
       { new: true, runValidators: true }
     )
@@ -854,20 +880,20 @@ export async function updateProfessionalWorkAreas(
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { 
-      success: true, 
-      professional: finalProfessional as unknown as ProfessionalWithUser 
+    return {
+      success: true,
+      professional: finalProfessional as unknown as ProfessionalWithUser,
     }
   } catch (error) {
     console.error("Error updating professional work areas:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה לעדכן איזורי עבודה של המטפל" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בעדכון איזורי העבודה" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בעדכון איזורי העבודה",
     }
   }
 }
@@ -893,38 +919,40 @@ export async function deleteProfessional(id: string): Promise<DeleteProfessional
     // Check if professional has any active bookings
     const activeBookings = await Booking.countDocuments({
       professionalId: new Types.ObjectId(id),
-      status: { $in: ["confirmed", "in_process"] as IBooking["status"][] }
+      status: { $in: ["confirmed", "in_process"] as IBooking["status"][] },
     })
 
     if (activeBookings > 0) {
-      return { 
-        success: false, 
-        error: `לא ניתן למחוק מטפל עם ${activeBookings} הזמנות פעילות` 
+      return {
+        success: false,
+        error: `לא ניתן למחוק מטפל עם ${activeBookings} הזמנות פעילות`,
       }
     }
 
     // Check if professional has any pending bookings
     const pendingBookings = await Booking.countDocuments({
       professionalId: new Types.ObjectId(id),
-      status: { $in: ["pending_professional_assignment", "pending_payment"] as IBooking["status"][] }
+      status: {
+        $in: ["pending_professional_assignment", "pending_payment"] as IBooking["status"][],
+      },
     })
 
     if (pendingBookings > 0) {
-      return { 
-        success: false, 
-        error: `לא ניתן למחוק מטפל עם ${pendingBookings} הזמנות ממתינות` 
+      return {
+        success: false,
+        error: `לא ניתן למחוק מטפל עם ${pendingBookings} הזמנות ממתינות`,
       }
     }
 
     // Use transaction for safe deletion
     const session = await ProfessionalProfile.startSession()
-    
+
     try {
       await session.withTransaction(async () => {
         // Delete professional profile first
         await ProfessionalProfile.findByIdAndDelete(id, { session })
 
-    // Delete associated user
+        // Delete associated user
         await User.findByIdAndDelete(professional.userId, { session })
       })
     } finally {
@@ -937,14 +965,14 @@ export async function deleteProfessional(id: string): Promise<DeleteProfessional
     return { success: true }
   } catch (error) {
     console.error("Error deleting professional:", error)
-    
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה למחוק מטפל" }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה במחיקת המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה במחיקת המטפל",
     }
   }
-} 
+}

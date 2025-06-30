@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function PurchaseGiftVoucherPage() {
   const session = await getServerSession(authOptions)
@@ -27,9 +27,7 @@ export default async function PurchaseGiftVoucherPage() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Heading title="Purchase Gift Voucher" description="Select and purchase a gift voucher." />
         <Separator />
-        <GuestGiftVoucherWizard
-          treatments={treatmentsResult.treatments || []}
-        />
+        <GuestGiftVoucherWizard treatments={treatmentsResult.treatments || []} />
       </div>
     </ScrollArea>
   )

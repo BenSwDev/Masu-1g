@@ -30,8 +30,8 @@ export async function getWorkingHoursSettings() {
           startTime: "09:00",
           endTime: "17:00",
           hasPriceAddition: false,
-          priceAddition: { 
-            amount: 0, 
+          priceAddition: {
+            amount: 0,
             type: "fixed",
             description: "",
             priceAdditionStartTime: null,
@@ -60,13 +60,13 @@ export async function getWorkingHoursSettings() {
       ...settings,
       _id: settings._id?.toString(),
       specialDates:
-        settings.specialDates?.map((date) => ({
+        settings.specialDates?.map(date => ({
           ...date,
           _id: date._id?.toString(),
           date: date.date.toISOString().split("T")[0],
         })) || [],
       specialDateEvents:
-        settings.specialDateEvents?.map((event) => ({
+        settings.specialDateEvents?.map(event => ({
           ...event,
           _id: event._id?.toString(),
           dates: event.dates.map(date => date.toISOString().split("T")[0]),
@@ -85,8 +85,15 @@ export async function getWorkingHoursSettings() {
 
 // Helper function to sanitize price addition data
 function sanitizePriceAddition(priceAddition: any) {
-  if (!priceAddition) return { amount: 0, type: "fixed", description: "", priceAdditionStartTime: null, priceAdditionEndTime: null }
-  
+  if (!priceAddition)
+    return {
+      amount: 0,
+      type: "fixed",
+      description: "",
+      priceAdditionStartTime: null,
+      priceAdditionEndTime: null,
+    }
+
   return {
     amount: Number(priceAddition.amount) || 0,
     type: priceAddition.type || "fixed",
@@ -107,7 +114,7 @@ export async function updateFixedHours(fixedHours: IFixedHours[]) {
     await dbConnect()
 
     // Sanitize and validate the data
-    const sanitizedFixedHours = fixedHours.map((day) => ({
+    const sanitizedFixedHours = fixedHours.map(day => ({
       ...day,
       priceAddition: sanitizePriceAddition(day.priceAddition),
       professionalShare: {
@@ -156,7 +163,7 @@ export async function updateSpecialDates(specialDates: ISpecialDate[]) {
     }
 
     // Sanitize the special dates data
-    const sanitizedSpecialDates = specialDates.map((date) => ({
+    const sanitizedSpecialDates = specialDates.map(date => ({
       ...date,
       priceAddition: sanitizePriceAddition(date.priceAddition),
     }))
@@ -190,7 +197,7 @@ export async function updateSpecialDateEvents(specialDateEvents: ISpecialDateEve
     }
 
     // Sanitize the special date events data
-    const sanitizedSpecialDateEvents = specialDateEvents.map((event) => ({
+    const sanitizedSpecialDateEvents = specialDateEvents.map(event => ({
       ...event,
       priceAddition: sanitizePriceAddition(event.priceAddition),
       professionalShare: {
@@ -327,7 +334,7 @@ export async function updateWorkingHours(workingHours: any): Promise<{
 
     // For now, just return the same working hours (no actual DB update)
     // TODO: Implement actual working hours storage
-    
+
     revalidatePath("/dashboard/admin/working-hours")
 
     return { success: true, data: workingHours }
@@ -335,4 +342,4 @@ export async function updateWorkingHours(workingHours: any): Promise<{
     logger.error("Error updating working hours:", error)
     return { success: false, error: "Failed to update working hours" }
   }
-} 
+}

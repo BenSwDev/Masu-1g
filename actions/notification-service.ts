@@ -6,7 +6,7 @@ import mongoose from "mongoose"
 
 /**
  * General Notification Service
- * 
+ *
  * This file contains notification functions that are NOT related to professional booking notifications.
  * Professional booking notifications are now handled by the unified-professional-notifications system.
  */
@@ -27,24 +27,23 @@ export async function sendOTP(
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    
+
     // Store OTP in database (simplified for now)
     // TODO: Create proper OTP verification model if needed
-    
+
     // TODO: Implement SMS sending when SMS service is available
     // For now, just log the OTP for development
     logger.info(`OTP for ${phone}: ${otp}`)
 
-    return { 
-      success: true, 
-      messageId: `dev-${Date.now()}` 
+    return {
+      success: true,
+      messageId: `dev-${Date.now()}`,
     }
-
   } catch (error) {
     logger.error("Error sending OTP:", error)
-    return { 
-      success: false, 
-      error: "Failed to send OTP" 
+    return {
+      success: false,
+      error: "Failed to send OTP",
     }
   }
 }
@@ -58,11 +57,10 @@ export async function verifyOTP(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()
-    
+
     // TODO: Implement proper OTP verification when model is available
     // For now, return success for development
     return { success: true }
-
   } catch (error) {
     logger.error("Error verifying OTP:", error)
     return { success: false, error: "Failed to verify OTP" }
@@ -81,22 +79,21 @@ export async function getUserNotificationPreferences(
 ): Promise<{ success: boolean; preferences?: any; error?: string }> {
   try {
     await dbConnect()
-    
+
     const User = (await import("@/lib/db/models/user")).default
     const user = await User.findById(userId).select("notificationPreferences").lean()
-    
+
     if (!user) {
       return { success: false, error: "User not found" }
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       preferences: user.notificationPreferences || {
         methods: ["sms"],
-        language: "he"
-      }
+        language: "he",
+      },
     }
-
   } catch (error) {
     logger.error("Error getting user notification preferences:", error)
     return { success: false, error: "Failed to get preferences" }
@@ -115,20 +112,16 @@ export async function updateUserNotificationPreferences(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()
-    
+
     const User = (await import("@/lib/db/models/user")).default
-    
-    await User.findByIdAndUpdate(
-      userId,
-      { 
-        $set: { 
-          notificationPreferences: preferences 
-        }
-      }
-    )
+
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        notificationPreferences: preferences,
+      },
+    })
 
     return { success: true }
-
   } catch (error) {
     logger.error("Error updating user notification preferences:", error)
     return { success: false, error: "Failed to update preferences" }
@@ -148,15 +141,13 @@ export async function sendBookingConfirmationToUser(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()
-    
+
     const User = (await import("@/lib/db/models/user")).default
     const Booking = (await import("@/lib/db/models/booking")).default
-    
+
     const [user, booking] = await Promise.all([
       User.findById(userId).select("name email phone notificationPreferences").lean(),
-      Booking.findById(bookingId)
-        .populate('treatmentId', 'name')
-        .lean()
+      Booking.findById(bookingId).populate("treatmentId", "name").lean(),
     ])
 
     if (!user || !booking) {
@@ -167,7 +158,6 @@ export async function sendBookingConfirmationToUser(
     logger.info(`Booking confirmation for user ${userId}, booking ${bookingId}`)
 
     return { success: true }
-
   } catch (error) {
     logger.error("Error sending booking confirmation:", error)
     return { success: false, error: "Failed to send confirmation" }
@@ -183,10 +173,12 @@ export async function sendUserNotification(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()
-    
+
     const User = (await import("@/lib/db/models/user")).default
-    const user = await User.findById(userId).select("name email phone notificationPreferences").lean()
-    
+    const user = await User.findById(userId)
+      .select("name email phone notificationPreferences")
+      .lean()
+
     if (!user) {
       return { success: false, error: "User not found" }
     }
@@ -195,7 +187,6 @@ export async function sendUserNotification(
     logger.info(`User notification for ${userId}:`, notificationData)
 
     return { success: true }
-
   } catch (error) {
     logger.error("Error sending user notification:", error)
     return { success: false, error: "Failed to send notification" }
@@ -219,7 +210,6 @@ export async function sendGuestNotification(
     logger.info(`Guest notification for ${guestInfo.name}:`, notificationData)
 
     return { success: true }
-
   } catch (error) {
     logger.error("Error sending guest notification:", error)
     return { success: false, error: "Failed to send notification" }
@@ -238,10 +228,9 @@ export async function getProfessionalResponses(
 ): Promise<{ success: boolean; responses?: any[]; error?: string }> {
   try {
     await dbConnect()
-    
+
     // TODO: Implement when professional response model is available
     return { success: true, responses: [] }
-
   } catch (error) {
     logger.error("Error getting professional responses:", error)
     return { success: false, error: "Failed to get responses" }
@@ -258,15 +247,14 @@ export async function handleProfessionalResponse(
 ): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     await dbConnect()
-    
+
     // TODO: Implement when professional response model is available
     logger.info(`Professional response: ${responseId} - ${action}`)
-    
-    return { 
-      success: true, 
-      message: `Response ${action}ed successfully` 
+
+    return {
+      success: true,
+      message: `Response ${action}ed successfully`,
     }
-    
   } catch (error) {
     logger.error("Error handling professional response:", error)
     return { success: false, error: "Failed to process response" }
@@ -283,15 +271,14 @@ export async function resendProfessionalNotifications(
   if (!session?.user || !session.user.roles.includes("admin")) {
     return { success: false, error: "Unauthorized" }
   }
-  
+
   try {
     // TODO: Implement when unified notification system is available
     logger.info(`Resending professional notifications for booking ${bookingId}`)
-    
+
     return { success: true, sentCount: 0 }
-    
   } catch (error) {
     logger.error("Error resending professional notifications:", error)
     return { success: false, error: "Failed to resend notifications" }
   }
-} 
+}

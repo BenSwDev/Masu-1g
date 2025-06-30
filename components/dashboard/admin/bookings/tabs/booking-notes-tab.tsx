@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { 
-  FileText, 
-  Edit,
-  Save,
-  X
-} from "lucide-react"
+import { FileText, Edit, Save, X } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
 interface BookingNotesTabProps {
@@ -54,28 +49,17 @@ export default function BookingNotesTab({ booking, onUpdate }: BookingNotesTabPr
             )}
             {isEditing ? (
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleCancel}
-                >
+                <Button variant="outline" size="sm" onClick={handleCancel}>
                   <X className="w-4 h-4 mr-2" />
                   ביטול
                 </Button>
-                <Button 
-                  size="sm"
-                  onClick={handleSave}
-                >
+                <Button size="sm" onClick={handleSave}>
                   <Save className="w-4 h-4 mr-2" />
                   שמירה
                 </Button>
               </div>
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                 <Edit className="w-4 h-4 mr-2" />
                 עריכה
               </Button>
@@ -88,29 +72,23 @@ export default function BookingNotesTab({ booking, onUpdate }: BookingNotesTabPr
               <Label className="text-sm font-medium">הערות הלקוח</Label>
               <Textarea
                 value={tempNotes}
-                onChange={(e) => setTempNotes(e.target.value)}
+                onChange={e => setTempNotes(e.target.value)}
                 placeholder="הזן הערות הלקוח כאן..."
                 rows={6}
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground">
-                תווים: {tempNotes.length}
-              </p>
+              <p className="text-xs text-muted-foreground">תווים: {tempNotes.length}</p>
             </div>
           ) : (
             <div className="space-y-2">
               <Label className="text-sm font-medium">הערות הלקוח</Label>
               {hasNotes ? (
                 <div className="p-4 border rounded-lg bg-gray-50 min-h-[120px]">
-                  <p className="whitespace-pre-wrap text-sm">
-                    {booking.notes}
-                  </p>
+                  <p className="whitespace-pre-wrap text-sm">{booking.notes}</p>
                 </div>
               ) : (
                 <div className="p-4 border rounded-lg bg-gray-50 min-h-[120px] flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">
-                    לא הוזנו הערות עבור הזמנה זו
-                  </p>
+                  <p className="text-muted-foreground text-sm">לא הוזנו הערות עבור הזמנה זו</p>
                 </div>
               )}
             </div>
@@ -175,9 +153,7 @@ export default function BookingNotesTab({ booking, onUpdate }: BookingNotesTabPr
             <div className="space-y-2">
               <Label className="text-sm font-medium">הודעת ברכה למתנה</Label>
               <div className="p-4 border rounded-lg bg-pink-50">
-                <p className="whitespace-pre-wrap text-sm">
-                  {booking.giftGreeting}
-                </p>
+                <p className="whitespace-pre-wrap text-sm">{booking.giftGreeting}</p>
               </div>
             </div>
           </CardContent>
@@ -200,4 +176,4 @@ export default function BookingNotesTab({ booking, onUpdate }: BookingNotesTabPr
       </Card>
     </div>
   )
-} 
+}

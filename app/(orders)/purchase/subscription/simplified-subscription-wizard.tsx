@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
@@ -13,10 +19,20 @@ import { useToast } from "@/components/ui/use-toast"
 import { Package, Clock, Star, CreditCard, CheckCircle, User, Mail, Phone } from "lucide-react"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import { getActiveSubscriptionsForPurchase, getTreatments, type SerializedSubscription, type SerializedTreatment } from "./actions"
+import {
+  getActiveSubscriptionsForPurchase,
+  getTreatments,
+  type SerializedSubscription,
+  type SerializedTreatment,
+} from "./actions"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
-import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase, initiateGuestSubscriptionPurchase, confirmGuestSubscriptionPurchase } from "@/actions/user-subscription-actions"
+import {
+  purchaseGuestSubscription,
+  saveAbandonedSubscriptionPurchase,
+  initiateGuestSubscriptionPurchase,
+  confirmGuestSubscriptionPurchase,
+} from "@/actions/user-subscription-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
@@ -49,15 +65,22 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
   } as ITreatment
 }
 
-export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
+export default function SimplifiedSubscriptionWizard({
+  subscriptions: propSubscriptions,
+  treatments: propTreatments,
+}: Props = {}) {
   const router = useRouter()
   const { t, language, dir } = useTranslation()
   const { toast } = useToast()
 
   // Data state
   const [dataLoading, setDataLoading] = useState(!propSubscriptions || !propTreatments)
-  const [subscriptions, setSubscriptions] = useState<ISubscription[]>(propSubscriptions?.map(convertToSubscription) || [])
-  const [treatments, setTreatments] = useState<ITreatment[]>(propTreatments?.map(convertToTreatment) || [])
+  const [subscriptions, setSubscriptions] = useState<ISubscription[]>(
+    propSubscriptions?.map(convertToSubscription) || []
+  )
+  const [treatments, setTreatments] = useState<ITreatment[]>(
+    propTreatments?.map(convertToTreatment) || []
+  )
 
   // Selection state
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState("")
@@ -85,13 +108,13 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
       try {
         const [subscriptionsResult, treatmentsResult] = await Promise.all([
           getActiveSubscriptionsForPurchase(),
-          getTreatments({ isActive: true })
+          getTreatments({ isActive: true }),
         ])
 
         if (subscriptionsResult.success) {
           setSubscriptions(subscriptionsResult.subscriptions?.map(convertToSubscription) || [])
         }
-        
+
         if (treatmentsResult.success) {
           setTreatments(treatmentsResult.treatments?.map(convertToTreatment) || [])
         }
@@ -124,12 +147,16 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   // Get selected data
   const selectedSubscription = subscriptions.find(s => s._id === selectedSubscriptionId)
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
-  const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
-    selectedTreatment.durations?.find(d => d._id === selectedDurationId) : undefined
+  const selectedDuration =
+    selectedTreatment?.pricingType === "duration_based"
+      ? selectedTreatment.durations?.find(d => d._id === selectedDurationId)
+      : undefined
 
   // Calculate price
-  const pricePerSession = selectedTreatment?.pricingType === "fixed" ? 
-    selectedTreatment.fixedPrice || 0 : selectedDuration?.price || 0
+  const pricePerSession =
+    selectedTreatment?.pricingType === "fixed"
+      ? selectedTreatment.fixedPrice || 0
+      : selectedDuration?.price || 0
   const totalPrice = (selectedSubscription?.quantity || 0) * pricePerSession
 
   const calculatedPrice: CalculatedPriceDetails = {
@@ -150,13 +177,16 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   }
 
   // Group treatments by category
-  const treatmentsByCategory = treatments.reduce((acc, treatment) => {
-    if (!acc[treatment.category]) {
-      acc[treatment.category] = []
-    }
-    acc[treatment.category].push(treatment)
-    return acc
-  }, {} as Record<string, ITreatment[]>)
+  const treatmentsByCategory = treatments.reduce(
+    (acc, treatment) => {
+      if (!acc[treatment.category]) {
+        acc[treatment.category] = []
+      }
+      acc[treatment.category].push(treatment)
+      return acc
+    },
+    {} as Record<string, ITreatment[]>
+  )
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
@@ -178,7 +208,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const handlePurchase = async () => {
     if (!selectedSubscriptionId || !selectedTreatmentId) return
     setIsLoading(true)
-    
+
     try {
       // Step 1: Initiate purchase (creates subscription with pending_payment status)
       const initiateResult = await initiateGuestSubscriptionPurchase({
@@ -191,9 +221,13 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           phone: guestInfo.phone,
         },
       })
-      
+
       if (!initiateResult.success || !initiateResult.userSubscriptionId) {
-        toast({ variant: "destructive", title: "שגיאה", description: initiateResult.error || "שגיאה ביצירת המנוי" })
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: initiateResult.error || "שגיאה ביצירת המנוי",
+        })
         setIsLoading(false)
         return
       }
@@ -201,7 +235,6 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
       // Store pending subscription ID for payment confirmation
       setPendingSubscriptionId(initiateResult.userSubscriptionId)
       setIsLoading(false)
-      
     } catch (error) {
       console.error("Purchase error:", error)
       toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
@@ -212,7 +245,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const handlePaymentSuccess = async () => {
     if (!pendingSubscriptionId) return
     setIsLoading(true)
-    
+
     try {
       const confirmResult = await confirmGuestSubscriptionPurchase({
         subscriptionId: pendingSubscriptionId,
@@ -222,18 +255,28 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
           phone: guestInfo.phone,
-        }
+        },
       })
-      
+
       if (confirmResult.success && confirmResult.subscription) {
         const subscriptionId = confirmResult.subscription._id || confirmResult.subscription.id
         if (subscriptionId) {
-          router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
+          router.push(
+            `/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`
+          )
         } else {
-          toast({ variant: "destructive", title: "שגיאה", description: "לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה." })
+          toast({
+            variant: "destructive",
+            title: "שגיאה",
+            description: "לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה.",
+          })
         }
       } else {
-        toast({ variant: "destructive", title: "שגיאה", description: confirmResult.error || "שגיאה באישור התשלום" })
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: confirmResult.error || "שגיאה באישור התשלום",
+        })
       }
     } catch (error) {
       console.error("Payment confirmation error:", error)
@@ -246,7 +289,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const handlePaymentFailure = async () => {
     if (!pendingSubscriptionId) return
     setIsLoading(true)
-    
+
     try {
       await confirmGuestSubscriptionPurchase({
         subscriptionId: pendingSubscriptionId,
@@ -256,10 +299,14 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
           phone: guestInfo.phone,
-        }
+        },
       })
-      
-      toast({ variant: "destructive", title: "התשלום נכשל", description: "התשלום לא עבר בהצלחה. המנוי לא הופעל." })
+
+      toast({
+        variant: "destructive",
+        title: "התשלום נכשל",
+        description: "התשלום לא עבר בהצלחה. המנוי לא הופעל.",
+      })
       setPendingSubscriptionId(null)
     } catch (error) {
       console.error("Payment failure handling error:", error)
@@ -269,7 +316,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     }
   }
 
-  const canProceedToStep2 = selectedSubscriptionId && selectedTreatmentId && 
+  const canProceedToStep2 =
+    selectedSubscriptionId &&
+    selectedTreatmentId &&
     (selectedTreatment?.pricingType !== "duration_based" || selectedDurationId)
 
   if (dataLoading) {
@@ -287,8 +336,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
 
   // Filter out undefined categories and get unique categories
   const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
-  const categoryTreatments = selectedCategory ? 
-    treatments.filter(t => t.category === selectedCategory) : []
+  const categoryTreatments = selectedCategory
+    ? treatments.filter(t => t.category === selectedCategory)
+    : []
 
   // Function to translate category names
   const getCategoryDisplayName = (category: string) => {
@@ -316,11 +366,13 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
         </CardHeader>
         <CardContent>
           <div className="grid gap-3">
-            {subscriptions.map((sub) => (
+            {subscriptions.map(sub => (
               <div
                 key={sub._id}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedSubscriptionId === sub._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                  selectedSubscriptionId === sub._id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
                 }`}
                 onClick={() => setSelectedSubscriptionId(sub._id)}
               >
@@ -334,7 +386,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                   <div className="flex gap-2">
                     <Badge variant="secondary">{sub.quantity}</Badge>
                     {sub.bonusQuantity > 0 && (
-                      <Badge variant="outline" className="bg-green-50">+{sub.bonusQuantity}</Badge>
+                      <Badge variant="outline" className="bg-green-50">
+                        +{sub.bonusQuantity}
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -352,11 +406,13 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              {treatmentCategories.map((category) => (
+              {treatmentCategories.map(category => (
                 <div
                   key={category}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                    selectedCategory === category ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                    selectedCategory === category
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
                   }`}
                   onClick={() => {
                     setSelectedCategory(category)
@@ -364,9 +420,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                     setSelectedDurationId("")
                   }}
                 >
-                  <div className="font-medium">
-                    {getCategoryDisplayName(category)}
-                  </div>
+                  <div className="font-medium">{getCategoryDisplayName(category)}</div>
                 </div>
               ))}
             </div>
@@ -382,11 +436,13 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
-              {categoryTreatments.map((treatment) => (
+              {categoryTreatments.map(treatment => (
                 <div
                   key={treatment._id}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedTreatmentId === treatment._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                    selectedTreatmentId === treatment._id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
                   }`}
                   onClick={() => {
                     setSelectedTreatmentId(treatment._id)
@@ -414,18 +470,22 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              {selectedTreatment.durations.filter(d => d.isActive).map((duration) => (
-                <div
-                  key={duration._id}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                    selectedDurationId === duration._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  onClick={() => setSelectedDurationId(duration._id)}
-                >
-                  <div className="font-medium">{duration.minutes} דקות</div>
-                  <div className="font-bold text-blue-600">₪{duration.price}</div>
-                </div>
-              ))}
+              {selectedTreatment.durations
+                .filter(d => d.isActive)
+                .map(duration => (
+                  <div
+                    key={duration._id}
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
+                      selectedDurationId === duration._id
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                    onClick={() => setSelectedDurationId(duration._id)}
+                  >
+                    <div className="font-medium">{duration.minutes} דקות</div>
+                    <div className="font-bold text-blue-600">₪{duration.price}</div>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>

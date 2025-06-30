@@ -2,11 +2,12 @@ import { z } from "zod"
 
 export const CouponBaseSchema = z
   .object({
-    code: z.string()
+    code: z
+      .string()
       .min(3, "Code must be at least 3 characters")
       .trim()
-      .refine((code) => /[A-Za-z]/.test(code), "Code must contain at least one letter")
-      .refine((code) => /[0-9]/.test(code), "Code must contain at least one number"),
+      .refine(code => /[A-Za-z]/.test(code), "Code must contain at least one letter")
+      .refine(code => /[0-9]/.test(code), "Code must contain at least one number"),
     description: z.string().optional(),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.number().min(0, "Discount value must be non-negative"),
@@ -18,7 +19,7 @@ export const CouponBaseSchema = z
     assignedPartnerId: z.string().optional().nullable(),
     notesForPartner: z.string().optional(),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],
   })
@@ -29,11 +30,12 @@ export const CreateCouponSchema = CouponBaseSchema
 export const UpdateCouponSchema = z
   .object({
     // Fields from CouponBaseSchema (copied)
-    code: z.string()
+    code: z
+      .string()
       .min(3, "Code must be at least 3 characters")
       .trim()
-      .refine((code) => /[A-Za-z]/.test(code), "Code must contain at least one letter")
-      .refine((code) => /[0-9]/.test(code), "Code must contain at least one number"),
+      .refine(code => /[A-Za-z]/.test(code), "Code must contain at least one letter")
+      .refine(code => /[0-9]/.test(code), "Code must contain at least one number"),
     description: z.string().optional(),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.number().min(0, "Discount value must be non-negative"),
@@ -47,7 +49,7 @@ export const UpdateCouponSchema = z
     // Additional field for update
     id: z.string().min(1, "Coupon ID is required for update"),
   })
-  .refine((data) => data.validUntil >= data.validFrom, {
+  .refine(data => data.validUntil >= data.validFrom, {
     // Re-apply refinement if it's relevant to all fields including id (though id doesn't affect this specific refine)
     message: "Expiration date must be after or same as start date",
     path: ["validUntil"],

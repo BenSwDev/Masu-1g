@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 import MemberBookingsClient from "@/components/dashboard/member/bookings/member-bookings-client"
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 

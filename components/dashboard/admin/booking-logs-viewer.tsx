@@ -5,23 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Search, 
-  Download, 
-  RefreshCw, 
-  Clock, 
-  AlertTriangle, 
+import {
+  Search,
+  Download,
+  RefreshCw,
+  Clock,
+  AlertTriangle,
   CheckCircle,
   XCircle,
   Info,
   Filter,
   Copy,
-  Eye
+  Eye,
 } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
@@ -29,9 +35,17 @@ import { toast } from "sonner"
 
 interface BookingLog {
   timestamp: string
-  level: 'info' | 'warn' | 'error' | 'debug'
+  level: "info" | "warn" | "error" | "debug"
   message: string
-  phase: 'initiation' | 'validation' | 'calculation' | 'creation' | 'payment' | 'confirmation' | 'completion' | 'error'
+  phase:
+    | "initiation"
+    | "validation"
+    | "calculation"
+    | "creation"
+    | "payment"
+    | "confirmation"
+    | "completion"
+    | "error"
   bookingId?: string
   userId?: string
   guestEmail?: string
@@ -56,12 +70,12 @@ export default function BookingLogsViewer() {
   const [summary, setSummary] = useState<BookingLogsSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
-    type: 'booking',
-    level: 'all',
-    bookingId: '',
-    sessionId: '',
-    phase: 'all',
-    limit: '100'
+    type: "booking",
+    level: "all",
+    bookingId: "",
+    sessionId: "",
+    phase: "all",
+    limit: "100",
   })
   const [selectedLog, setSelectedLog] = useState<BookingLog | null>(null)
 
@@ -71,7 +85,7 @@ export default function BookingLogsViewer() {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
         // Convert "all" values to empty strings for the API call
-        const apiValue = value === 'all' ? '' : value
+        const apiValue = value === "all" ? "" : value
         if (apiValue) params.append(key, apiValue)
       })
 
@@ -92,38 +106,38 @@ export default function BookingLogsViewer() {
     }
   }
 
-  const downloadLogs = async (format: 'json' | 'text' = 'text') => {
+  const downloadLogs = async (format: "json" | "text" = "text") => {
     try {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
         // Convert "all" values to empty strings for the API call
-        const apiValue = value === 'all' ? '' : value
+        const apiValue = value === "all" ? "" : value
         if (apiValue) params.append(key, apiValue)
       })
-      params.append('format', format)
+      params.append("format", format)
 
       const response = await fetch(`/api/logs?${params}`)
-      
-      if (format === 'text') {
+
+      if (format === "text") {
         const text = await response.text()
-        const blob = new Blob([text], { type: 'text/plain' })
+        const blob = new Blob([text], { type: "text/plain" })
         const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
+        const a = document.createElement("a")
         a.href = url
-        a.download = `booking_logs_${new Date().toISOString().split('T')[0]}.txt`
+        a.download = `booking_logs_${new Date().toISOString().split("T")[0]}.txt`
         a.click()
         URL.revokeObjectURL(url)
       } else {
         const data = await response.json()
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
         const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
+        const a = document.createElement("a")
         a.href = url
-        a.download = `booking_logs_${new Date().toISOString().split('T')[0]}.json`
+        a.download = `booking_logs_${new Date().toISOString().split("T")[0]}.json`
         a.click()
         URL.revokeObjectURL(url)
       }
-      
+
       toast.success("לוגים הורדו בהצלחה")
     } catch (error) {
       toast.error("שגיאה בהורדת הלוגים")
@@ -132,13 +146,13 @@ export default function BookingLogsViewer() {
 
   const copyLogToClipboard = (log: BookingLog) => {
     const logText = `[${log.timestamp}] [${log.level.toUpperCase()}] [${log.phase}] ${log.message}
-Booking ID: ${log.bookingId || 'N/A'}
-User/Email: ${log.userId || log.guestEmail || 'N/A'}
-Treatment ID: ${log.treatmentId || 'N/A'}
-Amount: ${log.amount || 'N/A'}
-Payment Status: ${log.paymentStatus || 'N/A'}
-${log.error ? `Error: ${JSON.stringify(log.error, null, 2)}` : ''}
-${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
+Booking ID: ${log.bookingId || "N/A"}
+User/Email: ${log.userId || log.guestEmail || "N/A"}
+Treatment ID: ${log.treatmentId || "N/A"}
+Amount: ${log.amount || "N/A"}
+Payment Status: ${log.paymentStatus || "N/A"}
+${log.error ? `Error: ${JSON.stringify(log.error, null, 2)}` : ""}
+${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ""}`
 
     navigator.clipboard.writeText(logText)
     toast.success("לוג הועתק")
@@ -146,36 +160,41 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
 
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case 'error': return <XCircle className="w-4 h-4 text-red-500" />
-      case 'warn': return <AlertTriangle className="w-4 h-4 text-yellow-500" />
-      case 'info': return <Info className="w-4 h-4 text-blue-500" />
-      case 'debug': return <Eye className="w-4 h-4 text-gray-500" />
-      default: return <CheckCircle className="w-4 h-4 text-green-500" />
+      case "error":
+        return <XCircle className="w-4 h-4 text-red-500" />
+      case "warn":
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+      case "info":
+        return <Info className="w-4 h-4 text-blue-500" />
+      case "debug":
+        return <Eye className="w-4 h-4 text-gray-500" />
+      default:
+        return <CheckCircle className="w-4 h-4 text-green-500" />
     }
   }
 
   const getLevelBadge = (level: string) => {
     const colors: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
-      error: 'destructive',
-      warn: 'default',
-      info: 'secondary',
-      debug: 'outline'
+      error: "destructive",
+      warn: "default",
+      info: "secondary",
+      debug: "outline",
     }
-    return <Badge variant={colors[level] || 'default'}>{level}</Badge>
+    return <Badge variant={colors[level] || "default"}>{level}</Badge>
   }
 
   const getPhaseBadge = (phase: string) => {
     const colors: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
-      initiation: 'default',
-      validation: 'secondary',
-      calculation: 'outline',
-      creation: 'default',
-      payment: 'secondary',
-      confirmation: 'default',
-      completion: 'default',
-      error: 'destructive'
+      initiation: "default",
+      validation: "secondary",
+      calculation: "outline",
+      creation: "default",
+      payment: "secondary",
+      confirmation: "default",
+      completion: "default",
+      error: "destructive",
     }
-    return <Badge variant={colors[phase] || 'default'}>{phase}</Badge>
+    return <Badge variant={colors[phase] || "default"}>{phase}</Badge>
   }
 
   useEffect(() => {
@@ -198,14 +217,17 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
               <Input
                 id="bookingId"
                 value={filters.bookingId}
-                onChange={(e) => setFilters(prev => ({ ...prev, bookingId: e.target.value }))}
+                onChange={e => setFilters(prev => ({ ...prev, bookingId: e.target.value }))}
                 placeholder="67abc123..."
               />
             </div>
-            
+
             <div>
               <Label htmlFor="level">רמת לוג</Label>
-              <Select value={filters.level} onValueChange={(value) => setFilters(prev => ({ ...prev, level: value }))}>
+              <Select
+                value={filters.level}
+                onValueChange={value => setFilters(prev => ({ ...prev, level: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="כל הרמות" />
                 </SelectTrigger>
@@ -221,7 +243,10 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
 
             <div>
               <Label htmlFor="phase">שלב</Label>
-              <Select value={filters.phase} onValueChange={(value) => setFilters(prev => ({ ...prev, phase: value }))}>
+              <Select
+                value={filters.phase}
+                onValueChange={value => setFilters(prev => ({ ...prev, phase: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="כל השלבים" />
                 </SelectTrigger>
@@ -241,7 +266,10 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
 
             <div>
               <Label htmlFor="limit">מגבלה</Label>
-              <Select value={filters.limit} onValueChange={(value) => setFilters(prev => ({ ...prev, limit: value }))}>
+              <Select
+                value={filters.limit}
+                onValueChange={value => setFilters(prev => ({ ...prev, limit: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -256,13 +284,13 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
 
             <div className="flex items-end gap-2">
               <Button onClick={fetchLogs} disabled={loading} className="flex-1">
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                 רענן
               </Button>
             </div>
 
             <div className="flex items-end gap-2">
-              <Button variant="outline" onClick={() => downloadLogs('text')} className="flex-1">
+              <Button variant="outline" onClick={() => downloadLogs("text")} className="flex-1">
                 <Download className="w-4 h-4 mr-2" />
                 הורד
               </Button>
@@ -312,11 +340,11 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
           <CardTitle className="flex items-center justify-between">
             <span>לוגים ({logs.length})</span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => downloadLogs('json')}>
+              <Button variant="outline" size="sm" onClick={() => downloadLogs("json")}>
                 <Download className="w-4 h-4 mr-2" />
                 JSON
               </Button>
-              <Button variant="outline" size="sm" onClick={() => downloadLogs('text')}>
+              <Button variant="outline" size="sm" onClick={() => downloadLogs("text")}>
                 <Download className="w-4 h-4 mr-2" />
                 טקסט
               </Button>
@@ -334,7 +362,7 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
                       {getLevelBadge(log.level)}
                       {getPhaseBadge(log.phase)}
                       <span className="text-sm text-gray-500">
-                        {format(new Date(log.timestamp), 'dd/MM HH:mm:ss', { locale: he })}
+                        {format(new Date(log.timestamp), "dd/MM HH:mm:ss", { locale: he })}
                       </span>
                     </div>
                     <div className="font-medium mb-1">{log.message}</div>
@@ -391,4 +419,4 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
       )}
     </div>
   )
-} 
+}

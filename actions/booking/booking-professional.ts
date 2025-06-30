@@ -10,16 +10,16 @@ import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
 import { unifiedNotificationService } from "@/lib/notifications/unified-service"
-import type { 
-  NotificationLanguage, 
-  ProfessionalBookingNotificationData 
+import type {
+  NotificationLanguage,
+  ProfessionalBookingNotificationData,
 } from "@/lib/notifications/notification-types"
 
 /**
  * Professional accepts a booking assignment
  */
 export async function professionalAcceptBooking(
-  bookingId: string,
+  bookingId: string
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
@@ -55,17 +55,17 @@ export async function professionalAcceptBooking(
         const clientUser = await User.findById(acceptedBooking.userId)
           .select("name email phone notificationPreferences")
           .lean()
-        const treatment = await Treatment.findById(acceptedBooking.treatmentId).select("name").lean()
+        const treatment = await Treatment.findById(acceptedBooking.treatmentId)
+          .select("name")
+          .lean()
         const professional = await User.findById(professionalId).select("name").lean()
 
         if (clientUser && treatment && professional) {
-          const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+          const clientLang =
+            (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
-          const baseUrl =
-            process.env.NEXT_PUBLIC_APP_URL ||
-            process.env.NEXTAUTH_URL ||
-            ""
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
           const notificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
@@ -78,23 +78,26 @@ export async function professionalAcceptBooking(
 
           const recipients = []
           if (clientNotificationMethods.includes("email") && clientUser.email) {
-            recipients.push({ 
-              type: "email" as const, 
-              value: clientUser.email, 
-              name: clientUser.name, 
-              language: clientLang 
+            recipients.push({
+              type: "email" as const,
+              value: clientUser.email,
+              name: clientUser.name,
+              language: clientLang,
             })
           }
           if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-            recipients.push({ 
-              type: "phone" as const, 
-              value: clientUser.phone, 
-              language: clientLang 
+            recipients.push({
+              type: "phone" as const,
+              value: clientUser.phone,
+              language: clientLang,
             })
           }
-          
+
           if (recipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
+            await unifiedNotificationService.sendNotificationToMultiple(
+              recipients,
+              notificationData
+            )
           }
         }
       } catch (notificationError) {
@@ -107,11 +110,18 @@ export async function professionalAcceptBooking(
     }
     return { success: false, error: "bookings.errors.assignProfessionalFailed" }
   } catch (error) {
-    logger.error("Error in professionalAcceptBooking (assign professional):", { error, bookingId, professionalId })
-    const errorMessage = error instanceof Error ? error.message : "bookings.errors.assignProfessionalFailed"
+    logger.error("Error in professionalAcceptBooking (assign professional):", {
+      error,
+      bookingId,
+      professionalId,
+    })
+    const errorMessage =
+      error instanceof Error ? error.message : "bookings.errors.assignProfessionalFailed"
     return {
       success: false,
-      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.assignProfessionalFailed",
+      error: errorMessage.startsWith("bookings.errors.")
+        ? errorMessage
+        : "bookings.errors.assignProfessionalFailed",
     }
   } finally {
     await mongooseDbSession.endSession()
@@ -122,7 +132,7 @@ export async function professionalAcceptBooking(
  * Professional marks booking as en route
  */
 export async function professionalMarkEnRoute(
-  bookingId: string,
+  bookingId: string
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
@@ -144,18 +154,18 @@ export async function professionalMarkEnRoute(
     }
 
     booking.status = "confirmed" // Keep as confirmed when en route
-    
+
     // Ensure required fields have valid values for backward compatibility
     if (!booking.treatmentCategory) {
       booking.treatmentCategory = new mongoose.Types.ObjectId()
     }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
+    if (typeof booking.staticTreatmentPrice !== "number") {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }
-    if (typeof booking.staticTherapistPay !== 'number') {
+    if (typeof booking.staticTherapistPay !== "number") {
       booking.staticTherapistPay = 0
     }
-    if (typeof booking.companyFee !== 'number') {
+    if (typeof booking.companyFee !== "number") {
       booking.companyFee = 0
     }
     if (!booking.consents) {
@@ -163,10 +173,10 @@ export async function professionalMarkEnRoute(
         customerAlerts: "email",
         patientAlerts: "email",
         marketingOptIn: false,
-        termsAccepted: false
+        termsAccepted: false,
       }
     }
-    
+
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
@@ -181,7 +191,7 @@ export async function professionalMarkEnRoute(
  * Professional marks booking as completed
  */
 export async function professionalMarkCompleted(
-  bookingId: string,
+  bookingId: string
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
@@ -203,18 +213,18 @@ export async function professionalMarkCompleted(
     }
 
     booking.status = "completed"
-    
+
     // Ensure required fields have valid values for backward compatibility
     if (!booking.treatmentCategory) {
       booking.treatmentCategory = new mongoose.Types.ObjectId()
     }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
+    if (typeof booking.staticTreatmentPrice !== "number") {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }
-    if (typeof booking.staticTherapistPay !== 'number') {
+    if (typeof booking.staticTherapistPay !== "number") {
       booking.staticTherapistPay = 0
     }
-    if (typeof booking.companyFee !== 'number') {
+    if (typeof booking.companyFee !== "number") {
       booking.companyFee = 0
     }
     if (!booking.consents) {
@@ -222,10 +232,10 @@ export async function professionalMarkCompleted(
         customerAlerts: "email",
         patientAlerts: "email",
         marketingOptIn: false,
-        termsAccepted: false
+        termsAccepted: false,
       }
     }
-    
+
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
     revalidatePath("/dashboard/admin/bookings")
@@ -250,7 +260,7 @@ export async function professionalMarkCompleted(
  */
 export async function assignProfessionalToBooking(
   bookingId: string,
-  professionalId: string,
+  professionalId: string
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("admin")) {
@@ -297,20 +307,20 @@ export async function assignProfessionalToBooking(
       // Send notifications to client and professional
       try {
         const [clientUser, professional, treatment] = await Promise.all([
-          User.findById(assignedBooking.userId).select("name email phone notificationPreferences").lean(),
+          User.findById(assignedBooking.userId)
+            .select("name email phone notificationPreferences")
+            .lean(),
           User.findById(professionalId).select("name email phone notificationPreferences").lean(),
           Treatment.findById(assignedBooking.treatmentId).select("name").lean(),
         ])
 
         if (clientUser && professional && treatment) {
           // Client notification
-          const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+          const clientLang =
+            (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
-          const baseUrl =
-            process.env.NEXT_PUBLIC_APP_URL ||
-            process.env.NEXTAUTH_URL ||
-            ""
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
           const clientNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
@@ -323,28 +333,34 @@ export async function assignProfessionalToBooking(
 
           const clientRecipients = []
           if (clientNotificationMethods.includes("email") && clientUser.email) {
-            clientRecipients.push({ 
-              type: "email" as const, 
-              value: clientUser.email, 
-              name: clientUser.name, 
-              language: clientLang 
+            clientRecipients.push({
+              type: "email" as const,
+              value: clientUser.email,
+              name: clientUser.name,
+              language: clientLang,
             })
           }
           if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-            clientRecipients.push({ 
-              type: "phone" as const, 
-              value: clientUser.phone, 
-              language: clientLang 
+            clientRecipients.push({
+              type: "phone" as const,
+              value: clientUser.phone,
+              language: clientLang,
             })
           }
-          
+
           if (clientRecipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(clientRecipients, clientNotificationData)
+            await unifiedNotificationService.sendNotificationToMultiple(
+              clientRecipients,
+              clientNotificationData
+            )
           }
 
           // Professional notification
-          const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
-          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["sms"]
+          const professionalLang =
+            (professional.notificationPreferences?.language as NotificationLanguage) || "he"
+          const professionalNotificationMethods = professional.notificationPreferences?.methods || [
+            "sms",
+          ]
 
           const professionalNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
@@ -357,23 +373,26 @@ export async function assignProfessionalToBooking(
 
           const professionalRecipients = []
           if (professionalNotificationMethods.includes("email") && professional.email) {
-            professionalRecipients.push({ 
-              type: "email" as const, 
-              value: professional.email, 
-              name: professional.name, 
-              language: professionalLang 
+            professionalRecipients.push({
+              type: "email" as const,
+              value: professional.email,
+              name: professional.name,
+              language: professionalLang,
             })
           }
           if (professionalNotificationMethods.includes("sms") && professional.phone) {
-            professionalRecipients.push({ 
-              type: "phone" as const, 
-              value: professional.phone, 
-              language: professionalLang 
+            professionalRecipients.push({
+              type: "phone" as const,
+              value: professional.phone,
+              language: professionalLang,
             })
           }
-          
+
           if (professionalRecipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(professionalRecipients, professionalNotificationData)
+            await unifiedNotificationService.sendNotificationToMultiple(
+              professionalRecipients,
+              professionalNotificationData
+            )
           }
         }
       } catch (notificationError) {
@@ -390,10 +409,13 @@ export async function assignProfessionalToBooking(
     return { success: false, error: "bookings.errors.assignProfessionalFailed" }
   } catch (error) {
     logger.error("Error in assignProfessionalToBooking:", { error, bookingId, professionalId })
-    const errorMessage = error instanceof Error ? error.message : "bookings.errors.assignProfessionalFailed"
+    const errorMessage =
+      error instanceof Error ? error.message : "bookings.errors.assignProfessionalFailed"
     return {
       success: false,
-      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.assignProfessionalFailed",
+      error: errorMessage.startsWith("bookings.errors.")
+        ? errorMessage
+        : "bookings.errors.assignProfessionalFailed",
     }
   } finally {
     await mongooseDbSession.endSession()
@@ -404,7 +426,7 @@ export async function assignProfessionalToBooking(
  * Admin unassigns professional from booking
  */
 export async function unassignProfessionalFromBooking(
-  bookingId: string,
+  bookingId: string
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("admin")) {
@@ -443,10 +465,10 @@ export async function unassignProfessionalFromBooking(
 /**
  * Get available professionals for assignment
  */
-export async function getAvailableProfessionals(): Promise<{ 
-  success: boolean; 
-  professionals?: any[]; 
-  error?: string 
+export async function getAvailableProfessionals(): Promise<{
+  success: boolean
+  professionals?: any[]
+  error?: string
 }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("admin")) {
@@ -460,15 +482,15 @@ export async function getAvailableProfessionals(): Promise<{
     const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
 
     // Get all active professionals with proper population
-    const professionals = await ProfessionalProfile.find({ 
-      status: 'active',
-      isActive: true
+    const professionals = await ProfessionalProfile.find({
+      status: "active",
+      isActive: true,
     })
       .populate({
-        path: 'userId',
-        select: 'name email phone gender roles',
+        path: "userId",
+        select: "name email phone gender roles",
         // Only get users who have professional role
-        match: { roles: 'professional' }
+        match: { roles: "professional" },
       })
       .lean()
 
@@ -485,8 +507,8 @@ export async function getAvailableProfessionals(): Promise<{
         gender: p.userId.gender,
         profileId: p._id.toString(),
         workAreas: p.workAreas,
-        treatments: p.treatments
-      }))
+        treatments: p.treatments,
+      })),
     }
   } catch (error) {
     logger.error("Error in getAvailableProfessionals:", { error })
@@ -503,9 +525,7 @@ export async function findSuitableProfessionals(
   try {
     await dbConnect()
 
-    const booking = await Booking.findById(bookingId)
-      .populate('treatmentId')
-      .lean()
+    const booking = await Booking.findById(bookingId).populate("treatmentId").lean()
 
     if (!booking) {
       return { success: false, error: "Booking not found" }
@@ -516,15 +536,15 @@ export async function findSuitableProfessionals(
 
     // Find professionals who can perform this treatment in this area
     const suitableProfessionals = await ProfessionalProfile.find({
-      status: 'active',
+      status: "active",
       isActive: true,
       treatments: booking.treatmentId,
-      workAreas: { $in: [booking.bookingAddressSnapshot?.city] }
+      workAreas: { $in: [booking.bookingAddressSnapshot?.city] },
     })
       .populate({
-        path: 'userId',
-        select: 'name email phone gender roles',
-        match: { roles: 'professional' }
+        path: "userId",
+        select: "name email phone gender roles",
+        match: { roles: "professional" },
       })
       .lean()
 
@@ -541,8 +561,8 @@ export async function findSuitableProfessionals(
         gender: p.userId.gender,
         profileId: p._id.toString(),
         workAreas: p.workAreas,
-        treatments: p.treatments
-      }))
+        treatments: p.treatments,
+      })),
     }
   } catch (error) {
     logger.error("Error finding suitable professionals:", { error, bookingId })
@@ -567,9 +587,7 @@ export async function sendNotificationToSuitableProfessionals(
       return { success: false, error: "No suitable professionals found" }
     }
 
-    const booking = await Booking.findById(bookingId)
-      .populate('treatmentId')
-      .lean()
+    const booking = await Booking.findById(bookingId).populate("treatmentId").lean()
 
     if (!booking) {
       return { success: false, error: "Booking not found" }
@@ -591,18 +609,18 @@ export async function sendNotificationToSuitableProfessionals(
 
         const recipients = []
         if (professional.email) {
-          recipients.push({ 
-            type: "email" as const, 
-            value: professional.email, 
-            name: professional.name, 
-            language: "he" as NotificationLanguage 
+          recipients.push({
+            type: "email" as const,
+            value: professional.email,
+            name: professional.name,
+            language: "he" as NotificationLanguage,
           })
         }
         if (professional.phone) {
-          recipients.push({ 
-            type: "phone" as const, 
-            value: professional.phone, 
-            language: "he" as NotificationLanguage 
+          recipients.push({
+            type: "phone" as const,
+            value: professional.phone,
+            language: "he" as NotificationLanguage,
           })
         }
 
@@ -611,9 +629,9 @@ export async function sendNotificationToSuitableProfessionals(
           sentCount++
         }
       } catch (error) {
-        logger.error("Failed to send notification to professional:", { 
-          error, 
-          professionalId: professional._id 
+        logger.error("Failed to send notification to professional:", {
+          error,
+          professionalId: professional._id,
         })
       }
     }
@@ -623,4 +641,4 @@ export async function sendNotificationToSuitableProfessionals(
     logger.error("Error sending notifications to suitable professionals:", { error, bookingId })
     return { success: false, error: "Failed to send notifications" }
   }
-} 
+}

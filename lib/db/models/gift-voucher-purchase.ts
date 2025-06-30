@@ -35,7 +35,7 @@ const GiftVoucherPurchaseSchema = new Schema<IGiftVoucherPurchase>(
       savedAt: { type: Date, default: Date.now },
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 )
 
 const GiftVoucherPurchase: Model<IGiftVoucherPurchase> =

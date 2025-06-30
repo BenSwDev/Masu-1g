@@ -7,17 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { 
-  Edit3, 
-  Save, 
-  X, 
-  Calendar, 
-  User, 
-  FileText, 
-  Clock,
-  MapPin
-} from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Edit3, Save, X, Calendar, User, FileText, Clock, MapPin } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 import type { BookingStatus } from "@/lib/db/models/booking"
 
@@ -37,32 +34,32 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
       month: "long",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     })
   }
 
   const getStatusText = (status: BookingStatus) => {
     const statusMap = {
-      "pending_payment": "ממתין לתשלום",
-      "in_process": "בטיפול", 
-      "confirmed": "מאושר",
-      "completed": "הושלם",
-      "cancelled": "בוטל",
-      "refunded": "הוחזר"
+      pending_payment: "ממתין לתשלום",
+      in_process: "בטיפול",
+      confirmed: "מאושר",
+      completed: "הושלם",
+      cancelled: "בוטל",
+      refunded: "הוחזר",
     }
     return statusMap[status] || status
   }
 
   const getStatusVariant = (status: BookingStatus) => {
     const variantMap = {
-      "pending_payment": "secondary" as const,
-      "in_process": "default" as const,
-      "confirmed": "default" as const, 
-      "completed": "default" as const,
-      "cancelled": "destructive" as const,
-      "refunded": "destructive" as const
+      pending_payment: "secondary" as const,
+      in_process: "default" as const,
+      confirmed: "default" as const,
+      completed: "default" as const,
+      cancelled: "destructive" as const,
+      refunded: "destructive" as const,
     }
-    return variantMap[status] || "secondary" as const
+    return variantMap[status] || ("secondary" as const)
   }
 
   return (
@@ -170,8 +167,8 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-green-600" />
                   <span>
-                    {typeof booking.professionalId === 'object' 
-                      ? booking.professionalId.name 
+                    {typeof booking.professionalId === "object"
+                      ? booking.professionalId.name
                       : "מטפל שויך"}
                   </span>
                 </div>
@@ -199,8 +196,10 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
                     {[
                       booking.bookingAddressSnapshot.street,
                       booking.bookingAddressSnapshot.streetNumber,
-                      booking.bookingAddressSnapshot.city
-                    ].filter(Boolean).join(" ")}
+                      booking.bookingAddressSnapshot.city,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   </span>
                 </div>
               </div>
@@ -219,7 +218,7 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
             {isEditing ? (
               <Textarea
                 value={booking.notes || ""}
-                onChange={(e) => onUpdate({ notes: e.target.value })}
+                onChange={e => onUpdate({ notes: e.target.value })}
                 placeholder="הערות נוספות על ההזמנה..."
                 rows={4}
                 className="w-full"
@@ -242,13 +241,11 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
           <CardContent>
             <div className="space-y-2">
               <Label>ברכת מתנה</Label>
-              <p className="text-muted-foreground">
-                {booking.giftGreeting || "ללא ברכה"}
-              </p>
+              <p className="text-muted-foreground">{booking.giftGreeting || "ללא ברכה"}</p>
             </div>
           </CardContent>
         </Card>
       )}
     </div>
   )
-} 
+}

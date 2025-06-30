@@ -2,7 +2,11 @@
 
 import { validateEmail, validatePhone } from "@/lib/auth/auth"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type { EmailRecipient, PhoneRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
+import type {
+  EmailRecipient,
+  PhoneRecipient,
+  NotificationLanguage,
+} from "@/lib/notifications/notification-types"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import PasswordResetToken from "@/lib/db/models/password-reset-token"
@@ -14,7 +18,7 @@ import { randomBytes } from "crypto"
  */
 export async function sendPasswordResetEmail(
   email: string,
-  language: NotificationLanguage = "en",
+  language: NotificationLanguage = "en"
 ): Promise<{
   success: boolean
   message: string
@@ -22,7 +26,6 @@ export async function sendPasswordResetEmail(
 }> {
   try {
     // TODO: Remove debug log
-
 
     // Validate email
     if (!validateEmail(email)) {
@@ -49,7 +52,6 @@ export async function sendPasswordResetEmail(
 
     // TODO: Remove debug log
 
-
     // Delete any existing reset tokens for this user
     await PasswordResetToken.deleteMany({ userId: user._id })
 
@@ -69,7 +71,6 @@ export async function sendPasswordResetEmail(
     await passwordResetToken.save()
     // TODO: Remove debug log
 
-
     // Create reset URL
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
 
@@ -87,7 +88,6 @@ export async function sendPasswordResetEmail(
     const result = await unifiedNotificationService.sendPasswordReset(recipient, resetUrl, 60)
     // TODO: Remove debug log
 
-
     if (!result.success) {
       console.error("Failed to send password reset email:", result.error)
       return {
@@ -98,7 +98,6 @@ export async function sendPasswordResetEmail(
     }
 
     // TODO: Remove debug log
-
 
     return {
       success: true,
@@ -125,7 +124,6 @@ export async function verifyResetToken(token: string): Promise<{
 }> {
   try {
     // TODO: Remove debug log
-
 
     // Connect to database
     await dbConnect()
@@ -209,7 +207,7 @@ export async function verifyResetToken(token: string): Promise<{
  */
 export async function resetPasswordWithToken(
   token: string,
-  newPassword: string,
+  newPassword: string
 ): Promise<{
   success: boolean
   message: string
@@ -217,7 +215,6 @@ export async function resetPasswordWithToken(
 }> {
   try {
     // TODO: Remove debug log
-
 
     // Verify token first
     const tokenVerification = await verifyResetToken(token)
@@ -230,7 +227,6 @@ export async function resetPasswordWithToken(
     }
 
     // TODO: Remove debug log
-
 
     // Validate password
     const { validatePassword, hashPassword } = await import("@/lib/auth/auth")
@@ -266,12 +262,10 @@ export async function resetPasswordWithToken(
 
     // TODO: Remove debug log
 
-
     // Mark token as used
     await PasswordResetToken.findOneAndUpdate({ token }, { used: true })
 
     // TODO: Remove debug log
-
 
     return {
       success: true,
@@ -298,7 +292,6 @@ export async function cleanupExpiredTokens(): Promise<void> {
       expiryDate: { $lt: now },
     })
     // TODO: Remove debug log
-
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error)
   }
@@ -309,7 +302,7 @@ export async function cleanupExpiredTokens(): Promise<void> {
  */
 export async function sendPasswordResetOTP(
   phone: string,
-  language: NotificationLanguage = "en",
+  language: NotificationLanguage = "en"
 ): Promise<{
   success: boolean
   message: string
@@ -374,7 +367,7 @@ export async function sendPasswordResetOTP(
 export async function resetPasswordWithOTP(
   phone: string,
   otpCode: string,
-  newPassword: string,
+  newPassword: string
 ): Promise<{
   success: boolean
   message: string
@@ -409,10 +402,7 @@ export async function resetPasswordWithOTP(
     await dbConnect()
 
     // Update user password
-    const updateResult = await User.findOneAndUpdate(
-      { phone },
-      { password: hashedPassword }
-    )
+    const updateResult = await User.findOneAndUpdate({ phone }, { password: hashedPassword })
 
     if (!updateResult) {
       return {

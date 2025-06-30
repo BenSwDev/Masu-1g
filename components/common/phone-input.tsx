@@ -46,7 +46,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
 
   const [selectedCode, setSelectedCode] = React.useState(defaultCountryCode)
   const [phoneNumber, setPhoneNumber] = React.useState(propsDefaultValue || "") // Initialize with propsDefaultValue
-  const selectedCountry = countryCodes.find((c) => c.code === selectedCode) || countryCodes[0]
+  const selectedCountry = countryCodes.find(c => c.code === selectedCode) || countryCodes[0]
   const inputRef = React.useRef<HTMLInputElement>(null)
   const hiddenInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -94,7 +94,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
 
     if (phoneNumber) {
       // Always include the country code with + sign
-      fullNumber = selectedCode + (phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber)
+      fullNumber =
+        selectedCode + (phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber)
     }
 
     // Only call onPhoneChange if the value has actually changed or if it's the initial load
@@ -128,12 +129,12 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
         // Sort country codes by length (descending) to match longer codes first
         // This prevents +1 from matching before +12 for example
         const sortedCountryCodes = [...countryCodes].sort((a, b) => b.code.length - a.code.length)
-        
-        const matchedCountry = sortedCountryCodes.find((cc) => fullNumberValue.startsWith(cc.code))
+
+        const matchedCountry = sortedCountryCodes.find(cc => fullNumberValue.startsWith(cc.code))
         if (matchedCountry) {
           newSelectedCode = matchedCountry.code
           newPhoneNumber = fullNumberValue.substring(matchedCountry.code.length)
-          
+
           // Remove leading zero for Israeli numbers if code is +972 and number starts with 0
           if (newSelectedCode === "+972" && newPhoneNumber.startsWith("0")) {
             newPhoneNumber = newPhoneNumber.substring(1)
@@ -141,13 +142,13 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
         } else {
           // If no country code matches, assume it's a local number for the default country code
           newPhoneNumber = fullNumberValue
-          
+
           // Remove leading zero for Israeli numbers if using default +972
           if (newSelectedCode === "+972" && newPhoneNumber.startsWith("0")) {
             newPhoneNumber = newPhoneNumber.substring(1)
           }
         }
-        
+
         // Only update state if the values are actually different to prevent infinite loops
         if (selectedCode !== newSelectedCode || phoneNumber !== newPhoneNumber) {
           setSelectedCode(newSelectedCode)
@@ -178,7 +179,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-[200px]">
-          {countryCodes.map((country) => (
+          {countryCodes.map(country => (
             <DropdownMenuItem
               key={country.code}
               onClick={() => handleCodeChange(country.code)}

@@ -46,10 +46,7 @@ export async function getAllCoupons(
       query.isActive = true
       query.validUntil = { $gte: new Date() }
     } else if (filters.status === "expired") {
-      query.$or = [
-        { isActive: false },
-        { validUntil: { $lt: new Date() } },
-      ]
+      query.$or = [{ isActive: false }, { validUntil: { $lt: new Date() } }]
     }
 
     if (filters.discountType) {
@@ -65,7 +62,7 @@ export async function getAllCoupons(
       .limit(limit)
       .lean()
 
-    const serializedCoupons = coupons.map((coupon) => ({
+    const serializedCoupons = coupons.map(coupon => ({
       ...coupon,
       _id: coupon._id.toString(),
     }))
@@ -126,11 +123,15 @@ export async function createCoupon(data: any): Promise<{
     revalidatePath("/dashboard/admin/coupons")
 
     const now = new Date()
-    const effectiveStatus = !coupon.isActive ? "inactive" :
-      new Date(coupon.validUntil) < now ? "expired" :
-      new Date(coupon.validFrom) > now ? "pending" :
-      coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit ? "exhausted" :
-      "active"
+    const effectiveStatus = !coupon.isActive
+      ? "inactive"
+      : new Date(coupon.validUntil) < now
+        ? "expired"
+        : new Date(coupon.validFrom) > now
+          ? "pending"
+          : coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit
+            ? "exhausted"
+            : "active"
 
     return {
       success: true,
@@ -166,9 +167,9 @@ export async function updateCoupon(updateData: any): Promise<{
 
     // If updating code, check if it already exists
     if (data.code) {
-      const existingCoupon = await Coupon.findOne({ 
+      const existingCoupon = await Coupon.findOne({
         code: data.code,
-        _id: { $ne: id }
+        _id: { $ne: id },
       })
       if (existingCoupon) {
         return { success: false, error: "Coupon code already exists" }
@@ -185,11 +186,10 @@ export async function updateCoupon(updateData: any): Promise<{
     if (data.usageLimit !== undefined) updateFields.usageLimit = Number(data.usageLimit)
     if (data.isActive !== undefined) updateFields.isActive = Boolean(data.isActive)
 
-    const coupon = await Coupon.findByIdAndUpdate(
-      id,
-      updateFields,
-      { new: true, runValidators: true }
-    )
+    const coupon = await Coupon.findByIdAndUpdate(id, updateFields, {
+      new: true,
+      runValidators: true,
+    })
 
     if (!coupon) {
       return { success: false, error: "Coupon not found" }
@@ -198,11 +198,15 @@ export async function updateCoupon(updateData: any): Promise<{
     revalidatePath("/dashboard/admin/coupons")
 
     const now = new Date()
-    const effectiveStatus = !coupon.isActive ? "inactive" :
-      new Date(coupon.validUntil) < now ? "expired" :
-      new Date(coupon.validFrom) > now ? "pending" :
-      coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit ? "exhausted" :
-      "active"
+    const effectiveStatus = !coupon.isActive
+      ? "inactive"
+      : new Date(coupon.validUntil) < now
+        ? "expired"
+        : new Date(coupon.validFrom) > now
+          ? "pending"
+          : coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit
+            ? "exhausted"
+            : "active"
 
     return {
       success: true,
@@ -374,4 +378,4 @@ export async function getCouponById(id: string): Promise<{
     logger.error("Error fetching coupon:", error)
     return { success: false, error: "Failed to fetch coupon" }
   }
-} 
+}

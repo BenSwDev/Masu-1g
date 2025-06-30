@@ -7,7 +7,7 @@ export async function GET() {
     console.log("Cities API: Starting to fetch cities")
     await dbConnect()
     console.log("Cities API: Database connected")
-    
+
     // Get all active cities
     const cities = await City.find({ isActive: true })
       .select("name isActive coordinates")
@@ -22,14 +22,18 @@ export async function GET() {
         _id: city._id.toString(),
         name: city.name,
         isActive: city.isActive,
-        coordinates: city.coordinates
-      }))
+        coordinates: city.coordinates,
+      })),
     })
   } catch (error) {
     console.error("Error fetching cities:", error)
     return NextResponse.json(
-      { success: false, error: "Failed to fetch cities", details: error instanceof Error ? error.message : String(error) },
+      {
+        success: false,
+        error: "Failed to fetch cities",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     )
   }
-} 
+}

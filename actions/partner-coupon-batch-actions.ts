@@ -17,10 +17,13 @@ import {
 } from "@/lib/validation/partner-coupon-batch-schemas"
 
 // Helper functions to check roles
-const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean => !!user?.roles?.includes("admin")
+const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean =>
+  !!user?.roles?.includes("admin")
 
 // Function to calculate effective status for batches
-function calculateBatchEffectiveStatus(batch: IPartnerCouponBatch): "active" | "expired" | "scheduled" | "inactive_manual" {
+function calculateBatchEffectiveStatus(
+  batch: IPartnerCouponBatch
+): "active" | "expired" | "scheduled" | "inactive_manual" {
   const now = new Date()
   const validFrom = new Date(batch.validFrom)
   const validUntil = new Date(batch.validUntil)
@@ -44,9 +47,9 @@ function calculateBatchEffectiveStatus(batch: IPartnerCouponBatch): "active" | "
 function generateCouponCode(prefix: string, index: number): string {
   // Generate PC + 6 random alphanumeric characters
   const randomSuffix = Array.from({ length: 6 }, () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return chars.charAt(Math.floor(Math.random() * chars.length))
-  }).join('')
+  }).join("")
   return `PC${randomSuffix}`
 }
 
@@ -59,7 +62,11 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
 
   const validatedFields = CreatePartnerCouponBatchSchema.safeParse(payload)
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid fields", details: validatedFields.error.flatten().fieldErrors }
+    return {
+      success: false,
+      error: "Invalid fields",
+      details: validatedFields.error.flatten().fieldErrors,
+    }
   }
 
   try {
@@ -79,7 +86,7 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
     const coupons = []
     for (let i = 1; i <= validatedFields.data.couponCount; i++) {
       const couponCode = generateCouponCode("", i) // No prefix needed, will generate PC codes
-      
+
       const coupon = new Coupon({
         code: couponCode,
         description: `${validatedFields.data.name} - קופון ${i}`,
@@ -101,17 +108,17 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
 
     // Save all coupons
     const savedCoupons = await Coupon.insertMany(coupons)
-    
+
     // Update batch with coupon IDs
     newBatch.couponIds = savedCoupons.map(coupon => coupon._id)
     await newBatch.save()
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
-    return { 
-      success: true, 
-      message: "Partner coupon batch created successfully", 
+    return {
+      success: true,
+      message: "Partner coupon batch created successfully",
       batch: JSON.parse(JSON.stringify(newBatch)),
-      couponsCreated: savedCoupons.length
+      couponsCreated: savedCoupons.length,
     }
   } catch (_error: any) {
     console.error("Error creating partner coupon batch:", error)
@@ -127,7 +134,11 @@ export async function updatePartnerCouponBatch(payload: UpdatePartnerCouponBatch
 
   const validatedFields = UpdatePartnerCouponBatchSchema.safeParse(payload)
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid fields", details: validatedFields.error.flatten().fieldErrors }
+    return {
+      success: false,
+      error: "Invalid fields",
+      details: validatedFields.error.flatten().fieldErrors,
+    }
   }
 
   const { id, ...updateData } = validatedFields.data
@@ -140,7 +151,7 @@ export async function updatePartnerCouponBatch(payload: UpdatePartnerCouponBatch
         ...updateData,
         assignedPartnerId: updateData.assignedPartnerId || null,
       },
-      { new: true },
+      { new: true }
     )
 
     if (!updatedBatch) {
@@ -164,10 +175,10 @@ export async function updatePartnerCouponBatch(payload: UpdatePartnerCouponBatch
     )
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
-    return { 
-      success: true, 
-      message: "Partner coupon batch updated successfully", 
-      batch: JSON.parse(JSON.stringify(updatedBatch)) 
+    return {
+      success: true,
+      message: "Partner coupon batch updated successfully",
+      batch: JSON.parse(JSON.stringify(updatedBatch)),
     }
   } catch (_error: any) {
     console.error("Error updating partner coupon batch:", error)
@@ -190,7 +201,7 @@ export async function deletePartnerCouponBatch(batchId: string) {
 
     // Delete all related coupons
     await Coupon.deleteMany({ _id: { $in: batch.couponIds } })
-    
+
     // Delete the batch
     await PartnerCouponBatch.findByIdAndDelete(batchId)
 
@@ -205,7 +216,7 @@ export async function deletePartnerCouponBatch(batchId: string) {
 export async function getPartnerCouponBatches(
   page = 1,
   limit = 10,
-  filters: { name?: string; isActive?: boolean; partnerId?: string; effectiveStatus?: string } = {},
+  filters: { name?: string; isActive?: boolean; partnerId?: string; effectiveStatus?: string } = {}
 ): Promise<{
   batches: (IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number })[]
   totalPages: number
@@ -230,11 +241,11 @@ export async function getPartnerCouponBatches(
     .lean()
 
   const batchesWithEffectiveStatus = await Promise.all(
-    allMatchingBatches.map(async (batch) => {
+    allMatchingBatches.map(async batch => {
       // Count active coupons in this batch
       const activeCouponsCount = await Coupon.countDocuments({
         _id: { $in: batch.couponIds },
-        isActive: true
+        isActive: true,
       })
 
       return {
@@ -247,7 +258,9 @@ export async function getPartnerCouponBatches(
 
   let filteredByEffectiveStatus = batchesWithEffectiveStatus
   if (filters.effectiveStatus) {
-    filteredByEffectiveStatus = batchesWithEffectiveStatus.filter((b) => b.effectiveStatus === filters.effectiveStatus)
+    filteredByEffectiveStatus = batchesWithEffectiveStatus.filter(
+      b => b.effectiveStatus === filters.effectiveStatus
+    )
   }
 
   const totalBatches = filteredByEffectiveStatus.length
@@ -271,7 +284,7 @@ export async function getBatchCoupons(batchId: string): Promise<{
   }
 
   await connectDB()
-  
+
   const batch = await PartnerCouponBatch.findById(batchId)
     .populate("createdBy", "name email")
     .populate("assignedPartnerId", "name email")
@@ -285,7 +298,7 @@ export async function getBatchCoupons(batchId: string): Promise<{
     .sort({ code: 1 })
     .lean()
 
-  const couponsWithEffectiveStatus = coupons.map((coupon) => ({
+  const couponsWithEffectiveStatus = coupons.map(coupon => ({
     ...coupon,
     effectiveStatus: calculateCouponEffectiveStatus(coupon as ICoupon),
   }))
@@ -304,12 +317,16 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
 
   const validatedFields = UpdateCouponsInBatchSchema.safeParse(payload)
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid fields", details: validatedFields.error.flatten().fieldErrors }
+    return {
+      success: false,
+      error: "Invalid fields",
+      details: validatedFields.error.flatten().fieldErrors,
+    }
   }
 
   try {
     await connectDB()
-    
+
     const { batchId, couponIds, updates } = validatedFields.data
 
     // Verify the batch exists and the coupons belong to it
@@ -318,7 +335,7 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
       return { success: false, error: "Partner coupon batch not found" }
     }
 
-    const validCouponIds = couponIds.filter(id => 
+    const validCouponIds = couponIds.filter(id =>
       batch.couponIds.some(batchCouponId => batchCouponId.toString() === id)
     )
 
@@ -327,16 +344,13 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
     }
 
     // Update the selected coupons
-    await Coupon.updateMany(
-      { _id: { $in: validCouponIds } },
-      { $set: updates }
-    )
+    await Coupon.updateMany({ _id: { $in: validCouponIds } }, { $set: updates })
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: `${validCouponIds.length} coupons updated successfully`,
-      updatedCount: validCouponIds.length
+      updatedCount: validCouponIds.length,
     }
   } catch (_error: any) {
     console.error("Error updating coupons in batch:", error)
@@ -345,7 +359,9 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
 }
 
 // Helper function for coupon effective status (reused from coupon-actions)
-function calculateCouponEffectiveStatus(coupon: ICoupon): "active" | "expired" | "scheduled" | "inactive_manual" {
+function calculateCouponEffectiveStatus(
+  coupon: ICoupon
+): "active" | "expired" | "scheduled" | "inactive_manual" {
   const now = new Date()
   const validFrom = new Date(coupon.validFrom)
   const validUntil = new Date(coupon.validUntil)
@@ -363,4 +379,4 @@ function calculateCouponEffectiveStatus(coupon: ICoupon): "active" | "expired" |
     return "expired"
   }
   return "active"
-} 
+}

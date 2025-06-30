@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { CitySelect } from "@/components/ui/city-select"
 import { createAddress, updateAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
@@ -45,7 +51,9 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
         ...(addressType === "apartment" && {
           apartmentDetails: {
             apartmentNumber: formData.get("apartmentNumber") as string,
-            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
+            floor: formData.get("floor")
+              ? Number.parseInt(formData.get("floor") as string)
+              : undefined,
             entrance: formData.get("entrance") as string,
           },
         }),
@@ -61,7 +69,9 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
         }),
         ...(addressType === "office" && {
           officeDetails: {
-            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
+            floor: formData.get("floor")
+              ? Number.parseInt(formData.get("floor") as string)
+              : undefined,
             entrance: formData.get("entrance") as string,
             companyName: formData.get("companyName") as string,
           },
@@ -95,7 +105,9 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
         // Reset form state if needed (though component might unmount)
         setAddressType("apartment")
       } else {
-        toast.error(result.error || (address ? t("addresses.updateError") : t("addresses.createError")))
+        toast.error(
+          result.error || (address ? t("addresses.updateError") : t("addresses.createError"))
+        )
       }
     } catch (error) {
       toast.error(address ? t("addresses.updateError") : t("addresses.createError"))
@@ -109,11 +121,11 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="city">{t("addresses.fields.city")}</Label>
-          <CitySelect 
-            id="city" 
-            name="city" 
-            defaultValue={address?.city} 
-            required 
+          <CitySelect
+            id="city"
+            name="city"
+            defaultValue={address?.city}
+            required
             className="focus:ring-turquoise-500"
             placeholder={t("addresses.fields.cityPlaceholder") || "בחר עיר"}
           />
@@ -143,7 +155,13 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
 
         <div className="space-y-2">
           <Label htmlFor="addressType">{t("addresses.fields.addressType")}</Label>
-          <Select name="addressType" defaultValue={addressType} onValueChange={(value: "apartment" | "house" | "private" | "office" | "hotel" | "other") => setAddressType(value)}>
+          <Select
+            name="addressType"
+            defaultValue={addressType}
+            onValueChange={(
+              value: "apartment" | "house" | "private" | "office" | "hotel" | "other"
+            ) => setAddressType(value)}
+          >
             <SelectTrigger className="focus:ring-turquoise-500">
               <SelectValue placeholder={t("addresses.fields.addressTypePlaceholder")} />
             </SelectTrigger>
@@ -325,7 +343,11 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
         >
           {t("common.cancel")}
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="bg-turquoise-500 hover:bg-turquoise-600"
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />

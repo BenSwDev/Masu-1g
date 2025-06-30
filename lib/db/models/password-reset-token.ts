@@ -26,7 +26,7 @@ const PasswordResetTokenSchema: Schema = new Schema(
       // OR rely on a cron job to clean up. For now, just store expiry.
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 ) // Add timestamps for createdAt/updatedAt
 
 // Optional: TTL index for automatic deletion by MongoDB after the 'expiresAt' time has passed.

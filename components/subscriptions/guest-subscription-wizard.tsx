@@ -7,7 +7,10 @@ import GuestSubscriptionSelectionStep from "./guest-subscription-selection-step"
 import { GuestTreatmentSelectionStep } from "@/components/booking/steps/guest-treatment-selection-step"
 import GuestSubscriptionSummaryStep from "./guest-subscription-summary-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
-import { saveAbandonedSubscriptionPurchase, purchaseGuestSubscription } from "@/actions/user-subscription-actions"
+import {
+  saveAbandonedSubscriptionPurchase,
+  purchaseGuestSubscription,
+} from "@/actions/user-subscription-actions"
 import type { CalculatedPriceDetails, SelectedBookingOptions } from "@/types/booking"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
@@ -81,7 +84,10 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
   } as ITreatment
 }
 
-export default function GuestSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
+export default function GuestSubscriptionWizard({
+  subscriptions: propSubscriptions,
+  treatments: propTreatments,
+}: Props = {}) {
   const router = useRouter()
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
@@ -111,13 +117,13 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
       try {
         const [subscriptionsResult, treatmentsResult] = await Promise.all([
           getActiveSubscriptionsForPurchase(),
-          getActiveTreatmentsForPurchase()
+          getActiveTreatmentsForPurchase(),
         ])
 
         if (subscriptionsResult.success) {
           setSubscriptions(subscriptionsResult.subscriptions || [])
         }
-        
+
         if (treatmentsResult.success) {
           setTreatments(treatmentsResult.treatments || [])
         }
@@ -132,19 +138,27 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
   }, [propSubscriptions, propTreatments])
 
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
-  const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
-    selectedTreatment.durations?.find(d => d._id === selectedDurationId) : undefined
+  const selectedDuration =
+    selectedTreatment?.pricingType === "duration_based"
+      ? selectedTreatment.durations?.find(d => d._id === selectedDurationId)
+      : undefined
 
-  const pricePerSession = selectedTreatment?.pricingType === "fixed" ? selectedTreatment.fixedPrice || 0 : selectedDuration?.price || 0
+  const pricePerSession =
+    selectedTreatment?.pricingType === "fixed"
+      ? selectedTreatment.fixedPrice || 0
+      : selectedDuration?.price || 0
 
   const calculatedPrice: CalculatedPriceDetails = {
-    basePrice: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    basePrice:
+      (subscriptions.find(s => s._id === selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     surcharges: [],
     totalSurchargesAmount: 0,
-    treatmentPriceAfterSubscriptionOrTreatmentVoucher: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    treatmentPriceAfterSubscriptionOrTreatmentVoucher:
+      (subscriptions.find(s => s._id === selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     couponDiscount: 0,
     voucherAppliedAmount: 0,
-    finalAmount: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    finalAmount:
+      (subscriptions.find(s => s._id === selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
@@ -166,7 +180,14 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         currentStep,
       })
     }
-  }, [guestUserId, guestInfo, selectedSubscriptionId, selectedTreatmentId, selectedDurationId, currentStep])
+  }, [
+    guestUserId,
+    guestInfo,
+    selectedSubscriptionId,
+    selectedTreatmentId,
+    selectedDurationId,
+    currentStep,
+  ])
 
   const nextStep = () => setCurrentStep(s => Math.min(s + 1, 5))
   const prevStep = () => setCurrentStep(s => Math.max(s - 1, 1))
@@ -179,7 +200,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
   const handlePurchase = async () => {
     if (!selectedSubscriptionId || !selectedTreatmentId) return
     setIsLoading(true)
-    
+
     try {
       const result = await purchaseGuestSubscription({
         subscriptionId: selectedSubscriptionId,
@@ -192,9 +213,9 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
           phone: guestInfo.phone,
         },
       })
-      
+
       setIsLoading(false)
-      
+
       if (result.success) {
         setPurchasedSubscription(result.userSubscription)
         setPurchaseComplete(true)
@@ -202,7 +223,9 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         // Redirect to confirmation page immediately without showing step 5
         const subscriptionId = result.userSubscription?._id || result.userSubscription?.id
         if (subscriptionId) {
-          router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
+          router.push(
+            `/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`
+          )
         } else {
           // Fallback to showing confirmation step
           setPurchasedSubscription(result.userSubscription)
@@ -236,8 +259,8 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         )
       case 2:
         const bookingOptions: SelectedBookingOptions = {
-          selectedTreatmentId: (selectedTreatmentId ?? ""),
-          selectedDurationId: (selectedDurationId ?? ""),
+          selectedTreatmentId: selectedTreatmentId ?? "",
+          selectedDurationId: selectedDurationId ?? "",
           selectedDateTime: null,
           therapistGenderPreference: "any",
           isFlexibleTime: false,
@@ -269,14 +292,13 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
                 selectedTreatmentId,
                 selectedDurationId,
               }
-              const nextState =
-                typeof update === "function" ? update(prev) : update
-              if (typeof nextState.selectedTreatmentId === 'string') {
+              const nextState = typeof update === "function" ? update(prev) : update
+              if (typeof nextState.selectedTreatmentId === "string") {
                 setSelectedTreatmentId(nextState.selectedTreatmentId)
               } else {
                 setSelectedTreatmentId("")
               }
-              if (typeof nextState.selectedDurationId === 'string') {
+              if (typeof nextState.selectedDurationId === "string") {
                 setSelectedDurationId(nextState.selectedDurationId)
               } else {
                 setSelectedDurationId("")
@@ -290,16 +312,16 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         )
       case 3:
         return (
-          <GuestInfoStep 
-            guestInfo={guestInfo} 
-            setGuestInfo={setGuestInfo} 
-            onNext={handleGuestInfoSubmit} 
+          <GuestInfoStep
+            guestInfo={guestInfo}
+            setGuestInfo={setGuestInfo}
+            onNext={handleGuestInfoSubmit}
             onPrev={prevStep}
             hideBookingForSomeoneElse={true}
           />
         )
       case 4:
-        const selectedSub = subscriptions.find(s=>s._id===selectedSubscriptionId)
+        const selectedSub = subscriptions.find(s => s._id === selectedSubscriptionId)
         return (
           <GuestSubscriptionSummaryStep
             guestInfo={guestInfo}

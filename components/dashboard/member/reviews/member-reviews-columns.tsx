@@ -31,13 +31,11 @@ const getLocale = (locale: string) => {
 const StarRating = ({ rating }: { rating: number }) => {
   return (
     <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
+      {[1, 2, 3, 4, 5].map(star => (
         <Star
           key={star}
           className={`h-4 w-4 ${
-            star <= rating
-              ? "fill-yellow-400 text-yellow-400"
-              : "text-gray-300"
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
           }`}
         />
       ))}
@@ -47,7 +45,7 @@ const StarRating = ({ rating }: { rating: number }) => {
 }
 
 export const getMemberReviewColumns = (
-  t: TFunction, 
+  t: TFunction,
   locale: string,
   onViewDetails?: (review: PopulatedReview) => void
 ): ColumnDef<PopulatedReview>[] => [
@@ -79,9 +77,7 @@ export const getMemberReviewColumns = (
       const treatment = row.original.treatmentId as any
       return (
         <div className="max-w-[200px]">
-          <span className="text-sm font-medium">
-            {treatment?.name || t("common.unknown")}
-          </span>
+          <span className="text-sm font-medium">{treatment?.name || t("common.unknown")}</span>
         </div>
       )
     },
@@ -91,11 +87,7 @@ export const getMemberReviewColumns = (
     header: t("memberReviews.columns.professional"),
     cell: ({ row }) => {
       const professional = row.original.professionalId as any
-      return (
-        <div className="text-sm">
-          {professional?.name || t("common.notAssigned")}
-        </div>
-      )
+      return <div className="text-sm">{professional?.name || t("common.notAssigned")}</div>
     },
   },
   {
@@ -131,11 +123,7 @@ export const getMemberReviewColumns = (
       const createdAt = row.getValue("createdAt") as string | Date
       if (!createdAt) return <div className="text-sm">-</div>
       const date = new Date(createdAt)
-      return (
-        <div className="text-sm">
-          {formatDate(date)}
-        </div>
-      )
+      return <div className="text-sm">{formatDate(date)}</div>
     },
   },
   {
@@ -145,9 +133,7 @@ export const getMemberReviewColumns = (
       const review = row.original
       return (
         <div className="flex items-center gap-1">
-          {review.comment && (
-            <MessageCircle className="h-4 w-4 text-blue-500" />
-          )}
+          {review.comment && <MessageCircle className="h-4 w-4 text-blue-500" />}
           {review.professionalResponse && (
             <Badge variant="outline" className="text-xs">
               {t("memberReviews.hasResponse")}
@@ -172,4 +158,4 @@ export const getMemberReviewColumns = (
       </Button>
     ),
   },
-] 
+]

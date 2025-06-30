@@ -4,13 +4,29 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { createSubscription, updateSubscription } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
+import {
+  createSubscription,
+  updateSubscription,
+} from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 import { toast } from "sonner"
 
 interface SubscriptionPlain {
@@ -146,7 +162,7 @@ export default function SubscriptionForm({
               <FormLabel>{t("subscriptions.fields.validityMonths")}</FormLabel>
               <Select
                 disabled={isLoading}
-                onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                onValueChange={value => field.onChange(Number.parseInt(value))}
                 value={field.value.toString()}
               >
                 <FormControl>
@@ -155,7 +171,7 @@ export default function SubscriptionForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {[1, 3, 6, 12, 24, 36].map((months) => (
+                  {[1, 3, 6, 12, 24, 36].map(months => (
                     <SelectItem key={months} value={months.toString()}>
                       {months} {t("subscriptions.months")}
                     </SelectItem>
@@ -176,7 +192,11 @@ export default function SubscriptionForm({
                 <FormLabel className="text-base">{t("subscriptions.fields.isActive")}</FormLabel>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isLoading}
+                />
               </FormControl>
             </FormItem>
           )}

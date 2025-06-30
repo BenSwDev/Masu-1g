@@ -6,20 +6,50 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
-import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus, RefreshCw } from "lucide-react"
+import {
+  Search,
+  Filter,
+  Users,
+  UserCheck,
+  UserX,
+  Clock,
+  AlertTriangle,
+  Plus,
+  RefreshCw,
+} from "lucide-react"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus, IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
-import type { Professional, ProfessionalManagementProps, PaginationInfo, ProfessionalStats } from "@/lib/types/professional"
+import type {
+  Professional,
+  ProfessionalManagementProps,
+  PaginationInfo,
+  ProfessionalStats,
+} from "@/lib/types/professional"
 
 // פונקציה לטרנספורמציה של נתונים מהשרת
-function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
+function transformProfessionalData(
+  rawProfessional: IProfessionalProfile & { userId: IUser }
+): Professional {
   return {
     _id: rawProfessional._id.toString(),
     userId: rawProfessional.userId,
@@ -31,16 +61,16 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
     bio: rawProfessional.bio,
     profileImage: rawProfessional.profileImage,
     treatments: (rawProfessional.treatments || []).map(t => ({
-      treatmentId: t.treatmentId?.toString() || '',
+      treatmentId: t.treatmentId?.toString() || "",
       durationId: t.durationId?.toString(),
       professionalPrice: t.professionalPrice || 0,
-      treatmentName: (t as any).treatmentName
+      treatmentName: (t as any).treatmentName,
     })),
     workAreas: (rawProfessional.workAreas || []).map(w => ({
-      cityId: w.cityId?.toString() || '',
-      cityName: w.cityName || '',
+      cityId: w.cityId?.toString() || "",
+      cityName: w.cityName || "",
       distanceRadius: w.distanceRadius,
-      coveredCities: w.coveredCities || []
+      coveredCities: w.coveredCities || [],
     })),
     totalEarnings: rawProfessional.totalEarnings || 0,
     pendingPayments: rawProfessional.pendingPayments || 0,
@@ -51,27 +81,27 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
     rejectedAt: rawProfessional.rejectedAt,
     lastActiveAt: rawProfessional.lastActiveAt,
     createdAt: rawProfessional.createdAt,
-    updatedAt: rawProfessional.updatedAt
+    updatedAt: rawProfessional.updatedAt,
   }
 }
 
-export function ProfessionalManagement({ 
-  initialProfessionals = [], 
-  totalPages: initialTotalPages = 1, 
-  currentPage: initialPage = 1, 
+export function ProfessionalManagement({
+  initialProfessionals = [],
+  totalPages: initialTotalPages = 1,
+  currentPage: initialPage = 1,
   initialSearch = "",
-  initialStats = { total: 0, active: 0, byStatus: {} }
+  initialStats = { total: 0, active: 0, byStatus: {} },
 }: ProfessionalManagementProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
-  
+
   const [professionals, setProfessionals] = useState<Professional[]>(initialProfessionals)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: initialPage,
     limit: 10,
     total: 0,
-    pages: initialTotalPages
+    pages: initialTotalPages,
   })
   const [stats, setStats] = useState<ProfessionalStats>(initialStats)
   const [loading, setLoading] = useState(false)
@@ -83,46 +113,51 @@ export function ProfessionalManagement({
   const [error, setError] = useState<string | null>(null)
 
   // Fetch professionals with improved error handling
-  const fetchProfessionals = useCallback(async (page = 1, showLoadingState = true) => {
-    if (showLoadingState) setLoading(true)
-    setError(null)
-    
-    try {
-      const result = await getProfessionals({
-        page,
-        limit: pagination.limit,
-        search: searchTerm,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        sortBy,
-        sortOrder
-      })
+  const fetchProfessionals = useCallback(
+    async (page = 1, showLoadingState = true) => {
+      if (showLoadingState) setLoading(true)
+      setError(null)
 
-      if (result.success && result.data) {
-        const transformedProfessionals = (result.data.professionals || []).map(transformProfessionalData)
-        setProfessionals(transformedProfessionals)
-        setPagination(result.data.pagination)
-        setStats(result.data.stats)
-      } else {
-        setError(result.error || "שגיאה בטעינת המטפלים")
+      try {
+        const result = await getProfessionals({
+          page,
+          limit: pagination.limit,
+          search: searchTerm,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          sortBy,
+          sortOrder,
+        })
+
+        if (result.success && result.data) {
+          const transformedProfessionals = (result.data.professionals || []).map(
+            transformProfessionalData
+          )
+          setProfessionals(transformedProfessionals)
+          setPagination(result.data.pagination)
+          setStats(result.data.stats)
+        } else {
+          setError(result.error || "שגיאה בטעינת המטפלים")
+          toast({
+            variant: "destructive",
+            title: "שגיאה",
+            description: result.error || "שגיאה בטעינת המטפלים",
+          })
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "שגיאה בטעינת המטפלים"
+        setError(errorMessage)
+        console.error("Error fetching professionals:", error)
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בטעינת המטפלים"
+          description: errorMessage,
         })
+      } finally {
+        if (showLoadingState) setLoading(false)
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "שגיאה בטעינת המטפלים"
-      setError(errorMessage)
-      console.error("Error fetching professionals:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: errorMessage
-      })
-    } finally {
-      if (showLoadingState) setLoading(false)
-    }
-  }, [pagination.limit, searchTerm, statusFilter, sortBy, sortOrder, toast])
+    },
+    [pagination.limit, searchTerm, statusFilter, sortBy, sortOrder, toast]
+  )
 
   // Refresh data
   const refreshData = useCallback(async () => {
@@ -131,7 +166,7 @@ export function ProfessionalManagement({
     setRefreshing(false)
     toast({
       title: "הצלחה",
-      description: "הנתונים עודכנו בהצלחה"
+      description: "הנתונים עודכנו בהצלחה",
     })
   }, [fetchProfessionals, pagination.page, toast])
 
@@ -159,11 +194,12 @@ export function ProfessionalManagement({
     }
   }, [])
 
-  const handleRowClick = useCallback((professional: Professional) => {
-    router.push(`/dashboard/admin/professional-management/${professional._id}`)
-  }, [router])
-
-
+  const handleRowClick = useCallback(
+    (professional: Professional) => {
+      router.push(`/dashboard/admin/professional-management/${professional._id}`)
+    },
+    [router]
+  )
 
   const handleCreateNew = useCallback(() => {
     router.push("/dashboard/admin/professional-management/new")
@@ -175,12 +211,12 @@ export function ProfessionalManagement({
       pending_admin_approval: { variant: "secondary" as const, icon: Clock, text: "ממתין לאישור" },
       pending_user_action: { variant: "outline" as const, icon: Clock, text: "ממתין למשתמש" },
       rejected: { variant: "destructive" as const, icon: UserX, text: "נדחה" },
-      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה" }
+      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה" },
     }
 
     const config = statusConfig[status]
     if (!config) return null
-    
+
     const Icon = config.icon
 
     return (
@@ -194,7 +230,7 @@ export function ProfessionalManagement({
   const formatDate = useCallback((date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL")
     } catch {
       return "-"
@@ -206,7 +242,7 @@ export function ProfessionalManagement({
     total: stats.total,
     active: stats.active,
     pending: stats.byStatus["pending_admin_approval"] || 0,
-    rejected: stats.byStatus["rejected"] || 0
+    rejected: stats.byStatus["rejected"] || 0,
   }
 
   // Error state
@@ -244,7 +280,7 @@ export function ProfessionalManagement({
             </Card>
           ))}
         </div>
-        
+
         <div className="space-y-4">
           <div className="flex gap-4">
             <Skeleton className="h-10 w-64" />
@@ -262,9 +298,7 @@ export function ProfessionalManagement({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              סה"כ מטפלים
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">סה"כ מטפלים</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -304,9 +338,7 @@ export function ProfessionalManagement({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              נדחו
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">נדחו</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -327,13 +359,16 @@ export function ProfessionalManagement({
                 <Input
                   placeholder="חיפוש לפי שם, אימייל או טלפון..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pr-10"
                 />
               </div>
             </div>
-            
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ProfessionalStatus | "all")}>
+
+            <Select
+              value={statusFilter}
+              onValueChange={value => setStatusFilter(value as ProfessionalStatus | "all")}
+            >
               <SelectTrigger className="w-full md:w-48">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="סנן לפי סטטוס" />
@@ -348,11 +383,14 @@ export function ProfessionalManagement({
               </SelectContent>
             </Select>
 
-            <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
-              const [field, order] = value.split('-')
-              setSortBy(field)
-              setSortOrder(order as "asc" | "desc")
-            }}>
+            <Select
+              value={`${sortBy}-${sortOrder}`}
+              onValueChange={value => {
+                const [field, order] = value.split("-")
+                setSortBy(field)
+                setSortOrder(order as "asc" | "desc")
+              }}
+            >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="מיין לפי" />
               </SelectTrigger>
@@ -364,13 +402,8 @@ export function ProfessionalManagement({
               </SelectContent>
             </Select>
 
-            <Button 
-              onClick={refreshData} 
-              disabled={refreshing}
-              variant="outline"
-              size="sm"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button onClick={refreshData} disabled={refreshing} variant="outline" size="sm">
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
               רענן
             </Button>
 
@@ -401,12 +434,24 @@ export function ProfessionalManagement({
                 // Show skeleton rows when refreshing existing data
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-48" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : professionals.length === 0 ? (
@@ -416,49 +461,52 @@ export function ProfessionalManagement({
                   </TableCell>
                 </TableRow>
               ) : (
-                professionals.map((professional) => (
-                  <TableRow 
-                    key={professional._id} 
+                professionals.map(professional => (
+                  <TableRow
+                    key={professional._id}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => handleRowClick(professional)}
                   >
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
+                          {typeof professional.userId === "object"
+                            ? professional.userId.name
+                            : "לא זמין"}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
+                          {typeof professional.userId === "object" &&
+                          professional.userId.gender === "male"
+                            ? "זכר"
+                            : "נקבה"}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="text-sm">
-                          {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
+                          {typeof professional.userId === "object"
+                            ? professional.userId.email
+                            : "לא זמין"}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
+                          {formatPhoneForDisplay(
+                            typeof professional.userId === "object"
+                              ? professional.userId.phone || ""
+                              : ""
+                          )}
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>{getStatusBadge(professional.status)}</TableCell>
                     <TableCell>
-                      {getStatusBadge(professional.status)}
+                      <div className="text-sm">{professional.treatments?.length || 0} טיפולים</div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        {professional.treatments?.length || 0} טיפולים
-                      </div>
+                      <div className="text-sm">{professional.workAreas?.length || 0} איזורים</div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        {professional.workAreas?.length || 0} איזורים
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {formatDate(professional.appliedAt)}
-                      </div>
+                      <div className="text-sm">{formatDate(professional.appliedAt)}</div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -478,7 +526,7 @@ export function ProfessionalManagement({
           >
             הקודם
           </Button>
-          
+
           <div className="flex items-center gap-2">
             {Array.from({ length: Math.min(pagination.pages, 7) }, (_, i) => {
               let page: number
@@ -491,7 +539,7 @@ export function ProfessionalManagement({
                 page = start + i
                 if (page > end) return null
               }
-              
+
               return (
                 <Button
                   key={page}
@@ -505,7 +553,7 @@ export function ProfessionalManagement({
               )
             })}
           </div>
-          
+
           <Button
             variant="outline"
             disabled={pagination.page === pagination.pages || loading}
@@ -515,7 +563,6 @@ export function ProfessionalManagement({
           </Button>
         </div>
       )}
-
     </div>
   )
 }

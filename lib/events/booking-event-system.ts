@@ -16,11 +16,9 @@ class BookingEventBus {
 
   async emit(event: BookingEvent): Promise<void> {
     const eventListeners = this.listeners.get(event.type) || []
-    
+
     // Execute all listeners for this event type
-    await Promise.allSettled(
-      eventListeners.map(listener => listener(event))
-    )
+    await Promise.allSettled(eventListeners.map(listener => listener(event)))
   }
 
   on(eventType: string, listener: (event: BookingEvent) => Promise<void>): void {
@@ -54,6 +52,6 @@ export function createBookingEvent(
     bookingId,
     userId,
     data,
-    timestamp: new Date()
+    timestamp: new Date(),
   }
-} 
+}

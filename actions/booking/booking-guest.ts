@@ -13,14 +13,14 @@ import Coupon from "@/lib/db/models/coupon"
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
-import { 
-  CreateBookingPayloadSchema, 
-  type CreateBookingPayloadType 
+import {
+  CreateBookingPayloadSchema,
+  type CreateBookingPayloadType,
 } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
-import type { 
-  PopulatedBooking, 
-  CalculatedPriceDetails as ClientCalculatedPriceDetails
+import type {
+  PopulatedBooking,
+  CalculatedPriceDetails as ClientCalculatedPriceDetails,
 } from "@/types/booking"
 import type { BookingStatus } from "@/types/core"
 import type { IBookingAddressSnapshot, IPriceDetails } from "@/lib/db/models/booking"
@@ -33,11 +33,13 @@ import bcrypt from "bcryptjs"
  * Create a new guest booking (for non-authenticated users)
  */
 export async function createGuestBooking(
-  payload: unknown,
+  payload: unknown
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
   const validationResult = CreateBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
-    logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
+    logger.warn("Invalid payload for createGuestBooking:", {
+      issues: validationResult.error.issues,
+    })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
   const validatedPayload = validationResult.data as CreateBookingPayloadType & {
@@ -61,10 +63,10 @@ export async function createGuestBooking(
 
     // Create or find guest user
     let guestUser = await User.findOne({ email: validatedPayload.guestInfo.email }).lean()
-    
+
     if (!guestUser) {
       // Create new guest user
-      const hashedPassword = validatedPayload.guestInfo.password 
+      const hashedPassword = validatedPayload.guestInfo.password
         ? await bcrypt.hash(validatedPayload.guestInfo.password, 12)
         : undefined
 
@@ -81,7 +83,7 @@ export async function createGuestBooking(
         emailVerified: false,
         phoneVerified: false,
       })
-      
+
       await newUser.save()
       guestUser = newUser.toObject() as any
       guestUserId = String(newUser._id)
@@ -108,10 +110,10 @@ export async function createGuestBooking(
       if (!addressDetails.fullAddress) {
         addressDetails.fullAddress = constructFullAddressHelper(addressDetails)
       }
-      
+
       bookingAddressSnapshot = {
         ...addressDetails,
-        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails)
+        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails),
       }
     } else {
       logger.warn("No address provided for guest booking")
@@ -130,24 +132,37 @@ export async function createGuestBooking(
         bookedByUserEmail: guestUser!.email || undefined,
         bookedByUserPhone: guestUser!.phone,
         // Add recipient fields for "booking for someone else" logic
-        recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : guestUser!.name,
-        recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : guestUser!.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : (guestUser!.email || undefined),
-        recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
-        recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
+        recipientName: validatedPayload.isBookingForSomeoneElse
+          ? validatedPayload.recipientName
+          : guestUser!.name,
+        recipientPhone: validatedPayload.isBookingForSomeoneElse
+          ? validatedPayload.recipientPhone
+          : guestUser!.phone,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse
+          ? validatedPayload.recipientEmail
+          : guestUser!.email || undefined,
+        recipientBirthDate: validatedPayload.isBookingForSomeoneElse
+          ? validatedPayload.recipientBirthDate
+          : undefined,
+        recipientGender: validatedPayload.isBookingForSomeoneElse
+          ? validatedPayload.recipientGender
+          : undefined,
         bookingAddressSnapshot,
         status: "pending_payment", // Will be updated to "in_process" after successful payment
         isGuestBooking: true,
         // Required fields with defaults for backward compatibility
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
-        staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
+        staticTreatmentPrice:
+          validatedPayload.staticPricingData?.staticTreatmentPrice ||
+          validatedPayload.priceDetails.basePrice ||
+          0,
         staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
         companyFee: validatedPayload.staticPricingData?.companyFee || 0,
         consents: validatedPayload.consents || {
           customerAlerts: "email",
           patientAlerts: "email",
           marketingOptIn: false,
-          termsAccepted: true
+          termsAccepted: true,
         },
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
@@ -158,10 +173,12 @@ export async function createGuestBooking(
           discountAmount: validatedPayload.priceDetails.couponDiscount,
           voucherAppliedAmount: validatedPayload.priceDetails.voucherAppliedAmount,
           finalAmount: validatedPayload.priceDetails.finalAmount,
-          isBaseTreatmentCoveredBySubscription: validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription,
+          isBaseTreatmentCoveredBySubscription:
+            validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription,
           isBaseTreatmentCoveredByTreatmentVoucher:
             validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher,
-          isFullyCoveredByVoucherOrSubscription: validatedPayload.priceDetails.isFullyCoveredByVoucherOrSubscription,
+          isFullyCoveredByVoucherOrSubscription:
+            validatedPayload.priceDetails.isFullyCoveredByVoucherOrSubscription,
           appliedCouponId: validatedPayload.priceDetails.appliedCouponId
             ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.appliedCouponId)
             : undefined,
@@ -175,7 +192,8 @@ export async function createGuestBooking(
           totalProfessionalPayment: validatedPayload.priceDetails.totalProfessionalPayment,
           totalOfficeCommission: validatedPayload.priceDetails.totalOfficeCommission,
           baseProfessionalPayment: validatedPayload.priceDetails.baseProfessionalPayment,
-          surchargesProfessionalPayment: validatedPayload.priceDetails.surchargesProfessionalPayment,
+          surchargesProfessionalPayment:
+            validatedPayload.priceDetails.surchargesProfessionalPayment,
         } as IPriceDetails,
         paymentDetails: {
           paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
@@ -198,13 +216,13 @@ export async function createGuestBooking(
         validatedPayload.priceDetails.appliedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
-          mongooseDbSession,
-        )
+        const voucher = await GiftVoucher.findById(
+          validatedPayload.priceDetails.appliedGiftVoucherId
+        ).session(mongooseDbSession)
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
-          
+
         // Add treatment validation for treatment vouchers
         if (voucher.voucherType === "treatment" && voucher.treatmentId) {
           const voucherTreatmentId = voucher.treatmentId.toString()
@@ -244,8 +262,13 @@ export async function createGuestBooking(
       }
 
       // Handle coupon usage
-      if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
-        const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
+      if (
+        validatedPayload.priceDetails.appliedCouponId &&
+        validatedPayload.priceDetails.couponDiscount > 0
+      ) {
+        const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(
+          mongooseDbSession
+        )
         if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
         coupon.timesUsed += 1
         await coupon.save({ session: mongooseDbSession })
@@ -271,14 +294,19 @@ export async function createGuestBooking(
 
       // Send booking confirmation to guest
       try {
-        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
-        const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "????? ?? ?????"
-        
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId)
+          .select("name")
+          .lean()
+        const bookingAddress =
+          finalBookingObject.bookingAddressSnapshot?.fullAddress || "????? ?? ?????"
+
         if (treatment && guestUser) {
           const isBookingForSomeoneElse = validatedPayload.isBookingForSomeoneElse || false
-          
+
           const guestBookingData = {
-            recipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : guestUser.name,
+            recipientName: isBookingForSomeoneElse
+              ? validatedPayload.recipientName!
+              : guestUser.name,
             bookerName: guestUser.name,
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
@@ -286,28 +314,30 @@ export async function createGuestBooking(
             bookingAddress: bookingAddress,
             isForSomeoneElse: isBookingForSomeoneElse,
           }
-          
+
           await sendGuestNotification(
             {
               name: guestUser.name,
               email: guestUser.email!,
               phone: guestUser.phone,
-              language: validatedPayload.guestInfo.language || "he"
+              language: validatedPayload.guestInfo.language || "he",
             },
             {
               type: "treatment-booking-success",
               ...guestBookingData,
             }
           )
-          
+
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
             await sendGuestNotification(
               {
                 name: validatedPayload.recipientName!,
                 email: validatedPayload.recipientEmail,
-                phone: validatedPayload.recipientNotificationMethods?.includes("sms") ? validatedPayload.recipientPhone : undefined,
-                language: validatedPayload.notificationLanguage || "he"
+                phone: validatedPayload.recipientNotificationMethods?.includes("sms")
+                  ? validatedPayload.recipientPhone
+                  : undefined,
+                language: validatedPayload.notificationLanguage || "he",
               },
               {
                 type: "treatment-booking-success",
@@ -316,30 +346,35 @@ export async function createGuestBooking(
             )
           }
         }
-        
-        logger.info("Guest booking notifications sent successfully", { 
+
+        logger.info("Guest booking notifications sent successfully", {
           bookingId: String(finalBookingObject._id),
           guestUserId,
-          isForSomeoneElse: validatedPayload.isBookingForSomeoneElse
+          isForSomeoneElse: validatedPayload.isBookingForSomeoneElse,
         })
-        
       } catch (notificationError) {
         logger.error("Failed to send guest booking notifications:", {
-          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+          error:
+            notificationError instanceof Error
+              ? notificationError.message
+              : String(notificationError),
           bookingId: String(finalBookingObject._id),
         })
       }
-      
+
       return { success: true, booking: finalBookingObject }
     } else {
       return { success: false, error: "bookings.errors.bookingCreationFailedUnknown" }
     }
   } catch (error) {
     logger.error("Error creating guest booking:", { error, payload: validatedPayload })
-    const errorMessage = error instanceof Error ? error.message : "bookings.errors.createBookingFailed"
+    const errorMessage =
+      error instanceof Error ? error.message : "bookings.errors.createBookingFailed"
     return {
       success: false,
-      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.createBookingFailed",
+      error: errorMessage.startsWith("bookings.errors.")
+        ? errorMessage
+        : "bookings.errors.createBookingFailed",
     }
   } finally {
     await mongooseDbSession.endSession()
@@ -349,7 +384,11 @@ export async function createGuestBooking(
 /**
  * Get initial data for guest booking form
  */
-export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
+export async function getGuestBookingInitialData(): Promise<{
+  success: boolean
+  data?: any
+  error?: string
+}> {
   try {
     await dbConnect()
 
@@ -359,12 +398,9 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
       .lean()
 
     // Get active coupons
-    const coupons = await Coupon.find({ 
+    const coupons = await Coupon.find({
       isActive: true,
-      $or: [
-        { validUntil: { $gte: new Date() } },
-        { validUntil: { $exists: false } }
-      ]
+      $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     })
       .select("code discountType discountValue description")
       .lean()
@@ -375,11 +411,21 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
         treatments,
         coupons,
         surcharges: [
-          { type: "evening", name: "????? ???", amount: 20, description: "????? ???? ????? ????? ????" },
-          { type: "weekend", name: "????? ??? ????", amount: 30, description: "????? ???? ????? ???? ?????" },
-          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" }
-        ]
-      }
+          {
+            type: "evening",
+            name: "????? ???",
+            amount: 20,
+            description: "????? ???? ????? ????? ????",
+          },
+          {
+            type: "weekend",
+            name: "????? ??? ????",
+            amount: 30,
+            description: "????? ???? ????? ???? ?????",
+          },
+          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" },
+        ],
+      },
     }
   } catch (error) {
     logger.error("Error fetching guest booking initial data:", error)
@@ -407,7 +453,7 @@ export async function createGuestUser(guestInfo: {
     }
 
     // Create new guest user
-    const hashedPassword = guestInfo.password 
+    const hashedPassword = guestInfo.password
       ? await bcrypt.hash(guestInfo.password, 12)
       : undefined
 
@@ -424,9 +470,9 @@ export async function createGuestUser(guestInfo: {
       emailVerified: false,
       phoneVerified: false,
     })
-    
+
     await newUser.save()
-    
+
     return { success: true, userId: String(newUser._id) }
   } catch (error) {
     logger.error("Error creating guest user:", error)
@@ -440,32 +486,29 @@ export async function createGuestUser(guestInfo: {
 export async function validateRedemptionCode(
   code: string,
   treatmentId?: string
-): Promise<{ 
+): Promise<{
   success: boolean
   type?: "gift_voucher" | "coupon"
   details?: any
-  error?: string 
+  error?: string
 }> {
   try {
     await dbConnect()
 
     // First check if it's a gift voucher
-    const giftVoucher = await GiftVoucher.findOne({ 
+    const giftVoucher = await GiftVoucher.findOne({
       code: code,
       isActive: true,
-      $or: [
-        { expiryDate: { $gte: new Date() } },
-        { expiryDate: { $exists: false } }
-      ]
+      $or: [{ expiryDate: { $gte: new Date() } }, { expiryDate: { $exists: false } }],
     }).lean()
 
     if (giftVoucher) {
       // Validate treatment match for treatment vouchers
       if (giftVoucher.voucherType === "treatment" && treatmentId) {
         if (giftVoucher.treatmentId?.toString() !== treatmentId) {
-          return { 
-            success: false, 
-            error: "bookings.errors.treatmentMismatch" 
+          return {
+            success: false,
+            error: "bookings.errors.treatmentMismatch",
           }
         }
       }
@@ -479,27 +522,24 @@ export async function validateRedemptionCode(
           amount: giftVoucher.amount,
           remainingAmount: giftVoucher.remainingAmount || giftVoucher.amount,
           treatmentId: giftVoucher.treatmentId,
-          description: giftVoucher.greetingMessage || "Gift voucher"
-        }
+          description: giftVoucher.greetingMessage || "Gift voucher",
+        },
       }
     }
 
     // Check if it's a coupon
-    const coupon = await Coupon.findOne({ 
+    const coupon = await Coupon.findOne({
       code: code,
       isActive: true,
-      $or: [
-        { validUntil: { $gte: new Date() } },
-        { validUntil: { $exists: false } }
-      ]
+      $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     }).lean()
 
     if (coupon) {
       // Check usage limits
       if ((coupon as any).maxUses && coupon.timesUsed >= (coupon as any).maxUses) {
-        return { 
-          success: false, 
-          error: "bookings.errors.couponExhausted" 
+        return {
+          success: false,
+          error: "bookings.errors.couponExhausted",
         }
       }
 
@@ -511,14 +551,14 @@ export async function validateRedemptionCode(
           discountType: coupon.discountType,
           discountValue: coupon.discountValue,
           description: coupon.description,
-          maxDiscount: (coupon as any).maxDiscount
-        }
+          maxDiscount: (coupon as any).maxDiscount,
+        },
       }
     }
 
-    return { 
-      success: false, 
-      error: "bookings.errors.invalidRedemptionCode" 
+    return {
+      success: false,
+      error: "bookings.errors.invalidRedemptionCode",
     }
   } catch (error) {
     logger.error("Error validating redemption code:", error)

@@ -8,15 +8,15 @@ import { he, enUS, ru } from "date-fns/locale"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
-import { 
-  ArrowUpDown, 
-  MoreHorizontal, 
-  Eye, 
-  X, 
+import {
+  ArrowUpDown,
+  MoreHorizontal,
+  Eye,
+  X,
   Loader2,
   MessageSquare,
   Star,
-  MessageCircle
+  MessageCircle,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -26,12 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import BookingDetailsView from "./booking-details-view"
@@ -52,7 +47,12 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   const canReview = booking.status === "completed"
 
   // Fetch existing review if any
-  const { data: existingReview, refetch, isLoading, error } = useQuery({
+  const {
+    data: existingReview,
+    refetch,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["review", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,
@@ -112,12 +112,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   if (hasReview) {
     return (
       <>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleViewReview}
-          className="text-xs"
-        >
+        <Button variant="outline" size="sm" onClick={handleViewReview} className="text-xs">
           <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
           {t("memberBookings.viewReview")}
         </Button>
@@ -137,12 +132,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
 
   return (
     <>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleCreateReview}
-        className="text-xs"
-      >
+      <Button variant="outline" size="sm" onClick={handleCreateReview} className="text-xs">
         <MessageCircle className="h-3 w-3 mr-1" />
         {t("memberBookings.writeReview")}
       </Button>
@@ -170,13 +160,13 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
     const bookingDate = new Date(booking.bookingDateTime)
     const now = new Date()
     const hoursUntilBooking = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60)
-    
+
     return cancelableStatuses.includes(booking.status) && hoursUntilBooking > 2
   }, [booking.status, booking.bookingDateTime])
 
   const handleCancelBooking = async () => {
     if (!canCancel) return
-    
+
     setIsCancelling(true)
     try {
       // TODO: Remove debug log
@@ -196,11 +186,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            aria-label={t("common.openMenu")}
-          >
+          <Button variant="ghost" className="h-8 w-8 p-0" aria-label={t("common.openMenu")}>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -214,20 +200,14 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
-          <DropdownMenuItem
-            onClick={() => setShowDetailsModal(true)}
-            className="cursor-pointer"
-          >
+
+          <DropdownMenuItem onClick={() => setShowDetailsModal(true)} className="cursor-pointer">
             <Eye className="mr-2 h-4 w-4" />
             <span>{t("common.viewDetails")}</span>
           </DropdownMenuItem>
 
           {hasNotes && (
-            <DropdownMenuItem
-              onClick={() => setShowNotesModal(true)}
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={() => setShowNotesModal(true)} className="cursor-pointer">
               <MessageSquare className="mr-2 h-4 w-4" />
               <span>{t("memberBookings.viewClientNotes")}</span>
             </DropdownMenuItem>
@@ -259,7 +239,10 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
       </DropdownMenu>
 
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="booking-details-description">
+        <DialogContent
+          className="max-w-4xl max-h-[90vh] overflow-y-auto"
+          aria-describedby="booking-details-description"
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-right">
               {t("bookingDetails.drawerTitle")} #{booking.bookingNumber}
@@ -288,7 +271,13 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
 }
 
 // Status component - clean and minimal with customer display logic
-const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
+const BookingStatusBadge = ({
+  status,
+  t,
+}: {
+  status: PopulatedBooking["status"]
+  t: TFunction
+}) => {
   // Customer display logic: show "confirmed" for both "confirmed" and "in_process"
   const getCustomerDisplayStatus = (actualStatus: string) => {
     if (actualStatus === "in_process") {
@@ -302,29 +291,29 @@ const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"];
   const statusConfig = {
     pending_payment: {
       label: "ממתין לתשלום",
-      className: "bg-yellow-100 text-yellow-800 border-yellow-200"
+      className: "bg-yellow-100 text-yellow-800 border-yellow-200",
     },
     confirmed: {
       label: "מאושר",
-      className: "bg-green-100 text-green-800 border-green-200"
+      className: "bg-green-100 text-green-800 border-green-200",
     },
     completed: {
       label: "הושלם",
-      className: "bg-gray-100 text-gray-800 border-gray-200"
+      className: "bg-gray-100 text-gray-800 border-gray-200",
     },
     cancelled: {
       label: "בוטל",
-      className: "bg-red-100 text-red-800 border-red-200"
+      className: "bg-red-100 text-red-800 border-red-200",
     },
     refunded: {
       label: "הוחזר",
-      className: "bg-purple-100 text-purple-800 border-purple-200"
-    }
+      className: "bg-purple-100 text-purple-800 border-purple-200",
+    },
   } as const
 
   const config = statusConfig[displayStatus as keyof typeof statusConfig] || {
     label: displayStatus || t("common.status.unknown"),
-    className: "bg-gray-100 text-gray-800 border-gray-200"
+    className: "bg-gray-100 text-gray-800 border-gray-200",
   }
 
   return (
@@ -343,18 +332,14 @@ const NotesDisplay = ({ notes, t }: { notes?: string; t: TFunction }) => {
   const isLong = notes.length > 50
 
   if (!isLong) {
-    return (
-      <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-        {notes}
-      </div>
-    )
+    return <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">{notes}</div>
   }
 
   const truncated = notes.substring(0, 50) + "..."
 
   return (
     <>
-      <div 
+      <div
         className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 flex items-center gap-1"
         onClick={() => setShowDialog(true)}
       >
@@ -380,7 +365,7 @@ const NotesDisplay = ({ notes, t }: { notes?: string; t: TFunction }) => {
 
 // Utility functions for formatting
 const formatDateIsraeli = (date: string | Date) => {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === "string" ? new Date(date) : date
   return format(d, "d.M.yyyy", { locale: he })
 }
 
@@ -390,9 +375,9 @@ const formatTimeIsraeli = (date: Date) => {
 
 const getLocale = (locale: string) => {
   switch (locale) {
-    case 'he':
+    case "he":
       return he
-    case 'ru':
+    case "ru":
       return ru
     default:
       return enUS
@@ -419,7 +404,8 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             #{row.original.bookingNumber}
           </div>
           <div className="text-xs text-gray-500">
-            {t("memberBookings.table.createdAt")}: {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
+            {t("memberBookings.table.createdAt")}:{" "}
+            {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
           </div>
         </div>
       ),
@@ -432,16 +418,24 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const booking = row.original
         const treatment = booking.treatmentId
         let durationDisplay = ""
-        
-        if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+
+        if (
+          treatment?.pricingType === "duration_based" &&
+          booking.selectedDurationId &&
+          treatment.durations
+        ) {
           const selectedDuration = treatment.durations.find(
-            (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
+            (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString()
           )
           if (selectedDuration) {
-            durationDisplay = t("memberBookings.table.duration", { minutes: selectedDuration.minutes })
+            durationDisplay = t("memberBookings.table.duration", {
+              minutes: selectedDuration.minutes,
+            })
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
-          durationDisplay = t("memberBookings.table.duration", { minutes: treatment.defaultDurationMinutes })
+          durationDisplay = t("memberBookings.table.duration", {
+            minutes: treatment.defaultDurationMinutes,
+          })
         }
 
         return (
@@ -449,9 +443,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             <div className="font-medium text-gray-900">
               {treatment?.name || t("common.unknownTreatment")}
               {durationDisplay && (
-                <span className="text-sm text-gray-600 mr-2">
-                  ({durationDisplay})
-                </span>
+                <span className="text-sm text-gray-600 mr-2">({durationDisplay})</span>
               )}
             </div>
           </div>
@@ -460,17 +452,19 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "therapistGenderPreference",
-      header: () => <div className="text-right">{t("bookings.steps.scheduling.therapistPreference")}</div>,
+      header: () => (
+        <div className="text-right">{t("bookings.steps.scheduling.therapistPreference")}</div>
+      ),
       cell: ({ row }) => {
         const preference = row.original.therapistGenderPreference
 
         const getPreferenceLabel = (pref: string) => {
           switch (pref) {
-            case 'male':
+            case "male":
               return t("preferences.treatment.genderMale")
-            case 'female':
+            case "female":
               return t("preferences.treatment.genderFemale")
-            case 'any':
+            case "any":
             default:
               return t("preferences.treatment.genderAny")
           }
@@ -488,7 +482,11 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "recipientName",
-      header: () => <div className="text-right hidden sm:block">{t("memberBookings.columns.recipientDetails")}</div>,
+      header: () => (
+        <div className="text-right hidden sm:block">
+          {t("memberBookings.columns.recipientDetails")}
+        </div>
+      ),
       cell: ({ row }) => {
         const booking = row.original
         const isForSomeoneElse = booking.isBookingForSomeoneElse
@@ -499,7 +497,9 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
               <div className="space-y-1">
                 <div className="font-medium text-gray-900">{booking.recipientName}</div>
                 {booking.recipientPhone && (
-                  <div className="text-xs text-gray-600">{formatPhoneForDisplay(booking.recipientPhone || "")}</div>
+                  <div className="text-xs text-gray-600">
+                    {formatPhoneForDisplay(booking.recipientPhone || "")}
+                  </div>
                 )}
                 <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
                   {t("memberBookings.table.bookingForOther")}
@@ -530,7 +530,9 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const bookingDate = new Date(booking.bookingDateTime)
         const now = new Date()
         const isToday = bookingDate.toDateString() === now.toDateString()
-        const isTomorrow = bookingDate.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString()
+        const isTomorrow =
+          bookingDate.toDateString() ===
+          new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString()
         const isPast = bookingDate < now
 
         // Format date in Israeli style
@@ -544,7 +546,9 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         } else if (isTomorrow) {
           dayLabel = t("memberBookings.table.tomorrow")
         } else if (!isPast) {
-          const daysFromNow = Math.ceil((bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          const daysFromNow = Math.ceil(
+            (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          )
           dayLabel = t("memberBookings.table.daysRemaining", { days: daysFromNow })
         } else {
           dayLabel = t("memberBookings.table.past")
@@ -560,16 +564,19 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
                 </span>
               )}
             </div>
-            <div className="text-sm text-gray-600">
-              {dateStr}
-            </div>
-            <div className={cn(
-              "text-xs px-2 py-1 rounded-full inline-block",
-              isToday ? "bg-green-100 text-green-700" :
-              isTomorrow ? "bg-blue-100 text-blue-700" :
-              isPast ? "bg-gray-100 text-gray-600" :
-              "bg-orange-100 text-orange-700"
-            )}>
+            <div className="text-sm text-gray-600">{dateStr}</div>
+            <div
+              className={cn(
+                "text-xs px-2 py-1 rounded-full inline-block",
+                isToday
+                  ? "bg-green-100 text-green-700"
+                  : isTomorrow
+                    ? "bg-blue-100 text-blue-700"
+                    : isPast
+                      ? "bg-gray-100 text-gray-600"
+                      : "bg-orange-100 text-orange-700"
+              )}
+            >
               {dayLabel}
             </div>
           </div>
@@ -579,14 +586,18 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "bookingAddressSnapshot.city",
-      header: () => <div className="text-right hidden md:block">{t("memberBookings.columns.fullAddress")}</div>,
+      header: () => (
+        <div className="text-right hidden md:block">{t("memberBookings.columns.fullAddress")}</div>
+      ),
       cell: ({ row }) => {
         const address = row.original.bookingAddressSnapshot || row.original.customAddressDetails
-        
+
         if (!address) {
           return (
             <div className="text-right hidden md:block">
-              <div className="text-gray-500 text-sm">{t("memberBookings.table.locationNotAvailable")}</div>
+              <div className="text-gray-500 text-sm">
+                {t("memberBookings.table.locationNotAvailable")}
+              </div>
             </div>
           )
         }
@@ -597,54 +608,68 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const apartment = (address as any)?.apartment || (address as any)?.apartmentNumber
         const floor = (address as any)?.floor
         const entrance = (address as any)?.entrance
-        const addressNotes = (address as any)?.instructions || (address as any)?.additionalNotes || (address as any)?.notes
+        const addressNotes =
+          (address as any)?.instructions ||
+          (address as any)?.additionalNotes ||
+          (address as any)?.notes
         const hasPrivateParking = (address as any)?.hasPrivateParking
         const isAccessible = (address as any)?.isAccessible
-        
+
         return (
           <div className="text-right hidden md:block space-y-1 max-w-[250px]">
             <div className="font-medium text-gray-900">
-              {address.fullAddress || 
-               (street && streetNumber 
-                ? `${street} ${streetNumber}, ${city}`
-                : city || t("memberBookings.table.cityNotSpecified")
-               )
-              }
+              {address.fullAddress ||
+                (street && streetNumber
+                  ? `${street} ${streetNumber}, ${city}`
+                  : city || t("memberBookings.table.cityNotSpecified"))}
             </div>
-            
+
             {/* Type-specific details */}
             <div className="text-xs text-gray-600 space-y-1">
-              {apartment && <div>{t("memberBookings.table.apartment")}: {apartment}</div>}
-              {floor && <div>{t("memberBookings.table.floor")}: {floor}</div>}
-              {entrance && <div>{t("memberBookings.table.entrance")}: {entrance}</div>}
-              
+              {apartment && (
+                <div>
+                  {t("memberBookings.table.apartment")}: {apartment}
+                </div>
+              )}
+              {floor && (
+                <div>
+                  {t("memberBookings.table.floor")}: {floor}
+                </div>
+              )}
+              {entrance && (
+                <div>
+                  {t("memberBookings.table.entrance")}: {entrance}
+                </div>
+              )}
+
               {(address as any)?.doorName && (
                 <div className="bg-purple-50 px-2 py-1 rounded">
                   {t("memberBookings.table.doorName")}: {(address as any).doorName}
                 </div>
               )}
-              
+
               {(address as any)?.buildingName && (
                 <div className="bg-indigo-50 px-2 py-1 rounded">
                   {t("memberBookings.table.buildingName")}: {(address as any).buildingName}
                 </div>
               )}
-              
+
               {(address as any)?.hotelName && (
                 <div className="bg-pink-50 px-2 py-1 rounded">
                   {t("memberBookings.table.hotelName")}: {(address as any).hotelName}
                 </div>
               )}
-              
+
               {(address as any)?.roomNumber && (
                 <div className="bg-yellow-50 px-2 py-1 rounded">
                   {t("memberBookings.table.roomNumber")}: {(address as any).roomNumber}
                 </div>
               )}
-              
+
               {(address as any)?.otherInstructions && (
                 <div className="bg-gray-50 px-2 py-1 rounded">
-                  {t("memberBookings.table.otherInstructions")}: {(address as any).otherInstructions}
+                  {t("memberBookings.table.otherInstructions")}:{" "}
+                  {(address as any).otherInstructions}
                 </div>
               )}
             </div>
@@ -706,46 +731,51 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const isFreeCovered = priceDetails.isFullyCoveredByVoucherOrSubscription
         const finalAmount = priceDetails.finalAmount || 0
         const basePrice = priceDetails.basePrice || 0
-        
+
         return (
           <div className="text-right space-y-1">
             <div className="font-semibold text-lg text-gray-900">
               {isFreeCovered ? t("memberBookings.table.paymentFree") : `₪${finalAmount.toFixed(0)}`}
             </div>
-            
+
             {/* Source */}
             <div className="text-xs text-gray-600">
-              {source === "subscription_redemption" && t("memberBookings.table.paymentSubscription")}
+              {source === "subscription_redemption" &&
+                t("memberBookings.table.paymentSubscription")}
               {source === "gift_voucher_redemption" && t("memberBookings.table.paymentVoucher")}
               {source === "new_purchase" && t("memberBookings.table.paymentNew")}
             </div>
-            
+
             {/* Price breakdown */}
             {basePrice > 0 && (
               <div className="text-xs text-gray-500">
                 {t("memberBookings.table.basePrice")}: ₪{basePrice.toFixed(0)}
               </div>
             )}
-            
+
             {priceDetails.discountAmount > 0 && (
               <div className="text-xs text-green-600">
                 {t("memberBookings.table.discount")}: -₪{priceDetails.discountAmount.toFixed(0)}
               </div>
             )}
-            
+
             {priceDetails.surcharges && priceDetails.surcharges.length > 0 && (
               <div className="text-xs text-orange-600">
-                {t("memberBookings.table.surcharges")}: +₪{priceDetails.totalSurchargesAmount?.toFixed(0) || "0"}
+                {t("memberBookings.table.surcharges")}: +₪
+                {priceDetails.totalSurchargesAmount?.toFixed(0) || "0"}
               </div>
             )}
-            
+
             {/* Payment status */}
             {paymentDetails?.paymentStatus && (
               <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                {paymentDetails.paymentStatus === 'paid' ? t("memberBookings.table.paymentPaid") :
-                 paymentDetails.paymentStatus === 'pending' ? t("memberBookings.table.paymentPending") :
-                 paymentDetails.paymentStatus === 'failed' ? t("memberBookings.table.paymentFailed") :
-                 t("memberBookings.table.paymentNotRequired")}
+                {paymentDetails.paymentStatus === "paid"
+                  ? t("memberBookings.table.paymentPaid")
+                  : paymentDetails.paymentStatus === "pending"
+                    ? t("memberBookings.table.paymentPending")
+                    : paymentDetails.paymentStatus === "failed"
+                      ? t("memberBookings.table.paymentFailed")
+                      : t("memberBookings.table.paymentNotRequired")}
               </div>
             )}
           </div>

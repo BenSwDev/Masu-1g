@@ -80,7 +80,7 @@ export async function getCities(page = 1, limit = 10, searchTerm = ""): Promise<
 
     return {
       success: true,
-      cities: cities.map((c) => ({
+      cities: cities.map(c => ({
         id: String(c._id),
         name: c.name,
         isActive: c.isActive,
@@ -135,8 +135,8 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
     }
 
     // Check if city already exists
-    const existingCity = await City.findOne({ 
-      name: { $regex: new RegExp(`^${name}$`, "i") }
+    const existingCity = await City.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
     })
 
     if (existingCity) {
@@ -148,9 +148,9 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
       name,
       coordinates: {
         lat: latitude,
-        lng: longitude
+        lng: longitude,
       },
-      isActive
+      isActive,
     })
 
     await city.save()
@@ -217,7 +217,7 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
     // Check if another city with the same name exists (excluding current city)
     const existingCity = await City.findOne({
       _id: { $ne: cityId },
-      name: { $regex: new RegExp(`^${name}$`, "i") }
+      name: { $regex: new RegExp(`^${name}$`, "i") },
     })
 
     if (existingCity) {
@@ -231,9 +231,9 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
         name,
         coordinates: {
           lat: latitude,
-          lng: longitude
+          lng: longitude,
         },
-        isActive
+        isActive,
       },
       { new: true, runValidators: true }
     )
@@ -244,16 +244,15 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
 
     // If coordinates changed, recalculate distances
     const originalCity = await City.findById(cityId)
-    if (originalCity && 
-        (originalCity.coordinates.lat !== latitude || originalCity.coordinates.lng !== longitude)) {
+    if (
+      originalCity &&
+      (originalCity.coordinates.lat !== latitude || originalCity.coordinates.lng !== longitude)
+    ) {
       // Remove old distances
       await CityDistance.deleteMany({
-        $or: [
-          { fromCityId: cityId },
-          { toCityId: cityId }
-        ]
+        $or: [{ fromCityId: cityId }, { toCityId: cityId }],
       })
-      
+
       // Recalculate distances
       await City.calculateDistancesForNewCity(cityId)
     }
@@ -300,10 +299,7 @@ export async function deleteCity(cityId: string): Promise<CityActionResponse> {
 
     // Delete all distance relationships for this city
     await CityDistance.deleteMany({
-      $or: [
-        { fromCityId: cityId },
-        { toCityId: cityId }
-      ]
+      $or: [{ fromCityId: cityId }, { toCityId: cityId }],
     })
 
     // Delete the city

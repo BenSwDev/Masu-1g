@@ -9,7 +9,7 @@ export interface IAddress {
   streetNumber: string
   fullAddress: string
   addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other"
-  
+
   apartmentDetails?: {
     floor: number
     apartmentNumber: string

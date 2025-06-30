@@ -44,7 +44,7 @@ export function PurchaseCard({
           ? "ring-2 ring-primary border-primary bg-primary/5 shadow-md transform scale-[1.02]"
           : "border-border hover:border-primary/50",
         disabled && "opacity-50 cursor-not-allowed",
-        className,
+        className
       )}
       onClick={disabled ? undefined : onClick}
     >

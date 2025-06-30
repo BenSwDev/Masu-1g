@@ -6,7 +6,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -34,7 +34,7 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
     useEffect(() => {
       const fetchCities = async () => {
         try {
-          const response = await fetch('/api/cities')
+          const response = await fetch("/api/cities")
           if (response.ok) {
             const data = await response.json()
             const sorted = (data.cities || []).sort((a: City, b: City) =>
@@ -62,8 +62,8 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
       )
     }
 
-    const filteredCities = cities.filter((city) =>
-      city.isActive && city.name.toLowerCase().includes(search.toLowerCase())
+    const filteredCities = cities.filter(
+      city => city.isActive && city.name.toLowerCase().includes(search.toLowerCase())
     )
 
     return (
@@ -76,11 +76,11 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
             <Input
               autoFocus
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder={t("admin.cities.searchPlaceholder")}
             />
           </div>
-          {filteredCities.map((city) => (
+          {filteredCities.map(city => (
             <SelectItem key={city._id} value={city.name}>
               {city.name}
             </SelectItem>
@@ -96,4 +96,4 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
   }
 )
 
-CitySelectForm.displayName = "CitySelectForm" 
+CitySelectForm.displayName = "CitySelectForm"

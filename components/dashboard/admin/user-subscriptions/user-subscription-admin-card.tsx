@@ -42,7 +42,8 @@ import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+interface PopulatedUserSubscription
+  extends Omit<IUserSubscription, "userId" | "subscriptionId" | "treatmentId" | "paymentMethodId"> {
   userId?: {
     _id: string
     name: string
@@ -84,7 +85,10 @@ interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | '
 }
 
 // Type compatible with the modal component
-type ModalCompatibleUserSubscription = Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> & {
+type ModalCompatibleUserSubscription = Omit<
+  IUserSubscription,
+  "userId" | "subscriptionId" | "treatmentId" | "paymentMethodId"
+> & {
   userId?: {
     _id: string
     name: string
@@ -150,9 +154,9 @@ export default function UserSubscriptionAdminCard({
 
   const handleCancel = async () => {
     if (!userSubscription._id) return
-    
+
     const result = await cancelSubscription(String(userSubscription._id))
-    
+
     if (result.success) {
       toast.success(t("common.success"))
       router.refresh()
@@ -164,9 +168,9 @@ export default function UserSubscriptionAdminCard({
 
   const handleDelete = async () => {
     if (!userSubscription._id) return
-    
+
     const result = await deleteUserSubscription(String(userSubscription._id))
-    
+
     if (result.success) {
       toast.success(t("common.success"))
       router.refresh()
@@ -214,7 +218,8 @@ export default function UserSubscriptionAdminCard({
   const StatusIcon = statusInfo.Icon
 
   const formatDate = (date: Date | string) => format(new Date(date), "dd/MM/yy", { locale: he })
-  const usagePercentage = (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
+  const usagePercentage =
+    (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
 
   // Convert to modal-compatible format
   const modalCompatibleSubscription: ModalCompatibleUserSubscription = {
@@ -232,7 +237,9 @@ export default function UserSubscriptionAdminCard({
               {userSubscription.userId ? (
                 <>
                   <CardTitle className="text-lg mb-1">{userSubscription.userId.name}</CardTitle>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {userSubscription.userId.email}
+                  </p>
                 </>
               ) : userSubscription.guestInfo ? (
                 <>
@@ -242,8 +249,12 @@ export default function UserSubscriptionAdminCard({
                       {t("userSubscriptions.guest")}
                     </Badge>
                   </CardTitle>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {userSubscription.guestInfo.email}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}
+                  </p>
                 </>
               ) : (
                 <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>
@@ -262,20 +273,25 @@ export default function UserSubscriptionAdminCard({
               <span>{userSubscription.subscriptionId?.name}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 mt-1">
-              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" /> {/* Assuming treatment icon */}
+              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />{" "}
+              {/* Assuming treatment icon */}
               <span>
-                {userSubscription.treatmentId.name} ({userSubscription.selectedDurationDetails?.minutes}{" "}
-                {t("common.minutes")})
+                {userSubscription.treatmentId.name} (
+                {userSubscription.selectedDurationDetails?.minutes} {t("common.minutes")})
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            <div className="text-gray-600 dark:text-gray-400">{t("userSubscriptions.purchaseDate")}:</div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {t("userSubscriptions.purchaseDate")}:
+            </div>
             <div className="font-medium text-gray-800 dark:text-gray-200">
               {formatDate(userSubscription.purchaseDate)}
             </div>
-            <div className="text-gray-600 dark:text-gray-400">{t("userSubscriptions.expiryDate")}:</div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {t("userSubscriptions.expiryDate")}:
+            </div>
             <div className="font-medium text-gray-800 dark:text-gray-200">
               {formatDate(userSubscription.expiryDate)}
             </div>
@@ -284,7 +300,8 @@ export default function UserSubscriptionAdminCard({
           <div>
             <div className="flex justify-between items-center mb-1">
               <span className="text-gray-600 dark:text-gray-400">
-                {t("userSubscriptions.usage")}: {userSubscription.remainingQuantity}/{userSubscription.totalQuantity}
+                {t("userSubscriptions.usage")}: {userSubscription.remainingQuantity}/
+                {userSubscription.totalQuantity}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {usagePercentage.toFixed(0)}% {t("userSubscriptions.remaining")}
@@ -296,7 +313,8 @@ export default function UserSubscriptionAdminCard({
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
             <CreditCard className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span>
-              {t("userSubscriptions.paymentAmount")}: ₪{userSubscription.paymentAmount?.toFixed(2) || "0.00"}
+              {t("userSubscriptions.paymentAmount")}: ₪
+              {userSubscription.paymentAmount?.toFixed(2) || "0.00"}
             </span>
           </div>
         </CardContent>
@@ -377,7 +395,8 @@ export default function UserSubscriptionAdminCard({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description")} {userSubscription.userId?.name || t("common.thisUser")}
+              {t("userSubscriptions.cancelDialog.description")}{" "}
+              {userSubscription.userId?.name || t("common.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -405,12 +424,17 @@ export default function UserSubscriptionAdminCard({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description")} {userSubscription.userId?.name || t("common.thisUser")}
+              {t("userSubscriptions.deleteDialog.description")}{" "}
+              {userSubscription.userId?.name || t("common.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
               {isDeleting ? (
                 <>
                   <Loader2 className="rtl:ml-2 ltr:mr-2 h-4 w-4 animate-spin" />

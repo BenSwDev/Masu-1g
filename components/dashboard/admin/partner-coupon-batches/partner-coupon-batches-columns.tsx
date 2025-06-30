@@ -1,7 +1,16 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle, Edit, Trash2, Clock, AlertTriangle, PowerOff, Eye } from "lucide-react"
+import {
+  MoreHorizontal,
+  CheckCircle,
+  Edit,
+  Trash2,
+  Clock,
+  AlertTriangle,
+  PowerOff,
+  Eye,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,9 +26,13 @@ import { formatDate, formatCurrency } from "@/lib/utils"
 import type { TFunction } from "i18next"
 
 interface PartnerCouponBatchColumnsProps {
-  onEdit: (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => void
+  onEdit: (
+    batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }
+  ) => void
   onDelete: (batchId: string) => void
-  onViewCoupons: (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => void
+  onViewCoupons: (
+    batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }
+  ) => void
   t: TFunction
   dir: "ltr" | "rtl"
 }
@@ -31,18 +44,28 @@ export const getPartnerName = (partner: any, t: TFunction): string => {
   return partner.name || partner.email || t("adminPartnerCouponBatches.columns.partnerUnnamed")
 }
 
-export const StatusBadge = ({ status, t, dir }: { status: string; t: TFunction; dir: "ltr" | "rtl" }) => {
+export const StatusBadge = ({
+  status,
+  t,
+  dir,
+}: {
+  status: string
+  t: TFunction
+  dir: "ltr" | "rtl"
+}) => {
   switch (status) {
     case "active":
       return (
         <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminPartnerCouponBatches.status.active")}
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminPartnerCouponBatches.status.active")}
         </Badge>
       )
     case "scheduled":
       return (
         <Badge variant="outline" className="border-blue-500 text-blue-700">
-          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminPartnerCouponBatches.status.scheduled")}
+          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminPartnerCouponBatches.status.scheduled")}
         </Badge>
       )
     case "expired":
@@ -70,23 +93,25 @@ export const columns = ({
   onViewCoupons,
   t,
   dir,
-}: PartnerCouponBatchColumnsProps): ColumnDef<IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }>[] => [
+}: PartnerCouponBatchColumnsProps): ColumnDef<
+  IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }
+>[] => [
   {
     accessorKey: "name",
     header: t("adminPartnerCouponBatches.columns.name"),
     cell: ({ row }) => (
       <div className="font-medium">
         {row.original.name}
-        <div className="text-sm text-muted-foreground">
-          {row.original.codePrefix}-XXX
-        </div>
+        <div className="text-sm text-muted-foreground">{row.original.codePrefix}-XXX</div>
       </div>
     ),
   },
   {
     accessorKey: "description",
     header: t("adminPartnerCouponBatches.columns.description"),
-    cell: ({ row }) => <span className="truncate block max-w-xs">{row.original.description || "-"}</span>,
+    cell: ({ row }) => (
+      <span className="truncate block max-w-xs">{row.original.description || "-"}</span>
+    ),
   },
   {
     accessorKey: "couponCount",
@@ -105,7 +130,9 @@ export const columns = ({
     header: t("adminPartnerCouponBatches.columns.discount"),
     cell: ({ row }) => {
       const batch = row.original
-      return batch.discountType === "percentage" ? `${batch.discountValue}%` : formatCurrency(batch.discountValue)
+      return batch.discountType === "percentage"
+        ? `${batch.discountValue}%`
+        : formatCurrency(batch.discountValue)
     },
   },
   {
@@ -143,21 +170,24 @@ export const columns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => onViewCoupons(batch)}>
-              <Eye className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("adminPartnerCouponBatches.viewCoupons")}
+              <Eye className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+              {t("adminPartnerCouponBatches.viewCoupons")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(batch)}>
-              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.edit")}
+              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+              {t("common.edit")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(batch._id.toString())}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
-              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.delete")}
+              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+              {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
     },
   },
-] 
+]

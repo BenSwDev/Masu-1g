@@ -1,7 +1,7 @@
 "use client"
 
-import React from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import React from "react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import { Skeleton } from "@/components/ui/skeleton"
 

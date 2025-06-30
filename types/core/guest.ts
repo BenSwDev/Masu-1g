@@ -10,7 +10,7 @@ export interface GuestInfo {
   phone?: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
-  
+
   // Booking for someone else fields
   isBookingForSomeoneElse?: boolean
   recipientName?: string
@@ -20,20 +20,20 @@ export interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
-  
+
   // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both"
   bookerNotificationLanguage?: "he" | "en" | "ru"
   recipientNotificationMethod?: "email" | "sms" | "both"
   recipientNotificationMethods?: "email" | "sms" | "both"
-  
+
   // Optional marketing consent
   marketingConsent?: boolean
-  
+
   // Terms and conditions
   termsAccepted?: boolean
   privacyPolicyAccepted?: boolean
-  
+
   // Additional notes
   notes?: string
 }
@@ -48,7 +48,7 @@ export interface GuestAddress {
   entrance?: string
   floor?: string
   notes?: string
-  
+
   // Address type specific fields
   addressType?: "house" | "apartment" | "office" | "hotel" | "other"
   doorName?: string
@@ -57,7 +57,7 @@ export interface GuestAddress {
   roomNumber?: string
   instructions?: string
   otherInstructions?: string
-  
+
   // Parking
   parking?: boolean
   hasPrivateParking?: boolean
@@ -92,4 +92,4 @@ export interface AbandonedBookingResult {
   bookingId?: string
   booking?: any
   error?: string
-} 
+}

@@ -39,16 +39,12 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
                     <XCircle className="w-12 h-12 text-red-600" />
                   </div>
                 </div>
-                <CardTitle className="text-2xl text-red-700">
-                  התשלום נכשל
-                </CardTitle>
+                <CardTitle className="text-2xl text-red-700">התשלום נכשל</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="text-gray-600">
-                  <p className="mb-4">
-                    מצטערים, אירעה שגיאה בביצוע התשלום והזמנתך לא הושלמה.
-                  </p>
-                  
+                  <p className="mb-4">מצטערים, אירעה שגיאה בביצוע התשלום והזמנתך לא הושלמה.</p>
+
                   {reason && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <div className="flex items-start gap-3">
@@ -60,7 +56,7 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-medium text-blue-800 mb-2">מה עכשיו?</h3>
                     <ul className="text-blue-700 space-y-1 text-sm">
@@ -70,12 +66,10 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
                     </ul>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button asChild>
-                    <Link href="/bookings/treatment">
-                      נסי שוב
-                    </Link>
+                    <Link href="/bookings/treatment">נסי שוב</Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link href="/">
@@ -84,12 +78,11 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
                     </Link>
                   </Button>
                 </div>
-                
+
                 <div className="text-sm text-gray-500 border-t pt-4">
                   <p>נזקקת לעזרה? צרי קשר איתנו:</p>
                   <p className="font-medium mt-1">
-                    📞 <span dir="ltr">03-1234567</span> | 
-                    📧 support@masu.co.il
+                    📞 <span dir="ltr">03-1234567</span> | 📧 support@masu.co.il
                   </p>
                 </div>
               </CardContent>
@@ -106,10 +99,10 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
   }
 
   await dbConnect()
-  
+
   // Get booking data
   const bookingResult = await getBookingById(bookingId)
-  
+
   if (!bookingResult.success || !bookingResult.booking) {
     notFound()
   }
@@ -118,7 +111,7 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8">
         <Suspense fallback={<div>טוען...</div>}>
-          <GuestBookingConfirmation 
+          <GuestBookingConfirmation
             bookingResult={bookingResult.booking as any}
             initialData={{
               activeTreatments: [],
@@ -143,4 +136,4 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
       </div>
     </div>
   )
-} 
+}

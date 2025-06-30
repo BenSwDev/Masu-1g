@@ -19,7 +19,7 @@ export class SMSService {
     this.isDevelopment = process.env.NODE_ENV === "development"
     this.isConfigured = false
     this.client = null
-    
+
     // Initialize Twilio client with proper validation
     this.initializeTwilio()
   }
@@ -36,16 +36,18 @@ export class SMSService {
     // Check if we have the minimum required configuration
     if (!accountSid || !authToken) {
       if (!this.isDevelopment) {
-        logger.warn("Twilio SMS service not configured - missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN")
+        logger.warn(
+          "Twilio SMS service not configured - missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN"
+        )
       }
       return
     }
 
     // Skip placeholder values in development
-    if (this.isDevelopment && (
-      accountSid === "your-twilio-account-sid" || 
-      authToken === "your-twilio-auth-token"
-    )) {
+    if (
+      this.isDevelopment &&
+      (accountSid === "your-twilio-account-sid" || authToken === "your-twilio-auth-token")
+    ) {
       logger.info("Development mode - Twilio SMS service using placeholder values")
       return
     }
@@ -60,7 +62,9 @@ export class SMSService {
 
     // We need either a phone number OR a messaging service SID
     if (!fromNumber && !messagingServiceSid) {
-      logger.error("Twilio SMS service requires either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID")
+      logger.error(
+        "Twilio SMS service requires either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID"
+      )
       return
     }
 
@@ -69,11 +73,11 @@ export class SMSService {
       this.fromNumber = fromNumber
       this.messagingServiceSid = messagingServiceSid
       this.isConfigured = true
-      
+
       logger.info("Twilio SMS service initialized successfully", {
         hasFromNumber: !!fromNumber,
         hasMessagingService: !!messagingServiceSid,
-        environment: this.isDevelopment ? "development" : "production"
+        environment: this.isDevelopment ? "development" : "production",
       })
     } catch (error) {
       logger.error("Failed to initialize Twilio SMS service:", error)
@@ -87,9 +91,12 @@ export class SMSService {
    * @param data Notification data
    * @returns Result of the send operation
    */
-  async sendNotification(recipient: PhoneRecipient, data: NotificationData): Promise<NotificationResult> {
+  async sendNotification(
+    recipient: PhoneRecipient,
+    data: NotificationData
+  ): Promise<NotificationResult> {
     const logId = `sms_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    
+
     try {
       // Check if service is configured
       if (!this.isConfigured || !this.client) {
@@ -104,7 +111,7 @@ export class SMSService {
 
       // Get message template
       const messageBody = getSMSTemplate(data, recipient.language || "he")
-      
+
       // In development mode, just log
       if (this.isDevelopment) {
         logNotification("sms", phoneNumber, { body: messageBody, data })
@@ -137,9 +144,9 @@ export class SMSService {
       // Send the SMS
       const message = await this.client.messages.create(messageOptions)
 
-      logger.info(`[${logId}] SMS sent successfully`, { 
+      logger.info(`[${logId}] SMS sent successfully`, {
         messageId: message.sid,
-        status: message.status 
+        status: message.status,
       })
 
       return {
@@ -149,21 +156,22 @@ export class SMSService {
           status: message.status,
           direction: message.direction,
           price: message.price,
-          priceUnit: message.priceUnit
-        }
+          priceUnit: message.priceUnit,
+        },
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown SMS error"
-      logger.error(`[${logId}] SMS send failed:`, { 
+      logger.error(`[${logId}] SMS send failed:`, {
         error: errorMessage,
         recipient: this.obscurePhone(recipient.value),
-        data: data.type 
+        data: data.type,
       })
-      
+
       return {
         success: false,
         error: errorMessage,
-        details: error instanceof Error ? { message: error.message, stack: error.stack } : { error }
+        details:
+          error instanceof Error ? { message: error.message, stack: error.stack } : { error },
       }
     }
   }
@@ -177,9 +185,9 @@ export class SMSService {
     try {
       // Use centralized phone normalization
       const { normalizePhoneNumber, validatePhoneNumber } = require("@/lib/phone-utils")
-      
+
       const normalized = normalizePhoneNumber(phoneNumber)
-      
+
       if (!validatePhoneNumber(normalized)) {
         logger.warn(`Invalid phone format: ${normalized}`)
         throw new Error(`Invalid phone number format: ${phoneNumber}`)
@@ -218,7 +226,7 @@ export class SMSService {
       hasClient: !!this.client,
       hasFromNumber: !!this.fromNumber,
       hasMessagingService: !!this.messagingServiceSid,
-      environment: this.isDevelopment ? "development" : "production"
+      environment: this.isDevelopment ? "development" : "production",
     }
   }
 
@@ -230,7 +238,7 @@ export class SMSService {
       return { success: false, error: "SMS service not configured" }
     }
 
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
     if (!accountSid) {
       return { success: false, error: "TWILIO_ACCOUNT_SID not configured" }
     }
@@ -238,9 +246,9 @@ export class SMSService {
     try {
       // Try to fetch account information to verify credentials
       const account = await this.client.api.accounts(accountSid).fetch()
-      logger.info("SMS service configuration test successful", { 
+      logger.info("SMS service configuration test successful", {
         accountSid: account.sid,
-        status: account.status 
+        status: account.status,
       })
       return { success: true }
     } catch (error) {

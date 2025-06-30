@@ -2,7 +2,14 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
@@ -16,7 +23,10 @@ interface UserSubscriptionsClientProps {
   pagination?: any
 }
 
-const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSubscriptionsClientProps) => {
+const UserSubscriptionsClient = ({
+  userSubscriptions = [],
+  pagination,
+}: UserSubscriptionsClientProps) => {
   const { t } = useTranslation()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -103,7 +113,7 @@ const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSub
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {userSubscriptions.map((subscription) => (
+          {userSubscriptions.map(subscription => (
             <Card key={subscription._id} className="overflow-hidden">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
@@ -141,7 +151,11 @@ const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSub
                   <Button
                     variant="default"
                     className="flex-1"
-                    disabled={subscription.status !== "active" || subscription.remainingQuantity <= 0 || isLoading}
+                    disabled={
+                      subscription.status !== "active" ||
+                      subscription.remainingQuantity <= 0 ||
+                      isLoading
+                    }
                     onClick={() => handleUseSubscription(subscription._id)}
                   >
                     {t("subscriptions.use")}

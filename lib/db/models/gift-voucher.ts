@@ -64,7 +64,7 @@ const GiftVoucherSchema: Schema<IGiftVoucherDocument> = new Schema(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 // Indexes
@@ -79,12 +79,12 @@ GiftVoucherSchema.pre("save", function (next) {
   if (this.voucherType === "monetary" && this.remainingAmount === undefined) {
     this.remainingAmount = this.originalAmount || this.amount
   }
-  
+
   // Set originalAmount if not provided
   if (this.originalAmount === undefined) {
     this.originalAmount = this.amount
   }
-  
+
   next()
 })
 
@@ -106,7 +106,11 @@ GiftVoucherSchema.virtual("isValidForUse").get(function () {
 })
 
 // Instance method to use voucher
-GiftVoucherSchema.methods.useVoucher = function (amountToUse: number, orderId?: string, description?: string) {
+GiftVoucherSchema.methods.useVoucher = function (
+  amountToUse: number,
+  orderId?: string,
+  description?: string
+) {
   if (this.voucherType === "monetary") {
     if ((this.remainingAmount || 0) < amountToUse) {
       throw new Error("Insufficient voucher balance")
@@ -123,17 +127,19 @@ GiftVoucherSchema.methods.useVoucher = function (amountToUse: number, orderId?: 
     this.status = "fully_used"
     amountToUse = this.amount
   }
-  
+
   this.usageHistory.push({
     date: new Date(),
     amountUsed: amountToUse,
     orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
-    description: description || `Used ${amountToUse} from voucher`
+    description: description || `Used ${amountToUse} from voucher`,
   })
-  
+
   return this.save()
 }
 
-const GiftVoucher: Model<IGiftVoucherDocument> = mongoose.models.GiftVoucher || mongoose.model<IGiftVoucherDocument>("GiftVoucher", GiftVoucherSchema)
+const GiftVoucher: Model<IGiftVoucherDocument> =
+  mongoose.models.GiftVoucher ||
+  mongoose.model<IGiftVoucherDocument>("GiftVoucher", GiftVoucherSchema)
 
 export default GiftVoucher

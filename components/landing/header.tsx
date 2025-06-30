@@ -52,7 +52,7 @@ export function LandingHeader() {
               dir === "rtl" ? "space-x-reverse space-x-6" : "space-x-6"
             )}
           >
-            {navigation.map((item) => {
+            {navigation.map(item => {
               const Icon = item.icon
               return (
                 <Link
@@ -78,9 +78,7 @@ export function LandingHeader() {
             {session ? (
               <>
                 <Button asChild>
-                  <Link href="/dashboard">
-                    {t("common.dashboard")}
-                  </Link>
+                  <Link href="/dashboard">{t("common.dashboard")}</Link>
                 </Button>
                 <Button
                   variant="ghost"
@@ -94,9 +92,7 @@ export function LandingHeader() {
               </>
             ) : (
               <Button asChild>
-                <Link href="/auth/login">
-                  {t("common.login")}
-                </Link>
+                <Link href="/auth/login">{t("common.login")}</Link>
               </Button>
             )}
           </div>
@@ -106,7 +102,7 @@ export function LandingHeader() {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t bg-white">
             <nav className="px-2 pt-2 pb-4 space-y-1">
-              {navigation.map((item) => {
+              {navigation.map(item => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -131,4 +127,4 @@ export function LandingHeader() {
       </div>
     </header>
   )
-} 
+}

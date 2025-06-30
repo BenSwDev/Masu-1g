@@ -36,7 +36,12 @@ export function AnimatedContainer({ children, isActive, className }: AnimatedCon
 
   return (
     <div
-      className={cn("transition-all duration-300 ease-in-out", animationClass, isActive ? "z-10" : "z-0", className)}
+      className={cn(
+        "transition-all duration-300 ease-in-out",
+        animationClass,
+        isActive ? "z-10" : "z-0",
+        className
+      )}
     >
       {children}
     </div>

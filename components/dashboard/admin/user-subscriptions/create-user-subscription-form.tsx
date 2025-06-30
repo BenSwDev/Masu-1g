@@ -5,9 +5,22 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
@@ -51,7 +64,11 @@ interface TreatmentOption {
   durations?: { _id: string; name: string; price: number }[]
 }
 
-export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false, onCancel }: CreateUserSubscriptionFormProps) {
+export default function CreateUserSubscriptionForm({
+  onSubmit,
+  isLoading = false,
+  onCancel,
+}: CreateUserSubscriptionFormProps) {
   const { t } = useTranslation()
   const [users, setUsers] = useState<UserOption[]>([])
   const [subscriptions, setSubscriptions] = useState<SubscriptionOption[]>([])
@@ -121,14 +138,18 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("userSubscriptions.user")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("userSubscriptions.selectUser")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {users.map((user) => (
+                  {users.map(user => (
                     <SelectItem key={user._id} value={user._id}>
                       {user.name} ({user.email})
                     </SelectItem>
@@ -146,14 +167,18 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("userSubscriptions.subscription")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("userSubscriptions.selectSubscription")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {subscriptions.map((subscription) => (
+                  {subscriptions.map(subscription => (
                     <SelectItem key={subscription._id} value={subscription._id}>
                       {subscription.name} ({subscription.quantity} sessions)
                     </SelectItem>
@@ -171,12 +196,12 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("userSubscriptions.treatment")}</FormLabel>
-              <Select 
-                onValueChange={(value) => {
+              <Select
+                onValueChange={value => {
                   field.onChange(value)
                   handleTreatmentChange(value)
-                }} 
-                defaultValue={field.value} 
+                }}
+                defaultValue={field.value}
                 disabled={isLoading}
               >
                 <FormControl>
@@ -185,7 +210,7 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {treatments.map((treatment) => (
+                  {treatments.map(treatment => (
                     <SelectItem key={treatment._id} value={treatment._id}>
                       {treatment.name}
                     </SelectItem>
@@ -197,32 +222,40 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
           )}
         />
 
-        {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.length > 0 && (
-          <FormField
-            control={form.control}
-            name="selectedDurationId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("userSubscriptions.duration")}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("userSubscriptions.selectDuration")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.map((duration) => (
-                      <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
-                        {duration.minutes} דקות - ₪{duration.price}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {selectedTreatment &&
+          selectedTreatment.durations &&
+          selectedTreatment.durations.length > 0 && (
+            <FormField
+              control={form.control}
+              name="selectedDurationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("userSubscriptions.duration")}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("userSubscriptions.selectDuration")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {selectedTreatment &&
+                        selectedTreatment.durations &&
+                        selectedTreatment.durations.map(duration => (
+                          <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
+                            {duration.minutes} דקות - ₪{duration.price}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
         <FormField
           control={form.control}
@@ -249,10 +282,17 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
                   <FormControl>
                     <Button
                       variant="outline"
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
                       disabled={isLoading}
                     >
-                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>{t("common.pickDate")}</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -262,7 +302,7 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date) => date < new Date()}
+                    disabled={date => date < new Date()}
                     initialFocus
                   />
                 </PopoverContent>
@@ -285,4 +325,4 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
       </form>
     </Form>
   )
-} 
+}

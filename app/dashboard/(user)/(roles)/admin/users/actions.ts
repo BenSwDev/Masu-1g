@@ -90,7 +90,7 @@ export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersRe
       page = 1,
       limit = 20,
       sortBy = "createdAt",
-      sortOrder = "desc"
+      sortOrder = "desc",
     } = filters
 
     // Build query
@@ -101,7 +101,7 @@ export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersRe
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } }
+        { phone: { $regex: search, $options: "i" } },
       ]
     }
 
@@ -134,17 +134,17 @@ export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersRe
       .select("-password") // Exclude password
       .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
       .skip((page - 1) * limit)
-        .limit(limit)
+      .limit(limit)
       .lean()
 
     return {
       users: users.map(user => ({
         ...user,
-        _id: user._id.toString()
+        _id: user._id.toString(),
       })) as UserData[],
       totalUsers,
       totalPages,
-      currentPage: page
+      currentPage: page,
     }
   } catch (error) {
     console.error("Error getting users:", error)
@@ -165,7 +165,7 @@ export async function getUserById(userId: string): Promise<ActionResult> {
     await dbConnect()
 
     const user = await User.findById(userId).select("-password").lean()
-    
+
     if (!user) {
       return { success: false, error: "User not found" }
     }
@@ -174,8 +174,8 @@ export async function getUserById(userId: string): Promise<ActionResult> {
       success: true,
       data: {
         ...user,
-        _id: user._id.toString()
-      } as UserData
+        _id: user._id.toString(),
+      } as UserData,
     }
   } catch (error) {
     console.error("Error getting user:", error)
@@ -217,7 +217,7 @@ export async function createUser(userData: CreateUserData): Promise<ActionResult
       ...userData,
       password: hashedPassword,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     })
 
     const savedUser = await newUser.save()
@@ -228,8 +228,8 @@ export async function createUser(userData: CreateUserData): Promise<ActionResult
       success: true,
       data: {
         ...savedUser.toObject(),
-        _id: savedUser._id.toString()
-      } as UserData
+        _id: savedUser._id.toString(),
+      } as UserData,
     }
   } catch (error) {
     console.error("Error creating user:", error)
@@ -257,9 +257,9 @@ export async function updateUser(userId: string, userData: UpdateUserData): Prom
 
     // Check if phone is being changed and already exists
     if (userData.phone && userData.phone !== existingUser.phone) {
-      const phoneExists = await User.findOne({ 
-        phone: userData.phone, 
-        _id: { $ne: userId } 
+      const phoneExists = await User.findOne({
+        phone: userData.phone,
+        _id: { $ne: userId },
       })
       if (phoneExists) {
         return { success: false, error: "Phone number already exists" }
@@ -268,9 +268,9 @@ export async function updateUser(userId: string, userData: UpdateUserData): Prom
 
     // Check if email is being changed and already exists
     if (userData.email && userData.email !== existingUser.email) {
-      const emailExists = await User.findOne({ 
-        email: userData.email, 
-        _id: { $ne: userId } 
+      const emailExists = await User.findOne({
+        email: userData.email,
+        _id: { $ne: userId },
       })
       if (emailExists) {
         return { success: false, error: "Email already exists" }
@@ -282,10 +282,12 @@ export async function updateUser(userId: string, userData: UpdateUserData): Prom
       userId,
       {
         ...userData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       { new: true, runValidators: true }
-    ).select("-password").lean()
+    )
+      .select("-password")
+      .lean()
 
     revalidatePath("/dashboard/admin/users")
 
@@ -293,8 +295,8 @@ export async function updateUser(userId: string, userData: UpdateUserData): Prom
       success: true,
       data: {
         ...updatedUser,
-        _id: updatedUser!._id.toString()
-      } as UserData
+        _id: updatedUser!._id.toString(),
+      } as UserData,
     }
   } catch (error) {
     console.error("Error updating user:", error)
@@ -340,7 +342,10 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
 /**
  * Reset user password to default
  */
-export async function resetUserPassword(userId: string, newPassword: string = "User123!"): Promise<ActionResult> {
+export async function resetUserPassword(
+  userId: string,
+  newPassword: string = "User123!"
+): Promise<ActionResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
@@ -361,7 +366,7 @@ export async function resetUserPassword(userId: string, newPassword: string = "U
     // Update password
     await User.findByIdAndUpdate(userId, {
       password: hashedPassword,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     })
 
     revalidatePath("/dashboard/admin/users")
@@ -393,7 +398,7 @@ export async function toggleUserRole(userId: string, role: string): Promise<Acti
     // Toggle role
     const currentRoles = user.roles || []
     const hasRole = currentRoles.includes(role as any)
-    
+
     let newRoles
     if (hasRole) {
       // Remove role
@@ -410,21 +415,23 @@ export async function toggleUserRole(userId: string, role: string): Promise<Acti
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { 
+      {
         roles: newRoles,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       { new: true }
-    ).select("-password").lean()
+    )
+      .select("-password")
+      .lean()
 
     revalidatePath("/dashboard/admin/users")
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         ...updatedUser,
-        _id: updatedUser!._id.toString()
-      } as UserData
+        _id: updatedUser!._id.toString(),
+      } as UserData,
     }
   } catch (error) {
     console.error("Error toggling user role:", error)
@@ -451,7 +458,7 @@ export async function getUserStats(): Promise<ActionResult> {
       memberUsers,
       partnerUsers,
       verifiedEmails,
-      verifiedPhones
+      verifiedPhones,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ roles: { $in: ["admin"] } }),
@@ -459,7 +466,7 @@ export async function getUserStats(): Promise<ActionResult> {
       User.countDocuments({ roles: { $in: ["member"] } }),
       User.countDocuments({ roles: { $in: ["partner"] } }),
       User.countDocuments({ emailVerified: { $exists: true, $ne: null } }),
-      User.countDocuments({ phoneVerified: { $exists: true, $ne: null } })
+      User.countDocuments({ phoneVerified: { $exists: true, $ne: null } }),
     ])
 
     return {
@@ -470,16 +477,16 @@ export async function getUserStats(): Promise<ActionResult> {
           admin: adminUsers,
           professional: professionalUsers,
           member: memberUsers,
-          partner: partnerUsers
+          partner: partnerUsers,
         },
         verificationStats: {
           emailVerified: verifiedEmails,
-          phoneVerified: verifiedPhones
-        }
-      }
+          phoneVerified: verifiedPhones,
+        },
+      },
     }
   } catch (error) {
     console.error("Error getting user stats:", error)
     return { success: false, error: "Failed to get user statistics" }
   }
-} 
+}

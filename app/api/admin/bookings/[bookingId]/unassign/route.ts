@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAdminSession } from "@/lib/auth/require-admin-session"
 import { unassignProfessionalFromBooking } from "@/actions/booking-actions"
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { bookingId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { bookingId: string } }) {
   try {
     // Require admin session
     const session = await requireAdminSession()
@@ -28,16 +25,22 @@ export async function POST(
         booking: result.booking,
       })
     } else {
-      return NextResponse.json({
-        success: false,
-        error: result.error || "Failed to unassign professional",
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error || "Failed to unassign professional",
+        },
+        { status: 400 }
+      )
     }
   } catch (error) {
     console.error("Error in unassign professional API:", error)
-    return NextResponse.json({
-      success: false,
-      error: "Internal server error",
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+      },
+      { status: 500 }
+    )
   }
-} 
+}

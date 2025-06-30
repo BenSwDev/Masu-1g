@@ -1,12 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -54,7 +49,11 @@ export default function ReviewDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir} aria-describedby="review-detail-description">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        dir={dir}
+        aria-describedby="review-detail-description"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
@@ -68,9 +67,7 @@ export default function ReviewDetailModal({
             <CardHeader>
               <CardTitle className="text-lg">{t("memberReviews.yourRating")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              {renderStars(review.rating)}
-            </CardContent>
+            <CardContent>{renderStars(review.rating)}</CardContent>
           </Card>
 
           {/* Booking Information */}
@@ -87,7 +84,12 @@ export default function ReviewDetailModal({
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{t("memberReviews.treatmentDate")}:</span>
-                  <span>{formatDateTime(review.bookingId?.bookingDateTime || review.createdAt, language)}</span>
+                  <span>
+                    {formatDateTime(
+                      review.bookingId?.bookingDateTime || review.createdAt,
+                      language
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">{t("memberReviews.treatmentType")}:</span>
@@ -143,4 +145,4 @@ export default function ReviewDetailModal({
       </DialogContent>
     </Dialog>
   )
-} 
+}

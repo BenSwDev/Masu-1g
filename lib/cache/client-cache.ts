@@ -30,7 +30,11 @@ interface CacheItem<T> {
 /**
  * Set an item in the cache with expiration
  */
-export function setCacheItem<T>(key: string, value: T, expiryTime: number = CACHE_EXPIRY.MEDIUM): void {
+export function setCacheItem<T>(
+  key: string,
+  value: T,
+  expiryTime: number = CACHE_EXPIRY.MEDIUM
+): void {
   if (typeof window === "undefined") return
 
   try {
@@ -89,7 +93,7 @@ export function clearAllCache(): void {
   if (typeof window === "undefined") return
 
   try {
-    Object.keys(localStorage).forEach((key) => {
+    Object.keys(localStorage).forEach(key => {
       if (key.startsWith("masu_")) {
         localStorage.removeItem(key)
       }
@@ -102,7 +106,10 @@ export function clearAllCache(): void {
 /**
  * Update the expiry time of an existing cache item
  */
-export function updateCacheExpiry<T>(key: string, newExpiryTime: number = CACHE_EXPIRY.MEDIUM): void {
+export function updateCacheExpiry<T>(
+  key: string,
+  newExpiryTime: number = CACHE_EXPIRY.MEDIUM
+): void {
   if (typeof window === "undefined") return
 
   try {

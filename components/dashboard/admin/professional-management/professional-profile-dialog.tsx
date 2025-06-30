@@ -4,7 +4,13 @@ import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -13,8 +19,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
-import { getProfessionalById, updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import { User, UserCheck, Clock, UserX, AlertTriangle, Save, Loader2, Mail, Phone, Calendar } from "lucide-react"
+import {
+  getProfessionalById,
+  updateProfessionalStatus,
+} from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import {
+  User,
+  UserCheck,
+  Clock,
+  UserX,
+  AlertTriangle,
+  Save,
+  Loader2,
+  Mail,
+  Phone,
+  Calendar,
+} from "lucide-react"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 
@@ -48,15 +68,15 @@ interface ProfessionalDetails {
   pendingPayments: number
 }
 
-export function ProfessionalProfileDialog({ 
-  professionalId, 
-  open, 
+export function ProfessionalProfileDialog({
+  professionalId,
+  open,
   onOpenChange,
-  onUpdate 
+  onUpdate,
 }: ProfessionalProfileDialogProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [profile, setProfile] = useState<ProfessionalDetails | null>(null)
   const [status, setStatus] = useState<ProfessionalStatus>("pending_admin_approval")
   const [adminNotes, setAdminNotes] = useState("")
@@ -76,10 +96,10 @@ export function ProfessionalProfileDialog({
   const loadProfessionalData = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const result = await getProfessionalById(professionalId!)
-      
+
       if (result.success && result.professional) {
         const prof = result.professional as any
         setProfile(prof)
@@ -112,13 +132,13 @@ export function ProfessionalProfileDialog({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נדרשת סיבת דחייה"
+        description: "נדרשת סיבת דחייה",
       })
       return
     }
 
     setUpdating(true)
-    
+
     try {
       const result = await updateProfessionalStatus(
         professionalId,
@@ -126,23 +146,23 @@ export function ProfessionalProfileDialog({
         adminNotes,
         rejectionReason
       )
-      
+
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "סטטוס המטפל עודכן בהצלחה"
+          description: "סטטוס המטפל עודכן בהצלחה",
         })
-        
+
         if (onUpdate) {
           onUpdate()
         }
-        
+
         onOpenChange(false)
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון הסטטוס"
+          description: result.error || "שגיאה בעדכון הסטטוס",
         })
       }
     } catch (error) {
@@ -150,7 +170,7 @@ export function ProfessionalProfileDialog({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בעדכון הסטטוס"
+        description: "שגיאה בעדכון הסטטוס",
       })
     } finally {
       setUpdating(false)
@@ -159,14 +179,44 @@ export function ProfessionalProfileDialog({
 
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
-      active: { variant: "default" as const, icon: UserCheck, text: "פעיל", color: "text-green-600" },
-      pending_admin_approval: { variant: "secondary" as const, icon: Clock, text: "ממתין לאישור", color: "text-orange-600" },
-      pending_user_action: { variant: "outline" as const, icon: Clock, text: "ממתין למשתמש", color: "text-blue-600" },
-      rejected: { variant: "destructive" as const, icon: UserX, text: "נדחה", color: "text-red-600" },
-      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה", color: "text-red-600" }
+      active: {
+        variant: "default" as const,
+        icon: UserCheck,
+        text: "פעיל",
+        color: "text-green-600",
+      },
+      pending_admin_approval: {
+        variant: "secondary" as const,
+        icon: Clock,
+        text: "ממתין לאישור",
+        color: "text-orange-600",
+      },
+      pending_user_action: {
+        variant: "outline" as const,
+        icon: Clock,
+        text: "ממתין למשתמש",
+        color: "text-blue-600",
+      },
+      rejected: {
+        variant: "destructive" as const,
+        icon: UserX,
+        text: "נדחה",
+        color: "text-red-600",
+      },
+      suspended: {
+        variant: "destructive" as const,
+        icon: AlertTriangle,
+        text: "מושהה",
+        color: "text-red-600",
+      },
     }
 
-    const config = statusConfig[status] || { variant: "outline" as const, icon: User, text: status, color: "text-gray-600" }
+    const config = statusConfig[status] || {
+      variant: "outline" as const,
+      icon: User,
+      text: status,
+      color: "text-gray-600",
+    }
     const Icon = config.icon
 
     return (
@@ -180,11 +230,11 @@ export function ProfessionalProfileDialog({
   const formatDate = (date?: Date | string) => {
     if (!date) return "-"
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL", {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
     } catch {
       return "-"
@@ -197,7 +247,11 @@ export function ProfessionalProfileDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            {loading ? "טוען נתוני מטפל..." : profile ? `פרופיל מטפל - ${profile.userId.name}` : "פרופיל מטפל"}
+            {loading
+              ? "טוען נתוני מטפל..."
+              : profile
+                ? `פרופיל מטפל - ${profile.userId.name}`
+                : "פרופיל מטפל"}
           </DialogTitle>
         </DialogHeader>
 
@@ -228,18 +282,18 @@ export function ProfessionalProfileDialog({
                 <h3 className="text-lg font-semibold">פרטים אישיים</h3>
                 {getStatusBadge(profile.status)}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">שם מלא</Label>
                   <p className="text-sm font-medium">{profile.userId.name}</p>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">מגדר</Label>
-                  <p className="text-sm">{profile.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+                  <p className="text-sm">{profile.userId.gender === "male" ? "זכר" : "נקבה"}</p>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">אימייל</Label>
                   <div className="flex items-center gap-2">
@@ -247,7 +301,7 @@ export function ProfessionalProfileDialog({
                     <p className="text-sm">{profile.userId.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
                   <div className="flex items-center gap-2">
@@ -255,7 +309,7 @@ export function ProfessionalProfileDialog({
                     <p className="text-sm">{formatPhoneForDisplay(profile.userId.phone || "")}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">תאריך הצטרפות</Label>
                   <div className="flex items-center gap-2">
@@ -263,7 +317,7 @@ export function ProfessionalProfileDialog({
                     <p className="text-sm">{formatDate(profile.appliedAt)}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-sm font-medium text-muted-foreground">מזהה מטפל</Label>
                   <p className="text-sm font-mono">{profile._id}</p>
@@ -276,25 +330,33 @@ export function ProfessionalProfileDialog({
             {/* Professional Summary */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">סיכום מקצועי</h3>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{profile.treatments.length}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {profile.treatments.length}
+                  </div>
                   <div className="text-sm text-muted-foreground">טיפולים</div>
                 </div>
-                
+
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{profile.workAreas.length}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {profile.workAreas.length}
+                  </div>
                   <div className="text-sm text-muted-foreground">איזורי פעילות</div>
                 </div>
-                
+
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">₪{profile.totalEarnings.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    ₪{profile.totalEarnings.toLocaleString()}
+                  </div>
                   <div className="text-sm text-muted-foreground">סה"כ הכנסות</div>
                 </div>
-                
+
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">₪{profile.pendingPayments.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    ₪{profile.pendingPayments.toLocaleString()}
+                  </div>
                   <div className="text-sm text-muted-foreground">תשלומים ממתינים</div>
                 </div>
               </div>
@@ -305,11 +367,16 @@ export function ProfessionalProfileDialog({
             {/* Status Management */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">ניהול סטטוס</h3>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-medium">סטטוס</Label>
-                  <Select value={status} onValueChange={(value) => setStatus(value as ProfessionalStatus)}>
+                  <Label htmlFor="status" className="text-sm font-medium">
+                    סטטוס
+                  </Label>
+                  <Select
+                    value={status}
+                    onValueChange={value => setStatus(value as ProfessionalStatus)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -324,11 +391,13 @@ export function ProfessionalProfileDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adminNotes" className="text-sm font-medium">הערות מנהל</Label>
+                  <Label htmlFor="adminNotes" className="text-sm font-medium">
+                    הערות מנהל
+                  </Label>
                   <Textarea
                     id="adminNotes"
                     value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
+                    onChange={e => setAdminNotes(e.target.value)}
                     placeholder="הוסף הערות מנהל..."
                     rows={3}
                   />
@@ -342,7 +411,7 @@ export function ProfessionalProfileDialog({
                     <Textarea
                       id="rejectionReason"
                       value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
+                      onChange={e => setRejectionReason(e.target.value)}
                       placeholder="הסבר את הסיבה לדחיית הבקשה..."
                       rows={3}
                       className={status === "rejected" && !rejectionReason ? "border-red-500" : ""}
@@ -370,14 +439,10 @@ export function ProfessionalProfileDialog({
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={updating}
-              >
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={updating}>
                 ביטול
               </Button>
-              
+
               <Button
                 onClick={handleSave}
                 disabled={updating || (status === "rejected" && !rejectionReason)}
@@ -405,4 +470,3 @@ export function ProfessionalProfileDialog({
     </Dialog>
   )
 }
-

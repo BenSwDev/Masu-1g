@@ -7,7 +7,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { MapPin, Plus, Trash2, Save, Loader2, AlertTriangle } from "lucide-react"
@@ -36,11 +42,11 @@ interface ProfessionalWorkAreasTabProps {
 export default function ProfessionalWorkAreasTab({
   professional,
   onUpdate,
-  disabled = false
+  disabled = false,
 }: ProfessionalWorkAreasTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
-  
+
   const [workAreas, setWorkAreas] = useState<WorkArea[]>(professional.workAreas || [])
   const [availableCities, setAvailableCities] = useState<City[]>([])
   const [loadingCities, setLoadingCities] = useState(true)
@@ -51,19 +57,19 @@ export default function ProfessionalWorkAreasTab({
   useEffect(() => {
     const loadCities = async () => {
       try {
-        const response = await fetch('/api/cities')
+        const response = await fetch("/api/cities")
         if (response.ok) {
           const data = await response.json()
           setAvailableCities(data.cities || [])
         } else {
-          throw new Error('Failed to fetch cities')
+          throw new Error("Failed to fetch cities")
         }
       } catch (error) {
         console.error("Error loading cities:", error)
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "שגיאה בטעינת רשימת הערים"
+          description: "שגיאה בטעינת רשימת הערים",
         })
       } finally {
         setLoadingCities(false)
@@ -78,7 +84,7 @@ export default function ProfessionalWorkAreasTab({
       cityId: "",
       cityName: "",
       distanceRadius: "20km",
-      coveredCities: []
+      coveredCities: [],
     }
     setWorkAreas(prev => [...prev, newWorkArea])
     setHasChanges(true)
@@ -90,20 +96,22 @@ export default function ProfessionalWorkAreasTab({
   }
 
   const handleWorkAreaChange = (index: number, field: keyof WorkArea, value: string) => {
-    setWorkAreas(prev => prev.map((workArea, i) => {
-      if (i === index) {
-        const updated = { ...workArea, [field]: value }
-        
-        // If city changed, also update the name
-        if (field === 'cityId') {
-          const selectedCity = availableCities.find(c => c._id === value)
-          updated.cityName = selectedCity?.name || ""
+    setWorkAreas(prev =>
+      prev.map((workArea, i) => {
+        if (i === index) {
+          const updated = { ...workArea, [field]: value }
+
+          // If city changed, also update the name
+          if (field === "cityId") {
+            const selectedCity = availableCities.find(c => c._id === value)
+            updated.cityName = selectedCity?.name || ""
+          }
+
+          return updated
         }
-        
-        return updated
-      }
-      return workArea
-    }))
+        return workArea
+      })
+    )
     setHasChanges(true)
   }
 
@@ -115,38 +123,38 @@ export default function ProfessionalWorkAreasTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נא להוסיף לפחות איזור עבודה אחד תקין"
+        description: "נא להוסיף לפחות איזור עבודה אחד תקין",
       })
       return
     }
 
     setSaving(true)
-    
+
     try {
       const result = await updateProfessionalWorkAreas(professional._id, validWorkAreas as any)
 
       if (result.success && result.professional) {
         // Update local state with the response from server (includes covered cities)
         const updatedWorkAreas = (result.professional.workAreas || []).map(w => ({
-          cityId: w.cityId?.toString() || '',
-          cityName: w.cityName || '',
+          cityId: w.cityId?.toString() || "",
+          cityName: w.cityName || "",
           distanceRadius: w.distanceRadius,
-          coveredCities: w.coveredCities || []
+          coveredCities: w.coveredCities || [],
         }))
-        
+
         setWorkAreas(updatedWorkAreas)
         onUpdate({ workAreas: updatedWorkAreas })
         setHasChanges(false)
-        
+
         toast({
           title: "נשמר בהצלחה",
-          description: `איזורי העבודה נשמרו בהצלחה. כיסוי: ${getAllCoveredCities(updatedWorkAreas).length} ערים`
+          description: `איזורי העבודה נשמרו בהצלחה. כיסוי: ${getAllCoveredCities(updatedWorkAreas).length} ערים`,
         })
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בשמירת איזורי העבודה"
+          description: result.error || "שגיאה בשמירת איזורי העבודה",
         })
       }
     } catch (error) {
@@ -154,7 +162,7 @@ export default function ProfessionalWorkAreasTab({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בשמירת איזורי העבודה"
+        description: "שגיאה בשמירת איזורי העבודה",
       })
     } finally {
       setSaving(false)
@@ -167,12 +175,18 @@ export default function ProfessionalWorkAreasTab({
 
   const getDistanceRadiusText = (radius: string) => {
     switch (radius) {
-      case "20km": return "20 ק\"מ"
-      case "40km": return "40 ק\"מ"
-      case "60km": return "60 ק\"מ"
-      case "80km": return "80 ק\"מ"
-      case "unlimited": return "ללא הגבלה"
-      default: return radius
+      case "20km":
+        return '20 ק"מ'
+      case "40km":
+        return '40 ק"מ'
+      case "60km":
+        return '60 ק"מ'
+      case "80km":
+        return '80 ק"מ'
+      case "unlimited":
+        return "ללא הגבלה"
+      default:
+        return radius
     }
   }
 
@@ -193,9 +207,7 @@ export default function ProfessionalWorkAreasTab({
       <div className="p-6 space-y-6" dir={dir}>
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            יש ליצור את המטפל תחילה לפני הגדרת איזורי העבודה
-          </AlertDescription>
+          <AlertDescription>יש ליצור את המטפל תחילה לפני הגדרת איזורי העבודה</AlertDescription>
         </Alert>
       </div>
     )
@@ -239,7 +251,7 @@ export default function ProfessionalWorkAreasTab({
             <Badge variant="outline">{allCoveredCities.length} ערים מכוסות</Badge>
           )}
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             onClick={handleAddWorkArea}
@@ -250,18 +262,10 @@ export default function ProfessionalWorkAreasTab({
             <Plus className="w-4 h-4" />
             הוסף איזור
           </Button>
-          
+
           {hasChanges && (
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
+            <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {saving ? "שומר..." : "שמור שינויים"}
             </Button>
           )}
@@ -287,20 +291,18 @@ export default function ProfessionalWorkAreasTab({
         <div className="space-y-4">
           {workAreas.map((workArea, index) => {
             const isValid = isValidWorkArea(workArea)
-            
+
             return (
-              <Card key={index} className={isValid ? 'border-green-200' : 'border-orange-200'}>
+              <Card key={index} className={isValid ? "border-green-200" : "border-orange-200"}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* City Selection */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          עיר מרכזית *
-                        </Label>
+                        <Label className="text-sm font-medium">עיר מרכזית *</Label>
                         <Select
                           value={workArea.cityId}
-                          onValueChange={(value) => handleWorkAreaChange(index, 'cityId', value)}
+                          onValueChange={value => handleWorkAreaChange(index, "cityId", value)}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="בחר עיר" />
@@ -322,12 +324,16 @@ export default function ProfessionalWorkAreasTab({
 
                       {/* Distance Radius */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          רדיוס פעילות
-                        </Label>
+                        <Label className="text-sm font-medium">רדיוס פעילות</Label>
                         <Select
                           value={workArea.distanceRadius}
-                          onValueChange={(value) => handleWorkAreaChange(index, 'distanceRadius', value as WorkArea['distanceRadius'])}
+                          onValueChange={value =>
+                            handleWorkAreaChange(
+                              index,
+                              "distanceRadius",
+                              value as WorkArea["distanceRadius"]
+                            )
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -364,9 +370,9 @@ export default function ProfessionalWorkAreasTab({
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {workArea.coveredCities.slice(0, 10).map((city, cityIndex) => (
-                          <Badge 
-                            key={cityIndex} 
-                            variant={city === workArea.cityName ? "default" : "outline"} 
+                          <Badge
+                            key={cityIndex}
+                            variant={city === workArea.cityName ? "default" : "outline"}
                             className="text-xs"
                           >
                             {city}
@@ -396,9 +402,7 @@ export default function ProfessionalWorkAreasTab({
               <div className="flex justify-between items-center text-sm">
                 <span className="font-medium">סיכום:</span>
                 <div className="flex gap-4">
-                  <span className="text-green-600">
-                    {validWorkAreas.length} איזורים תקינים
-                  </span>
+                  <span className="text-green-600">{validWorkAreas.length} איזורים תקינים</span>
                   {workAreas.length > validWorkAreas.length && (
                     <span className="text-orange-600">
                       {workAreas.length - validWorkAreas.length} חסרים
@@ -406,7 +410,7 @@ export default function ProfessionalWorkAreasTab({
                   )}
                 </div>
               </div>
-              
+
               {validWorkAreas.length === 0 && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
@@ -425,9 +429,9 @@ export default function ProfessionalWorkAreasTab({
                     {allCoveredCities.slice(0, 15).map((city, index) => {
                       const isMainCity = validWorkAreas.some(area => area.cityName === city)
                       return (
-                        <Badge 
-                          key={index} 
-                          variant={isMainCity ? "default" : "outline"} 
+                        <Badge
+                          key={index}
+                          variant={isMainCity ? "default" : "outline"}
                           className="text-xs"
                         >
                           {city}

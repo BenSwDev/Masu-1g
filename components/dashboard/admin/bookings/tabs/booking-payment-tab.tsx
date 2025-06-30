@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { 
+import {
   CreditCard,
   DollarSign,
   Gift,
@@ -17,7 +17,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
@@ -42,13 +42,21 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
   const getPaymentStatusBadge = (status?: string) => {
     switch (status) {
       case "paid":
-        return <Badge variant="default" className="bg-green-100 text-green-800">שולם</Badge>
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            שולם
+          </Badge>
+        )
       case "pending":
         return <Badge variant="secondary">ממתין לתשלום</Badge>
       case "failed":
         return <Badge variant="destructive">נכשל</Badge>
       case "refunded":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">הוחזר</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            הוחזר
+          </Badge>
+        )
       case "cancelled":
         return <Badge variant="outline">בוטל</Badge>
       default:
@@ -58,12 +66,18 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
 
   const getPaymentMethodName = (method?: string) => {
     switch (method) {
-      case "credit_card": return "כרטיס אשראי"
-      case "cash": return "מזומן"
-      case "bank_transfer": return "העברה בנקאית"
-      case "gift_voucher": return "שובר מתנה"
-      case "coupon": return "קופון"
-      default: return method || "לא צוין"
+      case "credit_card":
+        return "כרטיס אשראי"
+      case "cash":
+        return "מזומן"
+      case "bank_transfer":
+        return "העברה בנקאית"
+      case "gift_voucher":
+        return "שובר מתנה"
+      case "coupon":
+        return "קופון"
+      default:
+        return method || "לא צוין"
     }
   }
 
@@ -85,28 +99,36 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium">סכום כולל</Label>
-              <p className="text-lg font-semibold">{formatCurrency(booking.priceDetails.finalAmount)}</p>
+              <p className="text-lg font-semibold">
+                {formatCurrency(booking.priceDetails.finalAmount)}
+              </p>
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium">סכום שולם</Label>
               <p className="text-lg font-semibold text-green-600">
-                {formatCurrency(booking.paymentDetails.paymentStatus === "paid" ? booking.priceDetails.finalAmount : 0)}
+                {formatCurrency(
+                  booking.paymentDetails.paymentStatus === "paid"
+                    ? booking.priceDetails.finalAmount
+                    : 0
+                )}
               </p>
             </div>
           </div>
 
           {/* Outstanding Amount */}
-          {booking.paymentDetails.paymentStatus !== "paid" && booking.paymentDetails.paymentStatus !== "not_required" && booking.priceDetails.finalAmount > 0 && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-                <span className="font-medium text-amber-800">יתרה לתשלום</span>
+          {booking.paymentDetails.paymentStatus !== "paid" &&
+            booking.paymentDetails.paymentStatus !== "not_required" &&
+            booking.priceDetails.finalAmount > 0 && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                  <span className="font-medium text-amber-800">יתרה לתשלום</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-600 mt-2">
+                  {formatCurrency(booking.priceDetails.finalAmount)}
+                </p>
               </div>
-              <p className="text-2xl font-bold text-amber-600 mt-2">
-                {formatCurrency(booking.priceDetails.finalAmount)}
-              </p>
-            </div>
-          )}
+            )}
         </CardContent>
       </Card>
 
@@ -125,7 +147,7 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
               <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  {booking.paymentDetails.paymentMethodId 
+                  {booking.paymentDetails.paymentMethodId
                     ? `${booking.paymentDetails.paymentMethodId.type || "כרטיס אשראי"} ${booking.paymentDetails.paymentMethodId.last4 ? `****${booking.paymentDetails.paymentMethodId.last4}` : ""}`
                     : "לא צוין"}
                 </span>
@@ -193,7 +215,9 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
             <div className="flex justify-between items-center pt-2 border-t">
               <Label className="text-sm font-medium">סך הכל לפני הנחות</Label>
               <span className="font-medium">
-                {formatCurrency(booking.priceDetails.basePrice + booking.priceDetails.totalSurchargesAmount)}
+                {formatCurrency(
+                  booking.priceDetails.basePrice + booking.priceDetails.totalSurchargesAmount
+                )}
               </span>
             </div>
 
@@ -222,7 +246,9 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
             {/* Final Total */}
             <div className="flex justify-between items-center pt-2 border-t">
               <Label className="text-lg font-semibold">סך הכל לתשלום</Label>
-              <span className="text-lg font-bold">{formatCurrency(booking.priceDetails.finalAmount)}</span>
+              <span className="text-lg font-bold">
+                {formatCurrency(booking.priceDetails.finalAmount)}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -244,20 +270,21 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
                   <div className="space-y-1">
                     <Label className="text-sm font-medium text-green-800">קופון מופעל</Label>
                     <p className="text-sm text-green-700">
-                      {typeof booking.priceDetails.appliedCouponId === 'object' 
-                        ? (booking.priceDetails.appliedCouponId as any)?.code || 'קופון לא זמין'
-                        : 'קופון לא זמין'}
+                      {typeof booking.priceDetails.appliedCouponId === "object"
+                        ? (booking.priceDetails.appliedCouponId as any)?.code || "קופון לא זמין"
+                        : "קופון לא זמין"}
                     </p>
                   </div>
                   <Badge variant="default" className="bg-green-100 text-green-800">
                     פעיל
                   </Badge>
                 </div>
-                {typeof booking.priceDetails.appliedCouponId === 'object' && (booking.priceDetails.appliedCouponId as any)?.description && (
-                  <p className="text-sm text-green-600 mt-2">
-                    {(booking.priceDetails.appliedCouponId as any).description}
-                  </p>
-                )}
+                {typeof booking.priceDetails.appliedCouponId === "object" &&
+                  (booking.priceDetails.appliedCouponId as any)?.description && (
+                    <p className="text-sm text-green-600 mt-2">
+                      {(booking.priceDetails.appliedCouponId as any).description}
+                    </p>
+                  )}
               </div>
             )}
 
@@ -288,30 +315,24 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
                 <Gift className="w-5 h-5 text-pink-600" />
                 <span className="font-medium text-pink-800">הזמנה זו היא מתנה</span>
               </div>
-              
+
               {booking.giftGreeting && (
                 <div className="mt-3">
                   <Label className="text-sm font-medium text-pink-800">הודעת ברכה</Label>
-                  <p className="text-sm text-pink-700 mt-1">
-                    {booking.giftGreeting}
-                  </p>
+                  <p className="text-sm text-pink-700 mt-1">{booking.giftGreeting}</p>
                 </div>
               )}
 
               {booking.recipientName && (
                 <div className="mt-3">
                   <Label className="text-sm font-medium text-pink-800">מקבל המתנה</Label>
-                  <p className="text-sm text-pink-700 mt-1">
-                    {booking.recipientName}
-                  </p>
+                  <p className="text-sm text-pink-700 mt-1">{booking.recipientName}</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
       )}
-
-
 
       {/* Guidelines */}
       <Card className="border-blue-200 bg-blue-50">
@@ -355,11 +376,12 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
                 </li>
               </ul>
             </div>
-            
+
             <div className="text-xs text-amber-600">
               <p>
-                <strong>הערה:</strong> דמי הביטול יחושבו על בסיס סכום ההזמנה הכולל ({formatCurrency(booking.priceDetails.finalAmount)})
-                ויופיעו כניכוי מהסכום המוחזר ללקוח.
+                <strong>הערה:</strong> דמי הביטול יחושבו על בסיס סכום ההזמנה הכולל (
+                {formatCurrency(booking.priceDetails.finalAmount)}) ויופיעו כניכוי מהסכום המוחזר
+                ללקוח.
               </p>
             </div>
           </div>
@@ -367,4 +389,4 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
       </Card>
     </div>
   )
-} 
+}

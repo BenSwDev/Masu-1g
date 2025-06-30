@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getProfessionals } from "./actions"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
-
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "ניהול מטפלים | מנהל",
@@ -35,7 +34,7 @@ function ProfessionalsLoadingSkeleton() {
           </Card>
         ))}
       </div>
-      
+
       {/* Filters Skeleton */}
       <Card>
         <CardContent className="pt-6">
@@ -47,7 +46,7 @@ function ProfessionalsLoadingSkeleton() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Table Skeleton */}
       <Card>
         <CardContent className="p-0">
@@ -62,7 +61,7 @@ function ProfessionalsLoadingSkeleton() {
                 <Skeleton className="h-6 w-24" />
               </div>
             </div>
-            
+
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="p-4 border-b last:border-b-0">
                 <div className="flex gap-4 items-center">
@@ -102,7 +101,7 @@ async function ProfessionalsPageContent() {
     }
 
     return (
-      <ProfessionalManagement 
+      <ProfessionalManagement
         initialProfessionals={initialData.data?.professionals || []}
         totalPages={initialData.data?.pagination.pages || 1}
         currentPage={initialData.data?.pagination.page || 1}
@@ -114,7 +113,7 @@ async function ProfessionalsPageContent() {
     console.error("Error loading professionals:", error)
     // במקרה של שגיאה, חזור לקומפוננט עם נתונים ריקים
     return (
-      <ProfessionalManagement 
+      <ProfessionalManagement
         initialProfessionals={[]}
         totalPages={1}
         currentPage={1}
@@ -127,7 +126,7 @@ async function ProfessionalsPageContent() {
 
 export default async function ProfessionalsPage() {
   const session = await requireUserSession()
-  
+
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
@@ -137,9 +136,7 @@ export default async function ProfessionalsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">ניהול מטפלים</h1>
-          <p className="text-muted-foreground">
-            ניהול מטפלים במערכת - צפייה, עריכה ואישור מטפלים
-          </p>
+          <p className="text-muted-foreground">ניהול מטפלים במערכת - צפייה, עריכה ואישור מטפלים</p>
         </div>
       </div>
 
@@ -148,4 +145,4 @@ export default async function ProfessionalsPage() {
       </Suspense>
     </div>
   )
-} 
+}

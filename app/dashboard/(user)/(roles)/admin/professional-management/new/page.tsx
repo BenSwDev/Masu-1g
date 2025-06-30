@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "יצירת מטפל חדש | מנהל",
@@ -28,7 +28,7 @@ function ProfessionalCreateLoadingSkeleton() {
           <Skeleton className="h-10 w-20" />
         </div>
       </div>
-      
+
       {/* Form Skeleton */}
       <Card>
         <CardHeader>
@@ -49,7 +49,7 @@ function ProfessionalCreateLoadingSkeleton() {
 
 export default async function ProfessionalCreatePageRoute() {
   const session = await requireUserSession()
-  
+
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
@@ -61,4 +61,4 @@ export default async function ProfessionalCreatePageRoute() {
       </Suspense>
     </div>
   )
-} 
+}

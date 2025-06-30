@@ -5,11 +5,33 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TrendingUp, DollarSign, Calendar, Clock, Star, AlertTriangle, Eye, BarChart3 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  TrendingUp,
+  DollarSign,
+  Calendar,
+  Clock,
+  Star,
+  AlertTriangle,
+  Eye,
+  BarChart3,
+} from "lucide-react"
 import type { Professional } from "@/lib/types/professional"
 
 interface Booking {
@@ -47,11 +69,9 @@ interface ProfessionalEarningsTabProps {
   professional: Professional
 }
 
-export default function ProfessionalEarningsTab({
-  professional
-}: ProfessionalEarningsTabProps) {
+export default function ProfessionalEarningsTab({ professional }: ProfessionalEarningsTabProps) {
   const { t, dir } = useTranslation()
-  
+
   const [bookings, setBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState<EarningsStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -63,16 +83,20 @@ export default function ProfessionalEarningsTab({
     const loadData = async () => {
       try {
         setLoading(true)
-        
+
         // Fetch bookings
-        const bookingsResponse = await fetch(`/api/admin/bookings/by-professional/${professional._id}?limit=20&status=${statusFilter}&timeFrame=${timeFrame}`)
+        const bookingsResponse = await fetch(
+          `/api/admin/bookings/by-professional/${professional._id}?limit=20&status=${statusFilter}&timeFrame=${timeFrame}`
+        )
         if (bookingsResponse.ok) {
           const bookingsData = await bookingsResponse.json()
           setBookings(bookingsData.bookings || [])
         }
 
         // Fetch earnings stats
-        const statsResponse = await fetch(`/api/admin/bookings/stats/${professional._id}?timeFrame=${timeFrame}`)
+        const statsResponse = await fetch(
+          `/api/admin/bookings/stats/${professional._id}?timeFrame=${timeFrame}`
+        )
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
           setStats(statsData.stats || null)
@@ -93,31 +117,27 @@ export default function ProfessionalEarningsTab({
       completed: { variant: "default" as const, text: "הושלם" },
       cancelled: { variant: "destructive" as const, text: "בוטל" },
       in_process: { variant: "secondary" as const, text: "בביצוע" },
-      pending_payment: { variant: "outline" as const, text: "ממתין לתשלום" }
+      pending_payment: { variant: "outline" as const, text: "ממתין לתשלום" },
     }
 
     const config = statusConfig[status] || { variant: "outline" as const, text: status }
-    return (
-      <Badge variant={config.variant}>
-        {config.text}
-      </Badge>
-    )
+    return <Badge variant={config.variant}>{config.text}</Badge>
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('he-IL', {
-      style: 'currency',
-      currency: 'ILS'
+    return new Intl.NumberFormat("he-IL", {
+      style: "currency",
+      currency: "ILS",
     }).format(amount)
   }
 
   const formatDate = (date: Date | string) => {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL", {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       })
     } catch {
       return "-"
@@ -126,13 +146,13 @@ export default function ProfessionalEarningsTab({
 
   const formatDateTime = (date: Date | string) => {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
+      const dateObj = typeof date === "string" ? new Date(date) : date
       return dateObj.toLocaleDateString("he-IL", {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
       })
     } catch {
       return "-"
@@ -154,7 +174,7 @@ export default function ProfessionalEarningsTab({
             </Card>
           ))}
         </div>
-        
+
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-32" />
@@ -216,9 +236,7 @@ export default function ProfessionalEarningsTab({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {stats?.completedBookings || 0}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{stats?.completedBookings || 0}</div>
           </CardContent>
         </Card>
 
@@ -294,10 +312,9 @@ export default function ProfessionalEarningsTab({
               <Calendar className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">אין הזמנות</h3>
               <p className="text-muted-foreground text-center">
-                {statusFilter === "all" 
+                {statusFilter === "all"
                   ? "לא נמצאו הזמנות לתקופה הנבחרת"
-                  : `לא נמצאו הזמנות עם סטטוס "${statusFilter}"`
-                }
+                  : `לא נמצאו הזמנות עם סטטוס "${statusFilter}"`}
               </p>
             </div>
           ) : (
@@ -315,7 +332,7 @@ export default function ProfessionalEarningsTab({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bookings.map((booking) => (
+                  {bookings.map(booking => (
                     <TableRow key={booking._id} className="hover:bg-muted/50">
                       <TableCell>
                         <div>
@@ -341,13 +358,9 @@ export default function ProfessionalEarningsTab({
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell>
-                        {getStatusBadge(booking.status)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {formatCurrency(booking.totalAmount)}
-                        </div>
+                        <div className="font-medium">{formatCurrency(booking.totalAmount)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium text-green-600">
@@ -385,7 +398,10 @@ export default function ProfessionalEarningsTab({
           <CardContent>
             <div className="space-y-4">
               {stats.monthlyEarnings.map((month, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="font-medium">{month.month}</div>
                   <div className="text-lg font-bold text-green-600">
                     {formatCurrency(month.amount)}

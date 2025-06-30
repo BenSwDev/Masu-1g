@@ -52,7 +52,7 @@ export async function switchActiveRole(role: string): Promise<{
  */
 export async function addRoleToUser(
   userId: string,
-  role: string,
+  role: string
 ): Promise<{
   success: boolean
   message: string
@@ -100,7 +100,7 @@ export async function addRoleToUser(
  */
 export async function removeRoleFromUser(
   userId: string,
-  role: string,
+  role: string
 ): Promise<{
   success: boolean
   message: string
@@ -131,7 +131,7 @@ export async function removeRoleFromUser(
 
     // Remove role if assigned
     if (user.roles.includes(role)) {
-      user.roles = user.roles.filter((r) => r !== role)
+      user.roles = user.roles.filter(r => r !== role)
       await user.save()
     }
 
@@ -163,10 +163,13 @@ export async function setActiveRole(role: string): Promise<{
     // Check if user has the requested role
     if (!user.roles.includes(role)) {
       // Fallback to default role
-      const fallback = user.roles.includes("admin") ? "admin"
-        : user.roles.includes("professional") ? "professional"
-        : user.roles.includes("partner") ? "partner"
-        : "member"
+      const fallback = user.roles.includes("admin")
+        ? "admin"
+        : user.roles.includes("professional")
+          ? "professional"
+          : user.roles.includes("partner")
+            ? "partner"
+            : "member"
       user.activeRole = fallback
       await user.save()
       return { success: false, message: "roleNotAssigned", activeRole: fallback }

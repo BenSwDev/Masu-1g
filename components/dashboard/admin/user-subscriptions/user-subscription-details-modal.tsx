@@ -25,7 +25,8 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { useState, useEffect } from "react"
 import { Calendar, Clock, User, Link } from "lucide-react"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+interface PopulatedUserSubscription
+  extends Omit<IUserSubscription, "userId" | "subscriptionId" | "treatmentId" | "paymentMethodId"> {
   userId?: {
     _id: string
     name: string
@@ -89,7 +90,7 @@ export default function UserSubscriptionDetailsModal({
   useEffect(() => {
     const fetchRelatedBookings = async () => {
       if (!isOpen || !userSubscription?._id) return
-      
+
       setLoadingBookings(true)
       try {
         const response = await fetch(`/api/admin/bookings?subscription_id=${userSubscription._id}`)
@@ -98,7 +99,7 @@ export default function UserSubscriptionDetailsModal({
           setRelatedBookings(data.bookings || [])
         }
       } catch (error) {
-        console.error('Error fetching related bookings:', error)
+        console.error("Error fetching related bookings:", error)
       } finally {
         setLoadingBookings(false)
       }
@@ -130,7 +131,8 @@ export default function UserSubscriptionDetailsModal({
     return format(date, "dd/MM/yyyy HH:mm", { locale: he })
   }
 
-  const maskCardNumber = (cardNumber?: string) => (cardNumber ? `**** ${cardNumber.slice(-4)}` : t("common.unknown"))
+  const maskCardNumber = (cardNumber?: string) =>
+    cardNumber ? `**** ${cardNumber.slice(-4)}` : t("common.unknown")
 
   const getStatusInfo = (status: string) => {
     const statusConfig = {
@@ -168,27 +170,21 @@ export default function UserSubscriptionDetailsModal({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("userSubscriptions.detailsModal.title")}</DialogTitle>
-          <DialogDescription>
-            {t("userSubscriptions.detailsModal.description")}
-          </DialogDescription>
+          <DialogDescription>{t("userSubscriptions.detailsModal.description")}</DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-4 py-4">
             <section>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                {userSubscription.userId ? t("userSubscriptions.detailsModal.userSectionTitle") : t("userSubscriptions.detailsModal.guestSectionTitle")}
+                {userSubscription.userId
+                  ? t("userSubscriptions.detailsModal.userSectionTitle")
+                  : t("userSubscriptions.detailsModal.guestSectionTitle")}
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
                 {userSubscription.userId ? (
                   <>
-                    <DetailItem
-                      label={t("common.name")}
-                      value={userSubscription.userId.name}
-                    />
-                    <DetailItem
-                      label={t("common.email")}
-                      value={userSubscription.userId.email}
-                    />
+                    <DetailItem label={t("common.name")} value={userSubscription.userId.name} />
+                    <DetailItem label={t("common.email")} value={userSubscription.userId.email} />
                     <DetailItem label={t("common.id")} value={userSubscription.userId._id} />
                   </>
                 ) : userSubscription.guestInfo ? (
@@ -214,10 +210,7 @@ export default function UserSubscriptionDetailsModal({
                     />
                   </>
                 ) : (
-                  <DetailItem
-                    label={t("common.name")}
-                    value={t("common.unknownUser")}
-                  />
+                  <DetailItem label={t("common.name")} value={t("common.unknownUser")} />
                 )}
               </dl>
             </section>
@@ -227,8 +220,18 @@ export default function UserSubscriptionDetailsModal({
                 {t("userSubscriptions.detailsModal.subscriptionSectionTitle")}
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
-                <DetailItem label={t("common.name")} value={userSubscription.subscriptionId?.name} />
-                <DetailItem label={t("common.id")} value={userSubscription.subscriptionId?._id ? String(userSubscription.subscriptionId._id) : undefined} />
+                <DetailItem
+                  label={t("common.name")}
+                  value={userSubscription.subscriptionId?.name}
+                />
+                <DetailItem
+                  label={t("common.id")}
+                  value={
+                    userSubscription.subscriptionId?._id
+                      ? String(userSubscription.subscriptionId._id)
+                      : undefined
+                  }
+                />
                 <DetailItem
                   label={t("common.status")}
                   value={<Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
@@ -237,7 +240,10 @@ export default function UserSubscriptionDetailsModal({
                   label={t("userSubscriptions.purchaseDate")}
                   value={formatDate(userSubscription.purchaseDate)}
                 />
-                <DetailItem label={t("userSubscriptions.expiryDate")} value={formatDate(userSubscription.expiryDate)} />
+                <DetailItem
+                  label={t("userSubscriptions.expiryDate")}
+                  value={formatDate(userSubscription.expiryDate)}
+                />
                 {userSubscription.cancellationDate && (
                   <DetailItem
                     label={t("userSubscriptions.cancellationDate")}
@@ -271,12 +277,18 @@ export default function UserSubscriptionDetailsModal({
                 {t("userSubscriptions.detailsModal.usageSectionTitle")}
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
-                <DetailItem label={t("userSubscriptions.totalQuantity")} value={userSubscription.totalQuantity} />
+                <DetailItem
+                  label={t("userSubscriptions.totalQuantity")}
+                  value={userSubscription.totalQuantity}
+                />
                 <DetailItem
                   label={t("userSubscriptions.remainingQuantity")}
                   value={userSubscription.remainingQuantity}
                 />
-                <DetailItem label={t("userSubscriptions.usedQuantity")} value={userSubscription.usedQuantity || 0} />
+                <DetailItem
+                  label={t("userSubscriptions.usedQuantity")}
+                  value={userSubscription.usedQuantity || 0}
+                />
               </dl>
             </section>
             <Separator />
@@ -304,7 +316,7 @@ export default function UserSubscriptionDetailsModal({
               </dl>
             </section>
             <Separator />
-            
+
             {/* Related Bookings Section */}
             <section>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
@@ -312,42 +324,44 @@ export default function UserSubscriptionDetailsModal({
                 {t("userSubscriptions.detailsModal.relatedBookings")} ({relatedBookings.length})
               </h3>
               {loadingBookings ? (
-                <div className="text-center py-4 text-gray-500">
-                  {t("common.loading")}
-                </div>
+                <div className="text-center py-4 text-gray-500">{t("common.loading")}</div>
               ) : relatedBookings.length > 0 ? (
                 <div className="space-y-3 max-h-60 overflow-y-auto">
                   {relatedBookings.map((booking: any, index: number) => (
-                    <div key={booking._id || index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div
+                      key={booking._id || index}
+                      className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border"
+                    >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm">
-                          {booking.bookingNumber}
-                        </span>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          booking.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          booking.status.includes('cancelled') ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className="font-medium text-sm">{booking.bookingNumber}</span>
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            booking.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : booking.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : booking.status.includes("cancelled")
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {t(`bookings.status.${booking.status}`)}
                         </span>
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(booking.bookingDateTime).toLocaleDateString('he-IL')}
+                          {new Date(booking.bookingDateTime).toLocaleDateString("he-IL")}
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {new Date(booking.bookingDateTime).toLocaleTimeString('he-IL', {
-                            hour: '2-digit',
-                            minute: '2-digit'
+                          {new Date(booking.bookingDateTime).toLocaleTimeString("he-IL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
                           })}
                         </div>
                         {booking.treatmentId?.name && (
-                          <div className="text-xs font-medium">
-                            {booking.treatmentId.name}
-                          </div>
+                          <div className="text-xs font-medium">{booking.treatmentId.name}</div>
                         )}
                         {booking.professionalId?.name && (
                           <div className="flex items-center gap-1">

@@ -2,18 +2,23 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Star, User, Phone, Mail, Calendar, Clock, MessageCircle, AlertTriangle, Edit3 } from "lucide-react"
+import {
+  Star,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  Clock,
+  MessageCircle,
+  AlertTriangle,
+  Edit3,
+} from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
@@ -41,7 +46,9 @@ export default function ReviewDetailModal({
   onUpdate,
 }: ReviewDetailModalProps) {
   const { t, language, dir } = useTranslation()
-  const [professionalResponse, setProfessionalResponse] = useState(review?.professionalResponse || "")
+  const [professionalResponse, setProfessionalResponse] = useState(
+    review?.professionalResponse || ""
+  )
   const [isUpdating, setIsUpdating] = useState(false)
 
   // Early return if review is null/undefined
@@ -57,11 +64,8 @@ export default function ReviewDetailModal({
 
     setIsUpdating(true)
     try {
-      await updateReviewResponse(
-        review._id,
-        professionalResponse.trim()
-      )
-      
+      await updateReviewResponse(review._id, professionalResponse.trim())
+
       toast.success(t("adminReviews.responseUpdated"))
       onUpdate()
       onClose()
@@ -97,7 +101,11 @@ export default function ReviewDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir={dir} aria-describedby="admin-review-detail-description">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+        dir={dir}
+        aria-describedby="admin-review-detail-description"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
@@ -127,10 +135,14 @@ export default function ReviewDetailModal({
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.treatmentDate")}:</span>
-                    <span>{bookingInfo?.bookingDateTime ? formatDateTime(bookingInfo.bookingDateTime, language) : "-"}</span>
+                    <span>
+                      {bookingInfo?.bookingDateTime
+                        ? formatDateTime(bookingInfo.bookingDateTime, language)
+                        : "-"}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">{t("adminReviews.treatmentType")}:</span>
@@ -140,7 +152,9 @@ export default function ReviewDetailModal({
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{t("adminReviews.duration")}:</span>
-                      <span>{treatmentInfo.duration} {t("common.minutes")}</span>
+                      <span>
+                        {treatmentInfo.duration} {t("common.minutes")}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -172,7 +186,7 @@ export default function ReviewDetailModal({
                     <span>{userInfo?.email || "-"}</span>
                   </div>
                 </div>
-                
+
                 {/* Recipient Information (if different) */}
                 {bookingInfo?.recipientName && (
                   <div className="space-y-2">
@@ -258,20 +272,23 @@ export default function ReviewDetailModal({
                   <h4 className="font-medium">{t("adminReviews.professionalResponse")}</h4>
                   <Edit3 className="h-4 w-4 text-muted-foreground" />
                 </div>
-                
+
                 <Textarea
                   placeholder={t("adminReviews.responseePlaceholder")}
                   value={professionalResponse}
-                  onChange={(e) => setProfessionalResponse(e.target.value)}
+                  onChange={e => setProfessionalResponse(e.target.value)}
                   className="min-h-[100px]"
                   disabled={isUpdating}
                 />
-                
+
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={onClose} disabled={isUpdating}>
                     {t("common.cancel")}
                   </Button>
-                  <Button onClick={handleUpdateResponse} disabled={isUpdating || !professionalResponse.trim()}>
+                  <Button
+                    onClick={handleUpdateResponse}
+                    disabled={isUpdating || !professionalResponse.trim()}
+                  >
                     {isUpdating ? t("common.updating") : t("adminReviews.updateResponse")}
                   </Button>
                 </div>
@@ -282,4 +299,4 @@ export default function ReviewDetailModal({
       </DialogContent>
     </Dialog>
   )
-} 
+}

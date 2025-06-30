@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { 
+import {
   Star,
   MessageSquare,
   CheckCircle,
@@ -19,7 +19,7 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
-  Flag
+  Flag,
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 
@@ -41,9 +41,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${
-          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        }`}
+        className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
       />
     ))
   }
@@ -51,13 +49,21 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
   const getReviewStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge variant="default" className="bg-green-100 text-green-800">מאושר</Badge>
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            מאושר
+          </Badge>
+        )
       case "pending":
         return <Badge variant="secondary">ממתין לאישור</Badge>
       case "rejected":
         return <Badge variant="destructive">נדחה</Badge>
       case "flagged":
-        return <Badge variant="outline" className="bg-red-100 text-red-800">מדווח</Badge>
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-800">
+            מדווח
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">לא ידוע</Badge>
     }
@@ -125,9 +131,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                   <Label className="text-sm font-medium">דירוג</Label>
                   <div className="flex items-center gap-2">
                     {renderStars(booking.customerReview.rating)}
-                    <span className="text-lg font-semibold">
-                      {booking.customerReview.rating}/5
-                    </span>
+                    <span className="text-lg font-semibold">{booking.customerReview.rating}/5</span>
                   </div>
                 </div>
                 {getReviewStatusBadge(booking.customerReview.status || "pending")}
@@ -157,16 +161,16 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
 
               {/* Admin Actions */}
               <div className="flex gap-2 pt-4 border-t">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   className="text-green-600 border-green-600 hover:bg-green-50"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   אשר ביקורת
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   className="text-red-600 border-red-600 hover:bg-red-50"
                 >
@@ -245,8 +249,8 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">שם המטפל</Label>
                   <p>
-                    {typeof booking.professionalId === 'object' 
-                      ? booking.professionalId.name 
+                    {typeof booking.professionalId === "object"
+                      ? booking.professionalId.name
                       : "לא זמין"}
                   </p>
                 </div>
@@ -262,9 +266,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
           <CardContent className="text-center py-8">
             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">אין ביקורות עדיין</h3>
-            <p className="text-sm text-gray-500">
-              ביקורות יופיעו כאן לאחר השלמת הטיפול
-            </p>
+            <p className="text-sm text-gray-500">ביקורות יופיעו כאן לאחר השלמת הטיפול</p>
           </CardContent>
         </Card>
       )}
@@ -282,13 +284,17 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
             <Label className="text-sm font-medium">הערות פנימיות</Label>
             <Textarea
               value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
+              onChange={e => setAdminNotes(e.target.value)}
               placeholder="הוסף הערות פנימיות על ההזמנה, הביקורות או נושאים אחרים..."
               rows={4}
               className="resize-none"
             />
           </div>
-          <Button onClick={() => {/* Save admin notes */}}>
+          <Button
+            onClick={() => {
+              /* Save admin notes */
+            }}
+          >
             שמור הערות
           </Button>
         </CardContent>
@@ -309,14 +315,13 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת לקוח</Label>
                   <p className="text-sm">
-                    {booking.endTime && booking.customerReview.createdAt ? (
-                      `${Math.round(
-                        (new Date(booking.customerReview.createdAt).getTime() - 
-                         new Date(booking.endTime).getTime()) / (1000 * 60 * 60 * 24)
-                      )} ימים`
-                    ) : (
-                      "לא זמין"
-                    )}
+                    {booking.endTime && booking.customerReview.createdAt
+                      ? `${Math.round(
+                          (new Date(booking.customerReview.createdAt).getTime() -
+                            new Date(booking.endTime).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )} ימים`
+                      : "לא זמין"}
                   </p>
                 </div>
               )}
@@ -325,14 +330,13 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת מטפל</Label>
                   <p className="text-sm">
-                    {booking.endTime && booking.professionalReview.createdAt ? (
-                      `${Math.round(
-                        (new Date(booking.professionalReview.createdAt).getTime() - 
-                         new Date(booking.endTime).getTime()) / (1000 * 60 * 60 * 24)
-                      )} ימים`
-                    ) : (
-                      "לא זמין"
-                    )}
+                    {booking.endTime && booking.professionalReview.createdAt
+                      ? `${Math.round(
+                          (new Date(booking.professionalReview.createdAt).getTime() -
+                            new Date(booking.endTime).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )} ימים`
+                      : "לא זמין"}
                   </p>
                 </div>
               )}
@@ -357,4 +361,4 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
       </Card>
     </div>
   )
-} 
+}

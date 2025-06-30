@@ -38,9 +38,7 @@ function getPeriodKey(date: Date, period: "day" | "week" | "month") {
   return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, "0")}`
 }
 
-export async function getProfessionalFinancialSummary(
-  period: "day" | "week" | "month" = "day",
-) {
+export async function getProfessionalFinancialSummary(period: "day" | "week" | "month" = "day") {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
     return { success: false, error: "Unauthorized" }
@@ -60,7 +58,7 @@ export async function getProfessionalFinancialSummary(
 
     const profile = await ProfessionalProfile.findOne(
       { userId: professionalId },
-      { financialTransactions: 1 },
+      { financialTransactions: 1 }
     ).lean()
 
     const records: Record<string, FinancialRecord> = {}
@@ -104,7 +102,7 @@ export async function getProfessionalFinancialSummary(
       records[key].adjustments += val
     })
 
-    const summary = Object.values(records).map((r) => ({
+    const summary = Object.values(records).map(r => ({
       ...r,
       total: r.earnings + r.adjustments,
     }))
@@ -123,7 +121,7 @@ export async function addProfessionalTransaction(
   type: "bonus" | "penalty" | "adjustment",
   amount: number,
   description: string,
-  adminNote?: string,
+  adminNote?: string
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.roles.includes("admin")) {

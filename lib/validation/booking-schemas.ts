@@ -18,14 +18,14 @@ export const getTodayInTimezone = () => {
 // Schema for booking consents
 export const BookingConsentsSchema = z.object({
   customerAlerts: z.enum(["sms", "email", "none"], {
-    required_error: "Customer alert method is required"
+    required_error: "Customer alert method is required",
   }),
   patientAlerts: z.enum(["sms", "email", "none"], {
-    required_error: "Patient alert method is required"
+    required_error: "Patient alert method is required",
   }),
   marketingOptIn: z.boolean(),
-  termsAccepted: z.boolean().refine((val) => val === true, {
-    message: "Terms must be accepted to proceed"
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "Terms must be accepted to proceed",
   }),
 })
 
@@ -81,14 +81,15 @@ export const TreatmentSelectionSchema = z.object({
 // Schema for scheduling details
 export const SchedulingDetailsSchema = z
   .object({
-    bookingDate: z
-      .date({ required_error: "bookings.validation.dateRequired" })
-      .refine((date) => {
+    bookingDate: z.date({ required_error: "bookings.validation.dateRequired" }).refine(
+      date => {
         const today = getTodayInTimezone()
         return date >= today
-      }, {
-        message: "bookings.validation.pastDateNotAllowed"
-      }),
+      },
+      {
+        message: "bookings.validation.pastDateNotAllowed",
+      }
+    ),
     bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
     selectedAddressId: z.string().optional(), // Made optional, will validate that either this or customAddress is present
     customAddressDetails: z // New: for one-time address
@@ -120,7 +121,7 @@ export const SchedulingDetailsSchema = z
     recipientGender: z.enum(["male", "female", "other"]).optional(),
   })
   .refine(
-    (data) => {
+    data => {
       if (data.isBookingForSomeoneElse) {
         return !!data.recipientName && data.recipientName.trim().length > 1
       }
@@ -129,10 +130,10 @@ export const SchedulingDetailsSchema = z
     {
       message: "bookings.validation.recipientNameRequired",
       path: ["recipientName"],
-    },
+    }
   )
   .refine(
-    (data) => {
+    data => {
       if (data.isBookingForSomeoneElse) {
         // Basic phone validation, can be enhanced
         return !!data.recipientPhone && data.recipientPhone.trim().length >= 9
@@ -142,20 +143,20 @@ export const SchedulingDetailsSchema = z
     {
       message: "bookings.validation.recipientPhoneRequired",
       path: ["recipientPhone"],
-    },
+    }
   )
   .refine(
-    (data) => {
+    data => {
       if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
         const today = new Date()
         const birthDate = new Date(data.recipientBirthDate)
         const age = today.getFullYear() - birthDate.getFullYear()
         const monthDiff = today.getMonth() - birthDate.getMonth()
         const dayDiff = today.getDate() - birthDate.getDate()
-        
+
         // Adjust age if birthday hasn't occurred this year
         const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age
-        
+
         return actualAge >= 16
       }
       return true
@@ -163,9 +164,9 @@ export const SchedulingDetailsSchema = z
     {
       message: "bookings.validation.recipientMustBe16OrOlder",
       path: ["recipientBirthDate"],
-    },
+    }
   )
-  .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
+  .refine(data => !!data.selectedAddressId || !!data.customAddressDetails, {
     message: "bookings.validation.addressOrCustomRequired",
     path: ["selectedAddressId"], // Or path: ["customAddressDetails"]
   })
@@ -181,7 +182,7 @@ export const PaymentDetailsSchema = z.object({
     required_error: "bookings.validation.paymentMethodRequired",
   }),
   appliedCouponCode: z.string().optional(),
-  agreedToTerms: z.boolean().refine((val) => val === true, {
+  agreedToTerms: z.boolean().refine(val => val === true, {
     message: "bookings.validation.termsRequired",
   }),
   agreedToMarketing: z.boolean().default(true),
@@ -194,23 +195,24 @@ const BaseBookingWizardSchema = z.object({
   source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"], {
     required_error: "bookings.validation.sourceRequired",
   }),
-  
+
   // Treatment selection
   selectedUserSubscriptionId: z.string().optional(),
   selectedGiftVoucherId: z.string().optional(),
   selectedTreatmentId: z.string({ required_error: "bookings.validation.treatmentRequired" }),
   selectedDurationId: z.string().optional(),
   therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
-  
+
   // Scheduling details
-  bookingDate: z
-    .date({ required_error: "bookings.validation.dateRequired" })
-    .refine((date) => {
+  bookingDate: z.date({ required_error: "bookings.validation.dateRequired" }).refine(
+    date => {
       const today = getTodayInTimezone()
       return date >= today
-    }, {
-      message: "bookings.validation.pastDateNotAllowed"
-    }),
+    },
+    {
+      message: "bookings.validation.pastDateNotAllowed",
+    }
+  ),
   bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
   selectedAddressId: z.string().optional(),
   customAddressDetails: z
@@ -240,31 +242,33 @@ const BaseBookingWizardSchema = z.object({
   recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
   recipientBirthDate: z.date().optional(),
   recipientGender: z.enum(["male", "female", "other"]).optional(),
-  
+
   // Notification preferences for this booking
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
   recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(), // For when booking for someone else
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
-  
+
   // Payment details
   selectedPaymentMethodId: z.string({
     required_error: "bookings.validation.paymentMethodRequired",
   }),
   appliedCouponCode: z.string().optional(),
-  agreedToTerms: z.boolean().refine((val) => val === true, {
+  agreedToTerms: z.boolean().refine(val => val === true, {
     message: "bookings.validation.termsRequired",
   }),
   agreedToMarketing: z.boolean().default(true),
 })
 
 // Apply validations with refinements
-export const BookingWizardSchema = BaseBookingWizardSchema
-  .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
+export const BookingWizardSchema = BaseBookingWizardSchema.refine(
+  data => !!data.selectedAddressId || !!data.customAddressDetails,
+  {
     message: "bookings.validation.addressOrCustomRequired",
     path: ["selectedAddressId"],
-  })
+  }
+)
   .refine(
-    (data) => {
+    data => {
       if (data.isBookingForSomeoneElse) {
         return !!data.recipientName && data.recipientName.trim().length > 1
       }
@@ -273,10 +277,10 @@ export const BookingWizardSchema = BaseBookingWizardSchema
     {
       message: "bookings.validation.recipientNameRequired",
       path: ["recipientName"],
-    },
+    }
   )
   .refine(
-    (data) => {
+    data => {
       if (data.isBookingForSomeoneElse) {
         return !!data.recipientPhone && data.recipientPhone.trim().length >= 9
       }
@@ -285,9 +289,8 @@ export const BookingWizardSchema = BaseBookingWizardSchema
     {
       message: "bookings.validation.recipientPhoneRequired",
       path: ["recipientPhone"],
-    },
+    }
   )
-
 
 // Schema for the payload of calculateBookingPrice action
 export const CalculatePricePayloadSchema = z.object({
@@ -354,12 +357,14 @@ export const CreateBookingPayloadSchema = z.object({
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
   recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(),
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
-  guestInfo: z.object({
-    name: z.string(),
-    email: z.string().email().optional(),
-    phone: z.string(),
-  }).optional(), // Optional for regular bookings, required for guest bookings
-  
+  guestInfo: z
+    .object({
+      name: z.string(),
+      email: z.string().email().optional(),
+      phone: z.string(),
+    })
+    .optional(), // Optional for regular bookings, required for guest bookings
+
   // ➕ שדות חדשים - optional לתאימות לאחור
   step: z.number().int().min(1).max(7).default(1).optional(),
   treatmentCategory: z.string().optional(), // ObjectId as string
@@ -378,119 +383,140 @@ export type PaymentFormValues = z.infer<typeof PaymentDetailsSchema>
 export type BookingWizardFormValues = z.infer<typeof BookingWizardSchema>
 
 // Schema for guest booking creation (similar to CreateBookingPayloadSchema but with different userId handling)
-export const CreateGuestBookingPayloadSchema = z.object({
-  userId: z.string().optional(), // Optional for guest bookings
-  treatmentId: z.string().min(1, "Treatment ID is required"),
-  selectedDurationId: z.string().optional(),
-  bookingDateTime: z.date()
-    .refine((date) => {
-      const today = getTodayInTimezone()
-      return date >= today
-    }, {
-      message: "Booking date cannot be in the past"
+export const CreateGuestBookingPayloadSchema = z
+  .object({
+    userId: z.string().optional(), // Optional for guest bookings
+    treatmentId: z.string().min(1, "Treatment ID is required"),
+    selectedDurationId: z.string().optional(),
+    bookingDateTime: z.date().refine(
+      date => {
+        const today = getTodayInTimezone()
+        return date >= today
+      },
+      {
+        message: "Booking date cannot be in the past",
+      }
+    ),
+    selectedAddressId: z.string().optional(), // Can be undefined if customAddressDetails is provided
+    customAddressDetails: z // New: for one-time address
+      .object({
+        fullAddress: z.string().min(1, "Full address is required"),
+        city: z.string().min(1, "City is required"),
+        street: z.string().min(1, "Street is required"),
+        streetNumber: z.string().optional(),
+        apartment: z.string().optional(),
+        entrance: z.string().optional(),
+        floor: z.string().optional(),
+        notes: z.string().max(500, "Notes too long").optional(),
+        doorName: z.string().optional(),
+        buildingName: z.string().optional(),
+        hotelName: z.string().optional(),
+        roomNumber: z.string().optional(),
+        otherInstructions: z.string().optional(),
+        hasPrivateParking: z.boolean().optional(),
+      })
+      .optional(),
+    therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
+    notes: z.string().max(500, "Notes too long").optional(),
+    priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
+    paymentDetails: z.object({
+      paymentMethodId: z.string().optional(), // Optional if fully covered
+      paymentStatus: z.enum(["paid", "pending", "failed", "not_required", "refunded"]),
+      transactionId: z.string().optional(),
     }),
-  selectedAddressId: z.string().optional(), // Can be undefined if customAddressDetails is provided
-  customAddressDetails: z // New: for one-time address
-    .object({
-      fullAddress: z.string().min(1, "Full address is required"),
-      city: z.string().min(1, "City is required"),
-      street: z.string().min(1, "Street is required"),
-      streetNumber: z.string().optional(),
-      apartment: z.string().optional(),
-      entrance: z.string().optional(),
-      floor: z.string().optional(),
-      notes: z.string().max(500, "Notes too long").optional(),
-      doorName: z.string().optional(),
-      buildingName: z.string().optional(),
-      hotelName: z.string().optional(),
-      roomNumber: z.string().optional(),
-      otherInstructions: z.string().optional(),
-      hasPrivateParking: z.boolean().optional(),
-    })
-    .optional(),
-  therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
-  notes: z.string().max(500, "Notes too long").optional(),
-  priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
-  paymentDetails: z.object({
-    paymentMethodId: z.string().optional(), // Optional if fully covered
-    paymentStatus: z.enum(["paid", "pending", "failed", "not_required", "refunded"]),
-    transactionId: z.string().optional(),
-  }),
-  source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"]),
-  redeemedUserSubscriptionId: z.string().optional(),
-  redeemedGiftVoucherId: z.string().optional(),
-  appliedCouponId: z.string().optional(),
-  isFlexibleTime: z.boolean().optional(),
-  flexibilityRangeHours: z.number().min(1).max(12).optional(),
-  isBookingForSomeoneElse: z.boolean().optional(),
-  recipientName: z.string().optional(),
-  recipientPhone: z.string()
-    .optional()
-    .refine((phone) => {
-      if (!phone) return true // Optional field
-      // Basic Israeli phone validation
-      const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
-      return phoneRegex.test(phone.replace(/[-\s]/g, ""))
-    }, {
-      message: "Invalid phone format"
-    }),
-  recipientEmail: z.string().email("Invalid email format").optional(),
-  recipientBirthDate: z.date().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
-  notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
-  recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(),
-  notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
-  guestInfo: z.object({
-    name: z.string().min(1, "Guest name is required"),
-    email: z.string().email("Invalid email format").optional(),
-    phone: z.string()
-      .min(1, "Guest phone is required")
-      .refine((phone) => {
-        // Basic Israeli phone validation
-        const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
-        return phoneRegex.test(phone.replace(/[-\s]/g, ""))
-      }, {
-        message: "Invalid guest phone format"
-      }),
-  }).required(), // Required for guest bookings
-  
-  // ➕ שדות חדשים לאורחים - optional לתאימות לאחור
-  step: z.number().int().min(1).max(7).default(1).optional(),
-  treatmentCategory: z.string().optional(), // ObjectId as string
-  staticPricingData: StaticPricingDataSchema.optional(),
-  giftInfo: BookingGiftInfoSchema.optional(),
-  consents: BookingConsentsSchema.optional(),
-  enhancedPaymentDetails: EnhancedPaymentDetailsSchema.optional(),
-  review: BookingReviewSchema.optional(),
-})
-.refine((data) => {
-  // Either selectedAddressId or customAddressDetails must be provided
-  return data.selectedAddressId || data.customAddressDetails
-}, {
-  message: "Either address ID or custom address details must be provided",
-  path: ["selectedAddressId"]
-})
-.refine((data) => {
-  // If booking for someone else, validate recipient details
-  if (data.isBookingForSomeoneElse) {
-    return data.recipientName && data.recipientName.trim().length > 0
-  }
-  return true
-}, {
-  message: "Recipient name is required when booking for someone else",
-  path: ["recipientName"]
-})
-.refine((data) => {
-  // If booking for someone else, validate recipient phone
-  if (data.isBookingForSomeoneElse) {
-    return data.recipientPhone && data.recipientPhone.trim().length > 0
-  }
-  return true
-}, {
-  message: "Recipient phone is required when booking for someone else",
-  path: ["recipientPhone"]
-})
+    source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"]),
+    redeemedUserSubscriptionId: z.string().optional(),
+    redeemedGiftVoucherId: z.string().optional(),
+    appliedCouponId: z.string().optional(),
+    isFlexibleTime: z.boolean().optional(),
+    flexibilityRangeHours: z.number().min(1).max(12).optional(),
+    isBookingForSomeoneElse: z.boolean().optional(),
+    recipientName: z.string().optional(),
+    recipientPhone: z
+      .string()
+      .optional()
+      .refine(
+        phone => {
+          if (!phone) return true // Optional field
+          // Basic Israeli phone validation
+          const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
+          return phoneRegex.test(phone.replace(/[-\s]/g, ""))
+        },
+        {
+          message: "Invalid phone format",
+        }
+      ),
+    recipientEmail: z.string().email("Invalid email format").optional(),
+    recipientBirthDate: z.date().optional(),
+    recipientGender: z.enum(["male", "female", "other"]).optional(),
+    notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
+    recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(),
+    notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
+    guestInfo: z
+      .object({
+        name: z.string().min(1, "Guest name is required"),
+        email: z.string().email("Invalid email format").optional(),
+        phone: z
+          .string()
+          .min(1, "Guest phone is required")
+          .refine(
+            phone => {
+              // Basic Israeli phone validation
+              const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
+              return phoneRegex.test(phone.replace(/[-\s]/g, ""))
+            },
+            {
+              message: "Invalid guest phone format",
+            }
+          ),
+      })
+      .required(), // Required for guest bookings
 
+    // ➕ שדות חדשים לאורחים - optional לתאימות לאחור
+    step: z.number().int().min(1).max(7).default(1).optional(),
+    treatmentCategory: z.string().optional(), // ObjectId as string
+    staticPricingData: StaticPricingDataSchema.optional(),
+    giftInfo: BookingGiftInfoSchema.optional(),
+    consents: BookingConsentsSchema.optional(),
+    enhancedPaymentDetails: EnhancedPaymentDetailsSchema.optional(),
+    review: BookingReviewSchema.optional(),
+  })
+  .refine(
+    data => {
+      // Either selectedAddressId or customAddressDetails must be provided
+      return data.selectedAddressId || data.customAddressDetails
+    },
+    {
+      message: "Either address ID or custom address details must be provided",
+      path: ["selectedAddressId"],
+    }
+  )
+  .refine(
+    data => {
+      // If booking for someone else, validate recipient details
+      if (data.isBookingForSomeoneElse) {
+        return data.recipientName && data.recipientName.trim().length > 0
+      }
+      return true
+    },
+    {
+      message: "Recipient name is required when booking for someone else",
+      path: ["recipientName"],
+    }
+  )
+  .refine(
+    data => {
+      // If booking for someone else, validate recipient phone
+      if (data.isBookingForSomeoneElse) {
+        return data.recipientPhone && data.recipientPhone.trim().length > 0
+      }
+      return true
+    },
+    {
+      message: "Recipient phone is required when booking for someone else",
+      path: ["recipientPhone"],
+    }
+  )
 
 export type CalculatePricePayloadType = z.infer<typeof CalculatePricePayloadSchema>
 export type CreateBookingPayloadType = z.infer<typeof CreateBookingPayloadSchema>

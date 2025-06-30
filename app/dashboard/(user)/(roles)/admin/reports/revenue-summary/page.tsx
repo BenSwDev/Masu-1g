@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { PieChart } from "lucide-react"
 import RevenueSummaryClient from "@/components/dashboard/admin/reports/revenue-summary-client"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "Revenue Summary",
-  description: "Summary of revenue from bookings, vouchers and subscriptions"
+  description: "Summary of revenue from bookings, vouchers and subscriptions",
 }
 
 export default async function RevenueSummaryPage() {

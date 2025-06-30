@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const path = require('path')
+const fs = require("fs")
+const path = require("path")
 
 class UnusedFileFinder {
   constructor(projectRoot) {
@@ -12,38 +12,40 @@ class UnusedFileFinder {
   }
 
   async findUnusedFiles() {
-    console.log('🔍 סורק קבצים...')
+    console.log("🔍 סורק קבצים...")
     await this.scanAllFiles()
-    
-    console.log('📊 מנתח שימוש...')
+
+    console.log("📊 מנתח שימוש...")
     await this.analyzeUsage()
-    
-    console.log('🗑️ מזהה קבצים לא בשימוש...')
+
+    console.log("🗑️ מזהה קבצים לא בשימוש...")
     await this.identifyUnusedFiles()
-    
+
     return this.unusedFiles
   }
 
   async scanAllFiles() {
-    const scanDir = (dir) => {
+    const scanDir = dir => {
       try {
         const items = fs.readdirSync(dir)
-        
+
         for (const item of items) {
           const fullPath = path.join(dir, item)
-          
+
           // Skip problematic directories
-          if (item.startsWith('.') || 
-              item === 'node_modules' || 
-              item === '.next' ||
-              item === 'dist' ||
-              item === 'build') {
+          if (
+            item.startsWith(".") ||
+            item === "node_modules" ||
+            item === ".next" ||
+            item === "dist" ||
+            item === "build"
+          ) {
             continue
           }
-          
+
           try {
             const stat = fs.statSync(fullPath)
-            
+
             if (stat.isDirectory()) {
               scanDir(fullPath)
             } else if (this.isRelevantFile(fullPath)) {
@@ -52,7 +54,7 @@ class UnusedFileFinder {
                 path: fullPath,
                 importedBy: [],
                 exports: [],
-                isUsed: false
+                isUsed: false,
               })
             }
           } catch (error) {
@@ -65,21 +67,21 @@ class UnusedFileFinder {
         return
       }
     }
-    
+
     scanDir(this.projectRoot)
     console.log(`📁 נמצאו ${this.allFiles.length} קבצים רלוונטיים`)
   }
 
   isRelevantFile(filePath) {
     const ext = path.extname(filePath).toLowerCase()
-    const relevantExtensions = ['.ts', '.tsx', '.js', '.jsx']
+    const relevantExtensions = [".ts", ".tsx", ".js", ".jsx"]
     return relevantExtensions.includes(ext)
   }
 
   async analyzeUsage() {
     for (const filePath of this.allFiles) {
       try {
-        const content = fs.readFileSync(filePath, 'utf-8')
+        const content = fs.readFileSync(filePath, "utf-8")
         this.analyzeFileImports(filePath, content)
         this.analyzeFileExports(filePath, content)
       } catch (error) {
@@ -93,7 +95,7 @@ class UnusedFileFinder {
     const importPatterns = [
       /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,
       /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
     ]
 
     for (const pattern of importPatterns) {
@@ -101,7 +103,7 @@ class UnusedFileFinder {
       while ((match = pattern.exec(content)) !== null) {
         const importPath = match[1]
         const resolvedPath = this.resolveImportPath(filePath, importPath)
-        
+
         if (resolvedPath && this.fileUsage.has(resolvedPath)) {
           const usage = this.fileUsage.get(resolvedPath)
           usage.importedBy.push(filePath)
@@ -116,17 +118,17 @@ class UnusedFileFinder {
     const exportPatterns = [
       /export\s+(?:default\s+)?(?:function|class|const|let|var)\s+(\w+)/g,
       /export\s+\{\s*([^}]+)\s*\}/g,
-      /export\s+default\s+(\w+)/g
+      /export\s+default\s+(\w+)/g,
     ]
 
     const exports = []
-    
+
     for (const pattern of exportPatterns) {
       let match
       while ((match = pattern.exec(content)) !== null) {
-        if (match[1] && match[1].includes(',')) {
+        if (match[1] && match[1].includes(",")) {
           // Handle multiple exports in braces
-          const multipleExports = match[1].split(',').map(e => e.trim())
+          const multipleExports = match[1].split(",").map(e => e.trim())
           exports.push(...multipleExports)
         } else if (match[1]) {
           exports.push(match[1])
@@ -142,24 +144,24 @@ class UnusedFileFinder {
 
   resolveImportPath(fromFile, importPath) {
     // Handle relative imports
-    if (importPath.startsWith('./') || importPath.startsWith('../')) {
+    if (importPath.startsWith("./") || importPath.startsWith("../")) {
       const resolvedPath = path.resolve(path.dirname(fromFile), importPath)
       return this.findExistingFile(resolvedPath)
     }
-    
+
     // Handle absolute imports starting with @/
-    if (importPath.startsWith('@/')) {
+    if (importPath.startsWith("@/")) {
       const relativePath = importPath.substring(2)
       const resolvedPath = path.resolve(this.projectRoot, relativePath)
       return this.findExistingFile(resolvedPath)
     }
-    
+
     return null
   }
 
   findExistingFile(basePath) {
-    const extensions = ['.ts', '.tsx', '.js', '.jsx']
-    
+    const extensions = [".ts", ".tsx", ".js", ".jsx"]
+
     // Try exact path
     for (const ext of extensions) {
       const fullPath = basePath + ext
@@ -167,15 +169,15 @@ class UnusedFileFinder {
         return fullPath
       }
     }
-    
+
     // Try index files
     for (const ext of extensions) {
-      const indexPath = path.join(basePath, 'index' + ext)
+      const indexPath = path.join(basePath, "index" + ext)
       if (this.allFiles.includes(indexPath)) {
         return indexPath
       }
     }
-    
+
     return null
   }
 
@@ -185,11 +187,11 @@ class UnusedFileFinder {
         try {
           const stat = fs.statSync(filePath)
           const relativePath = path.relative(this.projectRoot, filePath)
-          
+
           this.unusedFiles.push({
             path: relativePath,
             size: stat.size,
-            reason: this.getUnusedReason(usage)
+            reason: this.getUnusedReason(usage),
           })
         } catch (error) {
           // Skip files that can't be accessed
@@ -197,15 +199,15 @@ class UnusedFileFinder {
         }
       }
     }
-    
+
     // Sort by size (largest first)
     this.unusedFiles.sort((a, b) => b.size - a.size)
   }
 
   isSpecialFile(filePath) {
     const relativePath = path.relative(this.projectRoot, filePath)
-    const normalizedPath = relativePath.replace(/\\/g, '/')
-    
+    const normalizedPath = relativePath.replace(/\\/g, "/")
+
     // Files that should not be considered unused
     const specialPatterns = [
       /^app\/.*\/page\.tsx$/, // Next.js pages
@@ -221,18 +223,18 @@ class UnusedFileFinder {
       /^scripts\/.*/, // Scripts directory
       /\.d\.ts$/, // Type definitions
     ]
-    
+
     return specialPatterns.some(pattern => pattern.test(normalizedPath))
   }
 
   getUnusedReason(usage) {
     if (usage.importedBy.length === 0) {
-      return 'לא מיובא על ידי אף קובץ'
+      return "לא מיובא על ידי אף קובץ"
     }
     if (usage.exports.length === 0) {
-      return 'לא מייצא שום דבר'
+      return "לא מייצא שום דבר"
     }
-    return 'לא בשימוש'
+    return "לא בשימוש"
   }
 }
 
@@ -240,43 +242,43 @@ class UnusedFileFinder {
 async function main() {
   const finder = new UnusedFileFinder(process.cwd())
   const unusedFiles = await finder.findUnusedFiles()
-  
-  console.log('\n📋 דוח קבצים לא בשימוש:')
-  console.log('='.repeat(50))
-  
+
+  console.log("\n📋 דוח קבצים לא בשימוש:")
+  console.log("=".repeat(50))
+
   if (unusedFiles.length === 0) {
-    console.log('✅ לא נמצאו קבצים לא בשימוש!')
+    console.log("✅ לא נמצאו קבצים לא בשימוש!")
     return
   }
-  
+
   let totalSize = 0
   unusedFiles.forEach((file, index) => {
     const sizeKB = (file.size / 1024).toFixed(1)
     console.log(`${index + 1}. ${file.path}`)
     console.log(`   📏 גודל: ${sizeKB}KB`)
     console.log(`   💭 סיבה: ${file.reason}`)
-    console.log('')
+    console.log("")
     totalSize += file.size
   })
-  
+
   const totalSizeKB = (totalSize / 1024).toFixed(1)
   console.log(`📊 סיכום: ${unusedFiles.length} קבצים לא בשימוש`)
   console.log(`💾 סה"כ גודל: ${totalSizeKB}KB`)
-  
+
   // Write to file
   const report = {
     timestamp: new Date().toISOString(),
     totalFiles: unusedFiles.length,
     totalSizeKB: parseFloat(totalSizeKB),
-    files: unusedFiles
+    files: unusedFiles,
   }
-  
-  fs.writeFileSync('unused-files-report.json', JSON.stringify(report, null, 2))
-  console.log('\n📄 הדוח נשמר ב: unused-files-report.json')
+
+  fs.writeFileSync("unused-files-report.json", JSON.stringify(report, null, 2))
+  console.log("\n📄 הדוח נשמר ב: unused-files-report.json")
 }
 
 if (require.main === module) {
   main().catch(console.error)
 }
 
-module.exports = { UnusedFileFinder } 
+module.exports = { UnusedFileFinder }

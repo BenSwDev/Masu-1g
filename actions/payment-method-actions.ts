@@ -91,12 +91,19 @@ export async function updatePaymentMethod(id: string, data: PaymentMethodFormDat
 
     // If this is set as default, unset all other defaults
     if (data.isDefault) {
-      await PaymentMethod.updateMany({ userId: session.user.id, _id: { $ne: id } }, { isDefault: false })
+      await PaymentMethod.updateMany(
+        { userId: session.user.id, _id: { $ne: id } },
+        { isDefault: false }
+      )
     }
 
-    const paymentMethod = await PaymentMethod.findOneAndUpdate({ _id: id, userId: session.user.id }, data, {
-      new: true,
-    })
+    const paymentMethod = await PaymentMethod.findOneAndUpdate(
+      { _id: id, userId: session.user.id },
+      data,
+      {
+        new: true,
+      }
+    )
 
     if (!paymentMethod) {
       throw new Error("Payment method not found")
@@ -156,7 +163,7 @@ export async function setDefaultPaymentMethod(id: string) {
     const paymentMethod = await PaymentMethod.findOneAndUpdate(
       { _id: id, userId: session.user.id },
       { isDefault: true },
-      { new: true },
+      { new: true }
     )
 
     if (!paymentMethod) {
@@ -189,9 +196,9 @@ export async function getActivePaymentMethods() {
       .lean()
 
     // Serialize the payment methods to plain objects and mask card numbers
-    const serializedPaymentMethods = paymentMethods.map((pm) => ({
+    const serializedPaymentMethods = paymentMethods.map(pm => ({
       ...pm,
-      _id: pm._id.toString(),
+      _id: (pm._id as any).toString(),
       cardNumber: `****-****-****-${pm.cardNumber.slice(-4)}`, // Mask card number for security
     }))
 

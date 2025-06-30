@@ -2,7 +2,12 @@
 
 import { useTranslation, type Language } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Globe } from "lucide-react"
 
 export function LanguageSelector() {
@@ -22,8 +27,11 @@ export function LanguageSelector() {
           <span className="sr-only">{t("login.languageSelector")}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={dir === "rtl" ? "start" : "end"} className={dir === "rtl" ? "rtl-dropdown" : ""}>
-        {languages.map((lang) => (
+      <DropdownMenuContent
+        align={dir === "rtl" ? "start" : "end"}
+        className={dir === "rtl" ? "rtl-dropdown" : ""}
+      >
+        {languages.map(lang => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => setLanguage(lang.code)}

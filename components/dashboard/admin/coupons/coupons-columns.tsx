@@ -1,7 +1,15 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle, Edit, Trash2, Clock, AlertTriangle, PowerOff } from "lucide-react"
+import {
+  MoreHorizontal,
+  CheckCircle,
+  Edit,
+  Trash2,
+  Clock,
+  AlertTriangle,
+  PowerOff,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -30,18 +38,28 @@ export const getPartnerName = (partner: any, t: TFunction): string => {
   return partner.name || partner.email || t("adminCoupons.columns.partnerUnnamed")
 }
 
-export const StatusBadge = ({ status, t, dir }: { status: string; t: TFunction; dir: "ltr" | "rtl" }) => {
+export const StatusBadge = ({
+  status,
+  t,
+  dir,
+}: {
+  status: string
+  t: TFunction
+  dir: "ltr" | "rtl"
+}) => {
   switch (status) {
     case "active":
       return (
         <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.active")}
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminCoupons.status.active")}
         </Badge>
       )
     case "scheduled":
       return (
         <Badge variant="outline" className="border-blue-500 text-blue-700">
-          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.scheduled")}
+          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminCoupons.status.scheduled")}
         </Badge>
       )
     case "expired":
@@ -77,14 +95,18 @@ export const columns = ({
   {
     accessorKey: "description",
     header: t("adminCoupons.columns.description"),
-    cell: ({ row }) => <span className="truncate block max-w-xs">{row.original.description || "-"}</span>,
+    cell: ({ row }) => (
+      <span className="truncate block max-w-xs">{row.original.description || "-"}</span>
+    ),
   },
   {
     accessorKey: "discountValue",
     header: t("adminCoupons.columns.discount"),
     cell: ({ row }) => {
       const coupon = row.original
-      return coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)
+      return coupon.discountType === "percentage"
+        ? `${coupon.discountValue}%`
+        : formatCurrency(coupon.discountValue)
     },
   },
   {
@@ -129,14 +151,16 @@ export const columns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => onEdit(coupon)}>
-              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.edit")}
+              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+              {t("common.edit")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(coupon._id.toString())}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
-              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.delete")}
+              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}
+              {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

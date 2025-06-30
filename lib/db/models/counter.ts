@@ -11,7 +11,8 @@ const CounterSchema: Schema<ICounter> = new Schema({
 })
 
 // Ensure the model is not recompiled if it already exists
-const Counter: Model<ICounter> = mongoose.models.Counter || mongoose.model<ICounter>("Counter", CounterSchema)
+const Counter: Model<ICounter> =
+  mongoose.models.Counter || mongoose.model<ICounter>("Counter", CounterSchema)
 
 export default Counter
 
@@ -25,7 +26,7 @@ export async function getNextSequenceValue(sequenceName: string): Promise<number
   const counter = await Counter.findByIdAndUpdate(
     sequenceName,
     { $inc: { sequence_value: 1 } },
-    { new: true, upsert: true, setDefaultsOnInsert: true }, // new: true returns the document AFTER update
+    { new: true, upsert: true, setDefaultsOnInsert: true } // new: true returns the document AFTER update
   )
   return counter.sequence_value
 }

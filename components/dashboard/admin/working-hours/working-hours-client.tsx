@@ -14,9 +14,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -51,7 +64,11 @@ import {
   deleteSpecialDate,
   deleteSpecialDateEvent,
 } from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
-import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent } from "@/lib/db/models/working-hours"
+import type {
+  IWorkingHoursSettings,
+  IFixedHours,
+  ISpecialDateEvent,
+} from "@/lib/db/models/working-hours"
 import { ISpecialDate } from "@/lib/db/models/working-hours"
 
 const priceAdditionSchema = z
@@ -60,30 +77,35 @@ const priceAdditionSchema = z
     type: z.enum(["fixed", "percentage"]),
     description: z.string().optional(),
     // New fields for time-range based price addition
-    priceAdditionStartTime: z.string()
+    priceAdditionStartTime: z
+      .string()
       .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
       .optional()
       .nullable(),
-    priceAdditionEndTime: z.string()
+    priceAdditionEndTime: z
+      .string()
       .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
       .optional()
       .nullable(),
   })
   .optional()
-  .refine((data) => {
-    // Validate that start time is before end time if both are provided
-    if (data?.priceAdditionStartTime && data?.priceAdditionEndTime) {
-      const startTime = data.priceAdditionStartTime.split(':').map(Number)
-      const endTime = data.priceAdditionEndTime.split(':').map(Number)
-      const startMinutes = startTime[0] * 60 + startTime[1]
-      const endMinutes = endTime[0] * 60 + endTime[1]
-      return startMinutes < endMinutes
+  .refine(
+    data => {
+      // Validate that start time is before end time if both are provided
+      if (data?.priceAdditionStartTime && data?.priceAdditionEndTime) {
+        const startTime = data.priceAdditionStartTime.split(":").map(Number)
+        const endTime = data.priceAdditionEndTime.split(":").map(Number)
+        const startMinutes = startTime[0] * 60 + startTime[1]
+        const endMinutes = endTime[0] * 60 + endTime[1]
+        return startMinutes < endMinutes
+      }
+      return true
+    },
+    {
+      message: "Start time must be before end time",
+      path: ["priceAdditionEndTime"],
     }
-    return true
-  }, {
-    message: "Start time must be before end time",
-    path: ["priceAdditionEndTime"]
-  })
+  )
 
 const fixedHoursSchema = z.object({
   dayOfWeek: z.number().min(0).max(6),
@@ -94,7 +116,11 @@ const fixedHoursSchema = z.object({
   priceAddition: priceAdditionSchema,
   notes: z.string().max(500, "Notes too long").optional(),
   minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
-  cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
+  cutoffTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+    .optional()
+    .nullable(),
   professionalShare: priceAdditionSchema,
 })
 
@@ -103,7 +129,11 @@ const fixedHoursFormSchema = z.object({
 })
 
 const specialDateFormSchema = z.object({
-  name: z.string().min(1, "Please enter a name").max(100, "Name is too long (max 100 chars)").default(""),
+  name: z
+    .string()
+    .min(1, "Please enter a name")
+    .max(100, "Name is too long (max 100 chars)")
+    .default(""),
   date: z.date({
     required_error: "Please select a date",
   }),
@@ -120,7 +150,11 @@ const specialDateFormSchema = z.object({
   priceAddition: priceAdditionSchema,
   notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
   minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
-  cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
+  cutoffTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+    .optional()
+    .nullable(),
   professionalShare: priceAdditionSchema,
 })
 
@@ -143,7 +177,11 @@ const specialDateEventFormSchema = z.object({
   priceAddition: priceAdditionSchema,
   notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
   minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
-  cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
+  cutoffTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+    .optional()
+    .nullable(),
   professionalShare: priceAdditionSchema,
 })
 
@@ -153,9 +191,9 @@ type SpecialDateEventFormData = z.infer<typeof specialDateEventFormSchema>
 
 const getDefaultFixedHours = (settings?: IWorkingHoursSettings): IFixedHours[] => {
   const days: IFixedHours[] = []
-  
+
   for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-    const existingDay = settings?.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
+    const existingDay = settings?.fixedHours?.find(fh => fh.dayOfWeek === dayOfWeek)
     days.push({
       dayOfWeek,
       isActive: existingDay?.isActive ?? false,
@@ -220,8 +258,8 @@ export default function WorkingHoursClient() {
       endTime: "17:00",
       hasPriceAddition: false,
       notes: "",
-      priceAddition: { 
-        amount: 0, 
+      priceAddition: {
+        amount: 0,
         type: "fixed",
         description: "",
         priceAdditionStartTime: null,
@@ -249,8 +287,8 @@ export default function WorkingHoursClient() {
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
       professionalShare: { amount: 0, type: "fixed" },
-      priceAddition: { 
-        amount: 0, 
+      priceAddition: {
+        amount: 0,
         type: "fixed",
         description: "",
         priceAdditionStartTime: null,
@@ -274,7 +312,7 @@ export default function WorkingHoursClient() {
         variant: "default",
       })
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error updating fixed hours:", error)
       toast({
         title: t("common.error"),
@@ -294,7 +332,7 @@ export default function WorkingHoursClient() {
       setIsSpecialDateDialogOpen(false)
       specialDateForm.reset()
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error adding special date:", error)
       toast({
         title: t("common.error"),
@@ -315,12 +353,12 @@ export default function WorkingHoursClient() {
       setEditingSpecialDateIndex(null)
       specialDateForm.reset()
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error updating special date:", error)
-        toast({
+      toast({
         title: t("common.error"),
-          variant: "destructive",
-        })
+        variant: "destructive",
+      })
     },
   })
 
@@ -333,7 +371,7 @@ export default function WorkingHoursClient() {
         variant: "default",
       })
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error deleting special date:", error)
       toast({
         title: t("common.error"),
@@ -354,12 +392,12 @@ export default function WorkingHoursClient() {
       setEditingSpecialEventIndex(null)
       specialEventForm.reset()
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error updating special event:", error)
-        toast({
+      toast({
         title: t("common.error"),
-          variant: "destructive",
-        })
+        variant: "destructive",
+      })
     },
   })
 
@@ -372,7 +410,7 @@ export default function WorkingHoursClient() {
         variant: "default",
       })
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error deleting special event:", error)
       toast({
         title: t("common.error"),
@@ -398,7 +436,7 @@ export default function WorkingHoursClient() {
       const currentDates = workingHoursData?.specialDates || []
       let updatedDates: ISpecialDate[]
 
-    if (editingSpecialDateIndex !== null) {
+      if (editingSpecialDateIndex !== null) {
         // עדכון תאריך מיוחד קיים
         updatedDates = [...currentDates]
         updatedDates[editingSpecialDateIndex] = {
@@ -406,7 +444,7 @@ export default function WorkingHoursClient() {
           date: new Date(data.date),
         }
         await updateSpecialDateMutation.mutateAsync(updatedDates)
-    } else {
+      } else {
         // הוספת תאריך מיוחד חדש
         updatedDates = [
           ...currentDates,
@@ -470,7 +508,7 @@ export default function WorkingHoursClient() {
       t("workingHours.days.friday"),
       t("workingHours.days.saturday"),
     ],
-    [t],
+    [t]
   )
 
   const handleAddOrUpdateSpecialEvent = async (data: SpecialDateEventFormData) => {
@@ -589,26 +627,45 @@ export default function WorkingHoursClient() {
             </CardHeader>
             <CardContent>
               <Form {...fixedHoursForm}>
-                <form onSubmit={fixedHoursForm.handleSubmit(handleFixedHoursSubmit)} className="space-y-6">
+                <form
+                  onSubmit={fixedHoursForm.handleSubmit(handleFixedHoursSubmit)}
+                  className="space-y-6"
+                >
                   {/* Desktop Table */}
                   <div className="hidden md:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="font-semibold">📅 {t("workingHours.day")}</TableHead>
-                          <TableHead className="text-center font-semibold">✅ {t("workingHours.active")}</TableHead>
-                          <TableHead className="font-semibold">🕐 {t("workingHours.startTime")}</TableHead>
-                          <TableHead className="font-semibold">🕐 {t("workingHours.endTime")}</TableHead>
-                          <TableHead className="font-semibold">⚙️ {t("workingHours.advancedSettings")}</TableHead>
-                          <TableHead className="font-semibold">💰 {t("workingHours.priceAddition")}</TableHead>
-                          <TableHead className="font-semibold">📝 {t("workingHours.notes")}</TableHead>
+                          <TableHead className="font-semibold">
+                            📅 {t("workingHours.day")}
+                          </TableHead>
+                          <TableHead className="text-center font-semibold">
+                            ✅ {t("workingHours.active")}
+                          </TableHead>
+                          <TableHead className="font-semibold">
+                            🕐 {t("workingHours.startTime")}
+                          </TableHead>
+                          <TableHead className="font-semibold">
+                            🕐 {t("workingHours.endTime")}
+                          </TableHead>
+                          <TableHead className="font-semibold">
+                            ⚙️ {t("workingHours.advancedSettings")}
+                          </TableHead>
+                          <TableHead className="font-semibold">
+                            💰 {t("workingHours.priceAddition")}
+                          </TableHead>
+                          <TableHead className="font-semibold">
+                            📝 {t("workingHours.notes")}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {fixedHoursForm.watch("fixedHours")?.map((_, index) => {
                           const dayOfWeek = fixedHoursForm.watch(`fixedHours.${index}.dayOfWeek`)
                           const isActive = fixedHoursForm.watch(`fixedHours.${index}.isActive`)
-                          const hasPriceAddition = fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`)
+                          const hasPriceAddition = fixedHoursForm.watch(
+                            `fixedHours.${index}.hasPriceAddition`
+                          )
 
                           return (
                             <TableRow key={index}>
@@ -622,7 +679,9 @@ export default function WorkingHoursClient() {
                                       <FormControl>
                                         <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
+                                          onCheckedChange={checked =>
+                                            handleDayActiveChange(index, !!checked)
+                                          }
                                           aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
                                         />
                                       </FormControl>
@@ -680,15 +739,19 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.minimumBookingAdvanceHours`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel className="text-xs">{t("workingHours.minimumBookingAdvanceHours")}</FormLabel>
+                                          <FormLabel className="text-xs">
+                                            {t("workingHours.minimumBookingAdvanceHours")}
+                                          </FormLabel>
                                           <FormControl>
                                             <Input
                                               type="number"
                                               min="0"
                                               max="168"
-                                              placeholder={t("workingHours.minimumBookingAdvanceHoursPlaceholder")}
+                                              placeholder={t(
+                                                "workingHours.minimumBookingAdvanceHoursPlaceholder"
+                                              )}
                                               {...field}
-                                              onChange={(e) =>
+                                              onChange={e =>
                                                 field.onChange(Number.parseInt(e.target.value) || 2)
                                               }
                                               className="h-8"
@@ -703,7 +766,9 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.cutoffTime`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel className="text-xs">{t("workingHours.cutoffTime")}</FormLabel>
+                                          <FormLabel className="text-xs">
+                                            {t("workingHours.cutoffTime")}
+                                          </FormLabel>
                                           <FormControl>
                                             <Input
                                               type="time"
@@ -717,22 +782,30 @@ export default function WorkingHoursClient() {
                                         </FormItem>
                                       )}
                                     />
-                                    {fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`) && (
+                                    {fixedHoursForm.watch(
+                                      `fixedHours.${index}.hasPriceAddition`
+                                    ) && (
                                       <FormField
                                         control={fixedHoursForm.control}
                                         name={`fixedHours.${index}.professionalShare.amount`}
                                         render={({ field }) => (
                                           <FormItem>
-                                            <FormLabel className="text-xs">{t("workingHours.professionalSharePercentage")}</FormLabel>
+                                            <FormLabel className="text-xs">
+                                              {t("workingHours.professionalSharePercentage")}
+                                            </FormLabel>
                                             <FormControl>
                                               <div className="flex items-center gap-1">
                                                 <Input
                                                   type="number"
                                                   min="0"
-                                                  placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
+                                                  placeholder={t(
+                                                    "workingHours.professionalSharePercentagePlaceholder"
+                                                  )}
                                                   {...field}
-                                                  onChange={(e) =>
-                                                    field.onChange(Number.parseInt(e.target.value) || 70)
+                                                  onChange={e =>
+                                                    field.onChange(
+                                                      Number.parseInt(e.target.value) || 70
+                                                    )
                                                   }
                                                   className="h-8 w-16"
                                                 />
@@ -755,7 +828,9 @@ export default function WorkingHoursClient() {
                                                         </FormControl>
                                                         <SelectContent>
                                                           <SelectItem value="fixed">₪</SelectItem>
-                                                          <SelectItem value="percentage">%</SelectItem>
+                                                          <SelectItem value="percentage">
+                                                            %
+                                                          </SelectItem>
                                                         </SelectContent>
                                                       </Select>
                                                       <FormMessage />
@@ -794,22 +869,38 @@ export default function WorkingHoursClient() {
                                         </FormItem>
                                       )}
                                     />
-                                    
+
                                     {hasPriceAddition && (
                                       <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
                                         {(() => {
-                                          const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
-                                          const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
-                                          const startTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionStartTime`)
-                                          const endTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionEndTime`)
-                                          const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
-                                          
+                                          const amount =
+                                            fixedHoursForm.watch(
+                                              `fixedHours.${index}.priceAddition.amount`
+                                            ) || 0
+                                          const type =
+                                            fixedHoursForm.watch(
+                                              `fixedHours.${index}.priceAddition.type`
+                                            ) || "fixed"
+                                          const startTime = fixedHoursForm.watch(
+                                            `fixedHours.${index}.priceAddition.priceAdditionStartTime`
+                                          )
+                                          const endTime = fixedHoursForm.watch(
+                                            `fixedHours.${index}.priceAddition.priceAdditionEndTime`
+                                          )
+                                          const professionalShare =
+                                            fixedHoursForm.watch(
+                                              `fixedHours.${index}.professionalShare.amount`
+                                            ) || 70
+
                                           return (
                                             <div className="flex items-center justify-between text-sm">
                                               <div className="font-semibold text-blue-900">
-                                                +{amount}{type === "fixed" ? "₪" : "%"}
-                                                {(startTime && endTime) && (
-                                                  <span className="text-blue-600 mr-2">({startTime}-{endTime})</span>
+                                                +{amount}
+                                                {type === "fixed" ? "₪" : "%"}
+                                                {startTime && endTime && (
+                                                  <span className="text-blue-600 mr-2">
+                                                    ({startTime}-{endTime})
+                                                  </span>
                                                 )}
                                               </div>
                                               <div className="text-green-700 font-medium">
@@ -829,27 +920,57 @@ export default function WorkingHoursClient() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => {
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 30)
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "08:00")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "22:00")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 65)
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.amount`,
+                                                30
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.type`,
+                                                "fixed"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionStartTime`,
+                                                "08:00"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionEndTime`,
+                                                "22:00"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.professionalShare.amount`,
+                                                65
+                                              )
                                             }}
                                             className="text-xs h-7"
                                           >
                                             יום מלא +30₪
                                           </Button>
-                                          
+
                                           <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
                                             onClick={() => {
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 50)
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "20:00")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "22:00")
-                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.amount`,
+                                                50
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.type`,
+                                                "fixed"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionStartTime`,
+                                                "20:00"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionEndTime`,
+                                                "22:00"
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.professionalShare.amount`,
+                                                70
+                                              )
                                             }}
                                             className="text-xs h-7"
                                           >
@@ -861,10 +982,22 @@ export default function WorkingHoursClient() {
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => {
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 0)
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, null)
-                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, null)
-                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.amount`,
+                                                0
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionStartTime`,
+                                                null
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.priceAddition.priceAdditionEndTime`,
+                                                null
+                                              )
+                                              fixedHoursForm.setValue(
+                                                `fixedHours.${index}.professionalShare.amount`,
+                                                70
+                                              )
                                             }}
                                             className="text-xs h-7"
                                           >
@@ -886,7 +1019,11 @@ export default function WorkingHoursClient() {
                                                     step="0.01"
                                                     placeholder="סכום"
                                                     {...field}
-                                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                                    onChange={e =>
+                                                      field.onChange(
+                                                        Number.parseFloat(e.target.value) || 0
+                                                      )
+                                                    }
                                                     className="w-20 h-8"
                                                   />
                                                 </FormControl>
@@ -898,7 +1035,10 @@ export default function WorkingHoursClient() {
                                             name={`fixedHours.${index}.priceAddition.type`}
                                             render={({ field }) => (
                                               <FormItem>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                                <Select
+                                                  onValueChange={field.onChange}
+                                                  defaultValue={field.value || "fixed"}
+                                                >
                                                   <FormControl>
                                                     <SelectTrigger className="w-[60px] h-8">
                                                       <SelectValue />
@@ -959,7 +1099,11 @@ export default function WorkingHoursClient() {
                                                     max="100"
                                                     placeholder="70"
                                                     {...field}
-                                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 70)}
+                                                    onChange={e =>
+                                                      field.onChange(
+                                                        Number.parseFloat(e.target.value) || 70
+                                                      )
+                                                    }
                                                     className="w-16 h-8"
                                                   />
                                                 </FormControl>
@@ -1007,7 +1151,9 @@ export default function WorkingHoursClient() {
                     {fixedHoursForm.watch("fixedHours")?.map((_, index) => {
                       const dayOfWeek = fixedHoursForm.watch(`fixedHours.${index}.dayOfWeek`)
                       const isActive = fixedHoursForm.watch(`fixedHours.${index}.isActive`)
-                      const hasPriceAddition = fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`)
+                      const hasPriceAddition = fixedHoursForm.watch(
+                        `fixedHours.${index}.hasPriceAddition`
+                      )
 
                       return (
                         <Card key={index} className="p-4">
@@ -1022,7 +1168,9 @@ export default function WorkingHoursClient() {
                                     <FormControl>
                                       <Checkbox
                                         checked={field.value}
-                                        onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
+                                        onCheckedChange={checked =>
+                                          handleDayActiveChange(index, !!checked)
+                                        }
                                         aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
                                       />
                                     </FormControl>
@@ -1096,18 +1244,34 @@ export default function WorkingHoursClient() {
                                     {/* Price Addition Summary for Mobile */}
                                     <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
                                       {(() => {
-                                        const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
-                                        const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
-                                        const startTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionStartTime`)
-                                        const endTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionEndTime`)
-                                        const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
-                                        
+                                        const amount =
+                                          fixedHoursForm.watch(
+                                            `fixedHours.${index}.priceAddition.amount`
+                                          ) || 0
+                                        const type =
+                                          fixedHoursForm.watch(
+                                            `fixedHours.${index}.priceAddition.type`
+                                          ) || "fixed"
+                                        const startTime = fixedHoursForm.watch(
+                                          `fixedHours.${index}.priceAddition.priceAdditionStartTime`
+                                        )
+                                        const endTime = fixedHoursForm.watch(
+                                          `fixedHours.${index}.priceAddition.priceAdditionEndTime`
+                                        )
+                                        const professionalShare =
+                                          fixedHoursForm.watch(
+                                            `fixedHours.${index}.professionalShare.amount`
+                                          ) || 70
+
                                         return (
                                           <div className="text-center">
                                             <div className="font-bold text-blue-900 text-lg">
-                                              +{amount}{type === "fixed" ? "₪" : "%"}
-                                              {(startTime && endTime) && (
-                                                <span className="text-blue-600 text-sm block">({startTime}-{endTime})</span>
+                                              +{amount}
+                                              {type === "fixed" ? "₪" : "%"}
+                                              {startTime && endTime && (
+                                                <span className="text-blue-600 text-sm block">
+                                                  ({startTime}-{endTime})
+                                                </span>
                                               )}
                                             </div>
                                             <div className="text-green-700 font-medium text-sm mt-1">
@@ -1117,7 +1281,7 @@ export default function WorkingHoursClient() {
                                         )
                                       })()}
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                       <FormField
                                         control={fixedHoursForm.control}
@@ -1132,7 +1296,11 @@ export default function WorkingHoursClient() {
                                                 step="0.01"
                                                 placeholder="0"
                                                 {...field}
-                                                onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                                onChange={e =>
+                                                  field.onChange(
+                                                    Number.parseFloat(e.target.value) || 0
+                                                  )
+                                                }
                                                 className="w-full"
                                                 aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
                                               />
@@ -1147,7 +1315,10 @@ export default function WorkingHoursClient() {
                                         render={({ field }) => (
                                           <FormItem>
                                             <FormLabel>{t("workingHours.type")}</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                            <Select
+                                              onValueChange={field.onChange}
+                                              defaultValue={field.value || "fixed"}
+                                            >
                                               <FormControl>
                                                 <SelectTrigger
                                                   className="w-full"
@@ -1166,7 +1337,7 @@ export default function WorkingHoursClient() {
                                         )}
                                       />
                                     </div>
-                                    
+
                                     {/* Time Range Fields for Mobile */}
                                     <div>
                                       <div className="text-xs text-muted-foreground mb-2">
@@ -1178,13 +1349,17 @@ export default function WorkingHoursClient() {
                                           name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
                                           render={({ field }) => (
                                             <FormItem>
-                                              <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                              <FormLabel>
+                                                {t("workingHours.priceAdditionStartTime")}
+                                              </FormLabel>
                                               <FormControl>
                                                 <Input
                                                   type="time"
                                                   {...field}
                                                   value={field.value || ""}
-                                                  placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                                  placeholder={t(
+                                                    "workingHours.priceAdditionStartTimePlaceholder"
+                                                  )}
                                                   className="w-full"
                                                   aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
                                                 />
@@ -1198,13 +1373,17 @@ export default function WorkingHoursClient() {
                                           name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
                                           render={({ field }) => (
                                             <FormItem>
-                                              <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                              <FormLabel>
+                                                {t("workingHours.priceAdditionEndTime")}
+                                              </FormLabel>
                                               <FormControl>
                                                 <Input
                                                   type="time"
                                                   {...field}
                                                   value={field.value || ""}
-                                                  placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                                  placeholder={t(
+                                                    "workingHours.priceAdditionEndTimePlaceholder"
+                                                  )}
                                                   className="w-full"
                                                   aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
                                                 />
@@ -1247,10 +1426,14 @@ export default function WorkingHoursClient() {
                   <div className="flex justify-end pt-4">
                     <Button
                       type="submit"
-                      disabled={updateFixedHoursMutation.isPending || !fixedHoursForm.formState.isDirty}
+                      disabled={
+                        updateFixedHoursMutation.isPending || !fixedHoursForm.formState.isDirty
+                      }
                       className="w-full sm:w-auto min-w-[120px]"
                     >
-                      {updateFixedHoursMutation.isPending ? t("common.saving") : t("common.saveChanges")}
+                      {updateFixedHoursMutation.isPending
+                        ? t("common.saving")
+                        : t("common.saveChanges")}
                     </Button>
                   </div>
                 </form>
@@ -1271,7 +1454,7 @@ export default function WorkingHoursClient() {
             <CardContent className="space-y-4">
               <Dialog
                 open={isSpecialDateDialogOpen}
-                onOpenChange={(isOpen) => {
+                onOpenChange={isOpen => {
                   setIsSpecialDateDialogOpen(isOpen)
                   if (!isOpen) {
                     setEditingSpecialDateIndex(null)
@@ -1304,10 +1487,15 @@ export default function WorkingHoursClient() {
                         ? t("workingHours.editSpecialDate")
                         : t("workingHours.addSpecialDate")}
                     </DialogTitle>
-                    <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
+                    <DialogDescription>
+                      {t("workingHours.specialDateDialogDescription")}
+                    </DialogDescription>
                   </DialogHeader>
                   <Form {...specialDateForm}>
-                    <form onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)} className="space-y-4">
+                    <form
+                      onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={specialDateForm.control}
                         name="name"
@@ -1315,7 +1503,10 @@ export default function WorkingHoursClient() {
                           <FormItem>
                             <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                              <Input
+                                {...field}
+                                placeholder={t("workingHours.specialDateNamePlaceholder")}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1336,7 +1527,9 @@ export default function WorkingHoursClient() {
                                   >
                                     <CalendarIcon className="rtl:ml-2 ltr:mr-2 h-4 w-4" />
                                     {field.value ? (
-                                      format(field.value, "PPP", { locale: language === "he" ? he : enUS })
+                                      format(field.value, "PPP", {
+                                        locale: language === "he" ? he : enUS,
+                                      })
                                     ) : (
                                       <span>{t("workingHours.selectDate")}</span>
                                     )}
@@ -1348,7 +1541,9 @@ export default function WorkingHoursClient() {
                                   mode="single"
                                   selected={field.value}
                                   onSelect={field.onChange}
-                                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                  disabled={date =>
+                                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                                  }
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -1371,8 +1566,12 @@ export default function WorkingHoursClient() {
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel htmlFor="specialDateIsActive">{t("workingHours.active")}</FormLabel>
-                              <FormDescription>{t("workingHours.specialDateActiveDescription")}</FormDescription>
+                              <FormLabel htmlFor="specialDateIsActive">
+                                {t("workingHours.active")}
+                              </FormLabel>
+                              <FormDescription>
+                                {t("workingHours.specialDateActiveDescription")}
+                              </FormDescription>
                             </div>
                           </FormItem>
                         )}
@@ -1445,7 +1644,9 @@ export default function WorkingHoursClient() {
                                           step="0.01"
                                           placeholder="0"
                                           {...field}
-                                          onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                          onChange={e =>
+                                            field.onChange(Number.parseFloat(e.target.value) || 0)
+                                          }
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -1459,7 +1660,10 @@ export default function WorkingHoursClient() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>{t("workingHours.type")}</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value || "fixed"}
+                                      >
                                         <FormControl>
                                           <SelectTrigger>
                                             <SelectValue />
@@ -1475,7 +1679,7 @@ export default function WorkingHoursClient() {
                                   )}
                                 />
                               </div>
-                              
+
                               {/* Time Range Fields for Special Date */}
                               <div>
                                 <div className="text-xs text-muted-foreground mb-2">
@@ -1487,13 +1691,17 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.priceAdditionStartTime"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                        <FormLabel>
+                                          {t("workingHours.priceAdditionStartTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             value={field.value || ""}
-                                            placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                            placeholder={t(
+                                              "workingHours.priceAdditionStartTimePlaceholder"
+                                            )}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -1505,13 +1713,17 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.priceAdditionEndTime"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                        <FormLabel>
+                                          {t("workingHours.priceAdditionEndTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             value={field.value || ""}
-                                            placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                            placeholder={t(
+                                              "workingHours.priceAdditionEndTimePlaceholder"
+                                            )}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -1597,7 +1809,9 @@ export default function WorkingHoursClient() {
                           <TableHead>{t("workingHours.hours")}</TableHead>
                           <TableHead>{t("workingHours.priceAddition")}</TableHead>
                           <TableHead>{t("workingHours.notes")}</TableHead>
-                          <TableHead className="text-right rtl:text-left">{t("common.actions")}</TableHead>
+                          <TableHead className="text-right rtl:text-left">
+                            {t("common.actions")}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1613,10 +1827,14 @@ export default function WorkingHoursClient() {
                               {specialDate.isActive ? t("common.yes") : t("common.no")}
                             </TableCell>
                             <TableCell>
-                              {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
+                              {specialDate.isActive
+                                ? `${specialDate.startTime} - ${specialDate.endTime}`
+                                : "-"}
                             </TableCell>
                             <TableCell>
-                              {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition
+                              {specialDate.isActive &&
+                              specialDate.hasPriceAddition &&
+                              specialDate.priceAddition
                                 ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
                                 : "-"}
                             </TableCell>
@@ -1696,15 +1914,19 @@ export default function WorkingHoursClient() {
                             {specialDate.isActive && (
                               <Badge variant="outline">{`${specialDate.startTime} - ${specialDate.endTime}`}</Badge>
                             )}
-                            {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition && (
-                              <Badge variant="outline">
-                                {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`}
-                              </Badge>
-                            )}
+                            {specialDate.isActive &&
+                              specialDate.hasPriceAddition &&
+                              specialDate.priceAddition && (
+                                <Badge variant="outline">
+                                  {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`}
+                                </Badge>
+                              )}
                           </div>
 
                           {specialDate.notes && (
-                            <p className="text-sm text-muted-foreground break-words">{specialDate.notes}</p>
+                            <p className="text-sm text-muted-foreground break-words">
+                              {specialDate.notes}
+                            </p>
                           )}
                         </div>
                       </Card>
@@ -1740,7 +1962,9 @@ export default function WorkingHoursClient() {
                         ? t("workingHours.editSpecialEvent")
                         : t("workingHours.addSpecialEvent")}
                     </DialogTitle>
-                    <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
+                    <DialogDescription>
+                      {t("workingHours.specialDateDialogDescription")}
+                    </DialogDescription>
                   </DialogHeader>
 
                   <Form {...specialEventForm}>
@@ -1756,13 +1980,16 @@ export default function WorkingHoursClient() {
                             <FormItem>
                               <FormLabel>{t("workingHours.eventName")}</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder={t("workingHours.eventNamePlaceholder")} />
+                                <Input
+                                  {...field}
+                                  placeholder={t("workingHours.eventNamePlaceholder")}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={specialEventForm.control}
                           name="eventType"
@@ -1776,10 +2003,18 @@ export default function WorkingHoursClient() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="holiday">{t("workingHours.eventTypes.holiday")}</SelectItem>
-                                  <SelectItem value="special">{t("workingHours.eventTypes.special")}</SelectItem>
-                                  <SelectItem value="closure">{t("workingHours.eventTypes.closure")}</SelectItem>
-                                  <SelectItem value="other">{t("workingHours.eventTypes.other")}</SelectItem>
+                                  <SelectItem value="holiday">
+                                    {t("workingHours.eventTypes.holiday")}
+                                  </SelectItem>
+                                  <SelectItem value="special">
+                                    {t("workingHours.eventTypes.special")}
+                                  </SelectItem>
+                                  <SelectItem value="closure">
+                                    {t("workingHours.eventTypes.closure")}
+                                  </SelectItem>
+                                  <SelectItem value="other">
+                                    {t("workingHours.eventTypes.other")}
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -1812,14 +2047,16 @@ export default function WorkingHoursClient() {
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
                             <FormLabel>{t("workingHours.eventDates")}</FormLabel>
-                            <FormDescription>{t("workingHours.eventDatesDescription")}</FormDescription>
+                            <FormDescription>
+                              {t("workingHours.eventDatesDescription")}
+                            </FormDescription>
                             <div className="space-y-2">
                               {field.value.map((date, index) => (
                                 <div key={index} className="flex items-center gap-2">
                                   <Input
                                     type="date"
                                     value={format(date, "yyyy-MM-dd")}
-                                    onChange={(e) => {
+                                    onChange={e => {
                                       const newDate = new Date(e.target.value)
                                       const updatedDates = [...field.value]
                                       updatedDates[index] = newDate
@@ -1882,7 +2119,7 @@ export default function WorkingHoursClient() {
                       {specialEventForm.watch("isActive") && (
                         <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                           <h4 className="font-medium">{t("workingHours.advancedSettings")}</h4>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={specialEventForm.control}
@@ -1918,15 +2155,21 @@ export default function WorkingHoursClient() {
                               name="minimumBookingAdvanceHours"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t("workingHours.minimumBookingAdvanceHours")}</FormLabel>
+                                  <FormLabel>
+                                    {t("workingHours.minimumBookingAdvanceHours")}
+                                  </FormLabel>
                                   <FormControl>
                                     <Input
                                       type="number"
                                       min="0"
                                       max="168"
                                       {...field}
-                                      onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 2)}
-                                      placeholder={t("workingHours.minimumBookingAdvanceHoursPlaceholder")}
+                                      onChange={e =>
+                                        field.onChange(Number.parseInt(e.target.value) || 2)
+                                      }
+                                      placeholder={t(
+                                        "workingHours.minimumBookingAdvanceHoursPlaceholder"
+                                      )}
                                     />
                                   </FormControl>
                                   <FormDescription className="text-xs">
@@ -1936,7 +2179,7 @@ export default function WorkingHoursClient() {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={specialEventForm.control}
                               name="cutoffTime"
@@ -1958,22 +2201,28 @@ export default function WorkingHoursClient() {
                                 </FormItem>
                               )}
                             />
-                            
+
                             {specialEventForm.watch("hasPriceAddition") && (
                               <FormField
                                 control={specialEventForm.control}
                                 name="professionalShare.amount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("workingHours.professionalSharePercentage")}</FormLabel>
+                                    <FormLabel>
+                                      {t("workingHours.professionalSharePercentage")}
+                                    </FormLabel>
                                     <FormControl>
                                       <div className="flex items-center gap-2">
                                         <Input
                                           type="number"
                                           min="0"
                                           {...field}
-                                          onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 70)}
-                                          placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
+                                          onChange={e =>
+                                            field.onChange(Number.parseInt(e.target.value) || 70)
+                                          }
+                                          placeholder={t(
+                                            "workingHours.professionalSharePercentagePlaceholder"
+                                          )}
                                           className="flex-1"
                                         />
                                         <FormField
@@ -1981,7 +2230,10 @@ export default function WorkingHoursClient() {
                                           name="professionalShare.type"
                                           render={({ field }) => (
                                             <FormItem>
-                                              <Select onValueChange={field.onChange} defaultValue={field.value || "percentage"}>
+                                              <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value || "percentage"}
+                                              >
                                                 <FormControl>
                                                   <SelectTrigger className="w-24">
                                                     <SelectValue />
@@ -2014,7 +2266,10 @@ export default function WorkingHoursClient() {
                             render={({ field }) => (
                               <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                                 <FormControl>
-                                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
                                 </FormControl>
                                 <FormLabel className="text-sm font-normal">
                                   {t("workingHours.enablePriceAddition")}
@@ -2039,7 +2294,9 @@ export default function WorkingHoursClient() {
                                           step="0.01"
                                           placeholder="0"
                                           {...field}
-                                          onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                          onChange={e =>
+                                            field.onChange(Number.parseFloat(e.target.value) || 0)
+                                          }
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -2052,7 +2309,10 @@ export default function WorkingHoursClient() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>{t("workingHours.type")}</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value || "fixed"}
+                                      >
                                         <FormControl>
                                           <SelectTrigger className="w-24">
                                             <SelectValue />
@@ -2068,7 +2328,7 @@ export default function WorkingHoursClient() {
                                   )}
                                 />
                               </div>
-                              
+
                               {/* Time Range Fields for Special Event */}
                               <div>
                                 <div className="text-xs text-muted-foreground mb-2">
@@ -2080,13 +2340,17 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.priceAdditionStartTime"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                        <FormLabel>
+                                          {t("workingHours.priceAdditionStartTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             value={field.value || ""}
-                                            placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                            placeholder={t(
+                                              "workingHours.priceAdditionStartTimePlaceholder"
+                                            )}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -2098,13 +2362,17 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.priceAdditionEndTime"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                        <FormLabel>
+                                          {t("workingHours.priceAdditionEndTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             value={field.value || ""}
-                                            placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                            placeholder={t(
+                                              "workingHours.priceAdditionEndTimePlaceholder"
+                                            )}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -2161,7 +2429,8 @@ export default function WorkingHoursClient() {
                 </DialogContent>
               </Dialog>
 
-              {(!workingHoursData?.specialDateEvents || workingHoursData.specialDateEvents.length === 0) && (
+              {(!workingHoursData?.specialDateEvents ||
+                workingHoursData.specialDateEvents.length === 0) && (
                 <div className="text-center text-muted-foreground py-8">
                   <CalendarIcon className="mx-auto h-12 w-12 opacity-50" />
                   <p className="mt-4 text-lg">{t("workingHours.noSpecialEvents")}</p>
@@ -2169,109 +2438,137 @@ export default function WorkingHoursClient() {
                 </div>
               )}
 
-              {workingHoursData?.specialDateEvents && workingHoursData.specialDateEvents.length > 0 && (
-                <div className="space-y-4">
-                  {workingHoursData.specialDateEvents.map((event, index) => (
-                    <Card key={index} className="p-4" style={{ borderLeft: `4px solid ${event.color}` }}>
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-lg truncate">{event.name}</h3>
-                              <Badge variant="outline">{t(`workingHours.eventTypes.${event.eventType}`)}</Badge>
-                              <Badge variant={event.isActive ? "default" : "secondary"}>
-                                {event.isActive ? t("workingHours.active") : t("common.inactive")}
-                              </Badge>
+              {workingHoursData?.specialDateEvents &&
+                workingHoursData.specialDateEvents.length > 0 && (
+                  <div className="space-y-4">
+                    {workingHoursData.specialDateEvents.map((event, index) => (
+                      <Card
+                        key={index}
+                        className="p-4"
+                        style={{ borderLeft: `4px solid ${event.color}` }}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-lg truncate">{event.name}</h3>
+                                <Badge variant="outline">
+                                  {t(`workingHours.eventTypes.${event.eventType}`)}
+                                </Badge>
+                                <Badge variant={event.isActive ? "default" : "secondary"}>
+                                  {event.isActive ? t("workingHours.active") : t("common.inactive")}
+                                </Badge>
+                              </div>
+                              {event.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {event.description}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {event.dates.slice(0, 3).map((date, dateIndex) => (
+                                  <Badge key={dateIndex} variant="outline" className="text-xs">
+                                    {format(new Date(date), "dd/MM", {
+                                      locale: language === "he" ? he : enUS,
+                                    })}
+                                  </Badge>
+                                ))}
+                                {event.dates.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{event.dates.length - 3} {t("common.more")}
+                                  </Badge>
+                                )}
+                                {event.dates.length > 1 ? (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({t("workingHours.eventMultiDayInfo")})
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({t("workingHours.eventSingleDayInfo")})
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            {event.description && (
-                              <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
-                            )}
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {event.dates.slice(0, 3).map((date, dateIndex) => (
-                                <Badge key={dateIndex} variant="outline" className="text-xs">
-                                  {format(new Date(date), "dd/MM", { locale: language === "he" ? he : enUS })}
-                                </Badge>
-                              ))}
-                              {event.dates.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{event.dates.length - 3} {t("common.more")}
-                                </Badge>
-                              )}
-                              {event.dates.length > 1 ? (
-                                <span className="text-xs text-muted-foreground">
-                                  ({t("workingHours.eventMultiDayInfo")})
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  ({t("workingHours.eventSingleDayInfo")})
-                                </span>
-                              )}
+                            <div className="flex gap-2 ml-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleEditSpecialEvent(index)}
+                                aria-label={t("workingHours.editSpecialEvent")}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDeleteSpecialEvent(index)}
+                                aria-label={t("common.delete")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2 ml-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleEditSpecialEvent(index)}
-                              aria-label={t("workingHours.editSpecialEvent")}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => handleDeleteSpecialEvent(index)}
-                              aria-label={t("common.delete")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
 
-                        {event.isActive && (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="font-medium">{t("workingHours.hours")}: </span>
-                              <span>{event.startTime} - {event.endTime}</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">{t("workingHours.minimumBookingAdvanceHours")}: </span>
-                              <span>{event.minimumBookingAdvanceHours || 2}h</span>
-                            </div>
-                            {event.cutoffTime && (
+                          {event.isActive && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
-                                <span className="font-medium">{t("workingHours.cutoffTime")}: </span>
-                                <span>{event.cutoffTime}</span>
+                                <span className="font-medium">{t("workingHours.hours")}: </span>
+                                <span>
+                                  {event.startTime} - {event.endTime}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="font-medium">
+                                  {t("workingHours.minimumBookingAdvanceHours")}:{" "}
+                                </span>
+                                <span>{event.minimumBookingAdvanceHours || 2}h</span>
+                              </div>
+                              {event.cutoffTime && (
+                                <div>
+                                  <span className="font-medium">
+                                    {t("workingHours.cutoffTime")}:{" "}
+                                  </span>
+                                  <span>{event.cutoffTime}</span>
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-medium">
+                                  {t("workingHours.professionalSharePercentage")}:{" "}
+                                </span>
+                                <span>
+                                  {event.professionalShare?.amount || 0}
+                                  {event.professionalShare?.type === "percentage" ? "%" : "₪"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {event.hasPriceAddition &&
+                            event.priceAddition &&
+                            event.priceAddition.amount > 0 && (
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-orange-50 text-orange-700 border-orange-200"
+                                >
+                                  +{event.priceAddition.amount}
+                                  {event.priceAddition.type === "percentage" ? "%" : "₪"}{" "}
+                                  {t("workingHours.priceAddition")}
+                                </Badge>
                               </div>
                             )}
-                            <div>
-                              <span className="font-medium">{t("workingHours.professionalSharePercentage")}: </span>
-                              <span>
-                                {event.professionalShare?.amount || 0}
-                                {event.professionalShare?.type === "percentage" ? "%" : "₪"}
-                              </span>
-                            </div>
-                          </div>
-                        )}
 
-                        {event.hasPriceAddition && event.priceAddition && event.priceAddition.amount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                              +{event.priceAddition.amount}{event.priceAddition.type === "percentage" ? "%" : "₪"} {t("workingHours.priceAddition")}
-                            </Badge>
-                          </div>
-                        )}
-
-                        {event.notes && (
-                          <p className="text-sm text-muted-foreground break-words border-t pt-2">{event.notes}</p>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                          {event.notes && (
+                            <p className="text-sm text-muted-foreground break-words border-t pt-2">
+                              {event.notes}
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
             </CardContent>
           </Card>
         </TabsContent>

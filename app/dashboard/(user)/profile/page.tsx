@@ -2,7 +2,7 @@ import { ProfileForm } from "@/components/dashboard/profile/profile-form"
 import { getUserProfile } from "@/actions/profile-actions"
 import { redirect } from "next/navigation"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function ProfilePage() {
   const result = await getUserProfile()
@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   const user = {
     ...result.user,
     dateOfBirth: result.user.dateOfBirth?.toISOString(),
-    createdAt: result.user.createdAt.toISOString()
+    createdAt: result.user.createdAt.toISOString(),
   }
 
   return (

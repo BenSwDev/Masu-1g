@@ -18,10 +18,10 @@ import type { BookingStatus, PopulatedBooking } from "@/types/booking"
 /**
  * Get initial data for booking form (authenticated users)
  */
-export async function getBookingInitialData(userId: string): Promise<{ 
-  success: boolean 
-  data?: any 
-  error?: string 
+export async function getBookingInitialData(userId: string): Promise<{
+  success: boolean
+  data?: any
+  error?: string
 }> {
   try {
     const session = await getServerSession(authOptions)
@@ -50,7 +50,7 @@ export async function getBookingInitialData(userId: string): Promise<{
     const userSubscriptions = await UserSubscription.find({
       userId: new mongoose.Types.ObjectId(userId),
       status: "active",
-      remainingQuantity: { $gt: 0 }
+      remainingQuantity: { $gt: 0 },
     })
       .populate("subscriptionId", "name description")
       .populate("treatmentId", "name pricingType")
@@ -60,21 +60,15 @@ export async function getBookingInitialData(userId: string): Promise<{
     const giftVouchers = await GiftVoucher.find({
       recipientUserId: new mongoose.Types.ObjectId(userId),
       isActive: true,
-      $or: [
-        { expiryDate: { $gte: new Date() } },
-        { expiryDate: { $exists: false } }
-      ]
+      $or: [{ expiryDate: { $gte: new Date() } }, { expiryDate: { $exists: false } }],
     })
       .select("code voucherType amount remainingAmount treatmentId description")
       .lean()
 
     // Get active coupons
-    const coupons = await Coupon.find({ 
+    const coupons = await Coupon.find({
       isActive: true,
-      $or: [
-        { validUntil: { $gte: new Date() } },
-        { validUntil: { $exists: false } }
-      ]
+      $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     })
       .select("code discountType discountValue description")
       .lean()
@@ -88,11 +82,21 @@ export async function getBookingInitialData(userId: string): Promise<{
         giftVouchers,
         coupons,
         surcharges: [
-          { type: "evening", name: "????? ???", amount: 20, description: "????? ???? ????? ????? ????" },
-          { type: "weekend", name: "????? ??? ????", amount: 30, description: "????? ???? ????? ???? ?????" },
-          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" }
-        ]
-      }
+          {
+            type: "evening",
+            name: "????? ???",
+            amount: 20,
+            description: "????? ???? ????? ????? ????",
+          },
+          {
+            type: "weekend",
+            name: "????? ??? ????",
+            amount: 30,
+            description: "????? ???? ????? ???? ?????",
+          },
+          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" },
+        ],
+      },
     }
   } catch (error) {
     logger.error("Error fetching booking initial data:", { error, userId })
@@ -132,18 +136,18 @@ export async function updateBookingStatusAfterPayment(
     revalidatePath("/dashboard/member/bookings")
     revalidatePath("/dashboard/admin/bookings")
 
-    logger.info("Booking status updated after payment", { 
-      bookingId, 
-      paymentStatus, 
-      newStatus: booking.status 
+    logger.info("Booking status updated after payment", {
+      bookingId,
+      paymentStatus,
+      newStatus: booking.status,
     })
 
     return { success: true }
   } catch (error) {
-    logger.error("Error updating booking status after payment:", { 
-      error, 
-      bookingId, 
-      paymentStatus 
+    logger.error("Error updating booking status after payment:", {
+      error,
+      bookingId,
+      paymentStatus,
     })
     return { success: false, error: "common.unknown" }
   }
@@ -201,10 +205,10 @@ export async function findSuitableProfessionals(
   treatmentId: string,
   bookingDateTime: Date,
   addressCity: string
-): Promise<{ 
+): Promise<{
   success: boolean
   professionals?: any[]
-  error?: string 
+  error?: string
 }> {
   try {
     await dbConnect()
@@ -221,7 +225,7 @@ export async function findSuitableProfessionals(
       isActive: true,
       "professionalProfile.isAvailable": true,
       "professionalProfile.serviceAreas": { $in: [addressCity] },
-      "professionalProfile.specializations": { $in: [treatment.category] }
+      "professionalProfile.specializations": { $in: [treatment.category] },
     })
       .select("name phone professionalProfile")
       .lean()
@@ -232,23 +236,25 @@ export async function findSuitableProfessionals(
       return prof.professionalProfile?.workingHours?.some((schedule: any) => {
         const bookingDay = bookingDateTime.getDay()
         const bookingHour = bookingDateTime.getHours()
-        
-        return schedule.dayOfWeek === bookingDay && 
-               bookingHour >= schedule.startHour && 
-               bookingHour < schedule.endHour
+
+        return (
+          schedule.dayOfWeek === bookingDay &&
+          bookingHour >= schedule.startHour &&
+          bookingHour < schedule.endHour
+        )
       })
     })
 
     return {
       success: true,
-      professionals: availableProfessionals
+      professionals: availableProfessionals,
     }
   } catch (error) {
-    logger.error("Error finding suitable professionals:", { 
-      error, 
-      treatmentId, 
-      bookingDateTime, 
-      addressCity 
+    logger.error("Error finding suitable professionals:", {
+      error,
+      treatmentId,
+      bookingDateTime,
+      addressCity,
     })
     return { success: false, error: "common.unknown" }
   }
@@ -257,12 +263,10 @@ export async function findSuitableProfessionals(
 /**
  * Get suitable professionals for existing booking
  */
-export async function getSuitableProfessionalsForBooking(
-  bookingId: string
-): Promise<{ 
+export async function getSuitableProfessionalsForBooking(bookingId: string): Promise<{
   success: boolean
   professionals?: any[]
-  error?: string 
+  error?: string
 }> {
   try {
     const session = await getServerSession(authOptions)
@@ -272,25 +276,23 @@ export async function getSuitableProfessionalsForBooking(
 
     await dbConnect()
 
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .lean()
+    const booking = await Booking.findById(bookingId).populate("treatmentId").lean()
 
     if (!booking) {
       return { success: false, error: "bookings.errors.bookingNotFound" }
     }
 
     const addressCity = booking.bookingAddressSnapshot?.city || ""
-    
+
     return await findSuitableProfessionals(
       booking.treatmentId.toString(),
       booking.bookingDateTime,
       addressCity
     )
   } catch (error) {
-    logger.error("Error getting suitable professionals for booking:", { 
-      error, 
-      bookingId 
+    logger.error("Error getting suitable professionals for booking:", {
+      error,
+      bookingId,
     })
     return { success: false, error: "common.unknown" }
   }
@@ -309,7 +311,7 @@ export async function sendNotificationToSuitableProfessionals(
     }
 
     const { success, professionals, error } = await getSuitableProfessionalsForBooking(bookingId)
-    
+
     if (!success || !professionals) {
       return { success: false, error: error || "No suitable professionals found" }
     }
@@ -317,20 +319,20 @@ export async function sendNotificationToSuitableProfessionals(
     // In production, this would send actual notifications (SMS, email, push)
     // For now, we'll just log the notification
     let notifiedCount = 0
-    
+
     for (const professional of professionals) {
       try {
         // Placeholder for actual notification sending
         logger.info("Notification sent to professional", {
           bookingId,
           professionalId: professional._id,
-          professionalName: professional.name
+          professionalName: professional.name,
         })
         notifiedCount++
       } catch (notificationError) {
         logger.error("Failed to notify professional:", {
           error: notificationError,
-          professionalId: professional._id
+          professionalId: professional._id,
         })
       }
     }
@@ -345,10 +347,10 @@ export async function sendNotificationToSuitableProfessionals(
 /**
  * Get available professionals (simplified version)
  */
-export async function getAvailableProfessionals(): Promise<{ 
+export async function getAvailableProfessionals(): Promise<{
   success: boolean
   professionals?: any[]
-  error?: string 
+  error?: string
 }> {
   try {
     const session = await getServerSession(authOptions)
@@ -361,14 +363,14 @@ export async function getAvailableProfessionals(): Promise<{
     const professionals = await User.find({
       roles: "professional",
       isActive: true,
-      "professionalProfile.isAvailable": true
+      "professionalProfile.isAvailable": true,
     })
       .select("name email phone professionalProfile")
       .lean()
 
     return {
       success: true,
-      professionals
+      professionals,
     }
   } catch (error) {
     logger.error("Error getting available professionals:", error)

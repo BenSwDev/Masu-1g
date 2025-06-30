@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 
 export const metadata = {
   title: "ניהול ערים",
-  description: "ניהול רשימת הערים הזמינות לשירות"
+  description: "ניהול רשימת הערים הזמינות לשירות",
 }
 
 interface AdminCitiesPageProps {
@@ -33,7 +33,12 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
         <CitiesHeading />
         <Separator />
         {result.success ? (
-          <CityManagement initialCities={result.cities as any} totalPages={result.totalPages} currentPage={page} initialSearch={search} />
+          <CityManagement
+            initialCities={result.cities as any}
+            totalPages={result.totalPages}
+            currentPage={page}
+            initialSearch={search}
+          />
         ) : (
           <div className="text-center py-8">
             <p className="text-red-600">שגיאה בטעינת הערים. אנא נסה שוב.</p>

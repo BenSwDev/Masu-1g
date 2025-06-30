@@ -24,21 +24,26 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     search: searchParams.search || "",
     role: searchParams.role || "",
     gender: searchParams.gender || "",
-    emailVerified: searchParams.emailVerified === "true" ? true : 
-                   searchParams.emailVerified === "false" ? false : undefined,
-    phoneVerified: searchParams.phoneVerified === "true" ? true : 
-                   searchParams.phoneVerified === "false" ? false : undefined,
+    emailVerified:
+      searchParams.emailVerified === "true"
+        ? true
+        : searchParams.emailVerified === "false"
+          ? false
+          : undefined,
+    phoneVerified:
+      searchParams.phoneVerified === "true"
+        ? true
+        : searchParams.phoneVerified === "false"
+          ? false
+          : undefined,
     page: parseInt(searchParams.page || "1"),
     limit: parseInt(searchParams.limit || "20"),
     sortBy: searchParams.sortBy || "createdAt",
-    sortOrder: (searchParams.sortOrder as "asc" | "desc") || "desc"
+    sortOrder: (searchParams.sortOrder as "asc" | "desc") || "desc",
   }
 
   // Fetch data
-  const [usersResult, statsResult] = await Promise.all([
-    getAllUsers(filters),
-    getUserStats()
-  ])
+  const [usersResult, statsResult] = await Promise.all([getAllUsers(filters), getUserStats()])
 
   const stats = statsResult.success ? statsResult.data : null
 
@@ -99,11 +104,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 
       {/* Main Content */}
       <Suspense fallback={<UserManagementSkeleton />}>
-        <UserManagementClient 
-          initialData={usersResult}
-          initialFilters={filters}
-          stats={stats}
-      />
+        <UserManagementClient initialData={usersResult} initialFilters={filters} stats={stats} />
       </Suspense>
     </div>
   )
@@ -120,11 +121,11 @@ function UserManagementSkeleton() {
       </CardHeader>
       <CardContent>
         <div className="animate-pulse space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="h-16 bg-gray-200 rounded"></div>
           ))}
         </div>
       </CardContent>
     </Card>
   )
-} 
+}

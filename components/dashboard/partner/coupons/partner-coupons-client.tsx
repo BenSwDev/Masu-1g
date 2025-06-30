@@ -24,7 +24,7 @@ const PartnerCouponsClient = ({ coupons = [], pagination }: PartnerCouponsClient
         {coupons.length === 0 ? (
           <div className="text-center text-gray-500">{t("partnerCoupons.noCoupons")}</div>
         ) : (
-          coupons.map((coupon) => (
+          coupons.map(coupon => (
             <Card key={coupon._id}>
               <CardContent className="p-4">
                 <div>{coupon.code}</div>

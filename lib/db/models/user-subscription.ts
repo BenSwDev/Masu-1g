@@ -15,7 +15,8 @@ export interface IUserSubscription extends Document {
   paymentId?: string // Payment transaction ID from payment provider
   paymentAmount: number // Total amount paid for this subscription package
   pricePerSession?: number // Price of a single session at the time of purchase
-  guestInfo?: { // Guest information for non-user purchases
+  guestInfo?: {
+    // Guest information for non-user purchases
     name: string
     email?: string
     phone: string
@@ -113,14 +114,14 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
   },
   {
     timestamps: true,
-  },
+  }
 )
 
 // Index for common queries
 UserSubscriptionSchema.index({ userId: 1, status: 1, expiryDate: 1 })
 
 // Update status to 'expired' if expiryDate is passed - can be handled by a cron job or a pre-find hook
-UserSubscriptionSchema.pre("find", (next) => {
+UserSubscriptionSchema.pre("find", next => {
   // Consider implications of updating on read. A cron job is usually better for this.
   // For now, this logic is commented out to avoid unintended side effects on queries.
   // const today = new Date();
@@ -132,7 +133,8 @@ UserSubscriptionSchema.pre("find", (next) => {
 })
 
 const UserSubscription: Model<IUserSubscription> =
-  mongoose.models.UserSubscription || mongoose.model<IUserSubscription>("UserSubscription", UserSubscriptionSchema)
+  mongoose.models.UserSubscription ||
+  mongoose.model<IUserSubscription>("UserSubscription", UserSubscriptionSchema)
 
 export default UserSubscription
 export { UserSubscription }

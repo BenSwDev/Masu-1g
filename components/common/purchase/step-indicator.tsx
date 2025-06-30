@@ -18,7 +18,7 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ steps, currentStep, className }: StepIndicatorProps) {
   const { dir } = useTranslation()
-  const currentIndex = steps.findIndex((s) => s.key === currentStep)
+  const currentIndex = steps.findIndex(s => s.key === currentStep)
 
   return (
     <div className={cn("w-full mb-10", className)}>
@@ -38,7 +38,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
                     isActive
                       ? "bg-primary border-primary text-primary-foreground"
                       : "border-muted-foreground/30 text-muted-foreground",
-                    isCurrent && "ring-4 ring-primary/20",
+                    isCurrent && "ring-4 ring-primary/20"
                   )}
                 >
                   <Icon className="w-6 h-6" />
@@ -46,7 +46,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
                 <div
                   className={cn(
                     "mt-2 text-sm font-medium transition-colors text-center",
-                    isActive ? "text-primary" : "text-muted-foreground",
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
                   {stepItem.label}
@@ -68,7 +68,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-2 transition-colors",
-                    index < currentIndex ? "bg-primary" : "bg-muted-foreground/30",
+                    index < currentIndex ? "bg-primary" : "bg-muted-foreground/30"
                   )}
                 />
               )}

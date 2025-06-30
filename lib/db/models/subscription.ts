@@ -37,4 +37,5 @@ SubscriptionSchema.pre("save", function (next) {
 SubscriptionSchema.index({ name: 1 })
 SubscriptionSchema.index({ isActive: 1 })
 
-export default mongoose.models.Subscription || mongoose.model<ISubscription>("Subscription", SubscriptionSchema)
+export default mongoose.models.Subscription ||
+  mongoose.model<ISubscription>("Subscription", SubscriptionSchema)

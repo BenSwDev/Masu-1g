@@ -14,7 +14,14 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table"
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -34,7 +41,14 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
 }
 
-export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefaultPagination = false, hideColumnsSelector = false, onRowClick }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  searchKey,
+  hideDefaultPagination = false,
+  hideColumnsSelector = false,
+  onRowClick,
+}: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -66,7 +80,7 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
           <Input
             placeholder={`חיפוש לפי ${searchKey}...`}
             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
+            onChange={event => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
             className="max-w-sm"
           />
         )}
@@ -80,14 +94,14 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
             <DropdownMenuContent align="end">
               {table
                 .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
+                .filter(column => column.getCanHide())
+                .map(column => {
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onCheckedChange={value => column.toggleVisibility(!!value)}
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
@@ -100,12 +114,14 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
       <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="bg-gray-50 border-b border-gray-200">
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map(header => {
                   return (
                     <TableHead key={header.id} className="font-medium text-gray-700 py-3">
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   )
                 })}
@@ -114,9 +130,9 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow 
-                  key={row.id} 
+              table.getRowModel().rows.map(row => (
+                <TableRow
+                  key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
                     "hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100",
@@ -124,7 +140,7 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
                   )}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id} className="py-4">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
@@ -147,7 +163,8 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
       {!hideDefaultPagination && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} מתוך {table.getFilteredRowModel().rows.length} שורות נבחרו.
+            {table.getFilteredSelectedRowModel().rows.length} מתוך{" "}
+            {table.getFilteredRowModel().rows.length} שורות נבחרו.
           </div>
           <div className="space-x-2">
             <Button
@@ -158,7 +175,12 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
             >
               הקודם
             </Button>
-            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
               הבא
             </Button>
           </div>

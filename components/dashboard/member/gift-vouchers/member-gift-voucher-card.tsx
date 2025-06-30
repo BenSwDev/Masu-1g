@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { GiftVoucher as GiftVoucherPlain } from "@/types/core"
-import { Gift, CreditCard, Calendar, User, MessageCircle, Phone, Clock, Eye, ShoppingBag } from "lucide-react"
+import {
+  Gift,
+  CreditCard,
+  Calendar,
+  User,
+  MessageCircle,
+  Phone,
+  Clock,
+  Eye,
+  ShoppingBag,
+} from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
@@ -17,7 +27,11 @@ interface MemberGiftVoucherCardProps {
   onViewDetails?: (voucher: GiftVoucherPlain) => void
 }
 
-export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }: MemberGiftVoucherCardProps) {
+export default function MemberGiftVoucherCard({
+  voucher,
+  onUse,
+  onViewDetails,
+}: MemberGiftVoucherCardProps) {
   const { t, dir } = useTranslation()
 
   const getStatusColor = (status: GiftVoucherPlain["status"]) => {
@@ -39,20 +53,27 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
     }
   }
 
-  const isUsable = ["active", "partially_used"].includes(voucher.status) && new Date(voucher.validUntil) > new Date()
+  const isUsable =
+    ["active", "partially_used"].includes(voucher.status) &&
+    new Date(voucher.validUntil) > new Date()
   const isExpired = new Date(voucher.validUntil) < new Date()
 
   return (
     <Card
       className={cn(
         "h-full transition-all duration-200 hover:shadow-lg border-2",
-        isExpired ? "opacity-75" : "hover:border-primary/20",
+        isExpired ? "opacity-75" : "hover:border-primary/20"
       )}
     >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-lg", voucher.voucherType === "treatment" ? "bg-blue-100" : "bg-green-100")}>
+            <div
+              className={cn(
+                "p-2 rounded-lg",
+                voucher.voucherType === "treatment" ? "bg-blue-100" : "bg-green-100"
+              )}
+            >
               {voucher.voucherType === "treatment" ? (
                 <Gift className="h-6 w-6 text-blue-600" />
               ) : (
@@ -78,7 +99,9 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
         {/* Value Information */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">{t("giftVouchers.myVouchers.originalValue")}:</span>
+            <span className="text-sm text-muted-foreground">
+              {t("giftVouchers.myVouchers.originalValue")}:
+            </span>
             <span className="font-semibold">
               {voucher.voucherType === "monetary"
                 ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")}`
@@ -88,9 +111,12 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
 
           {voucher.voucherType === "monetary" && (
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t("giftVouchers.fields.remainingAmount")}:</span>
+              <span className="text-sm text-muted-foreground">
+                {t("giftVouchers.fields.remainingAmount")}:
+              </span>
               <span className="font-semibold text-primary">
-                {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+                {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)}{" "}
+                {t("common.currency")}
               </span>
             </div>
           )}
@@ -100,10 +126,17 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
               <Calendar className="w-3 h-3" />
               {t("giftVouchers.fields.validUntil")}:
             </span>
-            <span className={cn("font-medium text-sm", isExpired ? "text-destructive" : "text-foreground")}>
+            <span
+              className={cn(
+                "font-medium text-sm",
+                isExpired ? "text-destructive" : "text-foreground"
+              )}
+            >
               {format(
-                typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil,
-                "MMM d, yyyy",
+                typeof voucher.validUntil === "string"
+                  ? parseISO(voucher.validUntil)
+                  : voucher.validUntil,
+                "MMM d, yyyy"
               )}
             </span>
           </div>
@@ -142,7 +175,9 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
               {voucher.recipientPhone && voucher.purchaserUserId === voucher.ownerUserId && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-3 w-3" />
-                  <span className="font-medium">{formatPhoneForDisplay(voucher.recipientPhone || "")}</span>
+                  <span className="font-medium">
+                    {formatPhoneForDisplay(voucher.recipientPhone || "")}
+                  </span>
                 </div>
               )}
 
@@ -150,7 +185,9 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-start gap-2 text-sm">
                     <MessageCircle className="h-3 w-3 mt-0.5 text-muted-foreground" />
-                    <span className="italic text-muted-foreground">"{voucher.greetingMessage}"</span>
+                    <span className="italic text-muted-foreground">
+                      "{voucher.greetingMessage}"
+                    </span>
                   </div>
                 </div>
               )}
@@ -159,34 +196,42 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
         )}
 
         {/* Usage History for Monetary Vouchers */}
-        {voucher.voucherType === "monetary" && voucher.usageHistory && voucher.usageHistory.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                {t("giftVouchers.myVouchers.usageHistory")}
-              </p>
-              <div className="space-y-2 max-h-24 overflow-y-auto">
-                {voucher.usageHistory.slice(0, 3).map((usage, index) => (
-                  <div key={index} className="flex justify-between text-xs bg-muted/30 p-2 rounded">
-                    <span className="text-muted-foreground">
-                      {format(typeof usage.date === "string" ? parseISO(usage.date) : usage.date, "MMM d")}
-                    </span>
-                    <span className="font-medium text-destructive">
-                      -{usage.amountUsed?.toFixed(2) ?? "0.00"} {t("common.currency")}
-                    </span>
-                  </div>
-                ))}
-                {voucher.usageHistory.length > 3 && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    +{voucher.usageHistory.length - 3} {t("common.more")}
-                  </p>
-                )}
+        {voucher.voucherType === "monetary" &&
+          voucher.usageHistory &&
+          voucher.usageHistory.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  {t("giftVouchers.myVouchers.usageHistory")}
+                </p>
+                <div className="space-y-2 max-h-24 overflow-y-auto">
+                  {voucher.usageHistory.slice(0, 3).map((usage, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between text-xs bg-muted/30 p-2 rounded"
+                    >
+                      <span className="text-muted-foreground">
+                        {format(
+                          typeof usage.date === "string" ? parseISO(usage.date) : usage.date,
+                          "MMM d"
+                        )}
+                      </span>
+                      <span className="font-medium text-destructive">
+                        -{usage.amountUsed?.toFixed(2) ?? "0.00"} {t("common.currency")}
+                      </span>
+                    </div>
+                  ))}
+                  {voucher.usageHistory.length > 3 && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      +{voucher.usageHistory.length - 3} {t("common.more")}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-4">
@@ -207,7 +252,12 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
               className={cn("h-10", onUse && isUsable ? "flex-none px-3" : "flex-1")}
               onClick={() => onViewDetails(voucher)}
             >
-              <Eye className={cn("w-4 h-4", !onUse || !isUsable ? (dir === "rtl" ? "ml-2" : "mr-2") : "")} />
+              <Eye
+                className={cn(
+                  "w-4 h-4",
+                  !onUse || !isUsable ? (dir === "rtl" ? "ml-2" : "mr-2") : ""
+                )}
+              />
               {(!onUse || !isUsable) && t("giftVouchers.myVouchers.viewDetails")}
             </Button>
           )}

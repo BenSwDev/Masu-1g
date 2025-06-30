@@ -7,8 +7,7 @@ import MemberReviewsClient from "@/components/dashboard/member/reviews/member-re
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 
 // Force dynamic rendering to prevent build-time database connections
-export const dynamic = 'force-dynamic'
-
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "My Reviews",
@@ -28,4 +27,4 @@ export default async function MemberReviewsPage() {
       </Suspense>
     </div>
   )
-} 
+}

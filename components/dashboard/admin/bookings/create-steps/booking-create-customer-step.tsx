@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, User, UserPlus } from "lucide-react"
@@ -25,7 +31,7 @@ interface BookingCreateCustomerStepProps {
 export default function BookingCreateCustomerStep({
   formData,
   onUpdate,
-  onNext
+  onNext,
 }: BookingCreateCustomerStepProps) {
   const { t, dir } = useTranslation()
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -79,8 +85,8 @@ export default function BookingCreateCustomerStep({
     onUpdate({
       guestInfo: {
         ...formData.guestInfo,
-        [field]: value
-      }
+        [field]: value,
+      },
     })
   }
 
@@ -88,8 +94,8 @@ export default function BookingCreateCustomerStep({
     onUpdate({
       recipientInfo: {
         ...formData.recipientInfo,
-        [field]: value
-      }
+        [field]: value,
+      },
     })
   }
 
@@ -108,7 +114,7 @@ export default function BookingCreateCustomerStep({
             <Label>סוג לקוח</Label>
             <RadioGroup
               value={formData.customerType}
-              onValueChange={(value) => onUpdate({ customerType: value })}
+              onValueChange={value => onUpdate({ customerType: value })}
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
@@ -131,24 +137,20 @@ export default function BookingCreateCustomerStep({
                   <Input
                     id="firstName"
                     value={formData.guestInfo?.firstName || ""}
-                    onChange={(e) => updateGuestInfo("firstName", e.target.value)}
+                    onChange={e => updateGuestInfo("firstName", e.target.value)}
                     className={errors.firstName ? "border-red-500" : ""}
                   />
-                  {errors.firstName && (
-                    <p className="text-sm text-red-500">{errors.firstName}</p>
-                  )}
+                  {errors.firstName && <p className="text-sm text-red-500">{errors.firstName}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">שם משפחה *</Label>
                   <Input
                     id="lastName"
                     value={formData.guestInfo?.lastName || ""}
-                    onChange={(e) => updateGuestInfo("lastName", e.target.value)}
+                    onChange={e => updateGuestInfo("lastName", e.target.value)}
                     className={errors.lastName ? "border-red-500" : ""}
                   />
-                  {errors.lastName && (
-                    <p className="text-sm text-red-500">{errors.lastName}</p>
-                  )}
+                  {errors.lastName && <p className="text-sm text-red-500">{errors.lastName}</p>}
                 </div>
               </div>
 
@@ -159,23 +161,19 @@ export default function BookingCreateCustomerStep({
                     id="email"
                     type="email"
                     value={formData.guestInfo?.email || ""}
-                    onChange={(e) => updateGuestInfo("email", e.target.value)}
+                    onChange={e => updateGuestInfo("email", e.target.value)}
                     className={errors.email ? "border-red-500" : ""}
                   />
-                  {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email}</p>
-                  )}
+                  {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">טלפון *</Label>
                   <PhoneInput
                     fullNumberValue={formData.guestInfo?.phone || ""}
-                    onPhoneChange={(value) => updateGuestInfo("phone", value)}
+                    onPhoneChange={value => updateGuestInfo("phone", value)}
                     className={errors.phone ? "border-red-500" : ""}
                   />
-                  {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone}</p>
-                  )}
+                  {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
                 </div>
               </div>
 
@@ -192,18 +190,16 @@ export default function BookingCreateCustomerStep({
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.guestInfo?.birthDate ? (
-                          format(formData.guestInfo.birthDate, "PPP")
-                        ) : (
-                          "בחר תאריך"
-                        )}
+                        {formData.guestInfo?.birthDate
+                          ? format(formData.guestInfo.birthDate, "PPP")
+                          : "בחר תאריך"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
                         selected={formData.guestInfo?.birthDate}
-                        onSelect={(date) => updateGuestInfo("birthDate", date)}
+                        onSelect={date => updateGuestInfo("birthDate", date)}
                         initialFocus
                       />
                     </PopoverContent>
@@ -213,7 +209,7 @@ export default function BookingCreateCustomerStep({
                   <Label>מגדר</Label>
                   <Select
                     value={formData.guestInfo?.gender || ""}
-                    onValueChange={(value) => updateGuestInfo("gender", value)}
+                    onValueChange={value => updateGuestInfo("gender", value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="בחר מגדר" />
@@ -235,7 +231,7 @@ export default function BookingCreateCustomerStep({
               <Label htmlFor="existingCustomer">בחר לקוח קיים *</Label>
               <Select
                 value={formData.existingCustomerId || ""}
-                onValueChange={(value) => onUpdate({ existingCustomerId: value })}
+                onValueChange={value => onUpdate({ existingCustomerId: value })}
               >
                 <SelectTrigger className={errors.existingCustomerId ? "border-red-500" : ""}>
                   <SelectValue placeholder="חפש ובחר לקוח..." />
@@ -257,7 +253,7 @@ export default function BookingCreateCustomerStep({
             <Checkbox
               id="bookingForSomeoneElse"
               checked={formData.isBookingForSomeoneElse}
-              onCheckedChange={(checked) => onUpdate({ isBookingForSomeoneElse: checked })}
+              onCheckedChange={checked => onUpdate({ isBookingForSomeoneElse: checked })}
             />
             <Label htmlFor="bookingForSomeoneElse">ההזמנה היא עבור מישהו אחר</Label>
           </div>
@@ -276,7 +272,7 @@ export default function BookingCreateCustomerStep({
                     <Input
                       id="recipientFirstName"
                       value={formData.recipientInfo?.firstName || ""}
-                      onChange={(e) => updateRecipientInfo("firstName", e.target.value)}
+                      onChange={e => updateRecipientInfo("firstName", e.target.value)}
                       className={errors.recipientFirstName ? "border-red-500" : ""}
                     />
                     {errors.recipientFirstName && (
@@ -288,7 +284,7 @@ export default function BookingCreateCustomerStep({
                     <Input
                       id="recipientLastName"
                       value={formData.recipientInfo?.lastName || ""}
-                      onChange={(e) => updateRecipientInfo("lastName", e.target.value)}
+                      onChange={e => updateRecipientInfo("lastName", e.target.value)}
                       className={errors.recipientLastName ? "border-red-500" : ""}
                     />
                     {errors.recipientLastName && (
@@ -315,7 +311,7 @@ export default function BookingCreateCustomerStep({
                       id="recipientEmail"
                       type="email"
                       value={formData.recipientInfo?.email || ""}
-                      onChange={(e) => updateRecipientInfo("email", e.target.value)}
+                      onChange={e => updateRecipientInfo("email", e.target.value)}
                     />
                   </div>
                 </div>
@@ -333,18 +329,16 @@ export default function BookingCreateCustomerStep({
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.recipientInfo?.birthDate ? (
-                            format(formData.recipientInfo.birthDate, "PPP")
-                          ) : (
-                            "בחר תאריך"
-                          )}
+                          {formData.recipientInfo?.birthDate
+                            ? format(formData.recipientInfo.birthDate, "PPP")
+                            : "בחר תאריך"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
                           selected={formData.recipientInfo?.birthDate}
-                          onSelect={(date) => updateRecipientInfo("birthDate", date)}
+                          onSelect={date => updateRecipientInfo("birthDate", date)}
                           initialFocus
                         />
                       </PopoverContent>
@@ -354,7 +348,7 @@ export default function BookingCreateCustomerStep({
                     <Label>מגדר</Label>
                     <Select
                       value={formData.recipientInfo?.gender || ""}
-                      onValueChange={(value) => updateRecipientInfo("gender", value)}
+                      onValueChange={value => updateRecipientInfo("gender", value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="בחר מגדר" />
@@ -375,10 +369,8 @@ export default function BookingCreateCustomerStep({
 
       {/* Navigation */}
       <div className="flex justify-end">
-        <Button onClick={handleNext}>
-          המשך
-        </Button>
+        <Button onClick={handleNext}>המשך</Button>
       </div>
     </div>
   )
-} 
+}

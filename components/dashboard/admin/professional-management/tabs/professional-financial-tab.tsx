@@ -13,14 +13,14 @@ interface ProfessionalFinancialTabProps {
 
 export default function ProfessionalFinancialTab({
   professional,
-  onUpdate
+  onUpdate,
 }: ProfessionalFinancialTabProps) {
   const { t, dir } = useTranslation()
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('he-IL', {
-      style: 'currency',
-      currency: 'ILS'
+    return new Intl.NumberFormat("he-IL", {
+      style: "currency",
+      currency: "ILS",
     }).format(amount)
   }
 
@@ -32,9 +32,7 @@ export default function ProfessionalFinancialTab({
             <DollarSign className="h-5 w-5" />
             מידע כספי
           </h3>
-          <p className="text-sm text-muted-foreground">
-            צפייה במידע כספי ונתוני רווחיות של המטפל
-          </p>
+          <p className="text-sm text-muted-foreground">צפייה במידע כספי ונתוני רווחיות של המטפל</p>
         </div>
         <Badge variant="secondary" className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
@@ -55,9 +53,7 @@ export default function ProfessionalFinancialTab({
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(professional.totalEarnings || 0)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              מתחילת הפעילות
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">מתחילת הפעילות</p>
           </CardContent>
         </Card>
 
@@ -72,9 +68,7 @@ export default function ProfessionalFinancialTab({
             <div className="text-2xl font-bold text-orange-600">
               {formatCurrency(professional.pendingPayments || 0)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              לתשלום במחזור הבא
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">לתשלום במחזור הבא</p>
           </CardContent>
         </Card>
       </div>
@@ -135,19 +129,17 @@ export default function ProfessionalFinancialTab({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">הצטרף:</span>
                 <span>
-                  {professional.appliedAt 
+                  {professional.appliedAt
                     ? new Date(professional.appliedAt).toLocaleDateString("he-IL")
-                    : "-"
-                  }
+                    : "-"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">עודכן:</span>
                 <span>
-                  {professional.updatedAt 
+                  {professional.updatedAt
                     ? new Date(professional.updatedAt).toLocaleDateString("he-IL")
-                    : "-"
-                  }
+                    : "-"}
                 </span>
               </div>
             </div>
@@ -156,4 +148,4 @@ export default function ProfessionalFinancialTab({
       </Card>
     </div>
   )
-} 
+}

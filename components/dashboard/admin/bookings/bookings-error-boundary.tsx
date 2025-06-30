@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, RefreshCw } from "lucide-react"
@@ -28,7 +28,7 @@ export class BookingsErrorBoundary extends React.Component<
   }
 
   componentDidCatch(_error: Error, errorInfo: React.ErrorInfo) {
-    console.error('BookingsErrorBoundary caught an error:', _error, errorInfo)
+    console.error("BookingsErrorBoundary caught an error:", _error, errorInfo)
   }
 
   handleReset = () => {
@@ -47,9 +47,7 @@ export class BookingsErrorBoundary extends React.Component<
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              אירעה שגיאה בטעינת נתוני ההזמנות. אנא נסה שוב.
-            </p>
+            <p className="text-muted-foreground">אירעה שגיאה בטעינת נתוני ההזמנות. אנא נסה שוב.</p>
             {this.state.error && (
               <details className="text-sm text-muted-foreground">
                 <summary className="cursor-pointer">פרטים טכניים</summary>
@@ -69,4 +67,4 @@ export class BookingsErrorBoundary extends React.Component<
 
     return this.props.children
   }
-} 
+}

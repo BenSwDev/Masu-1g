@@ -14,11 +14,14 @@ export function MasuLogo({ className, width = 120, height = 40 }: MasuLogoProps)
   const { dir } = useTranslation()
 
   return (
-    <Link href="/" className={`flex items-center ${dir === "rtl" ? "flex-row-reverse" : ""} ${className || ""}`}>
-      <Image 
-        src="/Masu_logo_big.png" 
-        alt="Masu Logo" 
-        width={width} 
+    <Link
+      href="/"
+      className={`flex items-center ${dir === "rtl" ? "flex-row-reverse" : ""} ${className || ""}`}
+    >
+      <Image
+        src="/Masu_logo_big.png"
+        alt="Masu Logo"
+        width={width}
         height={height}
         className="object-contain"
         priority

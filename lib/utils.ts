@@ -44,14 +44,18 @@ export function formatDate(date: Date | string, language = "en-US"): string {
  * @param language The language code (e.g., "en", "he", "ru") for localization. Defaults to "he-IL" for ILS, "en-US" for USD.
  * @returns A localized currency string (e.g., "₪100.00") or a fallback string if formatting fails.
  */
-export function formatCurrency(amount: number | undefined | null, currency = "ILS", language = "en-US"): string {
+export function formatCurrency(
+  amount: number | undefined | null,
+  currency = "ILS",
+  language = "en-US"
+): string {
   // Handle undefined/null values
   if (amount === undefined || amount === null) {
     return `0.00 ${currency}`
   }
-  
+
   // Ensure amount is a number
-  const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
+  const numericAmount = typeof amount === "number" ? amount : parseFloat(String(amount))
   if (isNaN(numericAmount)) {
     return `0.00 ${currency}`
   }
@@ -70,7 +74,10 @@ export function formatCurrency(amount: number | undefined | null, currency = "IL
       maximumFractionDigits: 2,
     }).format(numericAmount)
   } catch (error) {
-    console.error(`[Utils] Error formatting currency ${currency} for language ${effectiveLanguage}:`, error)
+    console.error(
+      `[Utils] Error formatting currency ${currency} for language ${effectiveLanguage}:`,
+      error
+    )
     // Fallback for unsupported currencies or errors
     return `${numericAmount.toFixed(2)} ${currency}`
   }
@@ -78,23 +85,23 @@ export function formatCurrency(amount: number | undefined | null, currency = "IL
 
 // Israeli date formatting functions
 export const formatDateIsraeli = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(d.getTime())) return 'תאריך לא תקין'
-  
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const d = typeof date === "string" ? new Date(date) : date
+  if (isNaN(d.getTime())) return "תאריך לא תקין"
+
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
   const year = d.getFullYear()
-  
+
   return `${day}/${month}/${year}`
 }
 
 export const formatTimeIsraeli = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(d.getTime())) return 'שעה לא תקינה'
-  
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  
+  const d = typeof date === "string" ? new Date(date) : date
+  if (isNaN(d.getTime())) return "שעה לא תקינה"
+
+  const hours = String(d.getHours()).padStart(2, "0")
+  const minutes = String(d.getMinutes()).padStart(2, "0")
+
   return `${hours}:${minutes}`
 }
 

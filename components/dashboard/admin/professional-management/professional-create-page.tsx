@@ -16,7 +16,7 @@ export function ProfessionalCreatePage() {
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
-  
+
   const [isCreating, setIsCreating] = useState(false)
 
   // יצירת אובייקט מטפל ריק ליצירת חדש
@@ -31,7 +31,7 @@ export function ProfessionalCreatePage() {
       roles: ["professional"],
       activeRole: "professional",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     } as unknown as IUser,
     status: "pending_admin_approval",
     isActive: true,
@@ -46,7 +46,7 @@ export function ProfessionalCreatePage() {
     rejectedAt: undefined,
     lastActiveAt: new Date(),
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   }
 
   const handleBack = () => {
@@ -56,7 +56,7 @@ export function ProfessionalCreatePage() {
   const handleCreated = (createdProfessional: Professional) => {
     toast({
       title: "הצלחה",
-      description: "המטפל נוצר בהצלחה"
+      description: "המטפל נוצר בהצלחה",
     })
     // חזרה לטבלת המטפלים
     router.push("/dashboard/admin/professional-management")
@@ -67,16 +67,16 @@ export function ProfessionalCreatePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleBack}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             חזור לרשימה
           </Button>
-          
+
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <UserPlus className="w-6 h-6" />
@@ -87,7 +87,7 @@ export function ProfessionalCreatePage() {
             </p>
           </div>
         </div>
-        
+
         <Badge variant="secondary" className="flex items-center gap-1">
           ממתין לאישור
         </Badge>
@@ -111,4 +111,4 @@ export function ProfessionalCreatePage() {
       </Card>
     </div>
   )
-} 
+}

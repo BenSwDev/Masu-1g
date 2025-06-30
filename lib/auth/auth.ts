@@ -34,24 +34,26 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 export function validatePassword(password: string): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
-  
+
   // Length check
   if (password.length < 8) {
     errors.push("הסיסמה חייבת להיות לפחות 8 תווים")
   }
-  
+
   // Check character types (need at least 3 out of 4)
   const hasUppercase = /[A-Z]/.test(password)
   const hasLowercase = /[a-z]/.test(password)
   const hasNumber = /[0-9]/.test(password)
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\\/~`]/.test(password)
-  
+
   const typesCount = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length
-  
+
   if (typesCount < 3) {
-    errors.push("הסיסמה חייבת להכיל לפחות 3 מתוך 4 הקטגוריות הבאות: אות גדולה (A-Z), אות קטנה (a-z), מספר (0-9), או תו מיוחד (!@#$%^&*...)")
+    errors.push(
+      "הסיסמה חייבת להכיל לפחות 3 מתוך 4 הקטגוריות הבאות: אות גדולה (A-Z), אות קטנה (a-z), מספר (0-9), או תו מיוחד (!@#$%^&*...)"
+    )
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -73,7 +75,7 @@ export function validatePhone(phone: string): boolean {
     if (!phone) return false
     const cleaned = phone.replace(/[^\d+]/g, "")
     return cleaned.startsWith("+") && cleaned.length >= 9 && cleaned.length <= 15
-    }
+  }
 }
 
 // Helper function to determine the default active role based on priority
@@ -87,7 +89,10 @@ function getDefaultActiveRole(roles: string[]): string {
 }
 
 const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "any" }
-const defaultNotificationPreferences: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
+const defaultNotificationPreferences: INotificationPreferences = {
+  methods: ["sms", "email"],
+  language: "he",
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise) as any,
@@ -105,7 +110,7 @@ export const authOptions: NextAuthOptions = {
         await dbConnect()
         const identifier = credentials.phone.toLowerCase().trim()
         let query: any = {}
-        
+
         if (validatePhone(identifier)) {
           const { normalizePhoneNumber } = await import("@/lib/utils/phone-utils")
           const cleaned = normalizePhoneNumber(identifier)
@@ -113,9 +118,9 @@ export const authOptions: NextAuthOptions = {
         } else {
           throw new Error("Invalid phone format - only phone login is supported")
         }
-        
+
         const user = (await User.findOne(query).select(
-          "+password email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
+          "+password email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences"
         )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("No user found with this identifier")
@@ -129,7 +134,7 @@ export const authOptions: NextAuthOptions = {
         }
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : ["member"]
         const activeRole = user.activeRole || getDefaultActiveRole(userRoles)
-        
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -157,14 +162,14 @@ export const authOptions: NextAuthOptions = {
         }
         await dbConnect()
         const user = (await User.findById(credentials.userId).select(
-          "email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
+          "email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences"
         )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("User not found")
         }
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : ["member"]
         const activeRole = user.activeRole || getDefaultActiveRole(userRoles)
-        
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -196,11 +201,13 @@ export const authOptions: NextAuthOptions = {
         token.gender = customUserFromAuth.gender
         token.dateOfBirth = customUserFromAuth.dateOfBirth
         token.roles =
-          customUserFromAuth.roles && customUserFromAuth.roles.length > 0 ? customUserFromAuth.roles : ["member"]
+          customUserFromAuth.roles && customUserFromAuth.roles.length > 0
+            ? customUserFromAuth.roles
+            : ["member"]
 
         // Fetch from DB to ensure latest activeRole and preferences
         const dbUser = await User.findById(token.id).select(
-          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences"
         )
 
         let activeRole = dbUser?.activeRole
@@ -213,12 +220,13 @@ export const authOptions: NextAuthOptions = {
         }
         token.activeRole = activeRole
         token.treatmentPreferences = dbUser?.treatmentPreferences || defaultTreatmentPreferences
-        token.notificationPreferences = dbUser?.notificationPreferences || defaultNotificationPreferences
+        token.notificationPreferences =
+          dbUser?.notificationPreferences || defaultNotificationPreferences
       }
       // On session update (e.g., role switch or preference update)
       else if (trigger === "update" && session) {
         const dbUser = await User.findById(token.id).select(
-          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences"
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -236,14 +244,15 @@ export const authOptions: NextAuthOptions = {
           token.gender = dbUser.gender
           token.dateOfBirth = dbUser.dateOfBirth
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
-          token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
+          token.notificationPreferences =
+            dbUser.notificationPreferences || defaultNotificationPreferences
         }
       }
       // On every other call, sync from DB if needed (e.g., if token is old)
       // For simplicity and to ensure freshness, we can always fetch if not first login or update
       else if (token.id) {
         const dbUser = await User.findById(token.id).select(
-          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences"
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -258,7 +267,8 @@ export const authOptions: NextAuthOptions = {
           token.gender = dbUser.gender
           token.dateOfBirth = dbUser.dateOfBirth
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
-          token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
+          token.notificationPreferences =
+            dbUser.notificationPreferences || defaultNotificationPreferences
         }
       }
 
@@ -276,7 +286,8 @@ export const authOptions: NextAuthOptions = {
         session.user.gender = token.gender as "male" | "female" | "other"
         session.user.dateOfBirth = token.dateOfBirth as Date
         session.user.treatmentPreferences = token.treatmentPreferences as ITreatmentPreferences // Add to session
-        session.user.notificationPreferences = token.notificationPreferences as INotificationPreferences // Add to session
+        session.user.notificationPreferences =
+          token.notificationPreferences as INotificationPreferences // Add to session
       }
       return session
     },

@@ -7,8 +7,8 @@ import Coupon from "@/lib/db/models/coupon"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import Subscription from "@/lib/db/models/subscription"
 import User from "@/lib/db/models/user"
-import Professional from "@/lib/db/models/professional"
-import WorkingHours from "@/lib/db/models/working-hours"
+import ProfessionalProfile from "@/lib/db/models/professional-profile"
+import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import mongoose from "mongoose"
@@ -72,7 +72,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) return { success: false, error: "bookings.errors.durationRequired" }
       const duration = treatment.durations?.find(
-        d => d._id.toString() === selectedDurationId && d.isActive
+        (d: any) => d._id.toString() === selectedDurationId && d.isActive
       )
       if (!duration) return { success: false, error: "bookings.errors.durationNotFound" }
       basePrice = duration.price
@@ -97,7 +97,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
     }
 
     // Calculate surcharges based on working hours settings
-    const settings = (await WorkingHours.findOne().lean()) as any | null
+    const settings = (await WorkingHoursSettings.findOne().lean()) as any | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
@@ -339,7 +339,7 @@ function calculateProfessionalPayment(
   if (treatment.pricingType === "fixed" && treatment.fixedProfessionalPrice) {
     baseProfessionalPayment = treatment.fixedProfessionalPrice
   } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
-    const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+    const duration = treatment.durations?.find((d: any) => d._id.toString() === selectedDurationId)
     if (duration) {
       baseProfessionalPayment = duration.professionalPrice || 0
     }
@@ -522,7 +522,7 @@ export async function getBasePriceForTreatment(
         return { success: false, error: "Duration required for duration-based treatment" }
       }
       const duration = treatment.durations?.find(
-        d => d._id.toString() === selectedDurationId && d.isActive
+        (d: any) => d._id.toString() === selectedDurationId && d.isActive
       )
       if (!duration) {
         return { success: false, error: "Duration not found" }

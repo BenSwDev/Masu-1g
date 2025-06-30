@@ -1,9 +1,9 @@
 "use server"
 
+import mongoose from "mongoose"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongoose"
-import mongoose from "mongoose"
+import dbConnect from "@/lib/db/mongodb"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
 

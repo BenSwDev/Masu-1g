@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongoose"
+import dbConnect from "@/lib/db/mongodb"
 import Booking, {
   type IBooking,
   type IBookingAddressSnapshot,

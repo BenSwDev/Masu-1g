@@ -4,14 +4,15 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongodb"
 import Booking from "@/lib/db/models/booking"
-import Professional from "@/lib/db/models/professional"
+import ProfessionalProfile from "@/lib/db/models/professional-profile"
 import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
 import Address from "@/lib/db/models/address"
 import { logger } from "@/lib/logs/logger"
+import type { IBookingDocument } from "@/types/core"
 import mongoose from "mongoose"
 import { revalidatePath } from "next/cache"
-import { sendProfessionalNotification } from "@/lib/notifications/professional-notifications"
+import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
 import type { BookingStatus } from "@/types/core"
 import type {
   NotificationLanguage,
@@ -23,7 +24,7 @@ import type {
  */
 export async function professionalAcceptBooking(
   bookingId: string
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+): Promise<{ success: boolean; error?: string; booking?: IBookingDocument }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
     return { success: false, error: "common.unauthorized" }
@@ -136,7 +137,7 @@ export async function professionalAcceptBooking(
  */
 export async function professionalMarkEnRoute(
   bookingId: string
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+): Promise<{ success: boolean; error?: string; booking?: IBookingDocument }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
     return { success: false, error: "common.unauthorized" }
@@ -195,7 +196,7 @@ export async function professionalMarkEnRoute(
  */
 export async function professionalMarkCompleted(
   bookingId: string
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+): Promise<{ success: boolean; error?: string; booking?: IBookingDocument }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("professional")) {
     return { success: false, error: "common.unauthorized" }
@@ -264,7 +265,7 @@ export async function professionalMarkCompleted(
 export async function assignProfessionalToBooking(
   bookingId: string,
   professionalId: string
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+): Promise<{ success: boolean; error?: string; booking?: IBookingDocument }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("admin")) {
     return { success: false, error: "common.unauthorized" }
@@ -430,7 +431,7 @@ export async function assignProfessionalToBooking(
  */
 export async function unassignProfessionalFromBooking(
   bookingId: string
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+): Promise<{ success: boolean; error?: string; booking?: IBookingDocument }> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id || !session.user.roles.includes("admin")) {
     return { success: false, error: "common.unauthorized" }

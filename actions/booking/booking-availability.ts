@@ -1,6 +1,7 @@
 "use server"
 
-import dbConnect from "@/lib/db/mongoose"
+import mongoose from "mongoose"
+import dbConnect from "@/lib/db/mongodb"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import Booking, { type IBooking } from "@/lib/db/models/booking"
 import {

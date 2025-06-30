@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongoose"
+import dbConnect from "@/lib/db/mongodb"
 import Booking, { type IBooking } from "@/lib/db/models/booking"
 import User from "@/lib/db/models/user"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"

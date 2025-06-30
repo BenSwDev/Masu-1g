@@ -102,7 +102,7 @@ export async function getUserPurchaseHistory(
           status:
             booking.status === "completed"
               ? "completed"
-              : booking.status === "cancelled_by_user" || booking.status === "cancelled_by_admin"
+              : (booking as any).status === "cancelled"
                 ? "cancelled"
                 : "pending",
           description: `הזמנת ${(booking.treatmentId as any)?.name || "טיפול"}`,
@@ -290,9 +290,9 @@ export async function getCustomerSummary(customerId: string): Promise<{
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === "completed")
     const cancelledBookings = bookings.filter(
-      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
+      b => (b as any).status === "cancelled"
     )
-    const noShowBookings = bookings.filter(b => b.status === "no_show")
+    const noShowBookings = bookings.filter(b => (b as any).status === "cancelled")
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()
@@ -316,7 +316,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
       0
     )
     const totalVoucherSpent = vouchers
-      .filter(v => v.purchaserUserId.equals(userId))
+      .filter(v => v.purchaserUserId!.equals(userId))
       .reduce((sum, v) => sum + v.amount, 0)
     const totalSpent = totalBookingSpent + totalSubscriptionSpent + totalVoucherSpent
 
@@ -347,7 +347,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
     const customerSummary: CustomerSummary = {
       userId: customer._id.toString(),
       customerName: customer.name,
-      customerEmail: customer.email,
+      customerEmail: customer.email || "",
       customerPhone: customer.phone || "",
       joinDate: customer.createdAt,
       totalSpent,
@@ -359,7 +359,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
         completedBookings: completedBookings.length,
         cancelledBookings: cancelledBookings.length,
         noShowBookings: noShowBookings.length,
-        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId.equals(userId)).length,
+        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId!.equals(userId)).length,
         totalVouchersUsed: usedVouchers.length,
         totalSubscriptionsPurchased: userSubscriptions.length,
         averageBookingValue,
@@ -533,7 +533,7 @@ export async function getAllPurchaseTransactions(
           status:
             booking.status === "completed"
               ? "completed"
-              : booking.status === "cancelled_by_user" || booking.status === "cancelled_by_admin"
+              : (booking as any).status === "cancelled"
                 ? "cancelled"
                 : "pending",
           description: `הזמנת ${(booking.treatmentId as any)?.name || "טיפול"}`,
@@ -733,7 +733,7 @@ export async function getPurchaseStats(): Promise<{
     // Calculate booking stats
     const completedBookings = allBookings.filter(b => b.status === "completed")
     const cancelledBookings = allBookings.filter(
-      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
+      b => (b as any).status === "cancelled"
     )
     const bookingRevenue = completedBookings.reduce((sum, b) => sum + b.priceDetails.finalAmount, 0)
 

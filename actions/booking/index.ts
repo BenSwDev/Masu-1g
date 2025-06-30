@@ -57,7 +57,7 @@ export {
   professionalAcceptBooking,
   professionalMarkEnRoute,
   professionalMarkCompleted,
-  getBookingByIdForProfessional,
+  // getBookingByIdForProfessional, - function doesn't exist
 } from "./booking-professional"
 
 // Time and availability operations

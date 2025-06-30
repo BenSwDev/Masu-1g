@@ -10,7 +10,7 @@ import Address, { type IAddress, constructFullAddress } from "@/lib/db/models/ad
 import type { PopulatedBooking } from "@/types/booking"
 import type { Booking as BookingCore, BookingAddress } from "@/types/core"
 import Counter from "@/lib/db/models/counter"
-import Professional from "@/lib/db/models/professional"
+import ProfessionalProfile from "@/lib/db/models/professional-profile"
 import type { BookingStatus } from "@/types/core"
 
 // Re-export for convenience
@@ -79,7 +79,7 @@ export async function toBookingPlain(bookingDoc: any): Promise<PopulatedBooking>
       notes: booking.notes,
       createdAt: formatDate(booking.createdAt),
       updatedAt: formatDate(booking.updatedAt),
-    } as PopulatedBooking
+    } as unknown as PopulatedBooking
   } catch (error) {
     logger.error("Error transforming booking to plain object:", error)
     throw error
@@ -97,7 +97,7 @@ export async function generateBookingNumber(): Promise<string> {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     )
-    return nextNum.seq.toString().padStart(6, "0")
+    return (nextNum as any).seq.toString().padStart(6, "0")
   } catch (error) {
     logger.error("Error generating booking number:", error)
     // Fallback to timestamp-based number

@@ -12,7 +12,7 @@ import { logger } from "@/lib/logs/logger"
 import type { IBookingDocument } from "@/types/core"
 import mongoose from "mongoose"
 import { revalidatePath } from "next/cache"
-import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { BookingStatus } from "@/types/core"
 import type {
   NotificationLanguage,
@@ -98,7 +98,7 @@ export async function professionalAcceptBooking(
           }
 
           if (recipients.length > 0) {
-            await sendProfessionalNotification.sendNotificationToMultiple(
+            await unifiedNotificationService.sendNotificationToMultiple(
               recipients,
               notificationData
             )
@@ -110,7 +110,7 @@ export async function professionalAcceptBooking(
           bookingId,
         })
       }
-      return { success: true, booking: acceptedBooking }
+      return { success: true, booking: acceptedBooking as unknown as IBookingDocument }
     }
     return { success: false, error: "bookings.errors.assignProfessionalFailed" }
   } catch (error) {
@@ -184,7 +184,7 @@ export async function professionalMarkEnRoute(
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
-    return { success: true, booking: booking.toObject() }
+    return { success: true, booking: booking.toObject() as unknown as IBookingDocument }
   } catch (error) {
     logger.error("Error in professionalMarkEnRoute:", { error, bookingId, professionalId })
     return { success: false, error: "bookings.errors.markEnRouteFailed" }
@@ -252,7 +252,7 @@ export async function professionalMarkCompleted(
       logger.error("Failed to send review reminder:", notifyError)
     }
 
-    return { success: true, booking: booking.toObject() }
+    return { success: true, booking: booking.toObject() as unknown as IBookingDocument }
   } catch (error) {
     logger.error("Error in professionalMarkCompleted:", { error, bookingId, professionalId })
     return { success: false, error: "bookings.errors.markCompletedFailed" }
@@ -353,7 +353,7 @@ export async function assignProfessionalToBooking(
           }
 
           if (clientRecipients.length > 0) {
-            await sendProfessionalNotification.sendNotificationToMultiple(
+            await unifiedNotificationService.sendNotificationToMultiple(
               clientRecipients,
               clientNotificationData
             )
@@ -393,7 +393,7 @@ export async function assignProfessionalToBooking(
           }
 
           if (professionalRecipients.length > 0) {
-            await sendProfessionalNotification.sendNotificationToMultiple(
+            await unifiedNotificationService.sendNotificationToMultiple(
               professionalRecipients,
               professionalNotificationData
             )
@@ -459,7 +459,7 @@ export async function unassignProfessionalFromBooking(
     revalidatePath("/dashboard/admin/bookings")
     revalidatePath("/dashboard/professional/bookings")
 
-    return { success: true, booking: booking.toObject() }
+    return { success: true, booking: booking.toObject() as unknown as IBookingDocument }
   } catch (error) {
     logger.error("Error in unassignProfessionalFromBooking:", { error, bookingId })
     return { success: false, error: "bookings.errors.unassignProfessionalFailed" }
@@ -603,7 +603,7 @@ export async function sendNotificationToSuitableProfessionals(
     for (const professional of professionalsResult.professionals) {
       try {
         const notificationData: ProfessionalBookingNotificationData = {
-          type: "NEW_BOOKING_AVAILABLE",
+          type: "professional-booking-notification",
           treatmentName: (booking.treatmentId as any).name,
           bookingDateTime: booking.bookingDateTime,
           professionalName: professional.name,
@@ -629,7 +629,7 @@ export async function sendNotificationToSuitableProfessionals(
         }
 
         if (recipients.length > 0) {
-          await sendProfessionalNotification.sendNotificationToMultiple(recipients, notificationData)
+          await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
           sentCount++
         }
       } catch (error) {

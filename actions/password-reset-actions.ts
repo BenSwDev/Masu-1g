@@ -144,8 +144,8 @@ export async function verifyResetToken(token: string): Promise<{
     console.log("Token found in database:", {
       token: tokenData.token,
       userId: tokenData.userId.toString(),
-      expiryDate: tokenData.expiryDate,
-      used: tokenData.used,
+      expiryDate: (tokenData as any).expiryDate,
+      used: (tokenData as any).used,
     })
 
     // Check if token has expired
@@ -162,7 +162,7 @@ export async function verifyResetToken(token: string): Promise<{
     }
 
     // Check if token was already used
-    if (tokenData.used) {
+    if ((tokenData as any).used) {
       // TODO: Remove debug log
 
       return {
@@ -335,7 +335,7 @@ export async function sendPasswordResetOTP(
     }
 
     // Send OTP for password reset
-    const otpResult = await sendOTP(phone, "phone", language)
+    const otpResult = await sendOTP(phone)
 
     if (!otpResult.success) {
       return {
@@ -348,8 +348,8 @@ export async function sendPasswordResetOTP(
     return {
       success: true,
       message: "If an account with this phone exists, you will receive an OTP",
-      obscuredIdentifier: otpResult.obscuredIdentifier,
-      expiryMinutes: otpResult.expiryMinutes,
+      obscuredIdentifier: (otpResult as any).obscuredIdentifier,
+      expiryMinutes: (otpResult as any).expiryMinutes,
     }
   } catch (error) {
     console.error("Error sending password reset OTP:", error)
@@ -375,11 +375,11 @@ export async function resetPasswordWithOTP(
 }> {
   try {
     // Verify OTP first
-    const otpVerification = await verifyOTP(phone, "phone", otpCode)
+    const otpVerification = await verifyOTP(phone, otpCode)
     if (!otpVerification.success) {
       return {
         success: false,
-        message: otpVerification.message,
+        message: (otpVerification as any).message,
         error: "OTP_VERIFICATION_FAILED",
       }
     }

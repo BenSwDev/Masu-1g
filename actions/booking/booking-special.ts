@@ -8,7 +8,7 @@ import Booking from "@/lib/db/models/booking"
 import Treatment from "@/lib/db/models/treatment"
 import Address from "@/lib/db/models/address"
 import User from "@/lib/db/models/user"
-import Professional from "@/lib/db/models/professional"
+import ProfessionalProfile from "@/lib/db/models/professional-profile"
 import Coupon from "@/lib/db/models/coupon"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import Subscription from "@/lib/db/models/subscription"
@@ -237,7 +237,7 @@ export async function findSuitableProfessionals(
     // Filter by availability (basic check - would need more sophisticated logic)
     const availableProfessionals = professionals.filter(prof => {
       // Basic availability check - in production this would check actual calendar
-      return prof.professionalProfile?.workingHours?.some((schedule: any) => {
+      return (prof as any).professionalProfile?.workingHours?.some((schedule: any) => {
         const bookingDay = bookingDateTime.getDay()
         const bookingHour = bookingDateTime.getHours()
 

@@ -61,7 +61,7 @@ function BookingCreateLoadingSkeleton() {
 
 async function BookingCreatePageContent() {
   try {
-    const initialData = await getBookingInitialData()
+    const initialData = await getBookingInitialData("admin")
 
     if (!initialData.success) {
       throw new Error(initialData.error || "Failed to load initial data")

@@ -42,20 +42,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { CustomPagination as Pagination } from "@/components/ui/pagination"
+import { Pagination as Pagination } from "@/components/ui/pagination"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useIsMobile } from "@/components/ui/use-mobile"
 
-import { GiftVoucherForm } from "./gift-voucher-form"
+import { voucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import {
-  getvouchers,
+  getGiftVouchers,
   deleteGiftVoucher,
   type GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
@@ -64,7 +64,7 @@ import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
 
-interface vouchersClientProps {
+interface GiftGiftVouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
   initialPagination: {
     total: number
@@ -89,7 +89,7 @@ const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment
 export function GiftVouchersClient({
   initialVouchers,
   initialPagination,
-}: vouchersClientProps) {
+}: GiftGiftVouchersClientProps) {
   const { toast } = useToast()
   const isMobile = useIsMobile()
   const [vouchers, setVouchers] = useState<GiftVoucherPlain[]>(initialVouchers)
@@ -103,7 +103,7 @@ export function GiftVouchersClient({
     GiftVoucherPlain["voucherType"] | "all"
   >("all")
   const [filterStatus, setFilterStatus] = useState<GiftVoucherPlain["status"] | "all">("all")
-  const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>(undefined)
+  const [filterDateRange, setFilterDateRange] = useState<Date | Date[] | { from: Date; to?: Date | undefined; } | undefined>(undefined)
 
   // View state
   const [viewMode, setViewMode] = useState<"table" | "cards">(isMobile ? "cards" : "table")
@@ -137,16 +137,18 @@ export function GiftVouchersClient({
           status: filterStatus === "all" ? undefined : filterStatus,
           dateRange: filterDateRange
             ? {
-                from: filterDateRange.from ? format(filterDateRange.from, "yyyy-MM-dd") : undefined,
-                to: filterDateRange.to ? format(filterDateRange.to, "yyyy-MM-dd") : undefined,
+                from: filter(dateRange as any)?.from ? format(filter(dateRange as any)?.from, "yyyy-MM-dd") : undefined,
+                to: filter(dateRange as any)?.to ? format(filter(dateRange as any)?.to, "yyyy-MM-dd") : undefined,
               }
             : undefined,
         }
 
-        const result = await getvouchers(page, pagination.limit, newSearch, currentFilters)
-        if (result.success && result.vouchers && result.pagination) {
+        const result = await getGiftVouchers()
+        if (result.success && result.vouchers) {
           setVouchers(result.vouchers)
-          setPagination(result.pagination)
+          if (result.pagination) {
+            setPagination(result.pagination)
+          }
           if (showRefreshToast) {
             toast({
               title: t("common.success"),
@@ -188,14 +190,14 @@ export function GiftVouchersClient({
   }, [search, filterVoucherType, filterStatus, filterDateRange, loadVouchers])
 
   const handleSearchAndFilter = () => {
-    setCurrentPage(1) // Reset to first page on new search/filter
+    setPage(1) // Reset to first page on new search/filter
     loadVouchers(1, search, {
       voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
       status: filterStatus === "all" ? undefined : filterStatus,
       dateRange: filterDateRange
         ? {
-            from: filterDateRange.from ? format(filterDateRange.from, "yyyy-MM-dd") : undefined,
-            to: filterDateRange.to ? format(filterDateRange.to, "yyyy-MM-dd") : undefined,
+            from: filter(dateRange as any)?.from ? format(filter(dateRange as any)?.from, "yyyy-MM-dd") : undefined,
+            to: filter(dateRange as any)?.to ? format(filter(dateRange as any)?.to, "yyyy-MM-dd") : undefined,
           }
         : undefined,
     })
@@ -434,13 +436,13 @@ export function GiftVouchersClient({
                 >
                   <Filter className="mr-2 h-4 w-4" />
                   {filterDateRange?.from ? (
-                    filterDateRange.to ? (
+                    filter(dateRange as any)?.to ? (
                       <>
-                        {format(filterDateRange.from, "LLL dd, y")} -{" "}
-                        {format(filterDateRange.to, "LLL dd, y")}
+                        {format(filter(dateRange as any)?.from, "LLL dd, y")} -{" "}
+                        {format(filter(dateRange as any)?.to, "LLL dd, y")}
                       </>
                     ) : (
-                      format(filterDateRange.from, "LLL dd, y")
+                      format(filter(dateRange as any)?.from, "LLL dd, y")
                     )
                   ) : (
                     <span>{t("vouchers.fields.validFrom")}</span>
@@ -594,7 +596,7 @@ export function GiftVouchersClient({
                 : t("vouchers.description")}
             </DialogDescription>
           </DialogHeader>
-          <GiftVoucherForm
+          <voucherForm
             initialData={editingVoucher ?? undefined}
             onSuccess={handleFormSuccess}
             onCancel={() => {
@@ -635,3 +637,4 @@ export function GiftVouchersClient({
     </div>
   )
 }
+

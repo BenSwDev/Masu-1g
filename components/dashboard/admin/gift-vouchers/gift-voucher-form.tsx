@@ -67,7 +67,7 @@ const voucherSchema = z
         Number.parseFloat(data.monetaryValue) <= 0
       ) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          
           message: "Monetary value must be a positive number",
           path: ["monetaryValue"],
         })
@@ -75,7 +75,7 @@ const voucherSchema = z
     } else if (data.voucherType === "treatment") {
       if (!data.treatmentId) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          
           message: "Treatment is required for treatment voucher",
           path: ["treatmentId"],
         })
@@ -84,7 +84,7 @@ const voucherSchema = z
     }
     if (data.validFrom && data.validUntil && data.validUntil < data.validFrom) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        
         message: "Valid until date must be after valid from date",
         path: ["validUntil"],
       })
@@ -200,7 +200,7 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
     try {
       setIsLoading(true)
       const formData: AdminGiftVoucherFormData = {
-        code: "", // Will be generated automatically
+         // Will be generated automatically
         voucherType: values.voucherType,
         treatmentId: values.treatmentId,
         selectedDurationId: values.selectedDurationId,

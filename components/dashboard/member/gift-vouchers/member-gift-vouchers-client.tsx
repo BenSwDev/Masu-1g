@@ -15,7 +15,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import {
   getMemberOwnedVouchers,
   getMemberPurchasedVouchers,
-  getvouchersList,
+  getGiftVouchersList,
   type GiftVoucher as GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
@@ -48,8 +48,8 @@ export default function MemberGiftVouchersClient({
     setLoading(true)
     try {
       const [ownedResult, purchasedResult] = await Promise.all([
-        getMemberOwnedVouchers(userId || ""),
-        getMemberPurchasedVouchers(userId || ""),
+        getMemberOwnedVouchers(session.user.id || ""),
+        getMemberPurchasedVouchers(session.user.id || ""),
       ])
 
       if (ownedResult.success) {

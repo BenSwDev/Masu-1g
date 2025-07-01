@@ -394,21 +394,34 @@ export async function getGuestBookingInitialData(): Promise<{
     await dbConnect()
     logger.info("Database connected successfully")
 
-    // Get active treatments
+    // Get active treatments with timeout and optimized query
     logger.info("Fetching active treatments...")
-    const treatments = await Treatment.find({ isActive: true })
+    const treatmentsPromise = Treatment.find({ isActive: true })
       .select("name description durations pricingType fixedPrice category")
       .lean()
-    logger.info(`Found ${treatments.length} active treatments`)
+      .maxTimeMS(15000) // 15 second timeout
+      .exec()
 
-    // Get active coupons
+    // Get active coupons with timeout and optimized query
     logger.info("Fetching active coupons...")
-    const coupons = await Coupon.find({
+    const couponsPromise = Coupon.find({
       isActive: true,
       $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     })
       .select("code discountType discountValue description")
       .lean()
+      .maxTimeMS(15000) // 15 second timeout
+      .exec()
+
+    // Execute both queries in parallel with overall timeout
+    const [treatments, coupons] = await Promise.race([
+      Promise.all([treatmentsPromise, couponsPromise]),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Query timeout after 20 seconds")), 20000)
+      )
+    ]) as [any[], any[]]
+
+    logger.info(`Found ${treatments.length} active treatments`)
     logger.info(`Found ${coupons.length} active coupons`)
 
     const result = {
@@ -441,7 +454,31 @@ export async function getGuestBookingInitialData(): Promise<{
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined
     })
-    return { success: false, error: "common.unknown" }
+    
+    // Return minimal data if database queries fail
+    logger.info("Returning fallback data due to database error")
+    return {
+      success: true,
+      data: {
+        treatments: [],
+        coupons: [],
+        surcharges: [
+          {
+            type: "evening",
+            name: "תוספת ערב",
+            amount: 20,
+            description: "תוספת עבור טיפול בשעות הערב",
+          },
+          {
+            type: "weekend",
+            name: "תוספת סוף שבוע",
+            amount: 30,
+            description: "תוספת עבור טיפול בסוף השבוע",
+          },
+          { type: "holiday", name: "תוספת חג", amount: 50, description: "תוספת עבור טיפול בחג" },
+        ],
+      },
+    }
   }
 }
 

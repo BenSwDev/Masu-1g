@@ -35,6 +35,7 @@ interface GuestTreatmentSelectionStepProps {
   userSubscription?: any
   currentUser?: any
   setRedemptionData?: React.Dispatch<React.SetStateAction<any>>
+  guestInfo?: { phone?: string } // Add guest info for phone validation
 }
 
 export function GuestTreatmentSelectionStep({
@@ -50,6 +51,7 @@ export function GuestTreatmentSelectionStep({
   userSubscription,
   currentUser,
   setRedemptionData,
+  guestInfo,
 }: GuestTreatmentSelectionStepProps) {
   const { t, dir } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null)
@@ -316,7 +318,9 @@ export function GuestTreatmentSelectionStep({
     setRedemptionError(null)
     
     try {
-      const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id)
+      // Get guest phone from guestInfo prop
+      const guestPhone = guestInfo?.phone
+      const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id, guestPhone)
       
       if (result.success && result.redemption) {
         // Update booking options with redemption data

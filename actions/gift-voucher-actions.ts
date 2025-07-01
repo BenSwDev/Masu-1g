@@ -272,7 +272,7 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       validUntil: new Date(data.validUntil),
       status: data.status,
       isActive: ["active", "partially_used", "sent"].includes(data.status),
-      isGift: false, // Admin created are not gifts by default
+      isGift: true, // ALL vouchers are gifts by definition
       purchaseDate: new Date(),
     }
 

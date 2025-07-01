@@ -116,37 +116,80 @@ export default function UniversalBookingWizard({
   const [redemptionData, setRedemptionData] = useState<any>(null)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
-    // Priority 1: Logged in user data
-    if (currentUser) {
-      const [first, ...rest] = (currentUser.name || "").split(" ")
-      return {
-        firstName: first || "",
-        lastName: rest.join(" ") || "",
-        email: currentUser.email || "",
-        phone: currentUser.phone || "",
-        birthDate: (currentUser as any).dateOfBirth ? new Date((currentUser as any).dateOfBirth) : undefined,
-        gender: (currentUser as any).gender,
-        isBookingForSomeoneElse: false,
-        bookerNotificationMethod: "email", // Default for logged in users
-        bookerNotificationLanguage: "he"
+    // 🎯 PRIORITY 1: Legal redemption data (HIGHEST PRIORITY - BUSINESS RULE ENFORCEMENT)
+    // This ensures only the rightful owner can redeem vouchers/subscriptions
+    
+    // Check redemption data from code input first (most authoritative)
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For gift vouchers - ONLY the recipient can redeem
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.isGift && redemption.data?.recipientName) {
+        const [first, ...rest] = redemption.data.recipientName.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          phone: redemption.data.recipientPhone || "",
+          email: redemption.data.recipientEmail || "",
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
       }
+      
+      // For subscriptions - ONLY the purchaser can redeem
+      if (redemption.type === "subscription") {
+        // If subscription was purchased by a logged-in user
+        if (redemption.data?.userId && currentUser?.id === redemption.data.userId.toString()) {
+          // Use current user data (they are the rightful owner)
+          const [first, ...rest] = (currentUser?.name || "").split(" ")
+          return {
+            firstName: first || "",
+            lastName: rest.join(" ") || "",
+            email: currentUser?.email || "",
+            phone: currentUser?.phone || "",
+            birthDate: (currentUser as any)?.dateOfBirth ? new Date((currentUser as any).dateOfBirth) : undefined,
+            gender: (currentUser as any)?.gender,
+            isBookingForSomeoneElse: false,
+            bookerNotificationMethod: "email",
+            bookerNotificationLanguage: "he"
+          }
+        }
+        // If subscription was purchased by a guest
+        else if (redemption.data?.guestInfo) {
+          const guestInfo = redemption.data.guestInfo
+          const [first, ...rest] = guestInfo.name.split(" ")
+          return {
+            firstName: first,
+            lastName: rest.join(" "),
+            email: guestInfo.email || "",
+            phone: guestInfo.phone || "",
+            isBookingForSomeoneElse: false,
+            bookerNotificationMethod: "email",
+            bookerNotificationLanguage: "he"
+          }
+        }
+      }
+      
+      // Since ALL vouchers are gifts, this section is no longer needed
+      // All voucher ownership is handled by the recipient logic above
     }
     
-    // Priority 2: Gift voucher data
-    if (voucher?.isGift && voucher.recipientName) {
+    // Check voucher passed as props (legacy flow) - ALL vouchers are gifts
+    if (voucher?.recipientName) {
       const [first, ...rest] = voucher.recipientName.split(" ")
       return {
         firstName: first,
         lastName: rest.join(" "),
         phone: voucher.recipientPhone,
-        email: "", // Gift vouchers usually don't have recipient email
-        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
+        email: voucher.recipientEmail || "", // Gift vouchers may have recipient email
+        isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
       }
     }
     
-    // Priority 3: Voucher guest info
+    // Check voucher purchased by guest (legacy flow)
     if ((voucher as any)?.guestInfo) {
       const guestInfo = (voucher as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
@@ -161,7 +204,7 @@ export default function UniversalBookingWizard({
       }
     }
     
-    // Priority 4: Subscription guest info
+    // Check subscription purchased by guest (legacy flow)
     if ((userSubscription as any)?.guestInfo) {
       const guestInfo = (userSubscription as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
@@ -176,56 +219,23 @@ export default function UniversalBookingWizard({
       }
     }
     
-    // Priority 5: Redemption data from code input
-    if (redemptionData) {
-      const redemption = redemptionData
-      
-      // For gift vouchers with recipient info
-      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.isGift && redemption.data?.recipientName) {
-        const [first, ...rest] = redemption.data.recipientName.split(" ")
-        return {
-          firstName: first,
-          lastName: rest.join(" "),
-          phone: redemption.data.recipientPhone || "",
-          email: redemption.data.recipientEmail || "",
-          isBookingForSomeoneElse: false,
-          bookerNotificationMethod: "email",
-          bookerNotificationLanguage: "he"
-        }
-      }
-      
-      // For non-gift vouchers purchased by guests
-      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.guestInfo && !redemption.data?.isGift) {
-        const guestInfo = redemption.data.guestInfo
-        const [first, ...rest] = guestInfo.name.split(" ")
-        return {
-          firstName: first,
-          lastName: rest.join(" "),
-          email: guestInfo.email || "",
-          phone: guestInfo.phone || "",
-          isBookingForSomeoneElse: false,
-          bookerNotificationMethod: "email",
-          bookerNotificationLanguage: "he"
-        }
-      }
-      
-      // For subscriptions with guest info
-      if (redemption.type === "subscription" && redemption.data?.guestInfo) {
-        const guestInfo = redemption.data.guestInfo
-        const [first, ...rest] = guestInfo.name.split(" ")
-        return {
-          firstName: first,
-          lastName: rest.join(" "),
-          email: guestInfo.email || "",
-          phone: guestInfo.phone || "",
-          isBookingForSomeoneElse: false,
-          bookerNotificationMethod: "email",
-          bookerNotificationLanguage: "he"
-        }
+    // 👤 PRIORITY 2: Logged in user data (ONLY if no redemption)
+    if (currentUser) {
+      const [first, ...rest] = (currentUser.name || "").split(" ")
+      return {
+        firstName: first || "",
+        lastName: rest.join(" ") || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        birthDate: (currentUser as any).dateOfBirth ? new Date((currentUser as any).dateOfBirth) : undefined,
+        gender: (currentUser as any).gender,
+        isBookingForSomeoneElse: false,
+        bookerNotificationMethod: "email",
+        bookerNotificationLanguage: "he"
       }
     }
     
-    // Default for guests
+    // 👥 PRIORITY 3: Default for guests (no locked fields)
     return {
       isBookingForSomeoneElse: false,
       bookerNotificationMethod: "email",
@@ -234,7 +244,61 @@ export default function UniversalBookingWizard({
   }, [voucher, userSubscription, currentUser, redemptionData])
 
   const lockedFields = useMemo(() => {
-    // If user is logged in, lock their basic info
+    // 🎯 PRIORITY 1: Legal redemption locks (HIGHEST PRIORITY - CANNOT BE OVERRIDDEN)
+    // These fields are COMPLETELY LOCKED when redeeming vouchers/subscriptions
+    
+    // Check redemption data from code input first (most authoritative)
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For ALL vouchers (all are gifts) - LOCK recipient info (only recipient can redeem)
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.recipientName) {
+        const fields = ["firstName", "lastName"] as const
+        const fieldsWithPhone = redemption.data?.recipientPhone ? [...fields, "phone"] as const : fields
+        const fieldsWithEmail = redemption.data?.recipientEmail ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+        return fieldsWithEmail
+      }
+      
+      // For subscriptions - LOCK purchaser info (only purchaser can redeem)
+      if (redemption.type === "subscription") {
+        // If subscription was purchased by a logged-in user, lock ALL their fields
+        if (redemption.data?.userId && currentUser?.id === redemption.data.userId.toString()) {
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          return fieldsWithEmail
+        }
+        // If subscription was purchased by a guest, lock guest purchaser info
+        else if (redemption.data?.guestInfo) {
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = redemption.data.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = redemption.data.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          return fieldsWithEmail
+        }
+      }
+      
+      // Since ALL vouchers are gifts, this section is no longer needed
+      // All voucher ownership is handled by the recipient logic above
+    }
+    
+    // Check voucher passed as props (legacy flow) - ALL vouchers are gifts
+    if (voucher?.recipientName) {
+      const fields = ["firstName", "lastName", "phone"] as const
+      const fieldsWithEmail = voucher.recipientEmail ? [...fields, "email"] as const : fields
+      return fieldsWithEmail
+    }
+    
+    // Check voucher purchased by guest (legacy flow)
+    if ((voucher as any)?.guestInfo) {
+      return ["firstName", "lastName", "phone", "email"] as const
+    }
+    
+    // Check subscription purchased by guest (legacy flow)
+    if ((userSubscription as any)?.guestInfo) {
+      return ["firstName", "lastName", "email", "phone"] as const
+    }
+    
+    // 👤 PRIORITY 2: Logged in user locks (ONLY if no redemption)
     if (currentUser) {
       const baseFields = ["firstName", "lastName"] as const
       const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
@@ -242,61 +306,7 @@ export default function UniversalBookingWizard({
       return fieldsWithEmail
     }
     
-    // Check redemption data from code input first
-    if (redemptionData) {
-      const redemption = redemptionData
-      
-      // For treatment vouchers, lock fields based on voucher data
-      if (redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") {
-        const voucherData = redemption.data as any
-        
-        // If it's a gift voucher, lock recipient info
-        if (voucherData?.isGift && voucherData?.recipientName) {
-          const fields = ["firstName", "lastName"] as const
-          const fieldsWithPhone = voucherData?.recipientPhone ? [...fields, "phone"] as const : fields
-          if (voucherData?.recipientEmail) {
-            return [...fieldsWithPhone, "email"] as const
-          }
-          return fieldsWithPhone
-        }
-        
-        // If it's a non-gift voucher purchased by a guest, lock purchaser info
-        if (voucherData?.guestInfo && !voucherData?.isGift) {
-          const baseFields = ["firstName", "lastName"] as const
-          const fieldsWithPhone = voucherData.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
-          const fieldsWithEmail = voucherData.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
-          return fieldsWithEmail
-        }
-      }
-      
-      // For subscriptions, lock fields based on subscription data
-      if (redemption.type === "subscription") {
-        const subscriptionData = redemption.data as any
-        if (subscriptionData?.guestInfo) {
-          const baseFields = ["firstName", "lastName"] as const
-          const fieldsWithPhone = subscriptionData.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
-          const fieldsWithEmail = subscriptionData.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
-          return fieldsWithEmail
-        }
-      }
-    }
-    
-    // Fallback to props-based logic (legacy flow)
-    if (voucher?.isGift && voucher.recipientName) {
-      // For gift vouchers - lock name and phone, but email might be empty so allow editing
-      const fields = ["firstName", "lastName", "phone"] as const
-      if ((voucher as any).recipientEmail) {
-        return [...fields, "email"] as const
-      }
-      return fields
-    }
-    if ((voucher as any)?.guestInfo) {
-      // For non-gift vouchers purchased by guests - lock all fields
-      return ["firstName", "lastName", "phone", "email"] as const
-    }
-    if ((userSubscription as any)?.guestInfo) {
-      return ["firstName", "lastName", "email", "phone"] as const
-    }
+    // 👥 PRIORITY 3: No locks for guests (all fields editable)
     return [] as const
   }, [voucher, userSubscription, currentUser, redemptionData])
 
@@ -674,7 +684,7 @@ export default function UniversalBookingWizard({
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
     const payload: CalculatePricePayloadType = {
-      userId: guestUserId || "guest",
+      userId: currentUser?.id || guestUserId || undefined,
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
@@ -682,6 +692,7 @@ export default function UniversalBookingWizard({
       giftVoucherCode: voucher?.code,
       userSubscriptionId:
         bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
+      guestPhone: !currentUser ? guestInfo.phone : undefined, // Add guest phone for ownership validation
     }
     
     const result = await calculateBookingPrice(payload)
@@ -1243,11 +1254,52 @@ export default function UniversalBookingWizard({
         },
       } as CreateBookingPayloadType & { guestInfo: { name: string; email?: string; phone: string } }
 
-      // Choose the correct function based on user type
-      const result = currentUser 
+      // ✅ Choose the correct function based on redemption ownership
+      // When redeeming voucher/subscription, booking goes to the owner, not current user
+      let targetUserId = null
+      
+      if (redemptionData) {
+        // For vouchers - booking goes to recipient (ownerUserId)  
+        if (redemptionData.type === "treatment_voucher" || redemptionData.type === "monetary_voucher") {
+          // Use findOrCreateUserByPhone to get/create the recipient user
+          const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+          const recipientPhone = redemptionData.data?.recipientPhone || guestInfo.phone
+          const recipientResult = await findOrCreateUserByPhone(recipientPhone, {
+            name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+            email: guestInfo.email,
+            gender: guestInfo.gender,
+            dateOfBirth: guestInfo.birthDate
+          })
+          
+          if (recipientResult.success) {
+            targetUserId = recipientResult.userId
+          }
+        }
+        // For subscriptions - booking goes to purchaser
+        else if (redemptionData.type === "subscription") {
+          // Use findOrCreateUserByPhone to get/create the purchaser user
+          const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+          const purchaserPhone = redemptionData.data?.guestInfo?.phone || guestInfo.phone
+          const purchaserResult = await findOrCreateUserByPhone(purchaserPhone, {
+            name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+            email: guestInfo.email,
+            gender: guestInfo.gender,
+            dateOfBirth: guestInfo.birthDate
+          })
+          
+          if (purchaserResult.success) {
+            targetUserId = purchaserResult.userId
+          }
+        }
+      } else if (currentUser) {
+        // No redemption - use current logged-in user
+        targetUserId = currentUser.id
+      }
+      
+      const result = targetUserId 
         ? await createBooking({
             ...payload,
-            userId: currentUser.id, // Use actual user ID for registered users
+            userId: targetUserId,
             // Remove guestInfo for registered users as it's not needed
             guestInfo: undefined
           })
@@ -1281,18 +1333,19 @@ export default function UniversalBookingWizard({
       case 1:
         // NEW ORDER: Treatment Selection First
         return (
-          <GuestTreatmentSelectionStep
-            initialData={initialData}
-            initialCategory={initialCategory}
-            bookingOptions={bookingOptions}
-            setBookingOptions={setBookingOptions}
-            onNext={nextStep}
-            onPrev={prevStep}
-            voucher={voucher}
-            userSubscription={userSubscription}
-            currentUser={currentUser}
-            setRedemptionData={setRedemptionData}
-          />
+                      <GuestTreatmentSelectionStep
+              initialData={initialData}
+              initialCategory={initialCategory}
+              bookingOptions={bookingOptions}
+              setBookingOptions={setBookingOptions}
+              onNext={nextStep}
+              onPrev={prevStep}
+              voucher={voucher}
+              userSubscription={userSubscription}
+              currentUser={currentUser}
+              setRedemptionData={setRedemptionData}
+              guestInfo={guestInfo}
+            />
         )
       case 2:
         // NEW ORDER: Scheduling Second

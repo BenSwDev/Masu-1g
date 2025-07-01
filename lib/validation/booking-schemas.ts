@@ -291,7 +291,7 @@ export const BookingWizardSchema = BaseBookingWizardSchema
 
 // Schema for the payload of calculateBookingPrice action
 export const CalculatePricePayloadSchema = z.object({
-  userId: z.string(),
+  userId: z.string().optional(), // Made optional for guest bookings
   treatmentId: z.string(),
   selectedDurationId: z.string().optional(),
   bookingDateTime: z.date(),
@@ -304,6 +304,7 @@ export const CalculatePricePayloadSchema = z.object({
   recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
   recipientGender: z.enum(["male", "female", "other"]).optional(),
+  guestPhone: z.string().optional(), // Add guest phone for ownership validation
 })
 
 // Schema for the payload of createBooking action

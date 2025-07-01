@@ -402,7 +402,7 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
             <h4 className="font-medium text-sm">פרטי טיפול וכתובת</h4>
             <div className="space-y-1 text-sm">
               <div className="font-medium text-base">
-                {typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'טיפול לא ידוע'}
+                {booking.treatmentId && typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'טיפול לא ידוע'}
               </div>
               {booking.bookingAddressSnapshot && (
                 <div className="flex items-start gap-2">
@@ -440,11 +440,13 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
               <span>תשלום למטפל:</span>
               <span className="font-medium text-green-600">
                 ₪{booking.priceDetails.totalProfessionalPayment || 
-                  professional.treatments.find(t => 
-                    t.treatmentId.toString() === (typeof booking.treatmentId === 'object' 
-                      ? booking.treatmentId._id?.toString() 
-                      : booking.treatmentId?.toString())
-                  )?.professionalPrice || 0}
+                  professional.treatments.find(t => {
+                    if (!booking.treatmentId) return false
+                    const bookingTreatmentId = typeof booking.treatmentId === 'object' && booking.treatmentId._id
+                      ? booking.treatmentId._id.toString() 
+                      : typeof booking.treatmentId === 'string' ? booking.treatmentId : null
+                    return bookingTreatmentId && t.treatmentId.toString() === bookingTreatmentId
+                  })?.professionalPrice || 0}
               </span>
             </div>
           </div>
@@ -474,18 +476,25 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
     (professionalUser && professionalUser.gender === booking.therapistGenderPreference)
 
   // Check treatment match
-  const treatmentId = typeof booking.treatmentId === 'object' 
-    ? booking.treatmentId._id?.toString() 
-    : booking.treatmentId?.toString()
+  const treatmentId = (() => {
+    if (!booking.treatmentId) return null
+    if (typeof booking.treatmentId === 'object' && booking.treatmentId._id) {
+      return booking.treatmentId._id.toString()
+    }
+    if (typeof booking.treatmentId === 'string') {
+      return booking.treatmentId
+    }
+    return null
+  })()
 
-  const treatmentMatch = professional.treatments.some(treatment => 
+  const treatmentMatch = treatmentId ? professional.treatments.some(treatment => 
     treatment.treatmentId.toString() === treatmentId
-  )
+  ) : false
 
   // Get professional payment for this treatment
-  const professionalTreatment = professional.treatments.find(treatment => 
+  const professionalTreatment = treatmentId ? professional.treatments.find(treatment => 
     treatment.treatmentId.toString() === treatmentId
-  )
+  ) : null
 
   // Check city coverage
   const bookingCity = booking.bookingAddressSnapshot?.city
@@ -522,7 +531,7 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
           <XCircle className="w-4 h-4 text-red-600" />
         )}
         <span className={treatmentMatch ? "text-green-700" : "text-red-700"}>
-          טיפול: {typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'לא ידוע'}
+          טיפול: {booking.treatmentId && typeof booking.treatmentId === 'object' ? booking.treatmentId.name : 'לא ידוע'}
         </span>
       </div>
 

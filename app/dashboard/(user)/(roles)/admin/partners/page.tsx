@@ -1,17 +1,17 @@
-import { Suspense } from "react"
+﻿import { Suspense } from "react"
 import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { PartnerManagement } from "@/components/dashboard/admin/partner-management/partner-management"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getPartners } from "./actions"
 
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "ניהול שותפים | מנהל",
-  description: "ניהול שותפים במערכת",
+  title: "× ×™×”×•×œ ×©×•×ª×¤×™× | ×ž× ×”×œ",
+  description: "× ×™×”×•×œ ×©×•×ª×¤×™× ×‘×ž×¢×¨×›×ª",
 }
 
 function PartnersLoadingSkeleton() {
@@ -39,7 +39,7 @@ function PartnersLoadingSkeleton() {
 async function PartnersPageContent() {
   const initialData = await getPartners({ page: 1, limit: 10, search: "" })
   if (!initialData.success) {
-    return <p className="text-center text-red-500">שגיאה בטעינת השותפים</p>
+    return <p className="text-center text-red-500">×©×’×™××” ×‘×˜×¢×™× ×ª ×”×©×•×ª×¤×™×</p>
   }
   return (
     <PartnerManagement
@@ -61,8 +61,8 @@ export default async function AdminPartnersPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">ניהול שותפים</h1>
-          <p className="text-muted-foreground">ניהול וצפייה ברשימת השותפים במערכת</p>
+          <h1 className="text-3xl font-bold tracking-tight">× ×™×”×•×œ ×©×•×ª×¤×™×</h1>
+          <p className="text-muted-foreground">× ×™×”×•×œ ×•×¦×¤×™×™×” ×‘×¨×©×™×ž×ª ×”×©×•×ª×¤×™× ×‘×ž×¢×¨×›×ª</p>
         </div>
       </div>
       <Suspense fallback={<PartnersLoadingSkeleton />}>
@@ -72,3 +72,5 @@ export default async function AdminPartnersPage() {
     </div>
   )
 }
+
+

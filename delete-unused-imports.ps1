@@ -1,4 +1,4 @@
-﻿# PowerShell script to delete unused imports from specific files
+# PowerShell script to delete unused imports from specific files
 # This script removes only the unused imports identified in the linting analysis
 
 Write-Host "Starting unused import cleanup..." -ForegroundColor Green

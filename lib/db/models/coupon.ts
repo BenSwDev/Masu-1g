@@ -61,6 +61,11 @@ CouponSchema.virtual("isUsageLimitReached").get(function () {
   return this.usageLimit !== 0 && this.timesUsed >= this.usageLimit
 })
 
+// Add indexes for better performance
+CouponSchema.index({ isActive: 1 })
+CouponSchema.index({ isActive: 1, validUntil: 1 })
+CouponSchema.index({ validUntil: 1 })
+
 const Coupon: Model<ICoupon> =
   mongoose.models.Coupon || mongoose.model<ICoupon>("Coupon", CouponSchema)
 

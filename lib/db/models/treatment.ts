@@ -132,6 +132,10 @@ TreatmentSchema.pre("save", function (this: ITreatment, next) {
   next()
 })
 
+// Add indexes for better performance
+TreatmentSchema.index({ isActive: 1 })
+TreatmentSchema.index({ category: 1, isActive: 1 })
+
 const Treatment: Model<ITreatment> =
   mongoose.models.Treatment || mongoose.model<ITreatment>("Treatment", TreatmentSchema)
 

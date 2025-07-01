@@ -1,27 +1,21 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
-import { Badge } from "@/components/ui/badge"
-
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import React, { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
+import { Gift, Plus, RefreshCw, ShoppingBag, TrendingUp, Clock, XCircle } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
-import {
-  getMemberOwnedVouchers,
-  getMemberPurchasedVouchers,
-  getvouchersList,
-  type GiftVoucher as GiftVoucherPlain,
-} from "@/actions/gift-voucher-actions"
-import MemberGiftVoucherCard from "./member-gift-voucher-card"
-import { Gift, Plus, ShoppingBag, RefreshCw, TrendingUp, Clock, XCircle } from "lucide-react"
-import MemberGiftVoucherDetailsModal from "./member-gift-voucher-details-modal"
+import { toast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import type { GiftVoucherPlain } from "@/types/core"
+import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gift-voucher-actions"
+import { GiftVoucherCard } from "@/components/common/purchase/gift-voucher-card"
+import { GiftVoucherDetailsModal } from "@/components/dashboard/member/gift-vouchers/gift-voucher-details-modal"
+import MemberGiftVoucherCard from "./member-gift-voucher-card"
 
 interface MemberGiftVouchersClientProps {
   initialOwnedVouchers?: GiftVoucherPlain[]
@@ -43,6 +37,10 @@ export default function MemberGiftVouchersClient({
   const [selectedVoucherForDetails, setSelectedVoucherForDetails] =
     useState<GiftVoucherPlain | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
+  // Get userId from session
+  const { data: session } = useSession()
+  const userId = session?.user?.id
 
   const refreshVouchers = async () => {
     setLoading(true)

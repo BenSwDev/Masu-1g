@@ -106,7 +106,6 @@ export function GuestPaymentStep({
       onConfirm()
     },
     onFailure: customFailureHandler,
-    pendingBookingId: null, // ✅ Not needed anymore
   })
   const [marketingConsent, setMarketingConsent] = useState(true)
   const [termsAccepted, setTermsAccepted] = useState(true)

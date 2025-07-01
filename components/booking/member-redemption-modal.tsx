@@ -7,6 +7,7 @@ import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
 import type { GiftVoucher } from '@/types/core';
 import { useTranslation } from "@/lib/translations/i18n"
+import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 
 interface MemberRedemptionModalProps {
   subscriptions: BookingInitialData["activeUserSubscriptions"]
@@ -35,7 +36,7 @@ export default function MemberRedemptionModal({
           <DialogTitle>{t("bookings.redeem.chooseTitle") || "מימוש שובר או מנוי"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {subscriptions?.map((sub: UserSubscription) => (
+          {subscriptions?.map((sub: IUserSubscription) => (
             <div key={sub._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{(sub.subscriptionId as any)?.name}</div>
               {sub.treatmentId && (

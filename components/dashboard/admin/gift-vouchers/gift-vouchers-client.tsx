@@ -188,7 +188,7 @@ export function GiftVouchersClient({
   }, [search, filterVoucherType, filterStatus, filterDateRange, loadVouchers])
 
   const handleSearchAndFilter = () => {
-    setCurrentPage(1) // Reset to first page on new search/filter
+    // setCurrentPage(1) // Reset to first page on new search/filter
     loadVouchers(1, search, {
       voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
       status: filterStatus === "all" ? undefined : filterStatus,

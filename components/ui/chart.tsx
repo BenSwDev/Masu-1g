@@ -5,6 +5,10 @@ import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
 
+// Define types for chart components
+type ValueType = string | number | (string | number)[]
+type NameType = string | number
+
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
 

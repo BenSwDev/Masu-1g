@@ -106,7 +106,7 @@
     "puppeteer": "^24.10.1",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5.8.3"
   },
   "overrides": {
     "@auth/core": "^0.34.2"

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { useToast } from "@/components/common/ui/use-toast"
+import { PhoneInput } from "@/components/common/phone-input"
 import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX, Pencil, X, MapPin, Briefcase, Shield, Eye, EyeOff } from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
@@ -340,21 +341,18 @@ export default function ProfessionalBasicInfoTab({
                 <Label htmlFor="phone" className="text-sm font-medium">
                   טלפון *
                 </Label>
-                <div className="relative">
-                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      setFormData(prev => ({ ...prev, phone: e.target.value }))
-                      if (validationErrors.phone) {
-                        setValidationErrors(prev => ({ ...prev, phone: "" }))
-                      }
-                    }}
-                    placeholder="050-1234567"
-                    className={`pr-10 ${validationErrors.phone ? "border-red-500" : ""}`}
-                  />
-                </div>
+                <PhoneInput
+                  id="phone"
+                  fullNumberValue={formData.phone}
+                  onPhoneChange={(value) => {
+                    setFormData(prev => ({ ...prev, phone: value }))
+                    if (validationErrors.phone) {
+                      setValidationErrors(prev => ({ ...prev, phone: "" }))
+                    }
+                  }}
+                  placeholder="050-1234567"
+                  className={validationErrors.phone ? "border-red-500" : ""}
+                />
                 {validationErrors.phone && (
                   <p className="text-sm text-red-500">{validationErrors.phone}</p>
                 )}

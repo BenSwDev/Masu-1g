@@ -115,7 +115,7 @@ export default function ProfessionalTreatmentsTabNew({
         }
         
         const _data = await response.json()
-        const treatmentList = data.treatments || []
+        const treatmentList = _data.treatments || []
         
         if (!Array.isArray(treatmentList)) {
           throw new Error('Invalid treatments data format')

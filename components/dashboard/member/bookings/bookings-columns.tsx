@@ -438,10 +438,10 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
           if (selectedDuration) {
-            durationDisplay = t("memberBookings.table.duration", { minutes: selectedDuration.minutes })
+            durationDisplay = t("memberBookings.table.duration")
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
-          durationDisplay = t("memberBookings.table.duration", { minutes: treatment.defaultDurationMinutes })
+                      durationDisplay = t("memberBookings.table.duration")
         }
 
         return (
@@ -545,7 +545,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
           dayLabel = t("memberBookings.table.tomorrow")
         } else if (!isPast) {
           const daysFromNow = Math.ceil((bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-          dayLabel = t("memberBookings.table.daysRemaining", { days: daysFromNow })
+          dayLabel = t("memberBookings.table.daysRemaining")
         } else {
           dayLabel = t("memberBookings.table.past")
         }

@@ -82,17 +82,17 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
     try {
       setLoading(true)
       const _data = new FormData()
-      data.append("name", values.name)
-      if (values.email) data.append("email", values.email)
-      data.append("phone", values.phone ?? "")
-      if (!initialData && values.password) data.append("password", values.password)
-      data.append("gender", values.gender)
-      data.append("businessNumber", values.businessNumber)
-      data.append("contactName", values.contactName)
+      _data.append("name", _values.name)
+      if (_values.email) _data.append("email", _values.email)
+      _data.append("phone", _values.phone ?? "")
+      if (!initialData && _values.password) _data.append("password", _values.password)
+      _data.append("gender", _values.gender)
+      _data.append("businessNumber", _values.businessNumber)
+      _data.append("contactName", _values.contactName)
 
       const result = initialData
-        ? await updatePartner(initialData.id, data)
-        : await createPartner(data)
+        ? await updatePartner(initialData.id, _data)
+        : await createPartner(_data)
 
       if (result.success) {
         toast({ title: "הצלחה", description: initialData ? "השותף עודכן" : "השותף נוצר" })

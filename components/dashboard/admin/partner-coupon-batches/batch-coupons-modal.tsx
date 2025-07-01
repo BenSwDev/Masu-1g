@@ -102,7 +102,7 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
       if (result.success) {
         toast({
           title: t("common.success"),
-          description: t("adminPartnerCouponBatches.toast.bulkUpdateSuccess", { count: result.updatedCount }),
+          description: t("adminPartnerCouponBatches.toast.bulkUpdateSuccess"),
         })
         await loadCoupons() // Reload to see updated status
         setSelectedCoupons([])
@@ -219,7 +219,7 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
           {selectedCoupons.length > 0 && (
             <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <span className="text-sm font-medium">
-                {t("adminPartnerCouponBatches.couponModal.selectedCount", { count: selectedCoupons.length })}
+                {t("adminPartnerCouponBatches.couponModal.selectedCount")}
               </span>
               <div className="flex gap-2 ml-auto">
                 <Button

@@ -96,9 +96,9 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     try {
       let result
       if (editingCoupon) {
-        result = await updateCoupon({ ...values, id: editingCoupon._id.toString() })
+        result = await updateCoupon({ ..._values, id: editingCoupon._id.toString() })
       } else {
-        result = await createCoupon(values)
+        result = await createCoupon(_values)
       }
 
       if (result.success && result.data) {
@@ -209,7 +209,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
             // state={{ pagination: { pageIndex: pagination.currentPage - 1, pageSize: 10 /* or your page size */ } }}
           />
           <p className="text-sm text-muted-foreground mt-2">
-            {t("adminCoupons.totalCoupons", { count: pagination.totalCoupons })}
+            {t("adminCoupons.totalCoupons")}
           </p>
         </>
       )}

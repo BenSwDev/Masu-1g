@@ -13,6 +13,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import { PhoneInput } from "@/components/common/phone-input"
 
 interface ProfessionalProfileTabProps extends ProfessionalTabProps {}
 
@@ -27,11 +28,11 @@ export default function ProfessionalProfileTab({
   const { toast } = useToast()
   
   const [userDetails, setUserDetails] = useState({
-    name: professional.userId.name || "",
-    email: professional.userId.email || "",
-    phone: professional.userId.phone || "",
-    gender: professional.userId.gender || "",
-    birthDate: professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
+    name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
+    email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
+    phone: typeof professional.userId === 'object' ? professional.userId.phone || "" : "",
+    gender: typeof professional.userId === 'object' ? professional.userId.gender || "" : "",
+    birthDate: typeof professional.userId === 'object' && professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
   })
   
   const [professionalDetails, setProfessionalDetails] = useState({
@@ -211,13 +212,11 @@ export default function ProfessionalProfileTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="phone">טלפון</Label>
-              <Input
+              <PhoneInput
                 id="phone"
-                value={userDetails.phone}
-                onChange={(e) => handleUserDetailChange("phone", e.target.value)}
+                fullNumberValue={userDetails.phone}
+                onPhoneChange={(value) => handleUserDetailChange("phone", value)}
                 placeholder="הכנס מספר טלפון"
-                className="text-right"
-                dir={dir}
               />
             </div>
 

@@ -183,7 +183,7 @@ export default function AdminReviewsClient() {
         
         {data && data.totalReviews > 0 && (
           <div className="mt-4 text-sm text-muted-foreground text-center">
-            {t("adminReviews.totalReviews", { count: data.totalReviews })}
+            {t("adminReviews.totalReviews")}
           </div>
         )}
       </>
@@ -331,11 +331,7 @@ export default function AdminReviewsClient() {
       {data && data.totalPages > 1 && (
         <div className="flex-shrink-0 flex items-center justify-between border-t pt-4 bg-white">
           <div className="text-sm text-muted-foreground">
-            {t("adminReviews.showingPage", { 
-              current: currentPage, 
-              total: data.totalPages,
-              totalReviews: data.totalReviews
-            })}
+            {t("adminReviews.showingPage")}
           </div>
           
           <div className="flex items-center space-x-2">

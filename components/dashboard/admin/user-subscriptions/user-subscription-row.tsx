@@ -242,10 +242,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {t("userSubscriptions.usageTooltip", {
-                    remaining: userSubscription.remainingQuantity,
-                    total: userSubscription.totalQuantity,
-                  })}
+                  {t("userSubscriptions.usageTooltip")}
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -374,9 +371,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.cancelDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -404,9 +399,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

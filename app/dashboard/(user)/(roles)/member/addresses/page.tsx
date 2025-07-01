@@ -26,7 +26,7 @@ export default function AddressesPage() {
     queryFn: async () => {
       const result = await getUserAddresses()
       if (!result.success) {
-        throw new Error(result.error || t("errors.fetchFailed", { context: "addresses" }))
+        throw new Error(result.error || t("errors.fetchFailed"))
       }
       return result.addresses || []
     },

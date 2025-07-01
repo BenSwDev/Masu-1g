@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Separator } from "@/components/common/ui/separator"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { PopulatedBooking, ITreatmentDuration, IGiftVoucherUsageHistory } from "@/types/booking"
 import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import type { ITreatment } from "@/lib/db/models/treatment"

@@ -120,7 +120,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
   const handleCreate = async (_data: FormData) => {
     setIsLoading(true)
     try {
-      const result = await createSubscription(data)
+      const result = await createSubscription(_data)
       if (result.success) {
         setSubscriptions([result.subscription, ...subscriptions])
         toast.success(t("subscriptions.createSuccess"))
@@ -145,7 +145,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     if (!currentSubscription) return
     setIsLoading(true)
     try {
-      const result = await updateSubscription(currentSubscription._id as string, data)
+      const result = await updateSubscription(currentSubscription._id as string, _data)
       if (result.success && result.subscription) {
         setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)))
         toast.success(t("subscriptions.updateSuccess"))

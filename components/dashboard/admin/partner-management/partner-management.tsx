@@ -12,12 +12,15 @@ import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { getPartners, removePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import PartnerFormDialog from "./partner-form-dialog"
 import PartnerProfileDialog from "./partner-profile-dialog"
-import type { IPartnerProfile } from "@/lib/db/models/partner-profile"
 import type { IUser } from "@/lib/db/models/user"
 
-interface Partner extends IPartnerProfile {
+interface Partner {
   _id: string
   userId: IUser
+  businessNumber: string
+  contactName: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface PartnerManagementProps {
@@ -28,7 +31,7 @@ interface PartnerManagementProps {
 }
 
 interface PartnerData {
-  id?: string
+  id: string
   name: string
   email: string
   phone: string
@@ -87,10 +90,10 @@ export function PartnerManagement({
   const handleEdit = (p: Partner) => {
     setEditingPartner({
       id: p._id,
-      name: p.userId.name,
-      email: p.userId.email,
-      phone: p.userId.phone,
-      gender: p.userId.gender,
+      name: p.userId.name || "",
+      email: p.userId.email || "",
+      phone: p.userId.phone || "",
+      gender: (p.userId.gender as "male" | "female") || "male",
       businessNumber: p.businessNumber,
       contactName: p.contactName,
     })

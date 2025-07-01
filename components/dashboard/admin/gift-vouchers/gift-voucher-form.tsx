@@ -21,10 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  createGiftVoucherByAdmin,
-  updateGiftVoucherByAdmin,
-  type AdminGiftVoucherFormData,
-  type GiftVoucherPlain,
+  createvoucherByAdmin,
+  updatevoucherByAdmin,
+  type AdminvoucherFormData,
+  type voucherPlain,
   getTreatmentsForSelection,
   getUsersForAdminSelection,
 } from "@/actions/gift-voucher-actions"
@@ -36,7 +36,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/translations/i18n"
 
-const giftVoucherStatuses = [
+const voucherStatuses = [
   "pending_payment",
   "active",
   "partially_used",
@@ -47,8 +47,8 @@ const giftVoucherStatuses = [
   "cancelled",
 ] as const
 
-// Define Zod schema based on AdminGiftVoucherFormData
-const giftVoucherSchema = z
+// Define Zod schema based on AdminvoucherFormData
+const voucherSchema = z
   .object({
     voucherType: z.enum(["treatment", "monetary"]),
     treatmentId: z.string().optional(),
@@ -57,7 +57,7 @@ const giftVoucherSchema = z
     ownerUserId: z.string().min(1, "Owner user is required"),
     validFrom: z.date({ required_error: "Valid from date is required." }),
     validUntil: z.date({ required_error: "Valid until date is required." }),
-    status: z.enum(giftVoucherStatuses),
+    status: z.enum(voucherStatuses),
   })
   .superRefine((data, ctx) => {
     if (data.voucherType === "monetary") {
@@ -91,10 +91,10 @@ const giftVoucherSchema = z
     }
   })
 
-type GiftVoucherFormValues = z.infer<typeof giftVoucherSchema>
+type voucherFormValues = z.infer<typeof voucherSchema>
 
-interface GiftVoucherFormProps {
-  initialData?: GiftVoucherPlain
+interface voucherFormProps {
+  initialData?: voucherPlain
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -111,7 +111,7 @@ interface UserOption {
   email: string
 }
 
-export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVoucherFormProps) {
+export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [treatments, setTreatments] = useState<TreatmentOption[]>([])
@@ -119,8 +119,8 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   const [selectedTreatment, setSelectedTreatment] = useState<TreatmentOption | null>(null)
   const { t } = useTranslation()
 
-  const form = useForm<GiftVoucherFormValues>({
-    resolver: zodResolver(giftVoucherSchema),
+  const form = useForm<voucherFormValues>({
+    resolver: zodResolver(voucherSchema),
     defaultValues: {
       voucherType: initialData?.voucherType ?? "monetary",
       treatmentId: initialData?.treatmentId ?? undefined,
@@ -161,7 +161,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
       } else {
         toast({
           title: t("common.error"),
-          description: t("giftVouchers.fetchErrorTreatments") || "Failed to load treatments.",
+          description: t("vouchers.fetchErrorTreatments") || "Failed to load treatments.",
           variant: "destructive",
         })
       }
@@ -170,7 +170,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
       } else {
         toast({
           title: t("common.error"),
-          description: t("giftVouchers.fetchErrorUsers") || "Failed to load users.",
+          description: t("vouchers.fetchErrorUsers") || "Failed to load users.",
           variant: "destructive",
         })
       }
@@ -196,10 +196,10 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
     form.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
   }
 
-  async function onSubmit(values: GiftVoucherFormValues) {
+  async function onSubmit(values: voucherFormValues) {
     try {
       setIsLoading(true)
-      const formData: AdminGiftVoucherFormData = {
+      const formData: AdminvoucherFormData = {
         code: "", // Will be generated automatically
         voucherType: values.voucherType,
         treatmentId: values.treatmentId,
@@ -215,8 +215,8 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
       console.log("Submitting gift voucher data:", formData)
 
       const result = initialData
-        ? await updateGiftVoucherByAdmin(initialData._id, formData)
-        : await createGiftVoucherByAdmin(formData)
+        ? await updatevoucherByAdmin(initialData._id, formData)
+        : await createvoucherByAdmin(formData)
 
       console.log("Gift voucher operation result:", result)
 
@@ -225,8 +225,8 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
       }
 
       toast({
-        title: initialData ? t("giftVouchers.updateSuccess") : t("giftVouchers.createSuccess"),
-        description: `Gift voucher ${result.giftVoucher?.code} ${initialData ? "updated" : "created"} successfully.`,
+        title: initialData ? t("vouchers.updateSuccess") : t("vouchers.createSuccess"),
+        description: `Gift voucher ${result.voucher?.code} ${initialData ? "updated" : "created"} successfully.`,
       })
       onSuccess?.()
     } catch (error) {
@@ -249,7 +249,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="ownerUserId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("giftVouchers.fields.owner")}</FormLabel>
+              <FormLabel>{t("vouchers.fields.owner")}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -257,7 +257,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("giftVouchers.fields.selectOwner")} />
+                    <SelectValue placeholder={t("vouchers.fields.selectOwner")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -278,7 +278,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="voucherType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("giftVouchers.fields.voucherType")}</FormLabel>
+              <FormLabel>{t("vouchers.fields.voucherType")}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -286,12 +286,12 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("giftVouchers.fields.selectType")} />
+                    <SelectValue placeholder={t("vouchers.fields.selectType")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="monetary">{t("giftVouchers.types.monetary")}</SelectItem>
-                  <SelectItem value="treatment">{t("giftVouchers.types.treatment")}</SelectItem>
+                  <SelectItem value="monetary">{t("vouchers.types.monetary")}</SelectItem>
+                  <SelectItem value="treatment">{t("vouchers.types.treatment")}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -305,7 +305,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
             name="monetaryValue"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("giftVouchers.fields.monetaryValue")}</FormLabel>
+                <FormLabel>{t("vouchers.fields.monetaryValue")}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -314,7 +314,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                     value={field.value ?? ""}
                     onChange={e => field.onChange(e.target.value)}
                     disabled={isLoading}
-                    placeholder={t("giftVouchers.fields.monetaryValuePlaceholder")}
+                    placeholder={t("vouchers.fields.monetaryValuePlaceholder")}
                   />
                 </FormControl>
                 <FormMessage />
@@ -330,7 +330,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
               name="treatmentId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("giftVouchers.fields.treatment")}</FormLabel>
+                  <FormLabel>{t("vouchers.fields.treatment")}</FormLabel>
                   <Select
                     onValueChange={value => {
                       field.onChange(value)
@@ -341,7 +341,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={t("giftVouchers.fields.selectTreatment")} />
+                        <SelectValue placeholder={t("vouchers.fields.selectTreatment")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -364,7 +364,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                   name="selectedDurationId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("giftVouchers.fields.duration")}</FormLabel>
+                      <FormLabel>{t("vouchers.fields.duration")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -372,7 +372,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("giftVouchers.fields.selectDuration")} />
+                            <SelectValue placeholder={t("vouchers.fields.selectDuration")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -396,7 +396,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="validFrom"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{t("giftVouchers.fields.validFrom")}</FormLabel>
+              <FormLabel>{t("vouchers.fields.validFrom")}</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -437,7 +437,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="validUntil"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{t("giftVouchers.fields.validUntil")}</FormLabel>
+              <FormLabel>{t("vouchers.fields.validUntil")}</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -480,7 +480,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("giftVouchers.fields.status")}</FormLabel>
+              <FormLabel>{t("vouchers.fields.status")}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -488,13 +488,13 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("giftVouchers.fields.selectStatus")} />
+                    <SelectValue placeholder={t("vouchers.fields.selectStatus")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {giftVoucherStatuses.map(s => (
+                  {voucherStatuses.map(s => (
                     <SelectItem key={s} value={s}>
-                      {t(`giftVouchers.statuses.${s}`)}
+                      {t(`vouchers.statuses.${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -520,4 +520,4 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   )
 }
 
-export default GiftVoucherForm
+export default voucherForm

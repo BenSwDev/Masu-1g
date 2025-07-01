@@ -431,6 +431,46 @@ export async function getGiftVouchersList(
 export { generateUniqueVoucherCode, toGiftVoucherPlain }
 export type { GiftVoucherPlain }
 
+// Admin-specific aliases for consistency (ROLE OF ONE: single source of truth)
+export const createGiftVoucherByAdmin = createGiftVoucher
+export const updateGiftVoucherByAdmin = updateGiftVoucher
+export const getGiftVouchers = getGiftVouchersList
+
+// Admin form data type alias
+export type AdminGiftVoucherFormData = GiftVoucherCreateForm
+
+// Selection helper functions for admin forms
+export async function getTreatmentsForSelection(): Promise<any> {
+  try {
+    await dbConnect()
+    const treatments = await Treatment.find({ isActive: true })
+      .select("name category durations fixedPrice pricingType")
+      .lean()
+    
+    return { success: true, treatments }
+  } catch (error) {
+    logger.error("Error fetching treatments for selection:", error)
+    return { success: false, error: "Failed to fetch treatments" }
+  }
+}
+
+export async function getUsersForAdminSelection(): Promise<any> {
+  try {
+    await dbConnect()
+    const users = await User.find({ isActive: true })
+      .select("name email phone")
+      .lean()
+    
+    return { success: true, users }
+  } catch (error) {
+    logger.error("Error fetching users for admin selection:", error)
+    return { success: false, error: "Failed to fetch users" }
+  }
+}
+
+// Export GiftVoucher type alias for backward compatibility
+export type GiftVoucher = GiftVoucherPlain
+
 // Member-specific functions
 export async function getMemberOwnedVouchers(userId: string): Promise<GiftVoucherListResponse> {
   return getGiftVouchersList({ ownerUserId: userId })
@@ -487,3 +527,6 @@ export async function deleteGiftVoucher(
     return { success: false, error: "Failed to delete gift voucher" }
   }
 }
+
+// Export GiftVoucher type alias for backward compatibility
+

@@ -55,7 +55,7 @@ import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import {
-  getGiftVouchers,
+  getvouchers,
   deleteGiftVoucher,
   type GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
@@ -64,7 +64,7 @@ import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
 
-interface GiftVouchersClientProps {
+interface vouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
   initialPagination: {
     total: number
@@ -86,10 +86,10 @@ const VOUCHER_STATUSES: GiftVoucherPlain["status"][] = [
 ]
 const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment"]
 
-export function GiftVouchersClient({
+export function vouchersClient({
   initialVouchers,
   initialPagination,
-}: GiftVouchersClientProps) {
+}: vouchersClientProps) {
   const { toast } = useToast()
   const isMobile = useIsMobile()
   const [vouchers, setVouchers] = useState<GiftVoucherPlain[]>(initialVouchers)
@@ -143,14 +143,14 @@ export function GiftVouchersClient({
             : undefined,
         }
 
-        const result = await getGiftVouchers(page, pagination.limit, newSearch, currentFilters)
-        if (result.success && result.giftVouchers && result.pagination) {
-          setVouchers(result.giftVouchers)
+        const result = await getvouchers(page, pagination.limit, newSearch, currentFilters)
+        if (result.success && result.vouchers && result.pagination) {
+          setVouchers(result.vouchers)
           setPagination(result.pagination)
           if (showRefreshToast) {
             toast({
               title: t("common.success"),
-              description: t("giftVouchers.notifications.dataRefreshed"),
+              description: t("vouchers.notifications.dataRefreshed"),
             })
           }
         } else {
@@ -311,9 +311,9 @@ export function GiftVouchersClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">{t("giftVouchers.title")}</h1>
+          <h1 className="text-2xl font-semibold">{t("vouchers.title")}</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t("giftVouchers.manage")} ({stats.total} {t("common.total")})
+            {t("vouchers.manage")} ({stats.total} {t("common.total")})
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -326,7 +326,7 @@ export function GiftVouchersClient({
             {t("common.refresh")}
           </Button>
           <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
-            <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
+            <Plus className="mr-2 h-4 w-4" /> {t("vouchers.addNew")}
           </Button>
         </div>
       </div>
@@ -340,39 +340,39 @@ export function GiftVouchersClient({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">{t("giftVouchers.totalVouchers")}</p>
+            <p className="text-xs text-muted-foreground">{t("vouchers.totalVouchers")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t("giftVouchers.statuses.active")}
+              {t("vouchers.statuses.active")}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            <p className="text-xs text-muted-foreground">{t("giftVouchers.activeVouchers")}</p>
+            <p className="text-xs text-muted-foreground">{t("vouchers.activeVouchers")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("giftVouchers.used")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("vouchers.used")}</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats.used}</div>
-            <p className="text-xs text-muted-foreground">{t("giftVouchers.usedVouchers")}</p>
+            <p className="text-xs text-muted-foreground">{t("vouchers.usedVouchers")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("giftVouchers.revenue")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("vouchers.revenue")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">₪{stats.revenue.toFixed(0)}</div>
-            <p className="text-xs text-muted-foreground">{t("giftVouchers.totalRevenue")}</p>
+            <p className="text-xs text-muted-foreground">{t("vouchers.totalRevenue")}</p>
           </CardContent>
         </Card>
       </div>
@@ -385,7 +385,7 @@ export function GiftVouchersClient({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <Input
-              placeholder={t("giftVouchers.searchPlaceholder")}
+              placeholder={t("vouchers.searchPlaceholder")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="lg:col-span-2"
@@ -397,13 +397,13 @@ export function GiftVouchersClient({
               disabled={isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t("giftVouchers.admin.filterByType")} />
+                <SelectValue placeholder={t("vouchers.admin.filterByType")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 {VOUCHER_TYPES.map(type => (
                   <SelectItem key={type} value={type}>
-                    {t(`giftVouchers.types.${type}`)}
+                    {t(`vouchers.types.${type}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -414,13 +414,13 @@ export function GiftVouchersClient({
               disabled={isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t("giftVouchers.filterByStatus")} />
+                <SelectValue placeholder={t("vouchers.filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {VOUCHER_STATUSES.map(status => (
                   <SelectItem key={status} value={status}>
-                    {t(`giftVouchers.statuses.${status}`)}
+                    {t(`vouchers.statuses.${status}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -443,7 +443,7 @@ export function GiftVouchersClient({
                       format(filterDateRange.from, "LLL dd, y")
                     )
                   ) : (
-                    <span>{t("giftVouchers.fields.validFrom")}</span>
+                    <span>{t("vouchers.fields.validFrom")}</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -461,7 +461,7 @@ export function GiftVouchersClient({
           </div>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={resetFilters} disabled={isLoading}>
-              <RotateCcw className="mr-2 h-4 w-4" /> {t("giftVouchers.admin.clearFilters")}
+              <RotateCcw className="mr-2 h-4 w-4" /> {t("vouchers.admin.clearFilters")}
             </Button>
             {!isMobile && (
               <div className="flex items-center gap-2">
@@ -497,14 +497,14 @@ export function GiftVouchersClient({
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <Gift className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              {t("giftVouchers.noGiftVouchers")}
+              {t("vouchers.novouchers")}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t("giftVouchers.noVouchers")}
+              {t("vouchers.noVouchers")}
             </p>
             <div className="mt-6">
               <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
-                <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
+                <Plus className="mr-2 h-4 w-4" /> {t("vouchers.addNew")}
               </Button>
             </div>
           </CardContent>
@@ -536,15 +536,15 @@ export function GiftVouchersClient({
               ) : (
                 <div className="rounded-md border bg-card">
                   <div className="hidden md:grid grid-cols-12 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
-                    <div className="col-span-1">{t("giftVouchers.fields.code")}</div>
-                    <div className="col-span-1">{t("giftVouchers.fields.voucherType")}</div>
-                    <div className="col-span-2">{t("giftVouchers.fields.owner")}</div>
-                    <div className="col-span-2">{t("giftVouchers.purchase.guestInfo")}</div>
-                    <div className="col-span-1">{t("giftVouchers.fields.amount")}</div>
-                    <div className="col-span-1">{t("giftVouchers.fields.purchaseDate")}</div>
-                    <div className="col-span-1">{t("giftVouchers.fields.validUntil")}</div>
-                    <div className="col-span-1">{t("giftVouchers.fields.status")}</div>
-                    <div className="col-span-1">{t("giftVouchers.purchase.sendAsGift")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.code")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.voucherType")}</div>
+                    <div className="col-span-2">{t("vouchers.fields.owner")}</div>
+                    <div className="col-span-2">{t("vouchers.purchase.guestInfo")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.amount")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.purchaseDate")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.validUntil")}</div>
+                    <div className="col-span-1">{t("vouchers.fields.status")}</div>
+                    <div className="col-span-1">{t("vouchers.purchase.sendAsGift")}</div>
                     <div className="col-span-1 text-right">{t("common.actions")}</div>
                   </div>
                   {vouchers.map(voucher => (
@@ -586,12 +586,12 @@ export function GiftVouchersClient({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingVoucher ? t("giftVouchers.edit") : t("giftVouchers.addNew")}
+              {editingVoucher ? t("vouchers.edit") : t("vouchers.addNew")}
             </DialogTitle>
             <DialogDescription>
               {editingVoucher
-                ? `${t("giftVouchers.edit")} ${editingVoucher.code}.`
-                : t("giftVouchers.description")}
+                ? `${t("vouchers.edit")} ${editingVoucher.code}.`
+                : t("vouchers.description")}
             </DialogDescription>
           </DialogHeader>
           <GiftVoucherForm
@@ -608,9 +608,9 @@ export function GiftVouchersClient({
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("giftVouchers.deleteConfirm")}</AlertDialogTitle>
+            <AlertDialogTitle>{t("vouchers.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("giftVouchers.deleteConfirmDescription")}
+              {t("vouchers.deleteConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

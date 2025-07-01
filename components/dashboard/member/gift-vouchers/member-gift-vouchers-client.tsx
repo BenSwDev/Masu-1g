@@ -15,7 +15,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import {
   getMemberOwnedVouchers,
   getMemberPurchasedVouchers,
-  getGiftVouchersList,
+  getvouchersList,
   type GiftVoucher as GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
@@ -23,15 +23,15 @@ import { Gift, Plus, ShoppingBag, RefreshCw, TrendingUp, Clock, XCircle } from "
 import MemberGiftVoucherDetailsModal from "./member-gift-voucher-details-modal"
 import { cn } from "@/lib/utils"
 
-interface MemberGiftVouchersClientProps {
+interface MembervouchersClientProps {
   initialOwnedVouchers?: GiftVoucherPlain[]
   initialPurchasedVouchers?: GiftVoucherPlain[]
 }
 
-export default function MemberGiftVouchersClient({
+export default function MembervouchersClient({
   initialOwnedVouchers = [],
   initialPurchasedVouchers = [],
-}: MemberGiftVouchersClientProps) {
+}: MembervouchersClientProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
@@ -53,15 +53,15 @@ export default function MemberGiftVouchersClient({
       ])
 
       if (ownedResult.success) {
-        setOwnedVouchers(ownedResult.giftVouchers)
+        setOwnedVouchers(ownedResult.vouchers)
       }
       if (purchasedResult.success) {
-        setPurchasedVouchers(purchasedResult.giftVouchers)
+        setPurchasedVouchers(purchasedResult.vouchers)
       }
     } catch (error) {
       toast({
         title: t("common.error"),
-        description: t("memberGiftVouchers.errorLoading"),
+        description: t("membervouchers.errorLoading"),
         variant: "destructive",
       })
     } finally {
@@ -169,10 +169,10 @@ export default function MemberGiftVouchersClient({
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Gift className="w-8 h-8 text-primary" />
-            {t("memberGiftVouchers.title")}
+            {t("membervouchers.title")}
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
-            {t("memberGiftVouchers.description")}
+            {t("membervouchers.description")}
           </p>
         </div>
         <div className="flex gap-3">
@@ -184,7 +184,7 @@ export default function MemberGiftVouchersClient({
           </Button>
           <Button onClick={() => router.push("/purchase/gift-voucher")} className="px-6">
             <Plus className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-            {t("memberGiftVouchers.purchaseVoucher")}
+            {t("membervouchers.purchaseVoucher")}
           </Button>
         </div>
       </div>
@@ -194,16 +194,16 @@ export default function MemberGiftVouchersClient({
         <TabsList className="grid w-full grid-cols-2 h-12">
           <TabsTrigger value="owned" className="flex items-center gap-2 text-base">
             <Gift className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("memberGiftVouchers.myVouchers")}</span>
-            <span className="sm:hidden">{t("memberGiftVouchers.owned")}</span>
+            <span className="hidden sm:inline">{t("membervouchers.myVouchers")}</span>
+            <span className="sm:hidden">{t("membervouchers.owned")}</span>
             <Badge variant="secondary" className="ml-1">
               {ownedStats.total}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="purchased" className="flex items-center gap-2 text-base">
             <ShoppingBag className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("memberGiftVouchers.purchasedVouchers")}</span>
-            <span className="sm:hidden">{t("memberGiftVouchers.purchased")}</span>
+            <span className="hidden sm:inline">{t("membervouchers.purchasedVouchers")}</span>
+            <span className="sm:hidden">{t("membervouchers.purchased")}</span>
             <Badge variant="secondary" className="ml-1">
               {purchasedStats.total}
             </Badge>
@@ -217,25 +217,25 @@ export default function MemberGiftVouchersClient({
             <StatCard
               icon={TrendingUp}
               value={ownedStats.active}
-              label={t("memberGiftVouchers.activeVouchers")}
+              label={t("membervouchers.activeVouchers")}
               color="green"
             />
             <StatCard
               icon={Clock}
               value={ownedStats.used}
-              label={t("memberGiftVouchers.usedVouchers")}
+              label={t("membervouchers.usedVouchers")}
               color="gray"
             />
             <StatCard
               icon={XCircle}
               value={ownedStats.expired}
-              label={t("memberGiftVouchers.expiredVouchers")}
+              label={t("membervouchers.expiredVouchers")}
               color="red"
             />
             <StatCard
               icon={Gift}
               value={ownedStats.total}
-              label={t("memberGiftVouchers.totalVouchers")}
+              label={t("membervouchers.totalVouchers")}
               color="blue"
             />
           </div>
@@ -244,9 +244,9 @@ export default function MemberGiftVouchersClient({
           {ownedVouchers.length === 0 ? (
             <EmptyState
               icon={Gift}
-              title={t("memberGiftVouchers.noGiftVouchers")}
-              description={t("memberGiftVouchers.noGiftVouchersDescription")}
-              actionLabel={t("memberGiftVouchers.purchaseVoucher")}
+              title={t("membervouchers.novouchers")}
+              description={t("membervouchers.novouchersDescription")}
+              actionLabel={t("membervouchers.purchaseVoucher")}
               onAction={() => router.push("/purchase/gift-voucher")}
             />
           ) : (
@@ -270,25 +270,25 @@ export default function MemberGiftVouchersClient({
             <StatCard
               icon={TrendingUp}
               value={purchasedStats.active}
-              label={t("memberGiftVouchers.activeVouchers")}
+              label={t("membervouchers.activeVouchers")}
               color="green"
             />
             <StatCard
               icon={Clock}
               value={purchasedStats.used}
-              label={t("memberGiftVouchers.usedVouchers")}
+              label={t("membervouchers.usedVouchers")}
               color="gray"
             />
             <StatCard
               icon={XCircle}
               value={purchasedStats.expired}
-              label={t("memberGiftVouchers.expiredVouchers")}
+              label={t("membervouchers.expiredVouchers")}
               color="red"
             />
             <StatCard
               icon={ShoppingBag}
               value={purchasedStats.total}
-              label={t("memberGiftVouchers.totalVouchers")}
+              label={t("membervouchers.totalVouchers")}
               color="blue"
             />
           </div>
@@ -297,9 +297,9 @@ export default function MemberGiftVouchersClient({
           {purchasedVouchers.length === 0 ? (
             <EmptyState
               icon={ShoppingBag}
-              title={t("memberGiftVouchers.noPurchasedVouchers")}
-              description={t("memberGiftVouchers.noPurchasedVouchersDescription")}
-              actionLabel={t("memberGiftVouchers.purchaseVoucher")}
+              title={t("membervouchers.noPurchasedVouchers")}
+              description={t("membervouchers.noPurchasedVouchersDescription")}
+              actionLabel={t("membervouchers.purchaseVoucher")}
               onAction={() => router.push("/purchase/gift-voucher")}
             />
           ) : (

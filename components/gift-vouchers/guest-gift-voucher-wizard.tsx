@@ -11,12 +11,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { useTranslation } from "@/lib/translations/i18n"
-import {
-  initiateGuestPurchaseGiftVoucher,
-  confirmGuestGiftVoucherPurchase,
-  saveAbandonedGiftVoucherPurchase,
-  type GiftVoucherPlain,
-} from "@/actions/gift-voucher-actions"
+// Server action imports replaced with client-safe API calls
 import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
@@ -463,3 +458,4 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
     </div>
   )
 }
+

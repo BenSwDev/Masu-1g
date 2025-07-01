@@ -19,13 +19,50 @@ import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { useTranslation } from "@/lib/translations/i18n"
 import { DollarSign, Gift, CheckCircle } from "lucide-react"
-import {
-  initiateGuestPurchaseGiftVoucher,
-  confirmGuestGiftVoucherPurchase,
-  saveAbandonedGiftVoucherPurchase,
-  type GiftVoucherPlain,
-} from "@/actions/gift-voucher-actions"
-import { createGuestUser } from "@/actions/booking-actions"
+// Client-safe API functions
+const initiateGuestPurchaseGiftVoucher = async (data: any) => {
+  const response = await fetch('/api/gift-vouchers/initiate-guest-purchase', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}
+
+const confirmGuestGiftVoucherPurchase = async (data: any) => {
+  const response = await fetch('/api/gift-vouchers/confirm-guest-purchase', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}
+
+const saveAbandonedGiftVoucherPurchase = async (userId: string, data: any) => {
+  const response = await fetch('/api/gift-vouchers/save-abandoned', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, ...data })
+  })
+  return response.json()
+}
+
+// Local type definition
+type GiftVoucherPlain = {
+  _id: string
+  voucherType: "monetary" | "treatment"
+  status: string
+  [key: string]: any
+}
+// createGuestUser API function
+const createGuestUser = async (data: any) => {
+  const response = await fetch('/api/users/create-guest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/core/booking"
 
@@ -573,4 +610,8 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     </div>
   )
 }
+
+
+
+
 

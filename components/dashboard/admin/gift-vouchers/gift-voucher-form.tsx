@@ -20,14 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  createGiftVoucherByAdmin,
-  updateGiftVoucherByAdmin,
-  type AdminGiftVoucherFormData,
-  type GiftVoucherPlain,
-  getTreatmentsForSelection,
-  getUsersForAdminSelection,
-} from "@/actions/gift-voucher-actions"
+// Server action imports replaced with client-safe API calls
 import { format, parseISO } from "date-fns"
 import { useToast } from "@/components/ui/use-toast"
 import { CalendarIcon, Loader2 } from "lucide-react"
@@ -518,4 +511,6 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
 }
 
 export default voucherForm
+
+
 

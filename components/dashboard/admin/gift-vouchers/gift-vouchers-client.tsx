@@ -54,13 +54,20 @@ import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
-import { getGiftVouchers as getvouchers } from "@/actions/gift-voucher-actions"
+// Client-safe API function
+const getvouchers = async (page: number, limit: number, search: string, filters: any) => {
+  const response = await fetch('/api/gift-vouchers/admin-list', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ page, limit, search, filters })
+  })
+  return response.json()
+}
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { GiftVoucherPlain } from "@/types/core"
-import { useToast } from "@/components/ui/use-toast"
 
 interface vouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
@@ -633,6 +640,8 @@ export function GiftVouchersClient({
     </div>
   )
 }
+
+
 
 
 

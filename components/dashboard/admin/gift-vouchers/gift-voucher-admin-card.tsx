@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -39,7 +39,7 @@ import {
   Copy,
   QrCode,
 } from "lucide-react"
-import { deleteGiftVoucher } from "@/actions/gift-voucher-actions"
+// deleteGiftVoucher replaced with API call
 import type { GiftVoucherPlain } from "@/types/core"
 import { useTranslation } from "@/lib/translations/i18n"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
@@ -255,7 +255,7 @@ export default function GiftVoucherAdminCard({
               )}
               <span className="font-medium">
                 {voucher.voucherType === "monetary"
-                  ? `${voucher.monetaryValue?.toFixed(2)} ₪`
+                  ? `${voucher.monetaryValue?.toFixed(2)} â‚ª`
                   : voucher.treatmentName || "N/A"}
               </span>
             </div>
@@ -275,7 +275,7 @@ export default function GiftVoucherAdminCard({
                 <span>{t("giftVouchers.fields.remainingAmount")}</span>
                 <span className="font-medium">
                   {(voucher.remainingAmount || voucher.monetaryValue).toFixed(2)} /{" "}
-                  {voucher.monetaryValue.toFixed(2)} ₪
+                  {voucher.monetaryValue.toFixed(2)} â‚ª
                 </span>
               </div>
               <Progress value={100 - usagePercentage} className="h-2" />
@@ -308,7 +308,7 @@ export default function GiftVoucherAdminCard({
               <span>
                 {daysUntilExpiry === 0
                   ? t("giftVouchers.expiringToday")
-                  : `${t("giftVouchers.expiringIn")} ${daysUntilExpiry} ימים`}
+                  : `${t("giftVouchers.expiringIn")} ${daysUntilExpiry} ×™×ž×™×`}
               </span>
             </div>
           )}
@@ -397,3 +397,5 @@ export default function GiftVoucherAdminCard({
     </TooltipProvider>
   )
 }
+
+

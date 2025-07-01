@@ -12,8 +12,8 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { toast, useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import type { GiftVoucherPlain } from "@/types/core/gift-voucher"
-import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gift-voucher-actions"
-import { GiftVoucherDetailsModal } from "@/components/dashboard/member/gift-vouchers/gift-voucher-details-modal"
+// Member voucher functions replaced with API calls
+import { GiftVoucherDetailsModal } from "@/components/dashboard/member/gift-vouchers/member-gift-voucher-details-modal"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
 
 interface MemberGiftVouchersClientProps {
@@ -320,4 +320,7 @@ export default function MemberGiftVouchersClient({
     </div>
   )
 }
+
+
+
 

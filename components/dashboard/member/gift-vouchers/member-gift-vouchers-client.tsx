@@ -11,9 +11,19 @@ import { Gift, Plus, RefreshCw, ShoppingBag, TrendingUp, Clock, XCircle } from "
 import { useTranslation } from "@/lib/translations/i18n"
 import { toast, useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
-import type { GiftVoucherPlain } from "@/types/core/gift-voucher"
+import type { GiftVoucher as GiftVoucherPlain } from "@/types/core"
 // Member voucher functions replaced with API calls
-import { GiftVoucherDetailsModal } from "@/components/dashboard/member/gift-vouchers/member-gift-voucher-details-modal"
+const getMemberOwnedVouchers = async (userId: string) => {
+  const response = await fetch(`/api/member/gift-vouchers/owned?userId=${userId}`)
+  return response.json()
+}
+
+const getMemberPurchasedVouchers = async (userId: string) => {
+  const response = await fetch(`/api/member/gift-vouchers/purchased?userId=${userId}`)
+  return response.json()
+}
+
+import MemberGiftVoucherDetailsModal from "@/components/dashboard/member/gift-vouchers/member-gift-voucher-details-modal"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
 
 interface MemberGiftVouchersClientProps {
@@ -312,7 +322,7 @@ export default function MemberGiftVouchersClient({
         </TabsContent>
       </Tabs>
 
-      <GiftVoucherDetailsModal
+      <MemberGiftVoucherDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         voucher={selectedVoucher}

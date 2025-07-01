@@ -390,22 +390,28 @@ export async function getGuestBookingInitialData(): Promise<{
   error?: string
 }> {
   try {
+    logger.info("Starting getGuestBookingInitialData")
     await dbConnect()
+    logger.info("Database connected successfully")
 
     // Get active treatments
+    logger.info("Fetching active treatments...")
     const treatments = await Treatment.find({ isActive: true })
       .select("name description durations pricingType fixedPrice category")
       .lean()
+    logger.info(`Found ${treatments.length} active treatments`)
 
     // Get active coupons
+    logger.info("Fetching active coupons...")
     const coupons = await Coupon.find({
       isActive: true,
       $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     })
       .select("code discountType discountValue description")
       .lean()
+    logger.info(`Found ${coupons.length} active coupons`)
 
-    return {
+    const result = {
       success: true,
       data: {
         treatments,
@@ -413,22 +419,28 @@ export async function getGuestBookingInitialData(): Promise<{
         surcharges: [
           {
             type: "evening",
-            name: "????? ???",
+            name: "תוספת ערב",
             amount: 20,
-            description: "????? ???? ????? ????? ????",
+            description: "תוספת עבור טיפול בשעות הערב",
           },
           {
             type: "weekend",
-            name: "????? ??? ????",
+            name: "תוספת סוף שבוע",
             amount: 30,
-            description: "????? ???? ????? ???? ?????",
+            description: "תוספת עבור טיפול בסוף השבוע",
           },
-          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" },
+          { type: "holiday", name: "תוספת חג", amount: 50, description: "תוספת עבור טיפול בחג" },
         ],
       },
     }
+    
+    logger.info("getGuestBookingInitialData completed successfully")
+    return result
   } catch (error) {
-    logger.error("Error fetching guest booking initial data:", error)
+    logger.error("Error fetching guest booking initial data:", { 
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return { success: false, error: "common.unknown" }
   }
 }

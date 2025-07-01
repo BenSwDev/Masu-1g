@@ -192,7 +192,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
           ))}
           {coupons.length === 0 && !loading && (
             <p className="text-center text-muted-foreground py-4">
-              {t("adminCoupons.noCouponsFound", "No coupons found.")}
+              {t("adminCoupons.noCouponsFound")}
             </p>
           )}
         </div>

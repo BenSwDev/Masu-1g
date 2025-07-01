@@ -322,7 +322,7 @@ function Calendar({
       {/* Quick navigation for birthdays */}
       <div className="mt-4 pt-3 border-t border-border">
         <div className="text-xs text-muted-foreground mb-2 text-center">
-          {t("common.quickNavigation", "Quick Navigation")}
+          {t("common.quickNavigation")}
         </div>
         <div className="flex gap-2 justify-center">
           <Button
@@ -335,7 +335,7 @@ function Calendar({
             }}
             className="text-xs h-7"
           >
-            {t("common.today", "Today")}
+            {t("common.today")}
           </Button>
           <Button
             variant="outline"
@@ -347,7 +347,7 @@ function Calendar({
             }}
             className="text-xs h-7"
           >
-            {t("common.birthYear", "Birth Year")}
+            {t("common.birthYear")}
           </Button>
         </div>
       </div>

@@ -80,8 +80,8 @@ export default function AddressesPage() {
           <DialogHeader>
             <DialogTitle>
               {editingAddress
-                ? t("addresses.editAddressDialogTitle", "Edit Address")
-                : t("addresses.addAddressDialogTitle", "Add New Address")}
+                ? t("addresses.editAddressDialogTitle")
+                : t("addresses.addAddressDialogTitle")}
             </DialogTitle>
           </DialogHeader>
           {/* Render AddressForm only when modal is open and ready to avoid premature form state issues */}
@@ -121,7 +121,7 @@ export default function AddressesPage() {
           <p className="text-muted-foreground">{t("addresses.noAddresses")}</p>
           <Button onClick={handleAddNew} className="mt-4">
             <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
-            {t("addresses.addFirstAddress", "Add your first address")}
+            {t("addresses.addFirstAddress")}
           </Button>
         </div>
       )}

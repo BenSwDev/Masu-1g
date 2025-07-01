@@ -11,11 +11,9 @@ export default async function ProfilePage() {
     redirect("/auth/login")
   }
 
-  // Convert dateOfBirth to string if it exists
-  const user = {
-    ...result.user,
-    dateOfBirth: (result.user as any).dateOfBirth?.toISOString(),
-    createdAt: result.user.createdAt.toISOString(),
+  const handleSubmit = async (values: any) => {
+    // TODO: Implement profile update logic
+    console.log("Profile update:", values)
   }
 
   return (
@@ -25,7 +23,14 @@ export default async function ProfilePage() {
         <p className="text-gray-600">Manage your personal information and preferences.</p>
       </div>
 
-      <ProfileForm user={user} />
+      <ProfileForm 
+        initialValues={{
+          name: result.user.name || "",
+          email: result.user.email || "",
+          phone: result.user.phone || "",
+        }}
+        onSubmit={handleSubmit}
+      />
     </div>
   )
 }

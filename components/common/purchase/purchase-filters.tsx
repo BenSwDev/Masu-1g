@@ -249,8 +249,8 @@ export default function PurchaseFiltersComponent({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={filters.dateFrom}
-                  onSelect={date => onFiltersChange({ ...filters, dateFrom: date })}
+                  selected={filters.dateFrom as Date | undefined}
+                  onSelect={date => onFiltersChange({ ...filters, dateFrom: date as Date | undefined })}
                   disabled={date => date > new Date()}
                   initialFocus
                 />
@@ -284,11 +284,13 @@ export default function PurchaseFiltersComponent({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={filters.dateTo}
-                  onSelect={date => onFiltersChange({ ...filters, dateTo: date })}
-                  disabled={date =>
-                    date > new Date() || (filters.dateFrom && date < filters.dateFrom)
-                  }
+                  selected={filters.dateTo as Date | undefined}
+                  onSelect={date => onFiltersChange({ ...filters, dateTo: date as Date | undefined })}
+                  disabled={date => {
+                    if (date > new Date()) return true
+                    if (filters.dateFrom && date < filters.dateFrom) return true
+                    return false
+                  }}
                   initialFocus
                 />
               </PopoverContent>

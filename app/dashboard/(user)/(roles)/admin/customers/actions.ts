@@ -8,7 +8,7 @@ import dbConnect from "@/lib/db/mongoose"
 import { User } from "@/lib/db/models/user"
 import { Booking } from "@/lib/db/models/booking"
 import { UserSubscription } from "@/lib/db/models/user-subscription"
-import { GiftVoucher } from "@/lib/db/models/gift-voucher"
+import { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
 import { getAllPurchaseTransactions as getSharedPurchaseTransactions } from "@/actions/purchase-summary-actions"
 
@@ -90,7 +90,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     )
 
     // Get vouchers
-    const vouchers = await GiftVoucher.find({
+    const vouchers = await IGiftVoucher.find({
       $or: [{ purchaserUserId: userId }, { ownerUserId: userId }],
     }).lean()
     const activeVouchers = vouchers.filter(

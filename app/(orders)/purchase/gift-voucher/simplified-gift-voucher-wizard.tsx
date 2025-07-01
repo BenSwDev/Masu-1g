@@ -478,7 +478,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
                       name: (info.firstName || "") + " " + (info.lastName || ""),
                       email: info.email || "",
                       phone: info.phone || "",
-                      gender: info.gender,
+                      
                     }).then((result: any) => {
                       if (result.success && result.userId) {
                         setGuestUserId(result.userId)

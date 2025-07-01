@@ -5,7 +5,25 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { requireUserSession } from "@/lib/auth"
 
+// Simple error component for data fetch errors
+function DataFetchError() {
+  return (
+    <div className="text-center p-8">
+      <p className="text-red-500">Error loading gift vouchers. Please try again later.</p>
+    </div>
+  )
+}
+
 export const dynamic = "force-dynamic"
+
+// Simple error component for data fetch errors
+function DataFetchError() {
+  return (
+    <div className="text-center p-8">
+      <p className="text-red-500">Error loading gift vouchers. Please try again later.</p>
+    </div>
+  )
+}
 
 function MemberGiftVouchersLoading() {
   return (

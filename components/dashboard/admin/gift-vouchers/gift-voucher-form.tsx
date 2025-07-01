@@ -23,8 +23,8 @@ import {
 import {
   createGiftVoucherByAdmin,
   updateGiftVoucherByAdmin,
-  type AdminvoucherFormData,
-  type voucherPlain,
+  type AdminGiftVoucherFormData,
+  type GiftVoucherPlain,
   getTreatmentsForSelection,
   getUsersForAdminSelection,
 } from "@/actions/gift-voucher-actions"
@@ -47,7 +47,7 @@ const voucherStatuses = [
   "cancelled",
 ] as const
 
-// Define Zod schema based on AdminvoucherFormData
+// Define Zod schema based on AdminGiftVoucherFormData
 const voucherSchema = z
   .object({
     voucherType: z.enum(["treatment", "monetary"]),
@@ -94,7 +94,7 @@ const voucherSchema = z
 type voucherFormValues = z.infer<typeof voucherSchema>
 
 interface voucherFormProps {
-  initialData?: voucherPlain
+  initialData?: GiftVoucherPlain
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -199,7 +199,7 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
   async function onSubmit(values: voucherFormValues) {
     try {
       setIsLoading(true)
-      const formData: AdminvoucherFormData = {
+      const formData: AdminGiftVoucherFormData = {
         code: "", // Will be generated automatically
         voucherType: values.voucherType,
         treatmentId: values.treatmentId,

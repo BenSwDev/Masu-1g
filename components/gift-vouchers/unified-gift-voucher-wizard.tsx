@@ -150,12 +150,12 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     setGuestInfo(info)
     if (!guestUserId) {
       const result = await createGuestUser({
-        firstName: info.firstName,
-        lastName: info.lastName,
+        name: info.firstName + ' ' + (info.lastName || ''),
+        
         email: info.email,
         phone: info.phone,
-        birthDate: info.birthDate,
-        gender: info.gender,
+        
+        
       })
       if (result.success && result.userId) {
         setGuestUserId(result.userId)

@@ -1,6 +1,6 @@
 import { getTreatmentsForSelection } from "./actions"
 import type { SerializedTreatment } from "./actions"
-import type { Treatment } from "@/types/core"
+import type { ITreatment } from "@/lib/db/models/treatment"
 import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
@@ -8,8 +8,8 @@ import { GuestLayout } from "@/components/layout/guest-layout"
 // Force dynamic rendering for database access
 export const dynamic = "force-dynamic"
 
-// Convert serialized treatment to Treatment
-function convertToTreatment(treatment: SerializedTreatment): Treatment {
+// Convert serialized ITreatment to ITreatment
+function convertToITreatment(treatment: SerializedTreatment): ITreatment {
   return {
     ...treatment,
     _id: treatment._id,
@@ -19,7 +19,7 @@ function convertToTreatment(treatment: SerializedTreatment): Treatment {
     })),
     createdAt: treatment.createdAt,
     updatedAt: treatment.updatedAt,
-  } as Treatment
+  } as ITreatment
 }
 
 export default async function GuestBookGiftVoucherPage() {
@@ -40,11 +40,11 @@ export default async function GuestBookGiftVoucherPage() {
     )
   }
 
-  const treatments: Treatment[] = treatmentsResult.treatments?.map(convertToTreatment) || []
+  const treatments: ITreatment[] = treatmentsResult.treatments?.map(convertToITreatment) || []
 
   return (
     <GuestLayout>
-      <GuestGiftVoucherWizard treatments={treatments} />
+      <GuestGiftVoucherWizard treatments={treatments} currentUser={null} />
     </GuestLayout>
   )
 }

@@ -3,7 +3,7 @@ import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gi
 import MemberGiftVouchersClient from "@/components/dashboard/member/gift-vouchers/member-gift-vouchers-client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { requireUserSession } from "@/lib/auth"
+import { requireUserSession } from "@/lib/auth/require-session"
 
 // Simple error component for data fetch errors
 function DataFetchError() {
@@ -16,14 +16,6 @@ function DataFetchError() {
 
 export const dynamic = "force-dynamic"
 
-// Simple error component for data fetch errors
-function DataFetchError() {
-  return (
-    <div className="text-center p-8">
-      <p className="text-red-500">Error loading gift vouchers. Please try again later.</p>
-    </div>
-  )
-}
 
 function MemberGiftVouchersLoading() {
   return (
@@ -96,3 +88,4 @@ export default function MemberGiftVouchersPage() {
     </Suspense>
   )
 }
+

@@ -154,7 +154,7 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
         setTreatments(treatmentsRes.treatments)
         if (initialData?.treatmentId) {
           const foundTreatment = treatmentsRes.treatments.find(
-            t => t._id === initialData.treatmentId
+            (t: any) => t._id === initialData.treatmentId
           )
           if (foundTreatment) setSelectedTreatment(foundTreatment)
         }
@@ -190,7 +190,7 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
   }, [voucherType, form])
 
   const handleTreatmentChange = (treatmentId: string) => {
-    const treatment = treatments.find(t => t._id === treatmentId)
+    const treatment = treatments.find((t: any) => t._id === treatmentId)
     setSelectedTreatment(treatment || null)
     form.setValue("treatmentId", treatmentId)
     form.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
@@ -204,8 +204,8 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
         voucherType: values.voucherType,
         treatmentId: values.treatmentId,
         selectedDurationId: values.selectedDurationId,
-        amount: values.monetaryValue, // Use amount for API
-        monetaryValue: values.monetaryValue, // Keep both for compatibility
+        amount: Number(values.monetaryValue) || 0, // Use amount for API
+        monetaryValue: Number(values.monetaryValue) || 0, // Keep both for compatibility
         ownerUserId: values.ownerUserId,
         validFrom: format(values.validFrom, "yyyy-MM-dd"),
         validUntil: format(values.validUntil, "yyyy-MM-dd"),

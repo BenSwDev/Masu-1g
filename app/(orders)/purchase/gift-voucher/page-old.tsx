@@ -19,7 +19,7 @@ function convertToITreatment(treatment: SerializedTreatment): ITreatment {
     })),
     createdAt: treatment.createdAt,
     updatedAt: treatment.updatedAt,
-  } as ITreatment
+  } as unknown as ITreatment
 }
 
 export default async function GuestBookGiftVoucherPage() {

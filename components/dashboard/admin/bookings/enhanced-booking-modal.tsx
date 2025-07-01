@@ -173,7 +173,7 @@ export default function EnhancedBookingModal({
       }
 
       if (Object.keys(updates).length > 0) {
-        const result = await updateBookingByAdmin(booking._id.toString(), updates)
+        const result = await updateBookingByAdmin(booking._id.toString?.() || '', updates)
         if (result.success) {
           toast.success(t("adminBookings.saveSuccess"))
           queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
@@ -679,7 +679,7 @@ export default function EnhancedBookingModal({
                         onValueChange={async value => {
                           try {
                             const result = await assignProfessionalToBooking(
-                              booking._id.toString(),
+                              booking._id.toString?.() || '',
                               value
                             )
                             if (result.success) {

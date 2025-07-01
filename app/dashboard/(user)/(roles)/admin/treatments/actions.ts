@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { revalidatePath } from "next/cache"
@@ -247,3 +248,4 @@ export async function toggleTreatmentStatus(id: string) {
 }
 
 export { getAllTreatments }
+

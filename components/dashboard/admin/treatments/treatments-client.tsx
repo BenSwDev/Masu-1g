@@ -40,7 +40,6 @@ export function TreatmentsClient() {
     refetch()
     toast({
       title: t("treatments.createSuccess"),
-      variant: "success",
     })
   }
 
@@ -49,7 +48,6 @@ export function TreatmentsClient() {
     refetch()
     toast({
       title: t("treatments.updateSuccess"),
-      variant: "success",
     })
   }
 

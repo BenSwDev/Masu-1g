@@ -70,7 +70,7 @@ export function CityFormDialog({ open, onOpenChange, onSuccess }: CityFormDialog
       form.append("name", formData.name.trim())
       form.append("lat", formData.lat)
       form.append("lng", formData.lng)
-      form.append("isActive", formData.isActive.toString())
+      form.append("isActive", formData.isActive.toString?.() || '')
 
       const result = await createCity(form)
 

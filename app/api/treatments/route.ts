@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       treatments: treatments.map(treatment => ({
-        _id: treatment._id.toString(),
+        _id: treatment._id.toString?.() || '',
         name: treatment.name,
         description: treatment.description,
         category: treatment.category || "other",
@@ -30,7 +30,7 @@ export async function GET() {
         // Duration-based pricing
         durations:
           treatment.durations?.map(duration => ({
-            _id: duration._id.toString(),
+            _id: duration._id.toString?.() || '',
             minutes: duration.minutes,
             price: duration.price,
             professionalPrice: duration.professionalPrice,

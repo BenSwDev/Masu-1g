@@ -132,7 +132,7 @@ export default function PartnerCouponBatchesClient({
         })
 
         // Update batches list and pagination
-        setBatches(prev => prev.filter(b => b._id.toString() !== batchToDelete))
+        setBatches(prev => prev.filter(b => b._id.toString?.() || '' !== batchToDelete))
         setPagination(prev => ({
           ...prev,
           totalBatches: Math.max(0, prev.totalBatches - 1),
@@ -169,7 +169,7 @@ export default function PartnerCouponBatchesClient({
     try {
       let result
       if (editingBatch) {
-        result = await updatePartnerCouponBatch({ ...values, id: editingBatch._id.toString() })
+        result = await updatePartnerCouponBatch({ ...values, id: editingBatch._id.toString?.() || '' })
       } else {
         result = await createPartnerCouponBatch(values)
       }
@@ -188,7 +188,7 @@ export default function PartnerCouponBatchesClient({
         if (result.batch) {
           setBatches(prev =>
             prev.map(b =>
-              b._id.toString() === result.batch?._id.toString()
+              b._id.toString?.() || '' === result.batch?._id.toString?.() || ''
                 ? ({
                     ...result.batch,
                     effectiveStatus: "active",
@@ -268,7 +268,7 @@ export default function PartnerCouponBatchesClient({
         <div className="space-y-4">
           {batches.map(batch => (
             <PartnerCouponBatchCard
-              key={batch._id.toString()}
+              key={batch._id.toString?.() || ''}
               batch={
                 batch as unknown as IPartnerCouponBatch & {
                   _id: string

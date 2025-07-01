@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -111,9 +112,9 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
     await connectDB()
 
     // Get form data
-    const name = formData.get("name")?.toString()?.trim()
-    const lat = formData.get("lat")?.toString()
-    const lng = formData.get("lng")?.toString()
+    const name = formData.get("name")?.toString?.() || ''?.trim()
+    const lat = formData.get("lat")?.toString?.() || ''
+    const lng = formData.get("lng")?.toString?.() || ''
     const isActive = formData.get("isActive") === "true"
 
     // Validate required fields
@@ -156,7 +157,7 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
     await city.save()
 
     // Calculate distances to all other cities
-    await City.calculateDistancesForNewCity(city._id.toString())
+    await City.calculateDistancesForNewCity(city._id.toString?.() || '')
 
     // Clear cities cache since we added a new city
     clearCitiesCache()
@@ -164,7 +165,7 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
     // Revalidate the cities page
     revalidatePath("/dashboard/admin/cities")
 
-    return { success: true, cityId: city._id.toString() }
+    return { success: true, cityId: city._id.toString?.() || '' }
   } catch (error) {
     console.error("Error creating city:", error)
     return { success: false, message: "creationFailed" }
@@ -191,9 +192,9 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
     }
 
     // Get form data
-    const name = formData.get("name")?.toString()?.trim()
-    const lat = formData.get("lat")?.toString()
-    const lng = formData.get("lng")?.toString()
+    const name = formData.get("name")?.toString?.() || ''?.trim()
+    const lat = formData.get("lat")?.toString?.() || ''
+    const lng = formData.get("lng")?.toString?.() || ''
     const isActive = formData.get("isActive") === "true"
 
     // Validate required fields
@@ -355,3 +356,4 @@ export async function toggleCityStatus(cityId: string): Promise<CityActionRespon
     return { success: false, message: "statusToggleFailed" }
   }
 }
+

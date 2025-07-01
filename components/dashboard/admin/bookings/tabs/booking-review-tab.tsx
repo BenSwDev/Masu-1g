@@ -84,25 +84,25 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <Label className="text-sm font-medium text-blue-800">ביקורת לקוח</Label>
               <p className="text-lg font-semibold mt-1">
-                {booking.customerReview ? "קיימת" : "לא קיימת"}
+                {(booking as any).customerReview ? "קיימת" : "לא קיימת"}
               </p>
             </div>
 
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <Label className="text-sm font-medium text-green-800">ביקורת מטפל</Label>
               <p className="text-lg font-semibold mt-1">
-                {booking.professionalReview ? "קיימת" : "לא קיימת"}
+                {(booking as any).professionalReview ? "קיימת" : "לא קיימת"}
               </p>
             </div>
 
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <Label className="text-sm font-medium text-purple-800">דירוג כללי</Label>
               <div className="flex justify-center mt-1">
-                {booking.customerReview?.rating ? (
+                {(booking as any).customerReview?.rating ? (
                   <div className="flex items-center gap-1">
-                    {renderStars(booking.customerReview.rating)}
+                    {renderStars((booking as any).customerReview.rating)}
                     <span className="text-sm font-semibold ml-1">
-                      ({booking.customerReview.rating}/5)
+                      ({(booking as any).customerReview.rating}/5)
                     </span>
                   </div>
                 ) : (
@@ -115,7 +115,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
       </Card>
 
       {/* Customer Review */}
-      {booking.customerReview && (
+      {(booking as any).customerReview && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -130,11 +130,11 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">דירוג</Label>
                   <div className="flex items-center gap-2">
-                    {renderStars(booking.customerReview.rating)}
-                    <span className="text-lg font-semibold">{booking.customerReview.rating}/5</span>
+                    {renderStars((booking as any).customerReview.rating)}
+                    <span className="text-lg font-semibold">{(booking as any).customerReview.rating}/5</span>
                   </div>
                 </div>
-                {getReviewStatusBadge(booking.customerReview.status || "pending")}
+                {getReviewStatusBadge((booking as any).customerReview.status || "pending")}
               </div>
 
               {/* Review Text */}
@@ -142,7 +142,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <Label className="text-sm font-medium">טקסט הביקורת</Label>
                 <div className="p-4 bg-gray-50 rounded-lg border">
                   <p className="text-sm whitespace-pre-wrap">
-                    {booking.customerReview.comment || "לא נכתבה ביקורת טקסטואלית"}
+                    {(booking as any).customerReview.comment || "לא נכתבה ביקורת טקסטואלית"}
                   </p>
                 </div>
               </div>
@@ -151,11 +151,11 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">תאריך ביקורת</Label>
-                  <p>{formatDate(booking.customerReview.createdAt)}</p>
+                  <p>{formatDate((booking as any).customerReview.createdAt)}</p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">שם הלקוח</Label>
-                  <p>{booking.customerReview.reviewerName || "אנונימי"}</p>
+                  <p>{(booking as any).customerReview.reviewerName || "אנונימי"}</p>
                 </div>
               </div>
 
@@ -184,7 +184,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
       )}
 
       {/* Professional Review */}
-      {booking.professionalReview && (
+      {(booking as any).professionalReview && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -199,13 +199,13 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">דירוג הלקוח</Label>
                   <div className="flex items-center gap-2">
-                    {renderStars(booking.professionalReview.customerRating)}
+                    {renderStars((booking as any).professionalReview.customerRating)}
                     <span className="text-lg font-semibold">
-                      {booking.professionalReview.customerRating}/5
+                      {(booking as any).professionalReview.customerRating}/5
                     </span>
                   </div>
                 </div>
-                {getReviewStatusBadge(booking.professionalReview.status || "pending")}
+                {getReviewStatusBadge((booking as any).professionalReview.status || "pending")}
               </div>
 
               {/* Review Text */}
@@ -213,7 +213,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <Label className="text-sm font-medium">הערות המטפל</Label>
                 <div className="p-4 bg-gray-50 rounded-lg border">
                   <p className="text-sm whitespace-pre-wrap">
-                    {booking.professionalReview.comment || "לא נכתבו הערות"}
+                    {(booking as any).professionalReview.comment || "לא נכתבו הערות"}
                   </p>
                 </div>
               </div>
@@ -222,19 +222,19 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
               <div className="space-y-2">
                 <Label className="text-sm font-medium">איכות החוויה</Label>
                 <div className="flex items-center gap-2">
-                  {booking.professionalReview.experienceRating === "positive" && (
+                  {(booking as any).professionalReview.experienceRating === "positive" && (
                     <div className="flex items-center gap-1 text-green-600">
                       <ThumbsUp className="w-4 h-4" />
                       <span className="text-sm">חיובית</span>
                     </div>
                   )}
-                  {booking.professionalReview.experienceRating === "negative" && (
+                  {(booking as any).professionalReview.experienceRating === "negative" && (
                     <div className="flex items-center gap-1 text-red-600">
                       <ThumbsDown className="w-4 h-4" />
                       <span className="text-sm">שלילית</span>
                     </div>
                   )}
-                  {booking.professionalReview.experienceRating === "neutral" && (
+                  {(booking as any).professionalReview.experienceRating === "neutral" && (
                     <span className="text-sm text-gray-600">נייטרלית</span>
                   )}
                 </div>
@@ -244,13 +244,13 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">תאריך ביקורת</Label>
-                  <p>{formatDate(booking.professionalReview.createdAt)}</p>
+                  <p>{formatDate((booking as any).professionalReview.createdAt)}</p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">שם המטפל</Label>
                   <p>
-                    {typeof booking.professionalId === "object"
-                      ? booking.professionalId.name
+                    {typeof booking.professionalId === "object" && booking.professionalId
+                      ? (booking.professionalId as any).name
                       : "לא זמין"}
                   </p>
                 </div>
@@ -261,7 +261,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
       )}
 
       {/* No Reviews */}
-      {!booking.customerReview && !booking.professionalReview && (
+      {!(booking as any).customerReview && !(booking as any).professionalReview && (
         <Card>
           <CardContent className="text-center py-8">
             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -301,7 +301,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
       </Card>
 
       {/* Review Statistics */}
-      {(booking.customerReview || booking.professionalReview) && (
+      {(booking as any).customerReview && (booking as any).professionalReview && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -311,32 +311,38 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {booking.customerReview && (
+              {!(booking as any).endTime && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת לקוח</Label>
                   <p className="text-sm">
-                    {booking.endTime && booking.customerReview.createdAt
-                      ? `${Math.round(
-                          (new Date(booking.customerReview.createdAt).getTime() -
-                            new Date(booking.endTime).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )} ימים`
-                      : "לא זמין"}
+                    {!(booking as any).endTime && (booking as any).customerReview && (
+                      <p className="text-xs text-muted-foreground">
+                        הטיפול הסתיים ב-{formatDate((booking as any).endTime)} ולכן ביקורת לקוח זמינה
+                      </p>
+                    )}
+                    {!(booking as any).endTime && (
+                      <p className="text-xs text-muted-foreground">
+                        הטיפול עדיין לא הסתיים, ביקורות יהיו זמינות לאחר השלמת הטיפול
+                      </p>
+                    )}
                   </p>
                 </div>
               )}
 
-              {booking.professionalReview && (
+              {!(booking as any).endTime && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת מטפל</Label>
                   <p className="text-sm">
-                    {booking.endTime && booking.professionalReview.createdAt
-                      ? `${Math.round(
-                          (new Date(booking.professionalReview.createdAt).getTime() -
-                            new Date(booking.endTime).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )} ימים`
-                      : "לא זמין"}
+                    {!(booking as any).endTime && (booking as any).professionalReview && (
+                      <p className="text-xs text-muted-foreground">
+                        הטיפול הסתיים ב-{formatDate((booking as any).endTime)} ולכן ביקורת מטפל זמינה
+                      </p>
+                    )}
+                    {!(booking as any).professionalReview && (
+                      <p className="text-xs text-muted-foreground">
+                        המטפל עדיין לא השאיר ביקורת
+                      </p>
+                    )}
                   </p>
                 </div>
               )}

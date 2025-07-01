@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { validateEmail, validatePhone } from "@/lib/auth/auth"
@@ -143,7 +144,7 @@ export async function verifyResetToken(token: string): Promise<{
 
     console.log("Token found in database:", {
       token: tokenData.token,
-      userId: tokenData.userId.toString(),
+      userId: tokenData.userId.toString?.() || '',
       expiryDate: (tokenData as any).expiryDate,
       used: (tokenData as any).used,
     })
@@ -190,7 +191,7 @@ export async function verifyResetToken(token: string): Promise<{
     return {
       success: true,
       message: "Token is valid",
-      userId: tokenData.userId.toString(), // Convert ObjectId to string
+      userId: tokenData.userId.toString?.() || '', // Convert ObjectId to string
     }
   } catch (error) {
     console.error("Error verifying reset token:", error)
@@ -425,3 +426,4 @@ export async function resetPasswordWithOTP(
     }
   }
 }
+

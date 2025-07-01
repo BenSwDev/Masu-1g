@@ -185,7 +185,7 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
               id="floor"
               name="floor"
               type="number"
-              defaultValue={address?.apartmentDetails?.floor?.toString()}
+              defaultValue={address?.apartmentDetails?.floor?.toString?.() || ''}
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -259,7 +259,7 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
               id="floor"
               name="floor"
               type="number"
-              defaultValue={address?.officeDetails?.floor?.toString()}
+              defaultValue={address?.officeDetails?.floor?.toString?.() || ''}
               className="focus:ring-turquoise-500"
             />
           </div>

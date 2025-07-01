@@ -245,7 +245,7 @@ export default function CreateUserSubscriptionForm({
                       {selectedTreatment &&
                         selectedTreatment.durations &&
                         selectedTreatment.durations.map(duration => (
-                          <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
+                          <SelectItem key={duration._id.toString?.() || ''} value={duration._id.toString?.() || ''}>
                             {duration.minutes} דקות - ₪{duration.price}
                           </SelectItem>
                         ))}

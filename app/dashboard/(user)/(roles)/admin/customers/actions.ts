@@ -1,5 +1,3 @@
-import { BookingStatus } from '@/lib/db/models/booking';
-import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth/next"
@@ -8,9 +6,9 @@ import { Types } from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import { User } from "@/lib/db/models/user"
-import { Booking } from "@/lib/db/models/booking"
+import { Booking, BookingStatus } from "@/lib/db/models/booking"
 import { UserSubscription } from "@/lib/db/models/user-subscription"
-import { IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import GiftVoucher from "@/lib/db/models/gift-voucher"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
 import { getAllPurchaseTransactions as getSharedPurchaseTransactions } from "@/actions/purchase-summary-actions"
 
@@ -92,7 +90,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     )
 
     // Get vouchers
-    const vouchers = await IGiftVoucher.find({
+    const vouchers = await GiftVoucher.find({
       $or: [{ purchaserUserId: userId }, { ownerUserId: userId }],
     }).lean()
     const activeVouchers = vouchers.filter(
@@ -136,7 +134,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
         : customer.createdAt
 
     const customerSummary: CustomerSummary = {
-      userId: customer._id.toString(),
+      userId: customer._id.toString?.() || '',
       customerName: customer.name,
       customerEmail: customer.email,
       customerPhone: customer.phone || "",
@@ -213,7 +211,7 @@ export async function getAllCustomers(
     const customers: CustomerSummary[] = []
 
     for (const user of users) {
-      const summaryResult = await getCustomerSummary(user._id.toString())
+      const summaryResult = await getCustomerSummary(user._id.toString?.() || '')
       if (summaryResult.success && summaryResult.data) {
         // Add user type information
         const customerWithType = {

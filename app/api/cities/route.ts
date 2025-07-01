@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       cities: cities.map(city => ({
-        _id: city._id.toString(),
+        _id: city._id.toString?.() || '',
         name: city.name,
         isActive: city.isActive,
         coordinates: city.coordinates,

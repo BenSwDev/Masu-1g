@@ -102,10 +102,10 @@ export default function PartnerFormDialog({
     })
   }, [initialData, form])
 
-  async function onSubmit(_values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setLoading(true)
-      const _data = new FormData()
+      const data = new FormData()
       data.append("name", values.name)
       if (values.email) data.append("email", values.email)
       data.append("phone", values.phone ?? "")

@@ -93,14 +93,14 @@ export function GuestSummaryStep({
 
   const selectedTreatment = useMemo(() => {
     return (initialData?.activeTreatments || []).find(
-      t => t._id.toString() === bookingOptions.selectedTreatmentId
+      t => t._id.toString?.() || '' === bookingOptions.selectedTreatmentId
     )
   }, [initialData?.activeTreatments, bookingOptions.selectedTreatmentId])
 
   const selectedDuration = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
       return selectedTreatment.durations.find(
-        (d: any) => d._id.toString() === bookingOptions.selectedDurationId
+        (d: any) => d._id.toString?.() || '' === bookingOptions.selectedDurationId
       )
     }
     return null

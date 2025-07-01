@@ -74,7 +74,7 @@ export function PartnerCouponBatchForm({
     () => ({
       name: initialData?.name || "",
       description: initialData?.description || "",
-      assignedPartnerId: initialData?.assignedPartnerId?.toString() || null,
+      assignedPartnerId: initialData?.assignedPartnerId?.toString?.() || '' || null,
       couponCount: initialData?.couponCount || 10,
       discountType: initialData?.discountType || "percentage",
       discountValue: initialData?.discountValue || 0,
@@ -332,7 +332,7 @@ export function PartnerCouponBatchForm({
                 value={
                   field.value === null || field.value === undefined
                     ? NO_PARTNER_SELECTED_VALUE
-                    : field.value.toString()
+                    : field.value.toString?.() || ''
                 }
                 disabled={loading || partnersForSelect.length === 0}
               >

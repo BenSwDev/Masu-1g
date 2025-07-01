@@ -48,7 +48,7 @@ export default function PartnerProfileDialog({
       const res = await getPartnerById(partnerId)
       if (res.success && res.partner) {
         const p = res.partner as any
-        ;(p as any)._id = p._id.toString()
+        ;(p as any)._id = p._id.toString?.() || ''
         setPartner(p)
       } else {
         setError(res.error || "שגיאה בטעינת הנתונים")

@@ -70,8 +70,8 @@ async function MemberGiftVouchersData() {
 
     return (
       <MemberGiftVouchersClient
-        ownedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
-        purchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
+        initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
+        initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
         userId={session.user.id}
       />
     )

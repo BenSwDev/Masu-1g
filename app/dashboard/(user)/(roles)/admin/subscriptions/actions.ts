@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { revalidatePath } from "next/cache"
@@ -189,7 +190,7 @@ export async function updateSubscription(
       success: true,
       subscription: {
         ...subscriptionObj,
-        _id: subscriptionObj._id.toString(),
+        _id: subscriptionObj._id.toString?.() || '',
       },
     }
   } catch (error) {
@@ -282,7 +283,7 @@ export async function getSubscriptions(
       success: true,
       subscriptions: subscriptions.map(sub => ({
         ...sub,
-        _id: sub._id.toString(),
+        _id: sub._id.toString?.() || '',
       })),
       pagination: {
         total,
@@ -319,7 +320,7 @@ export async function getSubscriptionById(id: string): Promise<GetSubscriptionsR
       subscriptions: [
         {
           ...subscription,
-          _id: subscription._id.toString(),
+          _id: subscription._id.toString?.() || '',
         },
       ],
     }
@@ -360,7 +361,7 @@ export async function toggleSubscriptionStatus(id: string): Promise<UpdateSubscr
       success: true,
       subscription: {
         ...subscriptionObj,
-        _id: subscriptionObj._id.toString(),
+        _id: subscriptionObj._id.toString?.() || '',
       },
     }
   } catch (error) {
@@ -385,7 +386,7 @@ export async function getActiveSubscriptions(): Promise<GetSubscriptionsResult> 
       success: true,
       subscriptions: subscriptions.map(sub => ({
         ...sub,
-        _id: sub._id.toString(),
+        _id: sub._id.toString?.() || '',
       })),
     }
   } catch (error) {
@@ -413,7 +414,7 @@ export async function getActiveSubscriptionsForPurchase(): Promise<GetSubscripti
       success: true,
       subscriptions: subscriptions.map(sub => ({
         ...sub,
-        _id: sub._id.toString(),
+        _id: sub._id.toString?.() || '',
       })),
     }
   } catch (error) {
@@ -439,7 +440,7 @@ export async function getAllTreatments() {
       success: true,
       treatments: treatments.map(treatment => ({
         ...treatment,
-        _id: treatment._id.toString(),
+        _id: treatment._id.toString?.() || '',
       })),
     }
   } catch (error) {
@@ -447,3 +448,4 @@ export async function getAllTreatments() {
     return { success: false, error: "Failed to fetch treatments" }
   }
 }
+

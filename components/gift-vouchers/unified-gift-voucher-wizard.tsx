@@ -67,12 +67,12 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
   }, [prefilledGuestInfo])
 
   const selectedTreatment = treatments.find(
-    t => (typeof t._id === "string" ? t._id : t._id?.toString()) === selectedTreatmentId
+    t => (typeof t._id === "string" ? t._id : t._id?.toString?.() || '') === selectedTreatmentId
   )
   const selectedDuration =
     selectedTreatment?.pricingType === "duration_based"
       ? selectedTreatment.durations?.find(
-          d => (typeof d._id === "string" ? d._id : d._id?.toString()) === selectedDurationId
+          d => (typeof d._id === "string" ? d._id : d._id?.toString?.() || '') === selectedDurationId
         )
       : undefined
 
@@ -384,13 +384,13 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                       key={
                         typeof treatment._id === "string"
                           ? treatment._id
-                          : treatment._id?.toString()
+                          : treatment._id?.toString?.() || ''
                       }
                       className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
                         selectedTreatmentId ===
                         (typeof treatment._id === "string"
                           ? treatment._id
-                          : treatment._id?.toString())
+                          : treatment._id?.toString?.() || '')
                           ? "border-blue-500 bg-blue-50"
                           : "border-gray-200 hover:border-blue-300"
                       }`}
@@ -398,7 +398,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                         setSelectedTreatmentId(
                           typeof treatment._id === "string"
                             ? treatment._id
-                            : treatment._id?.toString() || ""
+                            : treatment._id?.toString?.() || '' || ""
                         )
                       }
                     >
@@ -415,7 +415,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                         {selectedTreatmentId ===
                           (typeof treatment._id === "string"
                             ? treatment._id
-                            : treatment._id?.toString()) && (
+                            : treatment._id?.toString?.() || '') && (
                           <CheckCircle className="w-5 h-5 text-blue-500" />
                         )}
                       </div>
@@ -435,13 +435,13 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                     .map(duration => (
                       <div
                         key={
-                          typeof duration._id === "string" ? duration._id : duration._id?.toString()
+                          typeof duration._id === "string" ? duration._id : duration._id?.toString?.() || ''
                         }
                         className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
                           selectedDurationId ===
                           (typeof duration._id === "string"
                             ? duration._id
-                            : duration._id?.toString())
+                            : duration._id?.toString?.() || '')
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-blue-300"
                         }`}
@@ -449,7 +449,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                           setSelectedDurationId(
                             typeof duration._id === "string"
                               ? duration._id
-                              : duration._id?.toString() || ""
+                              : duration._id?.toString?.() || '' || ""
                           )
                         }
                       >
@@ -460,7 +460,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                             {selectedDurationId ===
                               (typeof duration._id === "string"
                                 ? duration._id
-                                : duration._id?.toString()) && (
+                                : duration._id?.toString?.() || '') && (
                               <CheckCircle className="w-5 h-5 text-blue-500" />
                             )}
                           </div>

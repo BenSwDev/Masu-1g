@@ -29,11 +29,11 @@ import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
+interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId" | "subscriptionId" | "paymentMethodId"> {
   userId?: {
     _id: string
     name: string
-    email?: string // Make email optional
+    email?: string
   } | null
   subscriptionId?: {
     _id: string
@@ -44,9 +44,14 @@ interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
     treatments: string[]
     isActive: boolean
   }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  }
   guestInfo?: {
     name: string
-    email?: string // Make email optional
+    email?: string
     phone: string
   }
 }
@@ -232,11 +237,6 @@ export default function UserSubscriptionRow({
             {userSubscription.selectedDurationDetails && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {userSubscription.selectedDurationDetails.minutes} {t("common.minutes")}
-              </span>
-            )}
-            {userSubscription.pricePerSession && (
-              <span className="text-xs text-green-600 dark:text-green-400">
-                ₪{userSubscription.pricePerSession.toFixed(2)} {t("userSubscriptions.perSession")}
               </span>
             )}
           </div>

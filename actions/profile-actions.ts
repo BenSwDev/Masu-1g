@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth/next"
@@ -90,7 +91,7 @@ export async function getUserProfile() {
     return {
       success: true,
       user: {
-        id: user._id.toString(),
+        id: user._id.toString?.() || '',
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -105,3 +106,4 @@ export async function getUserProfile() {
     return { success: false, message: "fetchFailed" }
   }
 }
+

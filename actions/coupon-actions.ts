@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -64,7 +65,7 @@ export async function getAllCoupons(
 
     const serializedCoupons = coupons.map(coupon => ({
       ...coupon,
-      _id: coupon._id.toString(),
+      _id: coupon._id.toString?.() || '',
     }))
 
     return {
@@ -137,7 +138,7 @@ export async function createCoupon(data: any): Promise<{
       success: true,
       data: {
         ...coupon.toObject(),
-        _id: (coupon._id as any).toString(),
+        _id: (coupon._id as any).toString?.() || '',
         effectiveStatus,
       },
     }
@@ -212,7 +213,7 @@ export async function updateCoupon(updateData: any): Promise<{
       success: true,
       data: {
         ...coupon.toObject(),
-        _id: (coupon._id as any).toString(),
+        _id: (coupon._id as any).toString?.() || '',
         effectiveStatus,
       },
     }
@@ -291,7 +292,7 @@ export async function validateCouponCode(code: string): Promise<{
       success: true,
       coupon: {
         ...coupon,
-        _id: coupon._id.toString(),
+        _id: coupon._id.toString?.() || '',
       },
     }
   } catch (error) {
@@ -370,7 +371,7 @@ export async function getCouponById(id: string): Promise<{
 
     const serializedCoupon = {
       ...coupon,
-      _id: coupon._id.toString(),
+      _id: coupon._id.toString?.() || '',
     }
 
     return { success: true, coupon: serializedCoupon }
@@ -379,3 +380,4 @@ export async function getCouponById(id: string): Promise<{
     return { success: false, error: "Failed to fetch coupon" }
   }
 }
+

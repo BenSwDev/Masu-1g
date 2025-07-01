@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -22,11 +23,11 @@ export async function getTreatments(): Promise<{
 
     const serializedTreatments = treatments.map(treatment => ({
       ...treatment,
-      _id: treatment._id.toString(),
+      _id: treatment._id.toString?.() || '',
       durations:
         treatment.durations?.map(duration => ({
           ...duration,
-          _id: duration._id.toString(),
+          _id: duration._id.toString?.() || '',
         })) || [],
     }))
 
@@ -56,11 +57,11 @@ export async function getTreatmentById(id: string): Promise<{
 
     const serializedTreatment = {
       ...treatment,
-      _id: treatment._id.toString(),
+      _id: treatment._id.toString?.() || '',
       durations:
         treatment.durations?.map(duration => ({
           ...duration,
-          _id: duration._id.toString(),
+          _id: duration._id.toString?.() || '',
         })) || [],
     }
 
@@ -109,7 +110,7 @@ export async function createTreatment(data: {
       success: true,
       treatment: {
         ...treatment.toObject(),
-        _id: (treatment._id as any).toString(),
+        _id: (treatment._id as any).toString?.() || '',
       },
     }
   } catch (error) {
@@ -165,7 +166,7 @@ export async function updateTreatment(
       success: true,
       treatment: {
         ...treatment.toObject(),
-        _id: (treatment._id as any).toString(),
+        _id: (treatment._id as any).toString?.() || '',
       },
     }
   } catch (error) {
@@ -230,7 +231,7 @@ export async function getTreatmentsForSelection(): Promise<{
       .lean()
 
     const serializedTreatments = treatments.map(treatment => ({
-      _id: treatment._id.toString(),
+      _id: treatment._id.toString?.() || '',
       name: treatment.name,
       pricingType: treatment.pricingType,
       fixedPrice: treatment.fixedPrice,
@@ -238,7 +239,7 @@ export async function getTreatmentsForSelection(): Promise<{
         treatment.durations
           ?.filter(d => d.isActive)
           .map(duration => ({
-            _id: duration._id.toString(),
+            _id: duration._id.toString?.() || '',
             minutes: duration.minutes,
             price: duration.price,
           })) || [],
@@ -267,7 +268,7 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
       .lean()
 
     const serializedTreatments = treatments.map(treatment => ({
-      _id: treatment._id.toString(),
+      _id: treatment._id.toString?.() || '',
       name: treatment.name,
       category: treatment.category,
       pricingType: treatment.pricingType,
@@ -277,7 +278,7 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
         treatment.durations
           ?.filter(d => d.isActive)
           .map(duration => ({
-            _id: duration._id.toString(),
+            _id: duration._id.toString?.() || '',
             minutes: duration.minutes,
             price: duration.price,
           })) || [],
@@ -292,3 +293,4 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
     return { success: false, error: "Failed to fetch treatments" }
   }
 }
+

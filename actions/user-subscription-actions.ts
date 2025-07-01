@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { revalidatePath } from "next/cache"
@@ -209,7 +210,7 @@ export async function purchaseSubscription({
       return { success: false, error: "Treatment not found or inactive" }
     }
 
-    if (!paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id) {
+    if (!paymentMethod || paymentMethod.userId.toString?.() || '' !== sessionData.user.id) {
       logger.warn(`[${requestId}] Payment method not found or not owned by user`, {
         paymentMethodId,
         userId: sessionData.user.id,
@@ -230,7 +231,7 @@ export async function purchaseSubscription({
         })
         return { success: false, error: "Duration must be selected for this treatment" }
       }
-      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+      const duration = treatment.durations?.find(d => d._id.toString?.() || '' === selectedDurationId)
       if (!duration || !duration.isActive) {
         logger.warn(`[${requestId}] Selected duration not found or inactive`, {
           selectedDurationId,
@@ -399,7 +400,7 @@ export async function getUserSubscriptions() {
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
             (d: any) =>
-              d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString()
+              d._id.toString?.() || '' === (sub.selectedDurationId as mongoose.Types.ObjectId).toString?.() || ''
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -483,7 +484,7 @@ export async function getAllUserSubscriptions(
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
             (d: any) =>
-              d._id.toString() === (sub.selectedDurationId as mongoose.Types.ObjectId).toString()
+              d._id.toString?.() || '' === (sub.selectedDurationId as mongoose.Types.ObjectId).toString?.() || ''
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -535,7 +536,7 @@ export async function useSubscription(userSubscriptionId: string, quantity = 1) 
 
     if (
       userSubscription.userId &&
-      userSubscription.userId.toString() !== sessionData.user.id &&
+      userSubscription.userId.toString?.() || '' !== sessionData.user.id &&
       !sessionData.user.roles.includes("admin")
     ) {
       return { success: false, error: "Unauthorized" }
@@ -585,7 +586,7 @@ export async function cancelSubscription(userSubscriptionId: string) {
 
     if (
       userSubscription.userId &&
-      userSubscription.userId.toString() !== sessionData.user.id &&
+      userSubscription.userId.toString?.() || '' !== sessionData.user.id &&
       !sessionData.user.roles.includes("admin")
     ) {
       return { success: false, error: "Unauthorized" }
@@ -695,7 +696,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
       treatmentPrice = treatment.fixedPrice || 0
     } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
       const selectedDuration = treatment.durations?.find(
-        (d: any) => d._id.toString() === selectedDurationId
+        (d: any) => d._id.toString?.() || '' === selectedDurationId
       )
       if (!selectedDuration) {
         return { success: false, error: "Selected duration not found" }
@@ -759,7 +760,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
 
     return {
       success: true,
-      userSubscriptionId: (newUserSubscription._id as any).toString(),
+      userSubscriptionId: (newUserSubscription._id as any).toString?.() || '',
       amount: totalPaymentAmount,
     }
   } catch (error) {
@@ -909,7 +910,7 @@ export async function purchaseGuestSubscription({
         })
         return { success: false, error: "Duration must be selected for this treatment" }
       }
-      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+      const duration = treatment.durations?.find(d => d._id.toString?.() || '' === selectedDurationId)
       if (!duration || !duration.isActive) {
         logger.warn(`[${requestId}] Selected duration not found or inactive`, {
           selectedDurationId,
@@ -1065,7 +1066,7 @@ export async function saveAbandonedSubscriptionPurchase(
         savedAt: new Date(),
       }
       await existing.save()
-      return { success: true, purchaseId: (existing._id as mongoose.Types.ObjectId).toString() }
+      return { success: true, purchaseId: (existing._id as mongoose.Types.ObjectId).toString?.() || '' }
     }
 
     const purchase = new SubscriptionPurchase({
@@ -1079,7 +1080,7 @@ export async function saveAbandonedSubscriptionPurchase(
       },
     })
     await purchase.save()
-    return { success: true, purchaseId: (purchase._id as mongoose.Types.ObjectId).toString() }
+    return { success: true, purchaseId: (purchase._id as mongoose.Types.ObjectId).toString?.() || '' }
   } catch (error) {
     return { success: false, error: "Failed to save abandoned subscription" }
   }
@@ -1125,8 +1126,8 @@ export async function getUserSubscriptionById(id: string) {
 
     const isGuest = !sub.userId
     const isOwner =
-      sub.userId && sessionData?.user?.id && sub.userId.toString() === sessionData.user.id
-    const isAdmin = !!sessionData?.user?.roles?.includes("admin")
+      sub.userId && sessionData?.user?.id && (sub.userId.toString?.() || '') === sessionData.user.id
+    const isAdmin = !!(sessionData?.user?.roles?.includes("admin"))
 
     if (!isGuest && !isOwner && !isAdmin) {
       return { success: false, error: "Unauthorized" }
@@ -1247,3 +1248,4 @@ export async function confirmGuestSubscriptionPurchase(data: {
     return { success: false, error: "Failed to confirm purchase. Please contact support." }
   }
 }
+

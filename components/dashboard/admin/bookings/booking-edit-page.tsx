@@ -78,7 +78,7 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
         professionalId:
           updatedBooking.professionalId !== booking.professionalId
             ? updatedBooking.professionalId && typeof updatedBooking.professionalId === "object"
-              ? updatedBooking.professionalId._id.toString()
+              ? updatedBooking.professionalId._id.toString?.() || ''
               : updatedBooking.professionalId
             : undefined,
       }
@@ -100,7 +100,7 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
       const { updateBookingByAdmin } = await import(
         "@/app/dashboard/(user)/(roles)/admin/bookings/actions"
       )
-      const result = await updateBookingByAdmin(updatedBooking._id.toString(), cleanUpdates)
+      const result = await updateBookingByAdmin(updatedBooking._id.toString?.() || '', cleanUpdates)
 
       if (result.success) {
         setHasUnsavedChanges(false)

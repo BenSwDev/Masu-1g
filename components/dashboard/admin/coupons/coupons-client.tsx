@@ -108,7 +108,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     }
   }
 
-  const handleFormSubmit = async (_values: CouponFormValues) => {
+  const handleFormSubmit = async (values: CouponFormValues) => {
     setLoading(true)
     try {
       let result

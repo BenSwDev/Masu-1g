@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -51,28 +52,28 @@ export async function getWorkingHoursSettings() {
     }
 
     // Ensure fixedHours are sorted by dayOfWeek
-    if (settings.fixedHours) {
-      settings.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+    if (settings && Array.isArray(settings.fixedHours)) {
+      settings.fixedHours.sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek)
     }
 
     // Convert dates to strings for client
     const serializedSettings = {
       ...settings,
-      _id: settings._id?.toString(),
+      _id: settings?._id?.toString?.() || '',
       specialDates:
-        settings.specialDates?.map(date => ({
+        settings && Array.isArray(settings.specialDates) ? settings.specialDates.map((date: any) => ({
           ...date,
-          _id: date._id?.toString(),
+          _id: date._id?.toString?.() || '',
           date: date.date.toISOString().split("T")[0],
-        })) || [],
+        })) : [],
       specialDateEvents:
-        settings.specialDateEvents?.map(event => ({
+        settings && Array.isArray(settings.specialDateEvents) ? settings.specialDateEvents.map((event: any) => ({
           ...event,
-          _id: event._id?.toString(),
-          dates: event.dates.map(date => date.toISOString().split("T")[0]),
-        })) || [],
-      createdAt: settings.createdAt?.toISOString(),
-      updatedAt: settings.updatedAt?.toISOString(),
+          _id: event._id?.toString?.() || '',
+          dates: event.dates.map((date: any) => date.toISOString().split("T")[0]),
+        })) : [],
+      createdAt: settings?.createdAt?.toISOString(),
+      updatedAt: settings?.updatedAt?.toISOString(),
     }
 
     logger.info(`[${requestId}] Successfully fetched working hours settings`)
@@ -343,3 +344,4 @@ export async function updateWorkingHours(workingHours: any): Promise<{
     return { success: false, error: "Failed to update working hours" }
   }
 }
+

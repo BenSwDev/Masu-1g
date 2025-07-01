@@ -33,11 +33,11 @@ export default function ProfessionalProfileTab({
   const { toast } = useToast()
 
   const [userDetails, setUserDetails] = useState({
-    name: professional.userId.name || "",
-    email: professional.userId.email || "",
-    phone: professional.userId.phone || "",
-    gender: professional.userId.gender || "",
-    birthDate: professional.userId.dateOfBirth
+    name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
+    email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
+    phone: typeof professional.userId === 'object' ? professional.userId.phone || "" : "",
+    gender: typeof professional.userId === 'object' ? professional.userId.gender || "" : "",
+    birthDate: typeof professional.userId === 'object' && professional.userId.dateOfBirth
       ? new Date(professional.userId.dateOfBirth).toISOString().split("T")[0]
       : "",
   })

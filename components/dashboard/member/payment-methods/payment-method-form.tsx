@@ -157,13 +157,13 @@ export function PaymentMethodForm({
   }
 
   const months = Array.from({ length: 12 }, (_, i) => {
-    const month = (i + 1).toString().padStart(2, "0")
+    const month = (i + 1).toString?.() || ''.padStart(2, "0")
     return { value: month, label: month }
   })
 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 11 }, (_, i) => {
-    const year = (currentYear + i).toString()
+    const year = (currentYear + i).toString?.() || ''
     return { value: year, label: year }
   })
 

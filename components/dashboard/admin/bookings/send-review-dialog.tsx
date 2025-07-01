@@ -42,7 +42,7 @@ export default function SendReviewDialog({
 
     setSending(true)
     try {
-      const result = await sendReviewReminder(booking._id.toString(), {
+      const result = await sendReviewReminder(booking._id.toString?.() || '', {
         sms: sendSms,
         email: sendEmail,
       })

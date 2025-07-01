@@ -191,7 +191,7 @@ export default function BookingCreateSchedulingStep({
               <div className="space-y-2 pr-6">
                 <Label htmlFor="flexibilityRange">טווח גמישות *</Label>
                 <Select
-                  value={formData.flexibilityRangeHours?.toString() || ""}
+                  value={formData.flexibilityRangeHours?.toString?.() || '' || ""}
                   onValueChange={value => onUpdate({ flexibilityRangeHours: parseInt(value) })}
                 >
                   <SelectTrigger className={errors.flexibilityRangeHours ? "border-red-500" : ""}>

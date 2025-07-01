@@ -192,8 +192,7 @@ export default function SimplifiedSubscriptionWizard({
     setGuestInfo(info)
     if (!guestUserId) {
       const result = await createGuestUser({
-        firstName: info.firstName,
-        lastName: info.lastName,
+        name: info.firstName + " " + info.lastName,
         email: info.email,
         phone: info.phone,
         birthDate: info.birthDate,
@@ -259,7 +258,7 @@ export default function SimplifiedSubscriptionWizard({
       })
 
       if (confirmResult.success && confirmResult.subscription) {
-        const subscriptionId = confirmResult.subscription._id || confirmResult.subscription.id
+        const subscriptionId = confirmResult.subscription._id?.toString() || confirmResult.subscription.id?.toString()
         if (subscriptionId) {
           router.push(
             `/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`

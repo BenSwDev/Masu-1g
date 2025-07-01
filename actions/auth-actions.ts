@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { hashPassword, validatePassword, validateEmail, validatePhone } from "@/lib/auth/auth"
@@ -206,7 +207,7 @@ export async function findOrCreateUserByPhone(
       logger.info(`[${requestId}] User found with phone, returning existing user`)
       return {
         success: true,
-        userId: existingUser._id.toString(),
+        userId: existingUser._id.toString?.() || '',
         isNewUser: false,
         userType: existingUser.roles.includes("guest") ? "guest" : "registered",
       }
@@ -232,7 +233,7 @@ export async function findOrCreateUserByPhone(
 
       return {
         success: true,
-        userId: guestUser._id.toString(),
+        userId: guestUser._id.toString?.() || '',
         isNewUser: true,
         userType: "guest",
       }
@@ -257,7 +258,7 @@ export async function findOrCreateUserByPhone(
           logger.info(`[${requestId}] Found existing user after duplicate error`)
           return {
             success: true,
-            userId: existingUser._id.toString(),
+            userId: existingUser._id.toString?.() || '',
             isNewUser: false,
             userType: existingUser.roles.includes("guest") ? "guest" : "registered",
           }
@@ -276,3 +277,4 @@ export async function findOrCreateUserByPhone(
     return { success: false, error: "Failed to find or create user" }
   }
 }
+

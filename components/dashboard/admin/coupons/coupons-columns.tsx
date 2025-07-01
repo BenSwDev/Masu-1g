@@ -156,7 +156,7 @@ export const columns = ({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onDelete(coupon._id.toString())}
+              onClick={() => onDelete(coupon._id.toString?.() || '')}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />{" "}

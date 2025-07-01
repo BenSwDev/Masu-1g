@@ -71,7 +71,7 @@ export function PartnerManagement({
         if (res.success && res.data) {
           const transformed = (res.data.partners || []) as unknown as Partner[]
           transformed.forEach(p => {
-            ;(p as any)._id = p._id.toString()
+            ;(p as any)._id = p._id.toString?.() || ''
           })
           setPartners(transformed)
           setPagination({ page: res.data.pagination.page, totalPages: res.data.pagination.pages })

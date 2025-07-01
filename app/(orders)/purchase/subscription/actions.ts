@@ -65,7 +65,7 @@ export async function getActiveSubscriptionsForPurchase(): Promise<GetActiveSubs
     return {
       success: true,
       subscriptions: subscriptions.map(sub => ({
-        _id: sub._id.toString(),
+        _id: sub._id?.toString() || '',
         name: sub.name,
         description: sub.description,
         quantity: sub.quantity,
@@ -102,9 +102,9 @@ export async function getTreatments(
     return {
       success: true,
       treatments: treatments.map(treatment => ({
-        _id: treatment._id.toString(),
+        _id: treatment._id?.toString() || '',
         name: treatment.name,
-        description: treatment.description,
+        description: treatment.description || '',
         category: treatment.category,
         pricingType: treatment.pricingType,
         fixedPrice: treatment.fixedPrice,

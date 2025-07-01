@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { dbConnect } from "@/lib/db/mongodb"
+import dbConnect from "@/lib/db/mongodb"
 import { logger } from "@/lib/logs/logger"
 
 /**
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
           profileId: profile._id?.toString() || '',
           workAreas: profile.workAreas || [],
           treatments: profile.treatments || [],
-          preferredLanguage: prof.preferredLanguage,
+          preferredLanguage: (prof as any).preferredLanguage || 'he',
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))

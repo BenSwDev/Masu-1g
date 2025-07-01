@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { revalidatePath } from "next/cache"
@@ -209,7 +210,7 @@ export async function getAllUserSubscriptions(
         const treatmentDoc = sub.treatmentId
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
-            (d: any) => d._id.toString() === sub.selectedDurationId.toString()
+            (d: any) => d._id.toString?.() || '' === sub.selectedDurationId.toString?.() || ''
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -377,3 +378,4 @@ export async function updateUserSubscription(
     return { success: false, error: "Failed to update user subscription" }
   }
 }
+

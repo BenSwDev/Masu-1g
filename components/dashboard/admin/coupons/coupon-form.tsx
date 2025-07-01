@@ -82,7 +82,7 @@ export function CouponForm({
       usageLimit: initialData?.usageLimit || 1,
       usageLimitPerUser: initialData?.usageLimitPerUser || 1,
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
-      assignedPartnerId: initialData?.assignedPartnerId?.toString() || null,
+      assignedPartnerId: initialData?.assignedPartnerId?.toString?.() || '' || null,
       notesForPartner: initialData?.notesForPartner || "",
     }),
     [initialData]
@@ -296,7 +296,7 @@ export function CouponForm({
                 value={
                   field.value === null || field.value === undefined
                     ? NO_PARTNER_SELECTED_VALUE
-                    : field.value.toString()
+                    : field.value.toString?.() || ''
                 }
                 disabled={loading || partnersForSelect.length === 0}
               >

@@ -24,7 +24,7 @@ function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingCo
   const bookingTreatment = useMemo(() => {
     if (!bookingResult?.treatmentId) return null
     return (initialData?.activeTreatments || []).find(
-      t => t._id.toString() === bookingResult.treatmentId.toString()
+      t => t._id.toString?.() || '' === bookingResult.treatmentId.toString?.() || ''
     )
   }, [bookingResult?.treatmentId, initialData?.activeTreatments])
 
@@ -60,7 +60,7 @@ function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingCo
 
     if (bookingResult?.selectedDurationId && bookingTreatment.durations) {
       const duration = bookingTreatment.durations.find(
-        (d: any) => d._id.toString() === bookingResult.selectedDurationId?.toString()
+        (d: any) => d._id.toString?.() || '' === bookingResult.selectedDurationId?.toString?.() || ''
       )
       if (duration) {
         return `${duration.minutes || 0} ${t("common.minutes")}`
@@ -113,7 +113,7 @@ function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingCo
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
           <strong>{t("confirmation.bookingReference")}:</strong>{" "}
-          {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
+          {bookingResult.bookingNumber || bookingResult._id?.toString?.() || ''.slice(-8).toUpperCase()}
         </AlertDescription>
       </Alert>
 

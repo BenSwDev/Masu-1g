@@ -426,7 +426,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                     </SelectTrigger>
                     <SelectContent>
                       {days.map(day => (
-                        <SelectItem key={day} value={day.toString()}>
+                        <SelectItem key={day} value={day.toString?.() || ''}>
                           {day}
                         </SelectItem>
                       ))}
@@ -454,7 +454,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                     </SelectTrigger>
                     <SelectContent>
                       {years.map(year => (
-                        <SelectItem key={year} value={year.toString()}>
+                        <SelectItem key={year} value={year.toString?.() || ''}>
                           {year}
                         </SelectItem>
                       ))}

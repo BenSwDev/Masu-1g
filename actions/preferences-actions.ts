@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth/next"
@@ -161,3 +162,4 @@ export async function updateNotificationPreferences(
     return { success: false, message: "Failed to update notification preferences" }
   }
 }
+

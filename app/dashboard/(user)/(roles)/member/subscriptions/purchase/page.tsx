@@ -33,7 +33,7 @@ export default async function PurchaseSubscriptionPage() {
   // Convert data to the format expected by GuestSubscriptionWizard
   const serializedSubscriptions =
     subscriptionsData.subscriptions?.map(sub => ({
-      _id: sub._id.toString(),
+      _id: sub._id.toString?.() || '',
       name: sub.name,
       description: sub.description,
       quantity: sub.quantity,
@@ -46,14 +46,14 @@ export default async function PurchaseSubscriptionPage() {
 
   const serializedTreatments =
     treatmentsData.treatments?.map(treatment => ({
-      _id: treatment._id.toString(),
+      _id: treatment._id.toString?.() || '',
       name: treatment.name,
       description: treatment.description,
       category: treatment.category,
       pricingType: treatment.pricingType,
       fixedPrice: treatment.fixedPrice,
       durations: treatment.durations?.map((d: any) => ({
-        _id: d._id.toString(),
+        _id: d._id.toString?.() || '',
         minutes: d.minutes,
         price: d.price,
         professionalPrice: d.professionalPrice,

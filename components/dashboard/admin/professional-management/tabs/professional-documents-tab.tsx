@@ -79,7 +79,7 @@ export default function ProfessionalDocumentsTab({
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       const newDoc = {
-        id: Date.now().toString(),
+        id: Date.now().toString?.() || '',
         type: docType,
         name: file.name,
         status: "pending" as const,

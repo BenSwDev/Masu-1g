@@ -390,7 +390,7 @@ export default function ComprehensiveBookingEditModal({
                   <div className="space-y-2">
                     <Label>{t("adminBookings.treatmentId")}</Label>
                     <Input
-                      value={treatment?._id?.toString() || booking.treatmentId?.toString()}
+                      value={treatment?._id?.toString?.() || '' || booking.treatmentId?.toString?.() || ''}
                       disabled
                     />
                   </div>
@@ -470,7 +470,7 @@ export default function ComprehensiveBookingEditModal({
                   {booking.selectedDurationId && (
                     <div className="space-y-2">
                       <Label>{t("adminBookings.selectedDuration")}</Label>
-                      <Input value={booking.selectedDurationId.toString()} disabled />
+                      <Input value={booking.selectedDurationId.toString?.() || ''} disabled />
                     </div>
                   )}
                 </div>
@@ -547,7 +547,7 @@ export default function ComprehensiveBookingEditModal({
                     <Label>{t("adminBookings.userId")}</Label>
                     <Input
                       value={
-                        client?._id?.toString() || booking.userId?.toString() || t("common.guest")
+                        client?._id?.toString?.() || '' || booking.userId?.toString?.() || '' || t("common.guest")
                       }
                       disabled
                     />
@@ -779,7 +779,7 @@ export default function ComprehensiveBookingEditModal({
                         )}
                         {professional?._id && (
                           <div className="col-span-2 text-xs text-green-600 font-mono">
-                            ID: {professional._id.toString()}
+                            ID: {professional._id.toString?.() || ''}
                           </div>
                         )}
                       </div>

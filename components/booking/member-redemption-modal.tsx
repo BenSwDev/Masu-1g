@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
+import type { GiftVoucher } from '@/types/core';
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface MemberRedemptionModalProps {
@@ -34,7 +35,7 @@ export default function MemberRedemptionModal({
           <DialogTitle>{t("bookings.redeem.chooseTitle") || "מימוש שובר או מנוי"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {subscriptions?.map((sub: IUserSubscription) => (
+          {subscriptions?.map((sub: UserSubscription) => (
             <div key={sub._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{(sub.subscriptionId as any)?.name}</div>
               {sub.treatmentId && (
@@ -46,7 +47,7 @@ export default function MemberRedemptionModal({
               </div>
             </div>
           ))}
-          {vouchers?.map((v: IGiftVoucher) => (
+          {vouchers?.map((v: GiftVoucher) => (
             <div key={v._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">
                 {v.voucherType === "monetary"
@@ -67,3 +68,5 @@ export default function MemberRedemptionModal({
     </Dialog>
   )
 }
+
+

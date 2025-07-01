@@ -38,7 +38,7 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
     let duration = null
     if (userSubscription.selectedDurationId && treatment.durations) {
       duration = treatment.durations.find(
-        (d: any) => d._id.toString() === userSubscription.selectedDurationId?.toString()
+        (d: any) => d._id.toString?.() || '' === userSubscription.selectedDurationId?.toString?.() || ''
       )
     }
 

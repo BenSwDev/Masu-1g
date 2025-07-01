@@ -152,12 +152,12 @@ export default function UnifiedSubscriptionWizard({
 
   // Get selected data
   const selectedSubscription = subscriptions.find(
-    s => (s._id as any).toString() === selectedSubscriptionId
+    s => (s._id as any).toString?.() || '' === selectedSubscriptionId
   )
-  const selectedTreatment = treatments.find(t => (t._id as any).toString() === selectedTreatmentId)
+  const selectedTreatment = treatments.find(t => (t._id as any).toString?.() || '' === selectedTreatmentId)
   const selectedDuration =
     selectedTreatment?.pricingType === "duration_based"
-      ? selectedTreatment.durations?.find(d => (d._id as any).toString() === selectedDurationId)
+      ? selectedTreatment.durations?.find(d => (d._id as any).toString?.() || '' === selectedDurationId)
       : undefined
 
   // Calculate price
@@ -377,13 +377,13 @@ export default function UnifiedSubscriptionWizard({
           <div className="grid gap-3">
             {subscriptions.map(sub => (
               <div
-                key={(sub._id as any).toString()}
+                key={(sub._id as any).toString?.() || ''}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedSubscriptionId === (sub._id as any).toString()
+                  selectedSubscriptionId === (sub._id as any).toString?.() || ''
                     ? "border-blue-500 bg-blue-50"
                     : "border-gray-200 hover:border-blue-300"
                 }`}
-                onClick={() => setSelectedSubscriptionId((sub._id as any).toString())}
+                onClick={() => setSelectedSubscriptionId((sub._id as any).toString?.() || '')}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -405,7 +405,7 @@ export default function UnifiedSubscriptionWizard({
                       </Badge>
                     </div>
                   </div>
-                  {selectedSubscriptionId === (sub._id as any).toString() && (
+                  {selectedSubscriptionId === (sub._id as any).toString?.() || '' && (
                     <CheckCircle className="w-6 h-6 text-blue-500" />
                   )}
                 </div>
@@ -445,13 +445,13 @@ export default function UnifiedSubscriptionWizard({
               <div className="grid gap-2">
                 {categoryTreatments.map(treatment => (
                   <div
-                    key={(treatment._id as any).toString()}
+                    key={(treatment._id as any).toString?.() || ''}
                     className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                      selectedTreatmentId === (treatment._id as any).toString()
+                      selectedTreatmentId === (treatment._id as any).toString?.() || ''
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-blue-300"
                     }`}
-                    onClick={() => setSelectedTreatmentId((treatment._id as any).toString())}
+                    onClick={() => setSelectedTreatmentId((treatment._id as any).toString?.() || '')}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -463,7 +463,7 @@ export default function UnifiedSubscriptionWizard({
                           <p className="text-sm text-blue-600 mt-1">₪{treatment.fixedPrice}</p>
                         )}
                       </div>
-                      {selectedTreatmentId === (treatment._id as any).toString() && (
+                      {selectedTreatmentId === (treatment._id as any).toString?.() || '' && (
                         <CheckCircle className="w-5 h-5 text-blue-500" />
                       )}
                     </div>
@@ -482,19 +482,19 @@ export default function UnifiedSubscriptionWizard({
                   .filter(d => d.isActive)
                   .map(duration => (
                     <div
-                      key={duration._id.toString()}
+                      key={duration._id.toString?.() || ''}
                       className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedDurationId === duration._id.toString()
+                        selectedDurationId === duration._id.toString?.() || ''
                           ? "border-blue-500 bg-blue-50"
                           : "border-gray-200 hover:border-blue-300"
                       }`}
-                      onClick={() => setSelectedDurationId(duration._id.toString())}
+                      onClick={() => setSelectedDurationId(duration._id.toString?.() || '')}
                     >
                       <div className="flex justify-between items-center">
                         <span>{duration.minutes} דקות</span>
                         <div className="flex items-center gap-2">
                           <span className="text-blue-600 font-medium">₪{duration.price}</span>
-                          {selectedDurationId === duration._id.toString() && (
+                          {selectedDurationId === duration._id.toString?.() || '' && (
                             <CheckCircle className="w-5 h-5 text-blue-500" />
                           )}
                         </div>

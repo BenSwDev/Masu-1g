@@ -550,7 +550,7 @@ const AdminUserSubscriptionsClient = ({
             </span>
 
             <Select
-              value={limit.toString()}
+              value={limit.toString?.() || ''}
               onValueChange={value => {
                 setLimit(Number.parseInt(value))
                 setCurrentPage(1) // Reset to page 1 when limit changes
@@ -558,11 +558,11 @@ const AdminUserSubscriptionsClient = ({
               }}
             >
               <SelectTrigger className="w-24">
-                <SelectValue placeholder={limit.toString()} />
+                <SelectValue placeholder={limit.toString?.() || ''} />
               </SelectTrigger>
               <SelectContent>
                 {[5, 10, 20, 50].map(l => (
-                  <SelectItem key={l} value={l.toString()}>
+                  <SelectItem key={l} value={l.toString?.() || ''}>
                     {t("common.pagination.showPerPage")} {l}
                   </SelectItem>
                 ))}

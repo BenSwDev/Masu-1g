@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -94,7 +95,7 @@ export async function getUserPurchaseHistory(
         }
 
         allTransactions.push({
-          id: booking._id.toString(),
+          id: booking._id.toString?.() || '',
           type: "booking",
           date: booking.bookingDateTime,
           amount: booking.priceDetails.basePrice || 0,
@@ -134,7 +135,7 @@ export async function getUserPurchaseHistory(
         }
 
         allTransactions.push({
-          id: userSub._id.toString(),
+          id: userSub._id.toString?.() || '',
           type: "subscription",
           date: userSub.purchaseDate,
           amount: userSub.paymentAmount || 0,
@@ -172,13 +173,13 @@ export async function getUserPurchaseHistory(
             voucher.usageHistory?.map(h => ({
               date: h.date,
               amountUsed: h.amountUsed,
-              orderId: h.orderId?.toString(),
+              orderId: h.orderId?.toString?.() || '',
               description: h.description || "שימוש בשובר",
             })) || [],
         }
 
         allTransactions.push({
-          id: voucher._id.toString(),
+          id: voucher._id.toString?.() || '',
           type: "gift_voucher",
           date: voucher.purchaseDate,
           amount: voucher.amount,
@@ -345,7 +346,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
         : customer.createdAt
 
     const customerSummary: CustomerSummary = {
-      userId: customer._id.toString(),
+      userId: customer._id.toString?.() || '',
       customerName: customer.name,
       customerEmail: customer.email || "",
       customerPhone: customer.phone || "",
@@ -429,7 +430,7 @@ export async function getAllCustomers(
     const customers: CustomerSummary[] = []
 
     for (const user of users) {
-      const summaryResult = await getCustomerSummary(user._id.toString())
+      const summaryResult = await getCustomerSummary(user._id.toString?.() || '')
       if (summaryResult.success && summaryResult.data) {
         // Add user type information
         const customerWithType = {
@@ -525,7 +526,7 @@ export async function getAllPurchaseTransactions(
         }
 
         allTransactions.push({
-          id: booking._id.toString(),
+          id: booking._id.toString?.() || '',
           type: "booking",
           date: booking.bookingDateTime,
           amount: booking.priceDetails.basePrice || 0,
@@ -569,7 +570,7 @@ export async function getAllPurchaseTransactions(
         }
 
         allTransactions.push({
-          id: userSub._id.toString(),
+          id: userSub._id.toString?.() || '',
           type: "subscription",
           date: userSub.purchaseDate,
           amount: userSub.paymentAmount || 0,
@@ -620,14 +621,14 @@ export async function getAllPurchaseTransactions(
             voucher.usageHistory?.map(h => ({
               date: h.date,
               amountUsed: h.amountUsed,
-              orderId: h.orderId?.toString(),
+              orderId: h.orderId?.toString?.() || '',
               description: h.description || "שימוש בשובר",
             })) || [],
         }
 
         const customerData = voucher.purchaserUserId || voucher.ownerUserId
         allTransactions.push({
-          id: voucher._id.toString(),
+          id: voucher._id.toString?.() || '',
           type: "gift_voucher",
           date: voucher.purchaseDate,
           amount: voucher.amount,
@@ -913,3 +914,4 @@ export async function getWeeklyAdminTransactionStats() {
     return { success: false, error: "Failed to fetch statistics" }
   }
 }
+

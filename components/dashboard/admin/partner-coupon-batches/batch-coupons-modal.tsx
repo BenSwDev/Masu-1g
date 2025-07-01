@@ -52,7 +52,7 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
   const loadCoupons = async () => {
     setLoading(true)
     try {
-      const result = await getBatchCoupons(batch._id.toString())
+      const result = await getBatchCoupons(batch._id.toString?.() || '')
       setCoupons(result.coupons)
     } catch (error) {
       toast({
@@ -93,7 +93,7 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
     if (selectedCoupons.length === coupons.length) {
       setSelectedCoupons([])
     } else {
-      setSelectedCoupons(coupons.map(c => c._id.toString()))
+      setSelectedCoupons(coupons.map(c => c._id.toString?.() || ''))
     }
   }
 
@@ -103,7 +103,7 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
     setIsUpdating(true)
     try {
       const result = await updateCouponsInBatch({
-        batchId: batch._id.toString(),
+        batchId: batch._id.toString?.() || '',
         couponIds: selectedCoupons,
         updates: { isActive },
       })
@@ -148,8 +148,8 @@ export function BatchCouponsModal({ open, onOpenChange, batch, onClose }: BatchC
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={selectedCoupons.includes(row.original._id.toString())}
-            onCheckedChange={checked => handleSelectCoupon(row.original._id.toString(), !!checked)}
+            checked={selectedCoupons.includes(row.original._id.toString?.() || '')}
+            onCheckedChange={checked => handleSelectCoupon(row.original._id.toString?.() || '', !!checked)}
             aria-label="Select row"
           />
         ),

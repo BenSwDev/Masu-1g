@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -16,48 +16,21 @@ import {
   FileText,
   DollarSign,
   ScrollText,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Ban,
 } from "lucide-react"
-import ProfessionalProfileTab from "./tabs/professional-profile-tab"
-import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
-import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
-import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
-import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
-import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
-import ProfessionalContractTab from "./tabs/professional-contract-tab"
+import { ProfessionalProfileTab } from "./tabs/professional-profile-tab"
+import { ProfessionalTreatmentsTabNew } from "./tabs/professional-treatments-tab-new"
+import { ProfessionalWorkAreasTabSimple } from "./tabs/professional-work-areas-tab-simple"
+import { ProfessionalBankDetailsTab } from "./tabs/professional-bank-details-tab"
+import { ProfessionalDocumentsTab } from "./tabs/professional-documents-tab"
+import { ProfessionalFinancialTab } from "./tabs/professional-financial-tab"
+import { ProfessionalContractTab } from "./tabs/professional-contract-tab"
+import type { Professional } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
 
 interface ProfessionalEditModalProps {
   professional: Professional
@@ -77,14 +50,14 @@ export default function ProfessionalEditModal({
   const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
+  useEffect(() => {
+    setUpdatedProfessional(professional)
+    setHasUnsavedChanges(false)
+  }, [professional])
+
   const handleUpdate = (updatedData: Partial<Professional>) => {
-    setUpdatedProfessional(prev => ({
-      ...prev,
-      ...updatedData,
-    }))
-    if (!isCreatingNew) {
-      setHasUnsavedChanges(true)
-    }
+    setUpdatedProfessional(prev => ({ ...prev, ...updatedData }))
+    setHasUnsavedChanges(true)
   }
 
   const handleClose = () => {
@@ -92,7 +65,6 @@ export default function ProfessionalEditModal({
       const confirmClose = window.confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לסגור?")
       if (!confirmClose) return
     }
-    setHasUnsavedChanges(false)
     onClose()
   }
 

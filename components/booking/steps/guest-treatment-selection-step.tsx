@@ -83,7 +83,7 @@ export function GuestTreatmentSelectionStep({
 
   const selectedTreatment = useMemo(() => {
     return availableTreatmentsForStep.find(
-      t => (t._id || t.id)?.toString() === bookingOptions.selectedTreatmentId
+      t => (t._id || t.id)?.toString?.() || '' === bookingOptions.selectedTreatmentId
     )
   }, [availableTreatmentsForStep, bookingOptions.selectedTreatmentId])
 
@@ -133,18 +133,18 @@ export function GuestTreatmentSelectionStep({
           typeof (redemption.data as any).treatmentId === "string"
             ? (redemption.data as any).treatmentId
             : (redemption.data as any).treatmentId?._id ||
-              (redemption.data as any).treatmentId?.toString()
+              (redemption.data as any).treatmentId?.toString?.() || ''
 
         const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-          t => (t._id || t.id)?.toString() === treatmentIdToFind?.toString()
+          t => (t._id || t.id)?.toString?.() || '' === treatmentIdToFind?.toString?.() || ''
         )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
           setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
           setBookingOptions(prev => ({
             ...prev,
-            selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString(),
-            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+            selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString?.() || '',
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString?.() || '',
           }))
           setIsTreatmentLockedBySource(true)
         } else if (
@@ -157,8 +157,8 @@ export function GuestTreatmentSelectionStep({
           setSelectedCategory(populatedTreatment.category || "Uncategorized")
           setBookingOptions(prev => ({
             ...prev,
-            selectedTreatmentId: (populatedTreatment._id || populatedTreatment.id)?.toString(),
-            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+            selectedTreatmentId: (populatedTreatment._id || populatedTreatment.id)?.toString?.() || '',
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString?.() || '',
           }))
           setIsTreatmentLockedBySource(true)
         }
@@ -171,14 +171,14 @@ export function GuestTreatmentSelectionStep({
           setSelectedCategory(treatmentFromSub.category || "Uncategorized")
           setBookingOptions(prev => ({
             ...prev,
-            selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
-            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+            selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString?.() || '',
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString?.() || '',
           }))
           setIsTreatmentLockedBySource(true)
         } else {
           // If treatmentId is just an ID, find it in activeTreatments
           const treatmentFromActiveTreatments = (initialData.activeTreatments || []).find(
-            t => (t._id || t.id)?.toString() === treatmentFromSub?.toString()
+            t => (t._id || t.id)?.toString?.() || '' === treatmentFromSub?.toString?.() || ''
           )
           if (treatmentFromActiveTreatments) {
             setAvailableTreatmentsForStep([treatmentFromActiveTreatments])
@@ -187,8 +187,8 @@ export function GuestTreatmentSelectionStep({
               ...prev,
               selectedTreatmentId: (
                 treatmentFromActiveTreatments._id || treatmentFromActiveTreatments.id
-              )?.toString(),
-              selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+              )?.toString?.() || '',
+              selectedDurationId: (redemption.data as any).selectedDurationId?.toString?.() || '',
             }))
             setIsTreatmentLockedBySource(true)
           }
@@ -201,15 +201,15 @@ export function GuestTreatmentSelectionStep({
     } else if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
       // Handle voucher passed as props (legacy flow)
       const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-        t => (t._id || t.id)?.toString() === voucher.treatmentId?.toString()
+        t => (t._id || t.id)?.toString?.() || '' === voucher.treatmentId?.toString?.() || ''
       )
       if (treatmentFromVoucher) {
         setAvailableTreatmentsForStep([treatmentFromVoucher])
         setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
         setBookingOptions(prev => ({
           ...prev,
-          selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString(),
-          selectedDurationId: voucher.selectedDurationId?.toString(),
+          selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString?.() || '',
+          selectedDurationId: voucher.selectedDurationId?.toString?.() || '',
         }))
         setIsTreatmentLockedBySource(true)
       }
@@ -218,7 +218,7 @@ export function GuestTreatmentSelectionStep({
       const treatmentFromSub =
         typeof userSubscription.treatmentId === "string"
           ? (initialData.activeTreatments || []).find(
-              t => (t._id || t.id)?.toString() === userSubscription.treatmentId?.toString()
+              t => (t._id || t.id)?.toString?.() || '' === userSubscription.treatmentId?.toString?.() || ''
             )
           : userSubscription.treatmentId
 
@@ -227,8 +227,8 @@ export function GuestTreatmentSelectionStep({
         setSelectedCategory(treatmentFromSub.category || "Uncategorized")
         setBookingOptions(prev => ({
           ...prev,
-          selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
-          selectedDurationId: userSubscription.selectedDurationId?.toString(),
+          selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString?.() || '',
+          selectedDurationId: userSubscription.selectedDurationId?.toString?.() || '',
         }))
         setIsTreatmentLockedBySource(true)
       }
@@ -262,8 +262,8 @@ export function GuestTreatmentSelectionStep({
         ) {
           const specificDuration = activeDurations.find(
             (d: any) =>
-              (d._id || d.id)?.toString() ===
-              (redemption.data as any).selectedDurationId?.toString()
+              (d._id || d.id)?.toString?.() || '' ===
+              (redemption.data as any).selectedDurationId?.toString?.() || ''
           )
           return specificDuration ? [specificDuration] : []
         }
@@ -272,8 +272,8 @@ export function GuestTreatmentSelectionStep({
         if (redemption.type === "subscription" && (redemption.data as any)?.selectedDurationId) {
           const specificDuration = activeDurations.find(
             (d: any) =>
-              (d._id || d.id)?.toString() ===
-              (redemption.data as any).selectedDurationId?.toString()
+              (d._id || d.id)?.toString?.() || '' ===
+              (redemption.data as any).selectedDurationId?.toString?.() || ''
           )
           return specificDuration ? [specificDuration] : []
         }
@@ -282,7 +282,7 @@ export function GuestTreatmentSelectionStep({
       // For vouchers passed as props (legacy flow)
       if (voucher?.voucherType === "treatment" && voucher.selectedDurationId) {
         const specificDuration = activeDurations.find(
-          (d: any) => (d._id || d.id)?.toString() === voucher.selectedDurationId?.toString()
+          (d: any) => (d._id || d.id)?.toString?.() || '' === voucher.selectedDurationId?.toString?.() || ''
         )
         return specificDuration ? [specificDuration] : []
       }
@@ -291,7 +291,7 @@ export function GuestTreatmentSelectionStep({
       if (userSubscription?.selectedDurationId) {
         const specificDuration = activeDurations.find(
           (d: any) =>
-            (d._id || d.id)?.toString() === userSubscription.selectedDurationId?.toString()
+            (d._id || d.id)?.toString?.() || '' === userSubscription.selectedDurationId?.toString?.() || ''
         )
         return specificDuration ? [specificDuration] : []
       }
@@ -332,7 +332,7 @@ export function GuestTreatmentSelectionStep({
   useEffect(() => {
     if (availableDurations.length === 1 && !bookingOptions.selectedDurationId) {
       const singleDuration = availableDurations[0]
-      const durationId = (singleDuration._id || singleDuration.id)?.toString()
+      const durationId = (singleDuration._id || singleDuration.id)?.toString?.() || ''
       if (durationId) {
         setBookingOptions(prev => ({
           ...prev,
@@ -387,11 +387,11 @@ export function GuestTreatmentSelectionStep({
                 ? "gift_voucher_redemption"
                 : "new_purchase",
           selectedGiftVoucherId: redemption.type.includes("voucher")
-            ? (redemption.data as any)?._id?.toString()
+            ? (redemption.data as any)?._id?.toString?.() || ''
             : undefined,
           selectedUserSubscriptionId:
             redemption.type === "subscription"
-              ? (redemption.data as any)?._id?.toString()
+              ? (redemption.data as any)?._id?.toString?.() || ''
               : undefined,
           appliedCouponCode: redemption.type.includes("coupon") ? redemptionCode.trim() : undefined,
         }))
@@ -636,7 +636,7 @@ export function GuestTreatmentSelectionStep({
                 ? filteredTreatmentsByCategory
                 : availableTreatmentsForStep
               ).map(treatment => {
-                const treatmentId = (treatment._id || treatment.id)?.toString()
+                const treatmentId = (treatment._id || treatment.id)?.toString?.() || ''
                 const isSelected = bookingOptions.selectedTreatmentId === treatmentId
                 const isLocked = isTreatmentLockedBySource && !isSelected
 
@@ -721,7 +721,7 @@ export function GuestTreatmentSelectionStep({
                 className="space-y-4"
               >
                 {availableDurations.map((duration: any) => {
-                  const durationId = (duration._id || duration.id)?.toString()
+                  const durationId = (duration._id || duration.id)?.toString?.() || ''
 
                   if (!durationId) return null // Skip durations without valid ID
 

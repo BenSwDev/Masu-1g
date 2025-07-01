@@ -163,7 +163,7 @@ export default function SubscriptionForm({
               <Select
                 disabled={isLoading}
                 onValueChange={value => field.onChange(Number.parseInt(value))}
-                value={field.value.toString()}
+                value={field.value.toString?.() || ''}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -172,7 +172,7 @@ export default function SubscriptionForm({
                 </FormControl>
                 <SelectContent>
                   {[1, 3, 6, 12, 24, 36].map(months => (
-                    <SelectItem key={months} value={months.toString()}>
+                    <SelectItem key={months} value={months.toString?.() || ''}>
                       {months} {t("subscriptions.months")}
                     </SelectItem>
                   ))}

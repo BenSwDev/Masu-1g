@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -27,11 +28,11 @@ export async function getSubscriptions(): Promise<{
 
     const serializedSubscriptions = subscriptions.map(sub => ({
       ...sub,
-      _id: (sub._id as any).toString(),
+      _id: (sub._id as any).toString?.() || '',
       treatmentId: sub.treatmentId
         ? {
             ...sub.treatmentId,
-            _id: sub.treatmentId._id.toString(),
+            _id: sub.treatmentId._id.toString?.() || '',
           }
         : null,
     }))
@@ -67,11 +68,11 @@ export async function getSubscriptionById(id: string): Promise<{
 
     const serializedSubscription = {
       ...subscription,
-      _id: (subscription as any)._id.toString(),
+      _id: (subscription as any)._id.toString?.() || '',
       treatmentId: (subscription as any).treatmentId
         ? {
             ...(subscription as any).treatmentId,
-            _id: (subscription as any).treatmentId._id.toString(),
+            _id: (subscription as any).treatmentId._id.toString?.() || '',
           }
         : null,
     }
@@ -115,7 +116,7 @@ export async function createSubscription(data: {
       success: true,
       subscription: {
         ...subscription.toObject(),
-        _id: (subscription as any)._id.toString(),
+        _id: (subscription as any)._id.toString?.() || '',
       },
     }
   } catch (error) {
@@ -165,7 +166,7 @@ export async function updateSubscription(
       success: true,
       subscription: {
         ...subscription.toObject(),
-        _id: (subscription as any)._id.toString(),
+        _id: (subscription as any)._id.toString?.() || '',
       },
     }
   } catch (error) {
@@ -224,15 +225,15 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
 
     const serializedSubscriptions = subscriptions.map((sub: any) => ({
       ...sub,
-      _id: (sub._id as any).toString(),
+      _id: (sub._id as any).toString?.() || '',
       treatmentId: sub.treatmentId
         ? {
             ...sub.treatmentId,
-            _id: sub.treatmentId._id.toString(),
+            _id: sub.treatmentId._id.toString?.() || '',
             durations:
               sub.treatmentId.durations?.map((duration: any) => ({
                 ...duration,
-                _id: duration._id.toString(),
+                _id: duration._id.toString?.() || '',
               })) || [],
           }
         : null,
@@ -247,3 +248,4 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
     return { success: false, error: "Failed to fetch subscriptions" }
   }
 }
+

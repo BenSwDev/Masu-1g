@@ -1,3 +1,4 @@
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth"
@@ -35,7 +36,7 @@ function getPeriodKey(date: Date, period: "day" | "week" | "month") {
     weekStart.setUTCHours(0, 0, 0, 0)
     return weekStart.toISOString().slice(0, 10)
   }
-  return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, "0")}`
+  return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString?.() || ''.padStart(2, "0")}`
 }
 
 export async function getProfessionalFinancialSummary(period: "day" | "week" | "month" = "day") {
@@ -79,7 +80,7 @@ export async function getProfessionalFinancialSummary(period: "day" | "week" | "
       records[key].treatments += 1
       records[key].earnings += amount
       records[key].details.push({
-        bookingId: b._id.toString(),
+        bookingId: b._id.toString?.() || '',
         treatmentName: (b.treatmentId as any)?.name || "",
         date: b.bookingDateTime,
         amount,
@@ -149,3 +150,4 @@ export async function addProfessionalTransaction(
     return { success: false, error: "Failed to add transaction" }
   }
 }
+

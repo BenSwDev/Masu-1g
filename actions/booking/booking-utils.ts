@@ -1,9 +1,17 @@
 "use server"
 
 import dbConnect from "@/lib/db/mongoose"
-import { Counter } from "@/lib/db/models/counter"
+import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import type { PopulatedBooking } from "@/types/booking"
+
+// Define Counter schema inline since we can't import it properly
+const counterSchema = new mongoose.Schema({
+  _id: String,
+  seq: { type: Number, default: 0 }
+})
+
+const Counter = mongoose.models.Counter || mongoose.model('Counter', counterSchema)
 
 /**
  * Transform booking document to plain object

@@ -24,7 +24,7 @@ import type {
 } from "@/types/booking"
 import type { BookingStatus } from "@/types/core"
 import type { IBookingAddressSnapshot, IPriceDetails } from "@/lib/db/models/booking"
-import { constructFullAddressHelper } from "./booking-utils"
+import { constructFullAddressHelper } from "@/lib/utils/booking-helpers"
 import { getNextSequenceValue } from "@/lib/db/models/counter"
 import { sendGuestNotification } from "@/actions/notification-service"
 import bcrypt from "bcryptjs"

@@ -99,73 +99,58 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
     // Calculate surcharges based on working hours settings
     const settings = (await WorkingHoursSettings.findOne().lean()) as any | null
     if (settings) {
-      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
-      if (
-        daySettings?.isActive &&
-        daySettings.hasPriceAddition &&
-        daySettings.priceAddition?.amount &&
-        daySettings.priceAddition.amount > 0
-      ) {
-        // Check if booking time is within surcharge time range
-        const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
-        let isInSurchargeRange = true // Default to true if no time range specified
+      const daySettings = await getDayWorkingHours(bookingDatePartUTC, settings)
 
-        if (
-          daySettings.priceAddition.priceAdditionStartTime ||
-          daySettings.priceAddition.priceAdditionEndTime
-        ) {
-          let surchargeStartMinutes = 0
-          let surchargeEndMinutes = 24 * 60 // Default to full day
+      if (!daySettings?.isActive) {
+        return {
+          success: true,
+          priceDetails: {
+            basePrice: treatment.fixedPrice || 0,
+            surcharges: [],
+            totalSurchargesAmount: 0,
+            treatmentPriceAfterSubscriptionOrTreatmentVoucher: treatment.fixedPrice || 0,
+            couponDiscount: 0,
+            voucherAppliedAmount: 0,
+            finalAmount: treatment.fixedPrice || 0,
+            isBaseTreatmentCoveredBySubscription: false,
+            isBaseTreatmentCoveredByTreatmentVoucher: false,
+            isFullyCoveredByVoucherOrSubscription: false,
+            totalProfessionalPayment: 0,
+            totalOfficeCommission: 0,
+            baseProfessionalPayment: 0,
+            surchargesProfessionalPayment: 0,
+          },
+        }
+      }
 
-          if (daySettings.priceAddition.priceAdditionStartTime) {
-            const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime
-              .split(":")
-              .map(Number)
-            surchargeStartMinutes = startHour * 60 + startMinute
-          }
-
-          if (daySettings.priceAddition.priceAdditionEndTime) {
-            const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime
-              .split(":")
-              .map(Number)
-            surchargeEndMinutes = endHour * 60 + endMinute
-          }
-
-          isInSurchargeRange =
-            bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
+      // Check for price additions
+      let priceAdditionAmount = 0
+      if (daySettings.hasPriceAddition && daySettings.priceAddition) {
+        const priceAddition = daySettings.priceAddition
+        
+        if (priceAddition.type === "fixed") {
+          priceAdditionAmount = priceAddition.amount || 0
+        } else if (priceAddition.type === "percentage") {
+          priceAdditionAmount = (basePrice * (priceAddition.amount || 0)) / 100
         }
 
-        if (isInSurchargeRange) {
-          const surchargeBase = basePrice
-          const surchargeAmount =
-            daySettings.priceAddition.type === "fixed"
-              ? daySettings.priceAddition.amount
-              : surchargeBase * (daySettings.priceAddition.amount / 100)
-
-          if (surchargeAmount > 0) {
-            // Calculate professional share for this surcharge
-            let professionalShare: any | undefined = undefined
-            if (
-              "professionalShare" in daySettings &&
-              daySettings.professionalShare &&
-              daySettings.professionalShare.amount > 0
-            ) {
-              professionalShare = {
-                amount: daySettings.professionalShare.amount,
-                type: daySettings.professionalShare.type,
-              }
-            }
-
-            priceDetails.surcharges.push({
-              description:
-                daySettings.priceAddition.description ||
-                ("notes" in daySettings ? daySettings.notes : "") ||
-                `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
-              amount: surchargeAmount,
-              ...(professionalShare && { professionalShare }),
-            })
-            priceDetails.totalSurchargesAmount += surchargeAmount
+        // Check if price addition applies to the booking time
+        if (priceAddition.priceAdditionStartTime && priceAddition.priceAdditionEndTime) {
+          const bookingTime = bookingDatePartUTC.toTimeString().slice(0, 5)
+          if (bookingTime < priceAddition.priceAdditionStartTime || bookingTime > priceAddition.priceAdditionEndTime) {
+            priceAdditionAmount = 0
           }
+        }
+
+        if (priceAdditionAmount > 0) {
+          priceDetails.surcharges.push({
+            description:
+              priceAddition.description ||
+              ("notes" in daySettings ? daySettings.notes : "") ||
+              `bookings.surcharges.specialTime (${format(bookingDatePartUTC, "HH:mm")})`,
+            amount: priceAdditionAmount,
+          })
+          priceDetails.totalSurchargesAmount += priceAdditionAmount
         }
       }
     }

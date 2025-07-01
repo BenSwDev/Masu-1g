@@ -69,14 +69,27 @@ export {
   filterAvailableSlots,
 } from "./booking-availability"
 
-// Booking Utilities
+// Booking Utilities - server actions only
 export {
   generateBookingNumber,
+  toBookingPlain,
+} from "./booking-utils"
+
+// Import utility functions from the new helpers file
+export {
   validateBookingData,
   formatTimeSlot,
   formatDuration,
+  canCancelBooking,
+  canRescheduleBooking,
+  getBookingDisplayStatus,
+  calculateBookingDuration,
+  formatBookingTime,
+  isBookingToday,
+  getBookingTimeStatus,
   isBookingEditable,
-} from "./booking-utils"
+  constructFullAddressHelper,
+} from "@/lib/utils/booking-helpers"
 
 // Legacy exports for backward compatibility - all functions from individual modules
 export * from "./booking-crud"

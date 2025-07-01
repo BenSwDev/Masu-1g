@@ -1,17 +1,16 @@
 "use server"
 
-import { getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth"
 import { revalidatePath } from "next/cache"
 import { Types } from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import { User } from "@/lib/db/models/user"
-import { Booking, BookingStatus } from "@/lib/db/models/booking"
+import User from "@/lib/db/models/user"
+import Booking from "@/lib/db/models/booking"
 import { UserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
 import { getAllPurchaseTransactions as getSharedPurchaseTransactions } from "@/actions/purchase-summary-actions"
-import { BookingStatus as BookingStatusType } from "@/types/booking"
 
 /**
  * Interface for customer summary result

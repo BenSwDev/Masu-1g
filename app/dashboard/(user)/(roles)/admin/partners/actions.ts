@@ -14,6 +14,8 @@ import {
   type CreateUserData,
   type UpdateUserData,
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
+import { User } from "@/lib/db/models/user"
+import { hashPassword } from "@/lib/utils/auth"
 
 interface GetPartnersOptions {
   page?: number
@@ -142,7 +144,7 @@ export async function createPartner(formData: FormData) {
 
     await dbConnect()
     const profile = await PartnerProfile.create({
-      userId: userRes.data._id,
+      userId: userRes.data._id as any,
       businessNumber: formData.get("businessNumber"),
       contactName: formData.get("contactName"),
     })

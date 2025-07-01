@@ -31,9 +31,9 @@ export default function AddressesPage() {
   } = useQuery({
     queryKey: ["addresses"],
     queryFn: async () => {
-      const result = await getUserAddresses("")
+      const result = await getUserAddresses()
       if (!result.success) {
-        throw new Error(result.error || t("errors.fetchFailed", { context: "addresses" }))
+        throw new Error(result.error || t("errors.fetchFailed"))
       }
       return result.addresses || []
     },
@@ -112,7 +112,7 @@ export default function AddressesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {addresses?.map(address => (
-            <AddressCard key={address._id} address={address} onEdit={handleEdit} />
+            <AddressCard key={address._id?.toString() || Math.random().toString()} address={address} onEdit={handleEdit} />
           ))}
         </div>
       )}

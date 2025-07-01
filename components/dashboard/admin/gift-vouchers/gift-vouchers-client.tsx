@@ -49,12 +49,12 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useIsMobile } from "@/components/ui/use-mobile"
 
-import { GiftVoucherForm } from "./gift-voucher-form"
+import { voucherForm as GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
-import { getGiftVouchers } from "@/actions/gift-voucher-actions"
+import { getGiftVouchers as getvouchers } from "@/actions/gift-voucher-actions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
@@ -139,7 +139,7 @@ export function GiftVouchersClient({
             : undefined,
         }
 
-        const result = await getGiftVouchers(page, pagination.limit, newSearch, currentFilters)
+        const result = await getvouchers(page, pagination.limit, newSearch, currentFilters)
         if (result.success && result.vouchers && result.pagination) {
           setVouchers(result.vouchers)
           setPagination(result.pagination)

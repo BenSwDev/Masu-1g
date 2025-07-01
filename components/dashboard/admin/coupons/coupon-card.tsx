@@ -59,7 +59,7 @@ export function CouponCard({ coupon, onEdit, onDelete, t, dir }: CouponCardProps
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onDelete(coupon._id.toString())}
+              onClick={() => onDelete((coupon._id as any).toString())}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash2 className={`${iconMargin} h-4 w-4`} />

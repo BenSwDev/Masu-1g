@@ -246,7 +246,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                   <Label className="text-xs text-muted-foreground">שם המטפל</Label>
                   <p>
                     {typeof booking.professionalId === 'object' 
-                      ? booking.professionalId.name 
+                      ? booking.professionalId?.name 
                       : "לא זמין"}
                   </p>
                 </div>

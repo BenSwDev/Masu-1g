@@ -147,6 +147,21 @@ export interface PopulatedBooking
   consents?: IBookingConsents
   enhancedPaymentDetails?: IEnhancedPaymentDetails
   review?: IBookingReview
+  customerReview?: {
+    rating: number
+    comment?: string
+    status: "pending" | "approved" | "rejected"
+    createdAt: Date
+    reviewerName?: string
+  }
+  professionalReview?: {
+    customerRating: number
+    comment?: string
+    experienceRating: "positive" | "negative" | "neutral"
+    status: "pending" | "approved" | "rejected"
+    createdAt: Date
+  }
+  endTime?: Date
   // selectedDurationId is still present from IBooking for logic, but display components might use treatmentId.durations
 }
 

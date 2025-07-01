@@ -86,7 +86,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               ) : (
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span>{booking.bookedByUserName || booking.userId?.name || "לא צוין"}</span>
+                  <span>{booking.bookedByUserName || (typeof booking.userId === 'object' ? (booking.userId as any)?.name : '') || "לא צוין"}</span>
                 </div>
               )}
             </div>
@@ -104,7 +104,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               ) : (
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{booking.bookedByUserEmail || booking.userId?.email || "לא צוין"}</span>
+                  <span>{booking.bookedByUserEmail || (typeof booking.userId === 'object' ? (booking.userId as any)?.email : '') || "לא צוין"}</span>
                 </div>
               )}
             </div>
@@ -121,7 +121,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               ) : (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{formatPhoneForDisplay(booking.bookedByUserPhone || booking.userId?.phone || "")}</span>
+                  <span>{formatPhoneForDisplay(booking.bookedByUserPhone || (typeof booking.userId === 'object' ? (booking.userId as any)?.phone : '') || "")}</span>
                 </div>
               )}
             </div>

@@ -289,8 +289,8 @@ export async function purchaseSubscription({
         const methods = purchaser.notificationPreferences?.methods || ["sms", "email"]
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-        const messageHe = `תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.`
-        const messageEn = `Thank you for your purchase! Your subscription code: ${newUserSubscription.code}\nUse this code to book treatments.`
+        const messageHe = `שלום ${purchaser.name}, תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.`
+        const messageEn = `Hello ${purchaser.name}, thank you for your purchase! Your subscription code: ${newUserSubscription.code}\nUse this code to book treatments.`
         const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
         const recipients = []
         if (methods.includes("email") && purchaser.email) {
@@ -1130,7 +1130,7 @@ export async function confirmGuestSubscriptionPurchase(data: {
       // Send success notifications
       try {
         const lang = "he"
-        const message = `תודה על רכישתך! קוד המנוי שלך: ${userSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
+        const message = `שלום ${guestInfo.name}, תודה על רכישתך! קוד המנוי שלך: ${userSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
         const recipients = []
         if (guestInfo.email) {
           recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })

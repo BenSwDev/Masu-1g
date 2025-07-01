@@ -1009,23 +1009,23 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
 
           let messageContent: string
           
-          if (!voucher.isGift) {
+                    if (!voucher.isGift) {
             // Regular purchase for self - include voucher code only
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
             messageContent = lang === "he" 
-              ? `תודה על רכישתך! קוד השובר שלך: ${voucher.code}\nלמימוש השובר השתמש בקוד זה.`
-              : `Thank you for your purchase! Your voucher code: ${voucher.code}\nUse this code to redeem your voucher.`
+              ? `שלום ${purchaser.name}, תודה על רכישתך! קוד השובר שלך: ${voucher.code}\nלמימוש השובר השתמש בקוד זה.`
+              : `Hello ${purchaser.name}, thank you for your purchase! Your voucher code: ${voucher.code}\nUse this code to redeem your voucher.`
           } else {
             // Gift purchase - message about gift being sent
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
             if (voucher.recipientName && voucher.recipientPhone) {
               messageContent = lang === "he" 
-                ? `תודה על רכישת שובר המתנה! המתנה נשלחה ל${voucher.recipientName}.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
-                : `Thank you for purchasing a gift voucher! The gift has been sent to ${voucher.recipientName}.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
+                ? `שלום ${purchaser.name}, תודה על רכישת שובר המתנה! המתנה נשלחה ל${voucher.recipientName}.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+                : `Hello ${purchaser.name}, thank you for purchasing a gift voucher! The gift has been sent to ${voucher.recipientName}.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
             } else {
-                              messageContent = lang === "he" 
-                  ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
-                  : `Thank you for purchasing a gift voucher! The voucher has been created successfully.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
+              messageContent = lang === "he" 
+                ? `שלום ${purchaser.name}, תודה על רכישת שובר המתנה! השובר נוצר בהצלחה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+                : `Hello ${purchaser.name}, thank you for purchasing a gift voucher! The voucher has been created successfully.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
             }
           }
 
@@ -1692,7 +1692,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           }
 
           // Send confirmation to purchaser with voucher code only
-          const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}`
+          const purchaserMessage = `שלום ${guestInfo.name}, ✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}`
           
           const purchaserRecipients = []
           if (guestInfo.email) {
@@ -1711,7 +1711,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
             `שובר כספי בסכום ₪${voucher.amount}` :
             `שובר טיפול: ${voucher.treatmentName || "טיפול"}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""}`
           
-          const message = `תודה על רכישתך!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}\n\nלמימוש השובר השתמש בקוד זה.`
+          const message = `שלום ${guestInfo.name}, תודה על רכישתך!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}\n\nלמימוש השובר השתמש בקוד זה.`
 
           const recipients = []
           if (guestInfo.email) {

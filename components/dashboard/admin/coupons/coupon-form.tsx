@@ -83,7 +83,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
   }, [defaultValues, form])
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await onSubmit(data)
+    await onSubmit(data as any)
   })
 
   return (

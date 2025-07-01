@@ -188,6 +188,7 @@ export async function sendBookingConfirmationToUser(
       type: "treatment-booking-success" as const,
       treatmentName: (booking.treatmentId as any)?.name || "טיפול",
       bookingDateTime: booking.bookingDateTime,
+      recipientName: user.name,
       userName: user.name,
       bookingDetailsLink: `${process.env.NEXTAUTH_URL}/dashboard/member/bookings?bookingId=${bookingId}`
     }

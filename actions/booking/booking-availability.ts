@@ -38,10 +38,10 @@ function isSameDay(dateLeft: Date, dateRight: Date): boolean {
 /**
  * Get working hours for a specific date
  */
-export function getDayWorkingHours(
+export async function getDayWorkingHours(
   date: Date,
   settings: IWorkingHoursSettings
-): IFixedHours | ISpecialDate | ISpecialDateEvent | null {
+): Promise<IFixedHours | ISpecialDate | ISpecialDateEvent | null> {
   const zonedDate = toZonedTime(date, TIMEZONE)
 
   // First check for special date events (new priority system)
@@ -125,7 +125,7 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.invalidTreatmentDuration" }
     }
 
-    const daySettings = getDayWorkingHours(selectedDateUTC, settings)
+    const daySettings = await getDayWorkingHours(selectedDateUTC, settings)
 
     if (!daySettings || !daySettings.isActive) {
       return {
@@ -306,7 +306,7 @@ export async function isTimeSlotAvailable(
       return { available: false, reason: "Working hours not configured" }
     }
 
-    const daySettings = getDayWorkingHours(dateTime, settings as unknown as IWorkingHoursSettings)
+    const daySettings = await getDayWorkingHours(dateTime, settings as unknown as IWorkingHoursSettings)
     if (!daySettings || !daySettings.isActive) {
       return { available: false, reason: "Closed on selected date" }
     }
@@ -407,7 +407,7 @@ export async function getWorkingHoursForDate(dateString: string): Promise<{
       return { success: false, error: "Working hours not configured" }
     }
 
-    const daySettings = getDayWorkingHours(date, settings as unknown as IWorkingHoursSettings)
+    const daySettings = await getDayWorkingHours(date, settings as unknown as IWorkingHoursSettings)
 
     return {
       success: true,
@@ -421,12 +421,12 @@ export async function getWorkingHoursForDate(dateString: string): Promise<{
 }
 
 // Export additional utility functions that might be needed by the index file
-export function generateTimeSlots() {
+export async function generateTimeSlots() {
   // Placeholder function - implement if needed
   return []
 }
 
-export function filterAvailableSlots() {
+export async function filterAvailableSlots() {
   // Placeholder function - implement if needed
   return []
 }

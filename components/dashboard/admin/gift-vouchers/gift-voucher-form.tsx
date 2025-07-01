@@ -125,7 +125,7 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
       voucherType: initialData?.voucherType ?? "monetary",
       treatmentId: initialData?.treatmentId ?? undefined,
       selectedDurationId: initialData?.selectedDurationId ?? undefined,
-      monetaryValue: initialData?.monetaryValue?.toString?.() || '' ?? "",
+      monetaryValue: initialData?.monetaryValue?.toString?.() || "",
       ownerUserId: initialData?.ownerUserId ?? "",
       validFrom: initialData?.validFrom
         ? typeof initialData.validFrom === "string"

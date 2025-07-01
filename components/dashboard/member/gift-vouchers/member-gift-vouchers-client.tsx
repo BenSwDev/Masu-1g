@@ -48,8 +48,8 @@ export default function MemberGiftVouchersClient({
     setLoading(true)
     try {
       const [ownedResult, purchasedResult] = await Promise.all([
-        getMemberOwnedVouchers(session.user.id || ""),
-        getMemberPurchasedVouchers(session.user.id || ""),
+        getMemberOwnedVouchers(userId || ""),
+        getMemberPurchasedVouchers(userId || ""),
       ])
 
       if (ownedResult.success) {

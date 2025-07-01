@@ -1,3 +1,5 @@
+import { BookingStatus } from '@/lib/db/models/booking';
+import { BookingStatus } from '@/lib/db/models/booking';
 "use server"
 
 import { getServerSession } from "next-auth/next"
@@ -79,9 +81,9 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === "completed")
     const cancelledBookings = bookings.filter(
-      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
+      b => b.status === BookingStatus.CANCELLED_BY_USER || b.status === BookingStatus.CANCELLED_BY_ADMIN
     )
-    const noShowBookings = bookings.filter(b => b.status === "no_show")
+    const noShowBookings = bookings.filter(b => b.status === BookingStatus.NO_SHOW)
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()
@@ -258,3 +260,5 @@ export async function getAllPurchaseTransactions(
 ) {
   return getSharedPurchaseTransactions(page, limit, filters)
 }
+
+

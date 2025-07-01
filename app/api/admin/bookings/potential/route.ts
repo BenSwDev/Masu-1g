@@ -83,11 +83,11 @@ export async function GET(request: NextRequest) {
       // Check if professional handles this treatment
       const treatmentId =
         typeof booking.treatmentId === "object"
-          ? booking.treatmentId._id.toString()
-          : booking.treatmentId.toString()
+          ? booking.treatmentId._id.toString?.() || ''
+          : booking.treatmentId.toString?.() || ''
 
       const canHandleTreatment = professionalProfile.treatments.some(
-        treatment => treatment.treatmentId?.toString() === treatmentId
+        treatment => treatment.treatmentId?.toString?.() || '' === treatmentId
       )
 
       if (!canHandleTreatment) {
@@ -133,17 +133,17 @@ export async function GET(request: NextRequest) {
       success: true,
       bookings: potentialBookings.map(booking => ({
         ...booking,
-        _id: booking._id.toString(),
+        _id: booking._id.toString?.() || '',
         userId: booking.userId
           ? {
               ...booking.userId,
-              _id: booking.userId._id.toString(),
+              _id: booking.userId._id.toString?.() || '',
             }
           : null,
         treatmentId: booking.treatmentId
           ? {
               ...booking.treatmentId,
-              _id: booking.treatmentId._id.toString(),
+              _id: booking.treatmentId._id.toString?.() || '',
             }
           : null,
       })),

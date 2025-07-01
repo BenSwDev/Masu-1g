@@ -21,8 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  createvoucherByAdmin,
-  updatevoucherByAdmin,
+  createGiftVoucherByAdmin,
+  updateGiftVoucherByAdmin,
   type AdminvoucherFormData,
   type voucherPlain,
   getTreatmentsForSelection,
@@ -215,8 +215,8 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
       console.log("Submitting gift voucher data:", formData)
 
       const result = initialData
-        ? await updatevoucherByAdmin(initialData._id, formData)
-        : await createvoucherByAdmin(formData)
+        ? await updateGiftVoucherByAdmin(initialData._id, formData)
+        : await createGiftVoucherByAdmin(formData)
 
       console.log("Gift voucher operation result:", result)
 

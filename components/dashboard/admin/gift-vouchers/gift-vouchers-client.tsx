@@ -86,7 +86,7 @@ const VOUCHER_STATUSES: GiftVoucherPlain["status"][] = [
 ]
 const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment"]
 
-export function vouchersClient({
+export function GiftVouchersClient({
   initialVouchers,
   initialPagination,
 }: vouchersClientProps) {

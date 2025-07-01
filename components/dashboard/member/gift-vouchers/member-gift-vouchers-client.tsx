@@ -23,15 +23,15 @@ import { Gift, Plus, ShoppingBag, RefreshCw, TrendingUp, Clock, XCircle } from "
 import MemberGiftVoucherDetailsModal from "./member-gift-voucher-details-modal"
 import { cn } from "@/lib/utils"
 
-interface MembervouchersClientProps {
+interface MemberGiftVouchersClientProps {
   initialOwnedVouchers?: GiftVoucherPlain[]
   initialPurchasedVouchers?: GiftVoucherPlain[]
 }
 
-export default function MembervouchersClient({
+export default function MemberGiftVouchersClient({
   initialOwnedVouchers = [],
   initialPurchasedVouchers = [],
-}: MembervouchersClientProps) {
+}: MemberGiftVouchersClientProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()

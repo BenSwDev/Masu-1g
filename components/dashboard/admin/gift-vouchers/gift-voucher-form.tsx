@@ -199,17 +199,14 @@ export function voucherForm({ initialData, onSuccess, onCancel }: voucherFormPro
   async function onSubmit(values: voucherFormValues) {
     try {
       setIsLoading(true)
-      const formData: AdminGiftVoucherFormData = {
-         // Will be generated automatically
-        voucherType: values.voucherType,
-        treatmentId: values.treatmentId,
-        selectedDurationId: values.selectedDurationId,
-        amount: Number(values.monetaryValue) || 0, // Use amount for API
-        monetaryValue: Number(values.monetaryValue) || 0, // Keep both for compatibility
+      const formData = {
         ownerUserId: values.ownerUserId,
+        voucherType: values.voucherType,
+        monetaryValue: values.voucherType === "monetary" ? parseFloat(values.monetaryValue || "0") : undefined,
+        treatmentId: values.voucherType === "treatment" ? values.treatmentId : undefined,
+        selectedDurationId: values.voucherType === "treatment" ? values.selectedDurationId : undefined,
         validFrom: format(values.validFrom, "yyyy-MM-dd"),
         validUntil: format(values.validUntil, "yyyy-MM-dd"),
-        status: values.status,
       }
 
       console.log("Submitting gift voucher data:", formData)

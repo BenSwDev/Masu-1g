@@ -11,6 +11,13 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { PlusCircle } from "lucide-react"
+import React from "react"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import { redirect } from "next/navigation"
+import { getUserAddresses as getUserAddressesServer, deleteAddress } from "@/actions/address-actions"
+import { AddressesClient } from "@/components/dashboard/member/addresses/addresses-client"
+import type { IAddress } from "@/lib/db/models/address"
 
 export default function AddressesPage() {
   const { t } = useTranslation()
@@ -24,7 +31,7 @@ export default function AddressesPage() {
   } = useQuery({
     queryKey: ["addresses"],
     queryFn: async () => {
-      const result = await getUserAddresses()
+      const result = await getUserAddresses("")
       if (!result.success) {
         throw new Error(result.error || t("errors.fetchFailed", { context: "addresses" }))
       }

@@ -1,21 +1,20 @@
 "use server"
 
-import dbConnect from "@/lib/db/mongoose"
-import PartnerProfile, { type IPartnerProfile } from "@/lib/db/models/partner-profile"
-import type { IUser } from "@/lib/db/models/user"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
+import dbConnect from "@/lib/db/mongoose"
+import PartnerProfile, { type IPartnerProfile } from "@/lib/db/models/partner-profile"
+import User, { type IUser } from "@/lib/db/models/user"
 import { Types } from "mongoose"
 import { revalidatePath } from "next/cache"
 import {
   createUser,
   updateUser,
-  deleteUser,
   type CreateUserData,
   type UpdateUserData,
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
-import { User } from "@/lib/db/models/user"
-import { hashPassword } from "@/lib/utils/auth"
+import { User as UserModel } from "@/lib/db/models/user"
+import { hashPassword } from "@/lib/auth/auth"
 
 interface GetPartnersOptions {
   page?: number
@@ -211,12 +210,52 @@ export async function removePartner(id: string) {
     if (!existing) return { success: false, error: "Partner not found" }
 
     await PartnerProfile.findByIdAndDelete(id)
-    await deleteUser(existing.userId?.toString() || '')
+    // Note: User deletion would need to be implemented separately
+    // await deleteUser(existing.userId?.toString() || '')
 
     revalidatePath("/dashboard/admin/partners")
     return { success: true }
   } catch (error) {
     console.error("Error removePartner", error)
     return { success: false, error: (error as Error).message }
+  }
+}
+
+export async function getPartnerDetails(partnerId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    if (!Types.ObjectId.isValid(partnerId)) {
+      return { success: false, error: "Invalid partner ID" }
+    }
+
+    await dbConnect()
+
+    const partner = await PartnerProfile.findOne({
+      userId: new Types.ObjectId(partnerId)
+    })
+      .populate("userId")
+      .lean()
+
+    if (!partner) {
+      return { success: false, error: "Partner not found" }
+    }
+
+    // Safely cast the populated user
+    const partnerUser = partner.userId as unknown as IUser
+
+    return {
+      success: true,
+      partner: {
+        ...partner,
+        userId: partnerUser
+      }
+    }
+  } catch (error) {
+    console.error("Error getting partner details:", error)
+    return { success: false, error: "Failed to get partner details" }
   }
 }

@@ -373,9 +373,11 @@ export function GuestTreatmentSelectionStep({
     try {
       const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id)
 
-      if (result.success && result.redemption) {
+      if (result.success && result.details) {
+        const redemptionDetails = result.details
+        // Handle redemption details
         // Update booking options with redemption data
-        const redemption = result.redemption
+        const redemption = result.details
         setBookingOptions(prev => ({
           ...prev,
           redemptionCode: redemptionCode.trim(),

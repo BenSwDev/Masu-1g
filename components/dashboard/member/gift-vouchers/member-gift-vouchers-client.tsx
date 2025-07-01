@@ -314,13 +314,10 @@ export default function MemberGiftVouchersClient({
         </TabsContent>
       </Tabs>
 
-      <MemberGiftVoucherDetailsModal
-        voucher={selectedVoucherForDetails}
+      <GiftVoucherDetailsModal
         isOpen={isDetailsModalOpen}
-        onClose={() => {
-          setIsDetailsModalOpen(false)
-          setSelectedVoucherForDetails(null)
-        }}
+        onClose={() => setIsDetailsModalOpen(false)}
+        voucher={selectedVoucherForDetails}
       />
     </div>
   )

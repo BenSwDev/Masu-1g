@@ -49,8 +49,8 @@ async function SubscriptionsData() {
 
   return (
     <UserSubscriptionsClient
-      userSubscriptions={result.subscriptions || []}
-      pagination={result.pagination}
+      userSubscriptions={result.userSubscriptions || []}
+      pagination={result.pagination || { currentPage: 1, totalPages: 1, totalItems: 0 }}
     />
   )
 }

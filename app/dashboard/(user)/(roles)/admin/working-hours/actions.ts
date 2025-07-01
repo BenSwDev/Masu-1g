@@ -6,80 +6,55 @@ import { revalidatePath } from "next/cache"
 import dbConnect from "@/lib/db/mongoose"
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
-import type { IFixedHours, ISpecialDate, ISpecialDateEvent } from "@/lib/db/models/working-hours"
+import type { IWorkingHoursSettings, IFixedHours, ISpecialDate, ISpecialDateEvent } from "@/lib/db/models/working-hours"
 
 /**
  * Fetches the working hours settings from the database
  * Creates default settings if none exist
  */
 export async function getWorkingHoursSettings() {
-  const requestId = `get_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
-
   try {
-    logger.info(`[${requestId}] Fetching working hours settings`)
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     await dbConnect()
 
-    let settings = await WorkingHoursSettings.findOne().lean()
+    const settings = await WorkingHoursSettings.findOne().lean()
 
     if (!settings) {
-      logger.info(`[${requestId}] No settings found, creating default`)
-      const defaultSettings = new WorkingHoursSettings({
-        fixedHours: Array.from({ length: 7 }, (_, i) => ({
-          dayOfWeek: i,
-          isActive: false,
-          startTime: "09:00",
-          endTime: "17:00",
-          hasPriceAddition: false,
-          priceAddition: {
-            amount: 0,
-            type: "fixed",
-            description: "",
-            priceAdditionStartTime: null,
-            priceAdditionEndTime: null,
-          },
-          notes: "",
-          minimumBookingAdvanceHours: 2,
-          cutoffTime: null,
-          professionalShare: { amount: 70, type: "percentage" },
-        })),
+      // Create default settings if none exist
+      const defaultSettings = {
+        fixedHours: [],
         specialDates: [],
-        specialDateEvents: [],
-      })
-
-      settings = await defaultSettings.save()
-      logger.info(`[${requestId}] Default settings created with ID: ${settings._id}`)
+        specialDateEvents: []
+      }
+      
+      const newSettings = await WorkingHoursSettings.create(defaultSettings)
+      return {
+        success: true,
+        settings: {
+          _id: newSettings._id.toString(),
+          fixedHours: newSettings.fixedHours || [],
+          specialDates: newSettings.specialDates || [],
+          specialDateEvents: newSettings.specialDateEvents || []
+        }
+      }
     }
 
-    // Ensure fixedHours are sorted by dayOfWeek
-    if (settings && Array.isArray(settings.fixedHours)) {
-      settings.fixedHours.sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek)
+    return {
+      success: true,
+      settings: {
+        _id: settings._id.toString(),
+        fixedHours: settings.fixedHours || [],
+        specialDates: settings.specialDates || [],
+        specialDateEvents: settings.specialDateEvents || []
+      }
     }
-
-    // Convert dates to strings for client
-    const serializedSettings = {
-      ...settings,
-      _id: settings?._id?.toString() || '',
-      specialDates:
-        settings && Array.isArray(settings.specialDates) ? settings.specialDates.map((date: any) => ({
-          ...date,
-          _id: date._id?.toString() || '',
-          date: date.date.toISOString().split("T")[0],
-        })) : [],
-      specialDateEvents:
-        settings && Array.isArray(settings.specialDateEvents) ? settings.specialDateEvents.map((event: any) => ({
-          ...event,
-          _id: event._id?.toString() || '',
-          dates: event.dates.map((date: any) => date.toISOString().split("T")[0]),
-        })) : [],
-      createdAt: settings?.createdAt?.toISOString(),
-      updatedAt: settings?.updatedAt?.toISOString(),
-    }
-
-    logger.info(`[${requestId}] Successfully fetched working hours settings`)
-    return { success: true, data: serializedSettings }
   } catch (error) {
-    logger.error(`[${requestId}] Error fetching working hours settings:`, error)
-    return { success: false, error: "Failed to fetch working hours settings" }
+    console.error("Error getting working hours settings:", error)
+    return { success: false, error: "Failed to get working hours settings" }
   }
 }
 

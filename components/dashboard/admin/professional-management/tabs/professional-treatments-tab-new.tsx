@@ -112,8 +112,8 @@ export default function ProfessionalTreatmentsTabNew({
           throw new Error("Failed to fetch treatments")
         }
 
-        const _data = await response.json()
-        const treatmentList = _data.treatments || []
+        const data = await response.json()
+        const treatmentList = data.treatments || []
 
         if (!Array.isArray(treatmentList)) {
           throw new Error("Invalid treatments data format")

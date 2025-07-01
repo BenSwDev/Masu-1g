@@ -184,8 +184,8 @@ export async function getPartnersForSelection(): Promise<GetPartnersForSelection
     return {
       success: true,
       partners: partners.map(partner => ({
-        value: partner._id.toString?.() || '',
-        label: partner.name || partner.email,
+        value: partner._id.toString(),
+        label: partner.name || partner.email || "Unknown Partner",
       })),
     }
   } catch (error) {

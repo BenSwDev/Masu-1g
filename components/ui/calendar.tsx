@@ -244,14 +244,14 @@ function Calendar({
           {captionLayout === "dropdown-buttons" ? (
             <>
               {/* Month Selector */}
-              <Select value={currentMonth.getMonth().toString?.() || ''} onValueChange={handleMonthChange}>
+              <Select value={currentMonth.getMonth().toString()} onValueChange={handleMonthChange}>
                 <SelectTrigger className="w-auto min-w-[120px] h-8 text-sm font-medium">
                   <SelectValue />
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </SelectTrigger>
                 <SelectContent>
                   {monthNames.map((month, index) => (
-                    <SelectItem key={index} value={index.toString?.() || ''}>
+                    <SelectItem key={index} value={index.toString()}>
                       {month}
                     </SelectItem>
                   ))}
@@ -259,14 +259,14 @@ function Calendar({
               </Select>
 
               {/* Year Selector */}
-              <Select value={currentYear.toString?.() || ''} onValueChange={handleYearChange}>
+              <Select value={currentYear.toString()} onValueChange={handleYearChange}>
                 <SelectTrigger className="w-auto min-w-[80px] h-8 text-sm font-medium">
                   <SelectValue />
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
                   {years.map(year => (
-                    <SelectItem key={year} value={year.toString?.() || ''}>
+                    <SelectItem key={year} value={year.toString()}>
                       {year}
                     </SelectItem>
                   ))}

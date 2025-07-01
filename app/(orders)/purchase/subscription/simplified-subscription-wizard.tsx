@@ -149,7 +149,7 @@ export default function SimplifiedSubscriptionWizard({
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
   const selectedDuration =
     selectedTreatment?.pricingType === "duration_based"
-      ? selectedTreatment.durations?.find(d => d._id === selectedDurationId)
+      ? selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId)
       : undefined
 
   // Calculate price
@@ -195,8 +195,6 @@ export default function SimplifiedSubscriptionWizard({
         name: info.firstName + " " + info.lastName,
         email: info.email,
         phone: info.phone,
-        birthDate: info.birthDate,
-        gender: info.gender,
       })
       if (result.success && result.userId) {
         setGuestUserId(result.userId)
@@ -367,13 +365,13 @@ export default function SimplifiedSubscriptionWizard({
           <div className="grid gap-3">
             {subscriptions.map(sub => (
               <div
-                key={sub._id}
+                key={(sub._id as any).toString()}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedSubscriptionId === sub._id
+                  selectedSubscriptionId === (sub._id as any).toString()
                     ? "border-blue-500 bg-blue-50"
                     : "border-gray-200 hover:border-blue-300"
                 }`}
-                onClick={() => setSelectedSubscriptionId(sub._id)}
+                onClick={() => setSelectedSubscriptionId((sub._id as any).toString())}
               >
                 <div className="flex justify-between items-center">
                   <div>
@@ -437,14 +435,14 @@ export default function SimplifiedSubscriptionWizard({
             <div className="grid gap-3">
               {categoryTreatments.map(treatment => (
                 <div
-                  key={treatment._id}
+                  key={(treatment._id as any).toString()}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedTreatmentId === treatment._id
+                    selectedTreatmentId === (treatment._id as any).toString()
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300"
                   }`}
                   onClick={() => {
-                    setSelectedTreatmentId(treatment._id)
+                    setSelectedTreatmentId((treatment._id as any).toString())
                     setSelectedDurationId("")
                   }}
                 >
@@ -473,13 +471,13 @@ export default function SimplifiedSubscriptionWizard({
                 .filter(d => d.isActive)
                 .map(duration => (
                   <div
-                    key={duration._id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                      selectedDurationId === duration._id
+                    key={duration._id.toString()}
+                    className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                      selectedDurationId === duration._id.toString()
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-blue-300"
                     }`}
-                    onClick={() => setSelectedDurationId(duration._id)}
+                    onClick={() => setSelectedDurationId(duration._id.toString())}
                   >
                     <div className="font-medium">{duration.minutes} דקות</div>
                     <div className="font-bold text-blue-600">₪{duration.price}</div>
@@ -550,7 +548,7 @@ export default function SimplifiedSubscriptionWizard({
                   <span>כמות טיפולים</span>
                   <span>{selectedSubscription?.quantity}</span>
                 </div>
-                {selectedSubscription?.bonusQuantity > 0 && (
+                {selectedSubscription && selectedSubscription.bonusQuantity && selectedSubscription.bonusQuantity > 0 && (
                   <div className="flex justify-between items-center text-sm text-green-600">
                     <span>בונוס</span>
                     <span>+{selectedSubscription.bonusQuantity}</span>

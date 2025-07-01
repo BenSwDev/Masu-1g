@@ -11,6 +11,7 @@ import { UserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
 import { getAllPurchaseTransactions as getSharedPurchaseTransactions } from "@/actions/purchase-summary-actions"
+import { BookingStatus as BookingStatusType } from "@/types/booking"
 
 /**
  * Interface for customer summary result
@@ -79,9 +80,9 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === "completed")
     const cancelledBookings = bookings.filter(
-      b => b.status === BookingStatus.CANCELLED_BY_USER || b.status === BookingStatus.CANCELLED_BY_ADMIN
+      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
     )
-    const noShowBookings = bookings.filter(b => b.status === BookingStatus.NO_SHOW)
+    const noShowBookings = bookings.filter(b => b.status === "no_show")
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()
@@ -105,7 +106,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
       0
     )
     const totalVoucherSpent = vouchers
-      .filter(v => v.purchaserUserId.equals(userId))
+      .filter(v => v.purchaserUserId?.toString() === userId.toString())
       .reduce((sum, v) => sum + v.amount, 0)
     const totalSpent = totalBookingSpent + totalSubscriptionSpent + totalVoucherSpent
 
@@ -134,7 +135,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
         : customer.createdAt
 
     const customerSummary: CustomerSummary = {
-      userId: customer._id.toString?.() || '',
+      userId: customer._id.toString(),
       customerName: customer.name,
       customerEmail: customer.email,
       customerPhone: customer.phone || "",
@@ -148,7 +149,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
         completedBookings: completedBookings.length,
         cancelledBookings: cancelledBookings.length,
         noShowBookings: noShowBookings.length,
-        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId.equals(userId)).length,
+        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId?.toString() === userId.toString()).length,
         totalVouchersUsed: usedVouchers.length,
         totalSubscriptionsPurchased: userSubscriptions.length,
         averageBookingValue,
@@ -211,7 +212,7 @@ export async function getAllCustomers(
     const customers: CustomerSummary[] = []
 
     for (const user of users) {
-      const summaryResult = await getCustomerSummary(user._id.toString?.() || '')
+      const summaryResult = await getCustomerSummary(user._id.toString())
       if (summaryResult.success && summaryResult.data) {
         // Add user type information
         const customerWithType = {
@@ -256,7 +257,7 @@ export async function getAllPurchaseTransactions(
     search?: string
   }
 ) {
-  return getSharedPurchaseTransactions(page, limit, filters)
+  return getSharedPurchaseTransactions(page, limit, filters as any)
 }
 
 

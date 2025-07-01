@@ -17,6 +17,7 @@ interface PaymentMethodSelectorProps {
   onPaymentMethodUpserted?: (method: IPaymentMethod) => void
   showAddButton?: boolean
   className?: string
+  isSubmitting?: boolean
 }
 
 export function PaymentMethodSelector({
@@ -26,6 +27,7 @@ export function PaymentMethodSelector({
   onPaymentMethodUpserted,
   showAddButton = true,
   className,
+  isSubmitting,
 }: PaymentMethodSelectorProps) {
   const { t, dir } = useTranslation()
   const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
@@ -72,6 +74,7 @@ export function PaymentMethodSelector({
           variant="outline"
           onClick={() => setShowPaymentMethodForm(true)}
           className="w-full h-12"
+          disabled={Boolean(isSubmitting)}
         >
           <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
           {t("paymentMethods.addNewLink")}

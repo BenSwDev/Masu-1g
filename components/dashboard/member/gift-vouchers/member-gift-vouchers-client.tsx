@@ -34,8 +34,7 @@ export default function MemberGiftVouchersClient({
   const [purchasedVouchers, setPurchasedVouchers] =
     useState<GiftVoucherPlain[]>(initialPurchasedVouchers)
   const [loading, setLoading] = useState(false)
-  const [selectedVoucherForDetails, setSelectedVoucherForDetails] =
-    useState<GiftVoucherPlain | null>(null)
+  const [selectedVoucher, setSelectedVoucher] = useState<GiftVoucherPlain | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   // Get userId from session
@@ -81,7 +80,7 @@ export default function MemberGiftVouchersClient({
   }
 
   const handleViewDetails = (voucher: GiftVoucherPlain) => {
-    setSelectedVoucherForDetails(voucher)
+    setSelectedVoucher(voucher)
     setIsDetailsModalOpen(true)
   }
 
@@ -317,7 +316,7 @@ export default function MemberGiftVouchersClient({
       <GiftVoucherDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
-        voucher={selectedVoucherForDetails}
+        voucher={selectedVoucher}
       />
     </div>
   )

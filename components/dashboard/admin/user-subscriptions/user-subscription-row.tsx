@@ -82,13 +82,11 @@ export default function UserSubscriptionRow({
 
     if (result.success) {
       toast({
-        title: t("common.success"),
         description: t("userSubscriptions.cancelSuccessToast"),
       })
       router.refresh()
     } else {
       toast({
-        title: t("common.error"),
         description: result.error || t("common.unknownError"),
         variant: "destructive",
       })

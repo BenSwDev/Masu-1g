@@ -145,7 +145,7 @@ const AdminUserSubscriptionsClient = ({
       })
 
       if (result.success && result.userSubscriptions && result.pagination) {
-        setUserSubscriptions(result.userSubscriptions as PopulatedUserSubscription[])
+        setUserSubscriptions(result.userSubscriptions as unknown as PopulatedUserSubscription[])
         setPagination(result.pagination)
         if (showRefreshToast) {
           toast.success(t("userSubscriptions.notifications.dataRefreshed"))

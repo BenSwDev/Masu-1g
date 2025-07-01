@@ -111,7 +111,7 @@ export async function getPartnerById(
       return { success: false, error: "Partner not found" }
     }
 
-    const user = partner.userId as IUser
+    const user = partner.userId as unknown as IUser
     if (!user.roles?.includes("partner")) {
       return { success: false, error: "User is not a partner" }
     }
@@ -245,13 +245,13 @@ export async function getPartnerDetails(partnerId: string) {
     }
 
     // Safely cast the populated user
-    const partnerUser = partner.userId as unknown as IUser
+    const user = partner.userId as unknown as IUser
 
     return {
       success: true,
       partner: {
         ...partner,
-        userId: partnerUser
+        userId: user
       }
     }
   } catch (error) {

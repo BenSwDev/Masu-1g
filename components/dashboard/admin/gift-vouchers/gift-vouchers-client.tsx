@@ -42,7 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { CustomPagination as Pagination } from "@/components/ui/pagination"
+import { Pagination } from "@/components/ui/pagination"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,11 +54,7 @@ import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
-import {
-  getvouchers,
-  deleteGiftVoucher,
-  type GiftVoucherPlain,
-} from "@/actions/gift-voucher-actions"
+import { getGiftVouchers } from "@/actions/gift-voucher-actions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
@@ -143,7 +139,7 @@ export function GiftVouchersClient({
             : undefined,
         }
 
-        const result = await getvouchers(page, pagination.limit, newSearch, currentFilters)
+        const result = await getGiftVouchers(page, pagination.limit, newSearch, currentFilters)
         if (result.success && result.vouchers && result.pagination) {
           setVouchers(result.vouchers)
           setPagination(result.pagination)

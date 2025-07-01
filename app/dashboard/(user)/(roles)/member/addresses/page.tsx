@@ -17,7 +17,7 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 import { getUserAddresses as getUserAddressesServer, deleteAddress } from "@/actions/address-actions"
 import { AddressesClient } from "@/components/dashboard/member/addresses/addresses-client"
-import type { IAddress } from "@/lib/db/models/address"
+import type { IAddress as Address } from "@/lib/db/models/address"
 
 export default function AddressesPage() {
   const { t } = useTranslation()

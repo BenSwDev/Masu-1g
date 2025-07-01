@@ -7,7 +7,7 @@ export type { IGiftVoucherDocument as IGiftVoucher } from "@/types/core"
 
 const GiftVoucherSchema: Schema<IGiftVoucherDocument> = new Schema(
   {
-    code: { type: String, required: true, unique: true, index: true },
+    code: { type: String, required: true, unique: true },
     voucherType: { type: String, enum: ["treatment", "monetary"], required: true },
     amount: { type: Number, required: true, min: 0 },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment" },

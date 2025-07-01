@@ -391,44 +391,91 @@ export async function getGuestBookingInitialData(): Promise<{
 }> {
   try {
     logger.info("Starting getGuestBookingInitialData")
-    await dbConnect()
-    logger.info("Database connected successfully")
+    
+    // Connect to database with retry logic
+    let retryCount = 0
+    const maxRetries = 3
+    
+    while (retryCount < maxRetries) {
+      try {
+        await dbConnect()
+        logger.info("Database connected successfully")
+        break
+      } catch (dbError) {
+        retryCount++
+        logger.warn(`Database connection attempt ${retryCount} failed:`, dbError)
+        if (retryCount >= maxRetries) {
+          throw dbError
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
 
-    // Get active treatments with timeout and optimized query
+    // Get active treatments with optimized query and shorter timeout
     logger.info("Fetching active treatments...")
-    const treatmentsPromise = Treatment.find({ isActive: true })
+    const treatmentsQuery = Treatment.find({ isActive: true })
       .select("name description durations pricingType fixedPrice category")
       .lean()
-      .maxTimeMS(15000) // 15 second timeout
-      .exec()
-
-    // Get active coupons with timeout and optimized query
+      .maxTimeMS(8000) // Shorter timeout
+    
+    // Get active coupons with optimized query and shorter timeout
     logger.info("Fetching active coupons...")
-    const couponsPromise = Coupon.find({
+    const couponsQuery = Coupon.find({
       isActive: true,
       $or: [{ validUntil: { $gte: new Date() } }, { validUntil: { $exists: false } }],
     })
       .select("code discountType discountValue description")
       .lean()
-      .maxTimeMS(15000) // 15 second timeout
-      .exec()
+      .maxTimeMS(8000) // Shorter timeout
 
-    // Execute both queries in parallel with overall timeout
-    const [treatments, coupons] = await Promise.race([
-      Promise.all([treatmentsPromise, couponsPromise]),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Query timeout after 20 seconds")), 20000)
-      )
-    ]) as [any[], any[]]
+    // Execute queries with individual error handling
+    let treatments: any[] = []
+    let coupons: any[] = []
+    
+    try {
+      treatments = await treatmentsQuery.exec()
+      logger.info(`Found ${treatments.length} active treatments`)
+    } catch (treatmentError) {
+      logger.error("Failed to fetch treatments:", treatmentError)
+      // Continue with empty treatments array
+    }
+    
+    try {
+      coupons = await couponsQuery.exec()
+      logger.info(`Found ${coupons.length} active coupons`)
+    } catch (couponError) {
+      logger.error("Failed to fetch coupons:", couponError)
+      // Continue with empty coupons array
+    }
 
-    logger.info(`Found ${treatments.length} active treatments`)
-    logger.info(`Found ${coupons.length} active coupons`)
+    // Group treatments by category for better organization
+    const treatmentsByCategory = treatments.reduce((acc, treatment) => {
+      const category = treatment.category || 'other'
+      if (!acc[category]) {
+        acc[category] = []
+      }
+      acc[category].push(treatment)
+      return acc
+    }, {} as Record<string, any[]>)
 
     const result = {
       success: true,
       data: {
-        treatments,
+        activeTreatments: treatments,
+        treatmentsByCategory,
         coupons,
+        activeUserSubscriptions: [],
+        usableGiftVouchers: [],
+        userPreferences: {
+          therapistGender: "any" as const,
+          notificationMethods: ["email"],
+          notificationLanguage: "he",
+        },
+        userAddresses: [],
+        userPaymentMethods: [],
+        workingHoursSettings: {},
+        currentUser: null,
         surcharges: [
           {
             type: "evening",
@@ -455,29 +502,10 @@ export async function getGuestBookingInitialData(): Promise<{
       stack: error instanceof Error ? error.stack : undefined
     })
     
-    // Return minimal data if database queries fail
-    logger.info("Returning fallback data due to database error")
+    // Return error instead of fallback data to help with debugging
     return {
-      success: true,
-      data: {
-        treatments: [],
-        coupons: [],
-        surcharges: [
-          {
-            type: "evening",
-            name: "תוספת ערב",
-            amount: 20,
-            description: "תוספת עבור טיפול בשעות הערב",
-          },
-          {
-            type: "weekend",
-            name: "תוספת סוף שבוע",
-            amount: 30,
-            description: "תוספת עבור טיפול בסוף השבוע",
-          },
-          { type: "holiday", name: "תוספת חג", amount: 50, description: "תוספת עבור טיפול בחג" },
-        ],
-      },
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown database error"
     }
   }
 }

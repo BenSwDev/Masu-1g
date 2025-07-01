@@ -31,13 +31,17 @@ export async function getBookingInitialData(userId: string): Promise<{
 
     // Get user data
     const user = await User.findById(userId)
-      .select("name email phone addresses")
-      .populate("addresses")
+      .select("name email phone")
       .lean()
 
     if (!user) {
       return { success: false, error: "bookings.errors.userNotFound" }
     }
+
+    // Get user addresses separately
+    const Address = (await import("@/lib/db/models/address")).default
+    const userAddresses = await Address.find({ userId: new mongoose.Types.ObjectId(userId) })
+      .lean()
 
     // Get active treatments
     const treatments = await Treatment.find({ isActive: true })
@@ -74,6 +78,25 @@ export async function getBookingInitialData(userId: string): Promise<{
     return {
       success: true,
       data: {
+        // Required fields for BookingInitialData interface
+        activeTreatments: treatments,
+        activeUserSubscriptions: userSubscriptions,
+        usableGiftVouchers: giftVouchers,
+        userPreferences: {
+          therapistGender: "any" as const,
+          notificationMethods: ["email"],
+          notificationLanguage: "he",
+        },
+        userAddresses: userAddresses,
+        userPaymentMethods: [],
+        workingHoursSettings: {},
+        currentUser: {
+          id: userId,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        },
+        // Additional data
         user,
         treatments,
         userSubscriptions,
@@ -82,17 +105,17 @@ export async function getBookingInitialData(userId: string): Promise<{
         surcharges: [
           {
             type: "evening",
-            name: "????? ???",
+            name: "תוספת ערב",
             amount: 20,
-            description: "????? ???? ????? ????? ????",
+            description: "תוספת עבור טיפול בשעות הערב",
           },
           {
             type: "weekend",
-            name: "????? ??? ????",
+            name: "תוספת סוף שבוע",
             amount: 30,
-            description: "????? ???? ????? ???? ?????",
+            description: "תוספת עבור טיפול בסוף השבוע",
           },
-          { type: "holiday", name: "????? ??", amount: 50, description: "????? ???? ????? ???" },
+          { type: "holiday", name: "תוספת חג", amount: 50, description: "תוספת עבור טיפול בחג" },
         ],
       },
     }

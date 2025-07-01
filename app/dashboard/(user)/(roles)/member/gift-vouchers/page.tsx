@@ -72,7 +72,6 @@ async function MemberGiftVouchersData() {
       <MemberGiftVouchersClient
         initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
         initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
-        userId={session.user.id}
       />
     )
   } catch (error) {

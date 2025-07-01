@@ -89,7 +89,7 @@ export default function ProfessionalBookingManagementPage() {
 
   const handleAcceptBooking = async () => {
     setActionLoading(true)
-    const result = await professionalAcceptBooking(bookingId, currentProfessionalId || "")
+    const result = await professionalAcceptBooking(bookingId)
     if (result.success) {
       toast({
         title: t("professionalBookingManagement.toasts.accepted.title"),

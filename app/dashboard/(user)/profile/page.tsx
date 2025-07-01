@@ -14,7 +14,7 @@ export default async function ProfilePage() {
   // Convert dateOfBirth to string if it exists
   const user = {
     ...result.user,
-    dateOfBirth: result.user.dateOfBirth?.toISOString(),
+    dateOfBirth: (result.user as any).dateOfBirth?.toISOString(),
     createdAt: result.user.createdAt.toISOString(),
   }
 

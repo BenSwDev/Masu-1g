@@ -37,10 +37,10 @@ export default function MemberRedemptionModal({
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {subscriptions?.map((sub: IUserSubscription) => (
-            <div key={sub._id} className="border rounded p-3 space-y-1">
+            <div key={(sub._id as any)?.toString() || Math.random().toString()} className="border rounded p-3 space-y-1">
               <div className="font-medium">{(sub.subscriptionId as any)?.name}</div>
               {sub.treatmentId && (
-                <div className="text-sm text-muted-foreground">{sub.treatmentId.name}</div>
+                <div className="text-sm text-muted-foreground">{(sub.treatmentId as any)?.name}</div>
               )}
               <div className="mt-2 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-blue-800">{sub.code}</div>

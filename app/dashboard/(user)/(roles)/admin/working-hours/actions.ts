@@ -35,10 +35,10 @@ export async function getWorkingHoursSettings() {
       return {
         success: true,
         settings: {
-          _id: newSettings._id.toString(),
-          fixedHours: newSettings.fixedHours || [],
-          specialDates: newSettings.specialDates || [],
-          specialDateEvents: newSettings.specialDateEvents || []
+          _id: (newSettings as any)._id.toString(),
+          fixedHours: (newSettings as any).fixedHours || [],
+          specialDates: (newSettings as any).specialDates || [],
+          specialDateEvents: (newSettings as any).specialDateEvents || []
         }
       }
     }
@@ -46,10 +46,10 @@ export async function getWorkingHoursSettings() {
     return {
       success: true,
       settings: {
-        _id: settings._id.toString(),
-        fixedHours: settings.fixedHours || [],
-        specialDates: settings.specialDates || [],
-        specialDateEvents: settings.specialDateEvents || []
+        _id: (settings as any)._id.toString(),
+        fixedHours: (settings as any).fixedHours || [],
+        specialDates: (settings as any).specialDates || [],
+        specialDateEvents: (settings as any).specialDateEvents || []
       }
     }
   } catch (error) {

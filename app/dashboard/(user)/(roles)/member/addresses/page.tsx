@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { AddressCard } from "@/components/dashboard/member/addresses/address-card"
 import { AddressForm } from "@/components/dashboard/member/addresses/address-form"
 import { getUserAddresses } from "@/actions/address-actions"
-import type { Address } from "@/types/core"
+import type { IAddress } from "@/lib/db/models/address"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -17,12 +17,11 @@ import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 import { getUserAddresses as getUserAddressesServer, deleteAddress } from "@/actions/address-actions"
 import { AddressesClient } from "@/components/dashboard/member/addresses/addresses-client"
-import type { IAddress as Address } from "@/lib/db/models/address"
 
 export default function AddressesPage() {
   const { t } = useTranslation()
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<Address | undefined>()
+  const [editingAddress, setEditingAddress] = useState<IAddress | undefined>()
 
   const {
     data: addresses,
@@ -39,7 +38,7 @@ export default function AddressesPage() {
     },
   })
 
-  const handleEdit = (address: Address) => {
+  const handleEdit = (address: IAddress) => {
     setEditingAddress(address)
     setIsAddressModalOpen(true)
   }

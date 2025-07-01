@@ -1,9 +1,9 @@
-"use client"
+﻿"use client"
 
 import { useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
 import { format, isValid } from "date-fns"
@@ -82,7 +82,7 @@ function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingCo
   }
 
   const formatPrice = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
+    return `â‚ª${amount.toFixed(2)}`
   }
 
   if (!bookingResult) {
@@ -348,3 +348,5 @@ function GuestBookingConfirmation({ bookingResult, initialData }: GuestBookingCo
 
 export default GuestBookingConfirmation
 export { GuestBookingConfirmation }
+
+

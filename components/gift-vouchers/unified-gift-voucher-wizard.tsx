@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -27,7 +27,7 @@ import {
 } from "@/actions/gift-voucher-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import type { CalculatedPriceDetails } from "@/types/booking"
+import type { CalculatedPriceDetails } from "@/types/core/booking"
 
 interface Props {
   treatments: ITreatment[]

@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,7 +86,7 @@ export function GuestSummaryStep({
       if (voucher.voucherType === "treatment") {
         return `${voucher.code} (${voucher.treatmentName}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""})`
       }
-      return `${voucher.code} (שובר כספי - יתרה: ${voucher.remainingAmount?.toFixed(2)} ₪)`
+      return `${voucher.code} (×©×•×‘×¨ ×›×¡×¤×™ - ×™×ª×¨×”: ${voucher.remainingAmount?.toFixed(2)} â‚ª)`
     }
     return null
   }, [bookingOptions.source, voucher])
@@ -114,11 +114,11 @@ export function GuestSummaryStep({
   const getTreatmentDurationText = () => {
     if (selectedTreatment?.pricingType === "fixed") {
       return selectedTreatment.defaultDuration
-        ? `${selectedTreatment.defaultDuration} דקות`
-        : "משך סטנדרטי"
+        ? `${selectedTreatment.defaultDuration} ×“×§×•×ª`
+        : "×ž×©×š ×¡×˜× ×“×¨×˜×™"
     }
     if (selectedDuration) {
-      return `${selectedDuration.minutes || 0} דקות`
+      return `${selectedDuration.minutes || 0} ×“×§×•×ª`
     }
     return ""
   }
@@ -126,25 +126,25 @@ export function GuestSummaryStep({
   const getGenderPreferenceText = () => {
     switch (bookingOptions.therapistGenderPreference) {
       case "male":
-        return "מטפל גבר"
+        return "×ž×˜×¤×œ ×’×‘×¨"
       case "female":
-        return "מטפלת אישה"
+        return "×ž×˜×¤×œ×ª ××™×©×”"
       case "any":
       default:
-        return "ללא העדפה"
+        return "×œ×œ× ×”×¢×“×¤×”"
     }
   }
 
   const formatPrice = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
+    return `â‚ª${amount.toFixed(2)}`
   }
 
   return (
     <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <CheckCircle className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h2 className="text-2xl font-semibold tracking-tight">סיכום ההזמנה</h2>
-        <p className="text-muted-foreground mt-2">בדוק את פרטי ההזמנה לפני המעבר לתשלום</p>
+        <h2 className="text-2xl font-semibold tracking-tight">×¡×™×›×•× ×”×”×–×ž× ×”</h2>
+        <p className="text-muted-foreground mt-2">×‘×“×•×§ ××ª ×¤×¨×˜×™ ×”×”×–×ž× ×” ×œ×¤× ×™ ×”×ž×¢×‘×¨ ×œ×ª×©×œ×•×</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -153,13 +153,13 @@ export function GuestSummaryStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              {guestInfo.isBookingForSomeoneElse ? "פרטי המזמין" : "פרטי האורח"}
+              {guestInfo.isBookingForSomeoneElse ? "×¤×¨×˜×™ ×”×ž×–×ž×™×Ÿ" : "×¤×¨×˜×™ ×”××•×¨×—"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">שם:</span>
+                <span className="text-muted-foreground">×©×:</span>
                 <span className="font-medium">
                   {guestInfo.firstName} {guestInfo.lastName}
                 </span>
@@ -167,14 +167,14 @@ export function GuestSummaryStep({
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Mail className="h-4 w-4" />
-                  אימייל:
+                  ××™×ž×™×™×œ:
                 </span>
                 <span className="font-medium">{guestInfo.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Phone className="h-4 w-4" />
-                  טלפון:
+                  ×˜×œ×¤×•×Ÿ:
                 </span>
                 <span className="font-medium">{formatPhoneForDisplay(guestInfo.phone || "")}</span>
               </div>
@@ -182,7 +182,7 @@ export function GuestSummaryStep({
                 <>
                   {guestInfo.birthDate && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">תאריך לידה:</span>
+                      <span className="text-muted-foreground">×ª××¨×™×š ×œ×™×“×”:</span>
                       <span className="font-medium">
                         {format(guestInfo.birthDate, "dd/MM/yyyy")}
                       </span>
@@ -190,13 +190,13 @@ export function GuestSummaryStep({
                   )}
                   {guestInfo.gender && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">מגדר:</span>
+                      <span className="text-muted-foreground">×ž×’×“×¨:</span>
                       <span className="font-medium">
                         {guestInfo.gender === "male"
-                          ? "גבר"
+                          ? "×’×‘×¨"
                           : guestInfo.gender === "female"
-                            ? "אישה"
-                            : "אחר"}
+                            ? "××™×©×”"
+                            : "××—×¨"}
                       </span>
                     </div>
                   )}
@@ -206,7 +206,7 @@ export function GuestSummaryStep({
                 <div>
                   <span className="text-muted-foreground flex items-center gap-1 mb-2">
                     <FileText className="h-4 w-4" />
-                    הערות:
+                    ×”×¢×¨×•×ª:
                   </span>
                   <p className="text-sm bg-muted p-3 rounded-lg">{guestInfo.notes}</p>
                 </div>
@@ -221,13 +221,13 @@ export function GuestSummaryStep({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                פרטי מקבל הטיפול
+                ×¤×¨×˜×™ ×ž×§×‘×œ ×”×˜×™×¤×•×œ
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">שם:</span>
+                  <span className="text-muted-foreground">×©×:</span>
                   <span className="font-medium">
                     {guestInfo.recipientFirstName} {guestInfo.recipientLastName}
                   </span>
@@ -235,14 +235,14 @@ export function GuestSummaryStep({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <Mail className="h-4 w-4" />
-                    אימייל:
+                    ××™×ž×™×™×œ:
                   </span>
                   <span className="font-medium">{guestInfo.recipientEmail}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground flex items-center gap-1">
                     <Phone className="h-4 w-4" />
-                    טלפון:
+                    ×˜×œ×¤×•×Ÿ:
                   </span>
                   <span className="font-medium">
                     {formatPhoneForDisplay(guestInfo.recipientPhone || "")}
@@ -250,7 +250,7 @@ export function GuestSummaryStep({
                 </div>
                 {guestInfo.recipientBirthDate && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">תאריך לידה:</span>
+                    <span className="text-muted-foreground">×ª××¨×™×š ×œ×™×“×”:</span>
                     <span className="font-medium">
                       {format(guestInfo.recipientBirthDate, "dd/MM/yyyy")}
                     </span>
@@ -258,13 +258,13 @@ export function GuestSummaryStep({
                 )}
                 {guestInfo.recipientGender && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">מגדר:</span>
+                    <span className="text-muted-foreground">×ž×’×“×¨:</span>
                     <span className="font-medium">
                       {guestInfo.recipientGender === "male"
-                        ? "גבר"
+                        ? "×’×‘×¨"
                         : guestInfo.recipientGender === "female"
-                          ? "אישה"
-                          : "אחר"}
+                          ? "××™×©×”"
+                          : "××—×¨"}
                     </span>
                   </div>
                 )}
@@ -278,39 +278,39 @@ export function GuestSummaryStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              פרטי ההזמנה
+              ×¤×¨×˜×™ ×”×”×–×ž× ×”
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between items-start">
-                <span className="text-muted-foreground">טיפול:</span>
+                <span className="text-muted-foreground">×˜×™×¤×•×œ:</span>
                 <div className="font-medium text-right">
                   <span>{selectedTreatment?.name}</span>
                   {getSubscriptionName() && (
                     <span className="block text-xs text-primary mt-1">
-                      🎫 משתמש במנוי: {getSubscriptionName()}
+                      ðŸŽ« ×ž×©×ª×ž×© ×‘×ž× ×•×™: {getSubscriptionName()}
                     </span>
                   )}
                   {selectedGiftVoucherDisplay && (
                     <span className="block text-xs text-primary mt-1">
-                      🎁 משתמש בשובר: {selectedGiftVoucherDisplay}
+                      ðŸŽ ×ž×©×ª×ž×© ×‘×©×•×‘×¨: {selectedGiftVoucherDisplay}
                     </span>
                   )}
                 </div>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">קטגוריה:</span>
+                <span className="text-muted-foreground">×§×˜×’×•×¨×™×”:</span>
                 <Badge variant="secondary">{selectedTreatment?.category}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">משך זמן:</span>
+                <span className="text-muted-foreground">×ž×©×š ×–×ž×Ÿ:</span>
                 <span className="font-medium">{getTreatmentDurationText()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  תאריך:
+                  ×ª××¨×™×š:
                 </span>
                 <span className="font-medium">
                   {bookingOptions.bookingDate ? formatDateString(bookingOptions.bookingDate) : "-"}
@@ -319,12 +319,12 @@ export function GuestSummaryStep({
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  שעה:
+                  ×©×¢×”:
                 </span>
                 <span className="font-medium">{bookingOptions.bookingTime || "-"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">העדפת מטפל:</span>
+                <span className="text-muted-foreground">×”×¢×“×¤×ª ×ž×˜×¤×œ:</span>
                 <span className="font-medium">{getGenderPreferenceText()}</span>
               </div>
             </div>
@@ -337,7 +337,7 @@ export function GuestSummaryStep({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            פירוט מחיר
+            ×¤×™×¨×•×˜ ×ž×—×™×¨
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -350,22 +350,22 @@ export function GuestSummaryStep({
           ) : calculatedPrice ? (
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span>מחיר בסיס:</span>
+                <span>×ž×—×™×¨ ×‘×¡×™×¡:</span>
                 <span>{formatPrice(calculatedPrice.basePrice)}</span>
               </div>
 
               {/* Surcharges */}
               {calculatedPrice.surcharges && calculatedPrice.surcharges.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-orange-700">תוספות מחיר:</div>
+                  <div className="text-sm font-medium text-orange-700">×ª×•×¡×¤×•×ª ×ž×—×™×¨:</div>
                   {calculatedPrice.surcharges.map((surcharge, index) => (
                     <div key={index} className="flex justify-between text-orange-600 text-sm pr-4">
-                      <span>• {surcharge.description || "תוספת מחיר"}:</span>
+                      <span>â€¢ {surcharge.description || "×ª×•×¡×¤×ª ×ž×—×™×¨"}:</span>
                       <span>+{formatPrice(surcharge.amount)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
-                    <span>סה"כ תוספות:</span>
+                    <span>×¡×”"×› ×ª×•×¡×¤×•×ª:</span>
                     <span>+{formatPrice(calculatedPrice.totalSurchargesAmount)}</span>
                   </div>
                 </div>
@@ -378,13 +378,13 @@ export function GuestSummaryStep({
                   <div className="flex justify-between text-green-600">
                     <span>
                       {calculatedPrice.isBaseTreatmentCoveredBySubscription
-                        ? "כוסה על ידי מנוי:"
-                        : "כוסה על ידי שובר טיפול:"}
+                        ? "×›×•×¡×” ×¢×œ ×™×“×™ ×ž× ×•×™:"
+                        : "×›×•×¡×” ×¢×œ ×™×“×™ ×©×•×‘×¨ ×˜×™×¤×•×œ:"}
                     </span>
                     <span>-{formatPrice(calculatedPrice.basePrice)}</span>
                   </div>
                   <div className="flex justify-between font-medium">
-                    <span>מחיר לאחר כיסוי מנוי/שובר:</span>
+                    <span>×ž×—×™×¨ ×œ××—×¨ ×›×™×¡×•×™ ×ž× ×•×™/×©×•×‘×¨:</span>
                     <span>
                       {formatPrice(
                         calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher
@@ -399,7 +399,7 @@ export function GuestSummaryStep({
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
-                    שובר מתנה:
+                    ×©×•×‘×¨ ×ž×ª× ×”:
                   </span>
                   <span>-{formatPrice(calculatedPrice.voucherAppliedAmount)}</span>
                 </div>
@@ -410,7 +410,7 @@ export function GuestSummaryStep({
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
-                    הנחת קופון:
+                    ×”× ×—×ª ×§×•×¤×•×Ÿ:
                   </span>
                   <span>-{formatPrice(calculatedPrice.couponDiscount)}</span>
                 </div>
@@ -424,10 +424,10 @@ export function GuestSummaryStep({
                   calculatedPrice.isFullyCoveredByVoucherOrSubscription ? "text-green-600" : ""
                 }`}
               >
-                <span>מחיר סופי:</span>
+                <span>×ž×—×™×¨ ×¡×•×¤×™:</span>
                 <span>
                   {calculatedPrice.isFullyCoveredByVoucherOrSubscription ? (
-                    <span className="text-green-600 font-bold">מכוסה במלואה!</span>
+                    <span className="text-green-600 font-bold">×ž×›×•×¡×” ×‘×ž×œ×•××”!</span>
                   ) : (
                     formatPrice(calculatedPrice.finalAmount)
                   )}
@@ -438,14 +438,14 @@ export function GuestSummaryStep({
               {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-800 text-center font-medium">
-                    🎉 הטיפול מכוסה במלואה על ידי המימוש!
+                    ðŸŽ‰ ×”×˜×™×¤×•×œ ×ž×›×•×¡×” ×‘×ž×œ×•××” ×¢×œ ×™×“×™ ×”×ž×™×ž×•×©!
                   </p>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center text-muted-foreground py-4">
-              <p>לא ניתן לחשב את המחיר כרגע. אנא נסה שוב.</p>
+              <p>×œ× × ×™×ª×Ÿ ×œ×—×©×‘ ××ª ×”×ž×—×™×¨ ×›×¨×’×¢. ×× × × ×¡×” ×©×•×‘.</p>
             </div>
           )}
         </CardContent>
@@ -454,12 +454,14 @@ export function GuestSummaryStep({
       {/* Navigation */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={onPrev}>
-          חזור
+          ×—×–×•×¨
         </Button>
         <Button onClick={onNext} disabled={isPriceCalculating || !calculatedPrice}>
-          {calculatedPrice?.finalAmount === 0 ? "אשר הזמנה" : "המשך לתשלום"}
+          {calculatedPrice?.finalAmount === 0 ? "××©×¨ ×”×–×ž× ×”" : "×”×ž×©×š ×œ×ª×©×œ×•×"}
         </Button>
       </div>
     </div>
   )
 }
+
+

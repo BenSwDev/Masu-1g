@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -52,7 +52,7 @@ interface GuestInfo {
   bookerNotificationLanguage?: "he" | "en" | "ru"
   recipientNotificationMethod?: "email" | "sms" | "both"
   recipientNotificationLanguage?: "he" | "en" | "ru"
-  // ➕ הסכמות חדשות
+  // âž• ×”×¡×›×ž×•×ª ×—×“×©×•×ª
   consents?: {
     customerAlerts: "sms" | "email" | "none"
     patientAlerts: "sms" | "email" | "none"
@@ -99,10 +99,10 @@ export function GuestPaymentStep({
     handleOpenChange,
   } = usePaymentModal({
     onSuccess: async () => {
-      console.log("🏦 GuestPaymentStep onSuccess triggered - payment simulation successful")
+      console.log("ðŸ¦ GuestPaymentStep onSuccess triggered - payment simulation successful")
 
-      // ✅ Simply call onConfirm which will create the final booking directly
-      console.log("🎯 Calling onConfirm (handleFinalSubmit)")
+      // âœ… Simply call onConfirm which will create the final booking directly
+      console.log("ðŸŽ¯ Calling onConfirm (handleFinalSubmit)")
       onConfirm()
     },
     onFailure: customFailureHandler,
@@ -110,7 +110,7 @@ export function GuestPaymentStep({
   const [marketingConsent, setMarketingConsent] = useState(true)
   const [termsAccepted, setTermsAccepted] = useState(true)
 
-  // ➕ שדות הסכמות חדשים
+  // âž• ×©×“×•×ª ×”×¡×›×ž×•×ª ×—×“×©×™×
   const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("sms")
   const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("sms")
 
@@ -136,7 +136,7 @@ export function GuestPaymentStep({
       bookerNotificationLanguage,
       recipientNotificationMethod,
       recipientNotificationLanguage,
-      // ➕ הסכמות חדשות
+      // âž• ×”×¡×›×ž×•×ª ×—×“×©×•×ª
       consents: {
         customerAlerts,
         patientAlerts,
@@ -156,7 +156,7 @@ export function GuestPaymentStep({
   ])
 
   const formatPrice = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
+    return `â‚ª${amount.toFixed(2)}`
   }
 
   const handlePayNow = async () => {
@@ -200,8 +200,8 @@ export function GuestPaymentStep({
       <div className="space-y-6" dir={dir}>
         <div className="text-center">
           <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
-          <h2 className="text-2xl font-semibold tracking-tight">תשלום</h2>
-          <p className="text-muted-foreground mt-2">סיכום ההזמנה והמעבר לתשלום</p>
+          <h2 className="text-2xl font-semibold tracking-tight">×ª×©×œ×•×</h2>
+          <p className="text-muted-foreground mt-2">×¡×™×›×•× ×”×”×–×ž× ×” ×•×”×ž×¢×‘×¨ ×œ×ª×©×œ×•×</p>
         </div>
 
         {/* Order Summary */}
@@ -209,29 +209,29 @@ export function GuestPaymentStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              סיכום הזמנה
+              ×¡×™×›×•× ×”×–×ž× ×”
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {/* Base Price */}
               <div className="flex justify-between">
-                <span>מחיר בסיס:</span>
+                <span>×ž×—×™×¨ ×‘×¡×™×¡:</span>
                 <span>{formatPrice(calculatedPrice.basePrice)}</span>
               </div>
 
               {/* Surcharges */}
               {calculatedPrice.surcharges && calculatedPrice.surcharges.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-orange-700">תוספות מחיר:</div>
+                  <div className="text-sm font-medium text-orange-700">×ª×•×¡×¤×•×ª ×ž×—×™×¨:</div>
                   {calculatedPrice.surcharges.map((surcharge, index) => (
                     <div key={index} className="flex justify-between text-orange-600 text-sm pr-4">
-                      <span>• {surcharge.description || "תוספת מחיר"}:</span>
+                      <span>â€¢ {surcharge.description || "×ª×•×¡×¤×ª ×ž×—×™×¨"}:</span>
                       <span>+{formatPrice(surcharge.amount)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
-                    <span>סה"כ תוספות:</span>
+                    <span>×¡×”"×› ×ª×•×¡×¤×•×ª:</span>
                     <span>+{formatPrice(calculatedPrice.totalSurchargesAmount)}</span>
                   </div>
                 </div>
@@ -244,13 +244,13 @@ export function GuestPaymentStep({
                   <div className="flex justify-between text-green-600">
                     <span>
                       {calculatedPrice.isBaseTreatmentCoveredBySubscription
-                        ? "כוסה על ידי מנוי:"
-                        : "כוסה על ידי שובר טיפול:"}
+                        ? "×›×•×¡×” ×¢×œ ×™×“×™ ×ž× ×•×™:"
+                        : "×›×•×¡×” ×¢×œ ×™×“×™ ×©×•×‘×¨ ×˜×™×¤×•×œ:"}
                     </span>
                     <span>-{formatPrice(calculatedPrice.basePrice)}</span>
                   </div>
                   <div className="flex justify-between font-medium">
-                    <span>מחיר לאחר כיסוי מנוי/שובר:</span>
+                    <span>×ž×—×™×¨ ×œ××—×¨ ×›×™×¡×•×™ ×ž× ×•×™/×©×•×‘×¨:</span>
                     <span>
                       {formatPrice(
                         calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher
@@ -265,7 +265,7 @@ export function GuestPaymentStep({
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
-                    שובר מתנה:
+                    ×©×•×‘×¨ ×ž×ª× ×”:
                   </span>
                   <span>-{formatPrice(calculatedPrice.voucherAppliedAmount)}</span>
                 </div>
@@ -276,7 +276,7 @@ export function GuestPaymentStep({
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
-                    הנחת קופון:
+                    ×”× ×—×ª ×§×•×¤×•×Ÿ:
                   </span>
                   <span>-{formatPrice(calculatedPrice.couponDiscount)}</span>
                 </div>
@@ -286,14 +286,14 @@ export function GuestPaymentStep({
 
               {/* Final Amount */}
               <div className="flex justify-between text-xl font-bold">
-                <span>סכום לתשלום:</span>
+                <span>×¡×›×•× ×œ×ª×©×œ×•×:</span>
                 <span className="text-primary">{formatPrice(calculatedPrice.finalAmount)}</span>
               </div>
 
               {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>ההזמנה מכוסה במלואה על ידי מנוי או שובר</AlertDescription>
+                  <AlertDescription>×”×”×–×ž× ×” ×ž×›×•×¡×” ×‘×ž×œ×•××” ×¢×œ ×™×“×™ ×ž× ×•×™ ××• ×©×•×‘×¨</AlertDescription>
                 </Alert>
               )}
             </div>
@@ -305,7 +305,7 @@ export function GuestPaymentStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              העדפות התראות
+              ×”×¢×“×¤×•×ª ×”×ª×¨××•×ª
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -313,12 +313,12 @@ export function GuestPaymentStep({
             <div className="space-y-4">
               <h4 className="font-medium flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                התראות עבור המזמין ({guestInfo.firstName} {guestInfo.lastName})
+                ×”×ª×¨××•×ª ×¢×‘×•×¨ ×”×ž×–×ž×™×Ÿ ({guestInfo.firstName} {guestInfo.lastName})
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">אמצעי התראה:</label>
+                  <label className="text-sm font-medium">××ž×¦×¢×™ ×”×ª×¨××”:</label>
                   <Select
                     value={bookerNotificationMethod}
                     onValueChange={(value: "email" | "sms" | "both") =>
@@ -332,19 +332,19 @@ export function GuestPaymentStep({
                       <SelectItem value="email">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          אימייל בלבד
+                          ××™×ž×™×™×œ ×‘×œ×‘×“
                         </div>
                       </SelectItem>
                       <SelectItem value="sms">
                         <div className="flex items-center gap-2">
                           <MessageSquare className="h-4 w-4" />
-                          SMS בלבד
+                          SMS ×‘×œ×‘×“
                         </div>
                       </SelectItem>
                       <SelectItem value="both">
                         <div className="flex items-center gap-2">
                           <Bell className="h-4 w-4" />
-                          אימייל + SMS
+                          ××™×ž×™×™×œ + SMS
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -352,7 +352,7 @@ export function GuestPaymentStep({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">שפת ההתראה:</label>
+                  <label className="text-sm font-medium">×©×¤×ª ×”×”×ª×¨××”:</label>
                   <Select
                     value={bookerNotificationLanguage}
                     onValueChange={(value: "he" | "en" | "ru") =>
@@ -366,7 +366,7 @@ export function GuestPaymentStep({
                       <SelectItem value="he">
                         <div className="flex items-center gap-2">
                           <Globe className="h-4 w-4" />
-                          עברית
+                          ×¢×‘×¨×™×ª
                         </div>
                       </SelectItem>
                       <SelectItem value="en">
@@ -378,7 +378,7 @@ export function GuestPaymentStep({
                       <SelectItem value="ru">
                         <div className="flex items-center gap-2">
                           <Globe className="h-4 w-4" />
-                          Русский
+                          Ð ÑƒÑÑÐºÐ¸Ð¹
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -392,13 +392,13 @@ export function GuestPaymentStep({
               <div className="space-y-4 border-t pt-4">
                 <h4 className="font-medium flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  התראות עבור מקבל הטיפול ({guestInfo.recipientFirstName}{" "}
+                  ×”×ª×¨××•×ª ×¢×‘×•×¨ ×ž×§×‘×œ ×”×˜×™×¤×•×œ ({guestInfo.recipientFirstName}{" "}
                   {guestInfo.recipientLastName})
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">אמצעי התראה:</label>
+                    <label className="text-sm font-medium">××ž×¦×¢×™ ×”×ª×¨××”:</label>
                     <Select
                       value={recipientNotificationMethod}
                       onValueChange={(value: "email" | "sms" | "both") =>
@@ -412,19 +412,19 @@ export function GuestPaymentStep({
                         <SelectItem value="email">
                           <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4" />
-                            אימייל בלבד
+                            ××™×ž×™×™×œ ×‘×œ×‘×“
                           </div>
                         </SelectItem>
                         <SelectItem value="sms">
                           <div className="flex items-center gap-2">
                             <MessageSquare className="h-4 w-4" />
-                            SMS בלבד
+                            SMS ×‘×œ×‘×“
                           </div>
                         </SelectItem>
                         <SelectItem value="both">
                           <div className="flex items-center gap-2">
                             <Bell className="h-4 w-4" />
-                            אימייל + SMS
+                            ××™×ž×™×™×œ + SMS
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -432,7 +432,7 @@ export function GuestPaymentStep({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">שפת ההתראה:</label>
+                    <label className="text-sm font-medium">×©×¤×ª ×”×”×ª×¨××”:</label>
                     <Select
                       value={recipientNotificationLanguage}
                       onValueChange={(value: "he" | "en" | "ru") =>
@@ -446,7 +446,7 @@ export function GuestPaymentStep({
                         <SelectItem value="he">
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4" />
-                            עברית
+                            ×¢×‘×¨×™×ª
                           </div>
                         </SelectItem>
                         <SelectItem value="en">
@@ -458,7 +458,7 @@ export function GuestPaymentStep({
                         <SelectItem value="ru">
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4" />
-                            Русский
+                            Ð ÑƒÑÑÐºÐ¸Ð¹
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -478,13 +478,13 @@ export function GuestPaymentStep({
               <Info className="h-4 w-4" />
               <AlertDescription className="text-sm leading-relaxed">
                 <div className="space-y-2">
-                  <div className="font-medium">מדיניות ביטול:</div>
-                  <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
+                  <div className="font-medium">×ž×“×™× ×™×•×ª ×‘×™×˜×•×œ:</div>
+                  <div>â€¢ ×‘×™×˜×•×œ ×”×–×ž× ×” ×ž×¨×’×¢ ×‘×™×¦×•×¢×” ×™×—×•×™×™×‘ ×‘×“×ž×™ ×‘×™×˜×•×œ ×©×œ 5% ×ž×¡×›×•× ×”×”×–×ž× ×”.</div>
                   <div>
-                    • ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.
+                    â€¢ ×‘×™×˜×•×œ ×”×–×ž× ×” ×¤×—×•×ª ×ž 24 ×©×¢×•×ª ×ž×ž×•×¢×“ ×”×˜×™×¤×•×œ ×™×—×•×™×™×‘ ×‘×“×ž×™ ×‘×™×˜×•×œ ×©×œ 50% ×ž×¡×›×•× ×”×”×–×ž× ×”.
                   </div>
                   <div>
-                    • ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.
+                    â€¢ ×‘×™×˜×•×œ ×”×–×ž× ×” ×¤×—×•×ª ×ž 4 ×©×¢×•×ª ×ž×ž×•×¢×“ ×”×˜×™×¤×•×œ ×™×—×•×™×™×‘ ×‘×“×ž×™ ×‘×™×˜×•×œ ×ž×œ××™× ×©×œ 100%.
                   </div>
                 </div>
               </AlertDescription>
@@ -502,8 +502,8 @@ export function GuestPaymentStep({
                   htmlFor="marketing-consent"
                   className="text-sm leading-relaxed cursor-pointer"
                 >
-                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות ועדכונים באמצעי המדיה
-                  השונים, לרבות בדואר אלקטרוני SMS ו/או שיחה טלפונית
+                  ×× ×™ ×ž××©×¨/×ª ×§×‘×œ×ª ×“×™×•×•×¨ ×©×œ ×—×•×ž×¨×™× ×¤×¨×¡×•×ž×™×™×, ×”×¦×¢×•×ª ×™×©×•×•×§×™×•×ª ×•×¢×“×›×•× ×™× ×‘××ž×¦×¢×™ ×”×ž×“×™×”
+                  ×”×©×•× ×™×, ×œ×¨×‘×•×ª ×‘×“×•××¨ ××œ×§×˜×¨×•× ×™ SMS ×•/××• ×©×™×—×” ×˜×œ×¤×•× ×™×ª
                 </label>
               </div>
 
@@ -514,14 +514,14 @@ export function GuestPaymentStep({
                   onCheckedChange={checked => setTermsAccepted(checked as boolean)}
                 />
                 <label htmlFor="terms-accepted" className="text-sm leading-relaxed cursor-pointer">
-                  בביצוע ההזמנה אני מאשר את הסכמתי לתנאי השימוש ומדיניות הפרטיות
+                  ×‘×‘×™×¦×•×¢ ×”×”×–×ž× ×” ×× ×™ ×ž××©×¨ ××ª ×”×¡×›×ž×ª×™ ×œ×ª× ××™ ×”×©×™×ž×•×© ×•×ž×“×™× ×™×•×ª ×”×¤×¨×˜×™×•×ª
                   <span className="text-red-500 mr-1">*</span>
                 </label>
               </div>
 
               {!termsAccepted && (
                 <div className="text-red-500 text-sm">
-                  יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך
+                  ×™×© ×œ××©×¨ ××ª ×ª× ××™ ×”×©×™×ž×•×© ×•×ž×“×™× ×™×•×ª ×”×¤×¨×˜×™×•×ª ×›×“×™ ×œ×”×ž×©×™×š
                 </div>
               )}
             </div>
@@ -531,7 +531,7 @@ export function GuestPaymentStep({
         {/* Navigation */}
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrev} disabled={isLoading}>
-            חזור
+            ×—×–×•×¨
           </Button>
           <Button
             onClick={handlePayNow}
@@ -541,8 +541,8 @@ export function GuestPaymentStep({
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isCountingDown
-              ? `נסה שוב בעוד ${countdown} שניות`
-              : `שלם כעת ${formatPrice(calculatedPrice.finalAmount)}`}
+              ? `× ×¡×” ×©×•×‘ ×‘×¢×•×“ ${countdown} ×©× ×™×•×ª`
+              : `×©×œ× ×›×¢×ª ${formatPrice(calculatedPrice.finalAmount)}`}
           </Button>
         </div>
       </div>
@@ -551,7 +551,7 @@ export function GuestPaymentStep({
       <Dialog open={showPaymentModal} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>
+            <DialogTitle className="text-center">×ª×©×œ×•× ×ž××•×‘×˜×—</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6" dir={dir}>
@@ -561,12 +561,12 @@ export function GuestPaymentStep({
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    כאן יהיה IFRAME של CARDCOMM
+                    ×›××Ÿ ×™×”×™×” IFRAME ×©×œ CARDCOMM
                   </h3>
-                  <p className="text-gray-500">ממשק התשלום המאובטח של CardComm</p>
+                  <p className="text-gray-500">×ž×ž×©×§ ×”×ª×©×œ×•× ×”×ž××•×‘×˜×— ×©×œ CardComm</p>
                   <div className="mt-4 p-4 bg-white border rounded">
                     <p className="text-sm text-gray-600">
-                      סכום לתשלום:{" "}
+                      ×¡×›×•× ×œ×ª×©×œ×•×:{" "}
                       <span className="font-bold">{formatPrice(calculatedPrice.finalAmount)}</span>
                     </p>
                   </div>
@@ -579,14 +579,14 @@ export function GuestPaymentStep({
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    דימוי הצלחה
+                    ×“×™×ž×•×™ ×”×¦×œ×—×”
                   </Button>
                   <Button
-                    onClick={() => handlePaymentFailure("תשלום נכשל עקב בעיה טכנית")}
+                    onClick={() => handlePaymentFailure("×ª×©×œ×•× × ×›×©×œ ×¢×§×‘ ×‘×¢×™×” ×˜×›× ×™×ª")}
                     variant="destructive"
                   >
                     <XCircle className="mr-2 h-4 w-4" />
-                    דימוי כישלון
+                    ×“×™×ž×•×™ ×›×™×©×œ×•×Ÿ
                   </Button>
                 </div>
               </>
@@ -595,24 +595,24 @@ export function GuestPaymentStep({
             {paymentStatus === "success" && (
               <div className="text-center py-8">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-600 mb-4" />
-                <h3 className="text-xl font-semibold text-green-700 mb-2">התשלום בוצע בהצלחה!</h3>
-                <p className="text-gray-600">ההזמנה אושרה ופרטיה נשלחו אליך באימייל</p>
+                <h3 className="text-xl font-semibold text-green-700 mb-2">×”×ª×©×œ×•× ×‘×•×¦×¢ ×‘×”×¦×œ×—×”!</h3>
+                <p className="text-gray-600">×”×”×–×ž× ×” ××•×©×¨×” ×•×¤×¨×˜×™×” × ×©×œ×—×• ××œ×™×š ×‘××™×ž×™×™×œ</p>
               </div>
             )}
 
             {paymentStatus === "failed" && (
               <div className="text-center py-8">
                 <XCircle className="mx-auto h-16 w-16 text-red-600 mb-4" />
-                <h3 className="text-xl font-semibold text-red-700 mb-2">התשלום נכשל</h3>
-                <p className="text-gray-600 mb-6">אירעה שגיאה בביצוע התשלום. אנא נסה שוב.</p>
+                <h3 className="text-xl font-semibold text-red-700 mb-2">×”×ª×©×œ×•× × ×›×©×œ</h3>
+                <p className="text-gray-600 mb-6">××™×¨×¢×” ×©×’×™××” ×‘×‘×™×¦×•×¢ ×”×ª×©×œ×•×. ×× × × ×¡×” ×©×•×‘.</p>
 
                 <Alert className="mb-6">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>לא חויבת. אין תשלום שבוצע עבור ההזמנה הזו.</AlertDescription>
+                  <AlertDescription>×œ× ×—×•×™×‘×ª. ××™×Ÿ ×ª×©×œ×•× ×©×‘×•×¦×¢ ×¢×‘×•×¨ ×”×”×–×ž× ×” ×”×–×•.</AlertDescription>
                 </Alert>
 
                 <Button onClick={handleTryAgain} className="w-full">
-                  נסה שנית
+                  × ×¡×” ×©× ×™×ª
                 </Button>
               </div>
             )}
@@ -622,3 +622,5 @@ export function GuestPaymentStep({
     </>
   )
 }
+
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -82,12 +82,12 @@ export default function UserSubscriptionRow({
 
     if (result.success) {
       toast({
-        description: t("userSubscriptions.cancelSuccessToast"),
+        description: t("userSubscriptions.cancelSuccessToast") as string,
       })
       router.refresh()
     } else {
       toast({
-        description: result.error || t("common.unknownError"),
+        description: result.error || t("common.unknownError") as string,
         variant: "destructive",
       })
     }
@@ -392,9 +392,7 @@ export default function UserSubscriptionRow({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.cancelDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -422,9 +420,7 @@ export default function UserSubscriptionRow({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

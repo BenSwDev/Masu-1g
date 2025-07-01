@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import { useState, useMemo, useCallback, memo } from "react"
+import { useMemo, useCallback, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,7 +43,7 @@ const TimeSlotButton = memo(
       <span>{slot.time}</span>
       {slot.surcharge && (
         <span className="text-orange-600 text-[10px] font-medium mt-1">
-          +{slot.surcharge.amount.toFixed(2)} ₪
+          +{slot.surcharge.amount.toFixed(2)} â‚ª
         </span>
       )}
     </Button>
@@ -328,27 +328,27 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                   <div className="mt-4 p-4 rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-orange-100">
                     <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
-                      <span>תוספת מחיר:</span>
+                      <span>×ª×•×¡×¤×ª ×ž×—×™×¨:</span>
                       <span className="font-bold">
-                        {priceCalculation.surchargeReason || "תוספת זמן מיוחד"}
+                        {priceCalculation.surchargeReason || "×ª×•×¡×¤×ª ×–×ž×Ÿ ×ž×™×•×—×“"}
                       </span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>מחיר בסיס:</span>
-                        <span>{priceCalculation.basePrice.toFixed(2)} ₪</span>
+                        <span>×ž×—×™×¨ ×‘×¡×™×¡:</span>
+                        <span>{priceCalculation.basePrice.toFixed(2)} â‚ª</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>תוספת:</span>
+                        <span>×ª×•×¡×¤×ª:</span>
                         <span className="text-orange-700">
-                          +{priceCalculation.surchargeAmount.toFixed(2)} ₪
+                          +{priceCalculation.surchargeAmount.toFixed(2)} â‚ª
                         </span>
                       </div>
                       <hr className="my-2 border-orange-300" />
                       <div className="flex justify-between font-bold text-base mt-2">
-                        <span>סך הכל:</span>
+                        <span>×¡×š ×”×›×œ:</span>
                         <span className="text-primary">
-                          {priceCalculation.finalPrice.toFixed(2)} ₪
+                          {priceCalculation.finalPrice.toFixed(2)} â‚ª
                         </span>
                       </div>
                     </div>
@@ -372,3 +372,5 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     </div>
   )
 })
+
+

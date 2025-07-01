@@ -134,7 +134,9 @@ const SubscriptionsClient = ({
     try {
       const result = await createSubscription(data)
       if (result.success) {
-        setSubscriptions([result.subscription, ...subscriptions])
+        if (result.subscription) {
+          setSubscriptions([result.subscription as any, ...subscriptions])
+        }
         toast.success(t("subscriptions.createSuccess"))
         setIsCreateDialogOpen(false)
         // Refresh the list to ensure correct ordering and pagination
@@ -160,7 +162,7 @@ const SubscriptionsClient = ({
       const result = await updateSubscription(currentSubscription._id as string, data)
       if (result.success && result.subscription) {
         setSubscriptions(
-          subscriptions.map(s => (s._id === currentSubscription._id ? result.subscription : s))
+          subscriptions.map(s => (s && s._id === currentSubscription._id && result.subscription ? result.subscription as any : s)).filter(Boolean)
         )
         toast.success(t("subscriptions.updateSuccess"))
         setIsEditDialogOpen(false)
@@ -286,9 +288,11 @@ const SubscriptionsClient = ({
               key={String(subscription._id)}
               subscription={{
                 ...subscription,
-                id: String(subscription._id),
+                id: subscription._id,
                 interval: "monthly",
                 features: [],
+                price: 0,
+                treatments: []
               }}
               onEdit={() => handleEdit(subscription)}
               onDelete={() => handleDeleteClick(subscription)}

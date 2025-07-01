@@ -1,4 +1,4 @@
-import type { BookingStatus } from "@/types/booking"
+﻿import type { BookingStatus } from "@/types/core/booking"
 
 /**
  * Construct full address string from address components
@@ -65,13 +65,13 @@ export function canRescheduleBooking(booking: any): boolean {
  */
 export function getBookingDisplayStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    pending_payment: "ממתין לתשלום",
-    confirmed: "מאושר",
-    in_process: "בתהליך",
-    completed: "הושלם",
-    cancelled: "בוטל",
-    no_show: "לא הגיע",
-    rescheduled: "נדחה",
+    pending_payment: "×ž×ž×ª×™×Ÿ ×œ×ª×©×œ×•×",
+    confirmed: "×ž××•×©×¨",
+    in_process: "×‘×ª×”×œ×™×š",
+    completed: "×”×•×©×œ×",
+    cancelled: "×‘×•×˜×œ",
+    no_show: "×œ× ×”×’×™×¢",
+    rescheduled: "× ×“×—×”",
   }
 
   return statusMap[status] || status
@@ -139,14 +139,14 @@ export function formatTimeSlot(date: Date, duration: number): string {
 
 export function formatDuration(minutes: number): string {
   if (minutes < 60) {
-    return `${minutes} דקות`
+    return `${minutes} ×“×§×•×ª`
   }
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60
   if (remainingMinutes === 0) {
-    return `${hours} שעות`
+    return `${hours} ×©×¢×•×ª`
   }
-  return `${hours} שעות ו-${remainingMinutes} דקות`
+  return `${hours} ×©×¢×•×ª ×•-${remainingMinutes} ×“×§×•×ª`
 }
 
 export function isBookingEditable(booking: any): boolean {

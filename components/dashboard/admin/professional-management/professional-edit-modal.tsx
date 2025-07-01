@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -21,13 +21,13 @@ import {
   Clock,
   Ban,
 } from "lucide-react"
-import { ProfessionalProfileTab } from "./tabs/professional-profile-tab"
-import { ProfessionalTreatmentsTabNew } from "./tabs/professional-treatments-tab-new"
-import { ProfessionalWorkAreasTabSimple } from "./tabs/professional-work-areas-tab-simple"
-import { ProfessionalBankDetailsTab } from "./tabs/professional-bank-details-tab"
-import { ProfessionalDocumentsTab } from "./tabs/professional-documents-tab"
-import { ProfessionalFinancialTab } from "./tabs/professional-financial-tab"
-import { ProfessionalContractTab } from "./tabs/professional-contract-tab"
+import ProfessionalProfileTab from "./tabs/professional-profile-tab"
+import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
+import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
+import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
+import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
+import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
+import ProfessionalContractTab from "./tabs/professional-contract-tab"
 import type { Professional } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
@@ -62,7 +62,7 @@ export default function ProfessionalEditModal({
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
-      const confirmClose = window.confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לסגור?")
+      const confirmClose = window.confirm("×™×© ×œ×š ×©×™× ×•×™×™× ×©×œ× × ×©×ž×¨×•. ×”×× ××ª×” ×‘×˜×•×— ×©×‘×¨×¦×•× ×š ×œ×¡×’×•×¨?")
       if (!confirmClose) return
     }
     onClose()
@@ -70,24 +70,24 @@ export default function ProfessionalEditModal({
 
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
-      active: { variant: "default" as const, icon: User, text: "פעיל", color: "text-green-600" },
+      active: { variant: "default" as const, icon: User, text: "×¤×¢×™×œ", color: "text-green-600" },
       pending_admin_approval: {
         variant: "secondary" as const,
         icon: AlertTriangle,
-        text: "ממתין לאישור",
+        text: "×ž×ž×ª×™×Ÿ ×œ××™×©×•×¨",
         color: "text-orange-600",
       },
       pending_user_action: {
         variant: "outline" as const,
         icon: AlertTriangle,
-        text: "ממתין למשתמש",
+        text: "×ž×ž×ª×™×Ÿ ×œ×ž×©×ª×ž×©",
         color: "text-blue-600",
       },
-      rejected: { variant: "destructive" as const, icon: X, text: "נדחה", color: "text-red-600" },
+      rejected: { variant: "destructive" as const, icon: X, text: "× ×“×—×”", color: "text-red-600" },
       suspended: {
         variant: "destructive" as const,
         icon: AlertTriangle,
-        text: "מושהה",
+        text: "×ž×•×©×”×”",
         color: "text-red-600",
       },
     }
@@ -123,14 +123,14 @@ export default function ProfessionalEditModal({
             <div>
               <DialogTitle className="text-xl">
                 {isCreatingNew
-                  ? "יצירת מטפל חדש"
-                  : `עריכת מטפל - ${updatedProfessional.userId.name}`}
+                  ? "×™×¦×™×¨×ª ×ž×˜×¤×œ ×—×“×©"
+                  : `×¢×¨×™×›×ª ×ž×˜×¤×œ - ${updatedProfessional.userId.name}`}
               </DialogTitle>
               {!isCreatingNew && (
                 <div className="flex items-center gap-3 mt-2">
                   {getStatusBadge(updatedProfessional.status)}
                   <span className="text-sm text-muted-foreground">
-                    הצטרף ב-{formatDate(updatedProfessional.appliedAt)}
+                    ×”×¦×˜×¨×£ ×‘-{formatDate(updatedProfessional.appliedAt)}
                   </span>
                 </div>
               )}
@@ -138,7 +138,7 @@ export default function ProfessionalEditModal({
             {hasUnsavedChanges && (
               <div className="flex items-center gap-2 text-orange-600">
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm">שינויים לא נשמרו</span>
+                <span className="text-sm">×©×™× ×•×™×™× ×œ× × ×©×ž×¨×•</span>
               </div>
             )}
           </div>
@@ -154,18 +154,18 @@ export default function ProfessionalEditModal({
             <TabsList className="grid w-full grid-cols-7 flex-shrink-0 mb-4">
               <TabsTrigger value="profile" className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">פרופיל</span>
-                <span className="sm:hidden">פרופיל</span>
+                <span className="hidden sm:inline">×¤×¨×•×¤×™×œ</span>
+                <span className="sm:hidden">×¤×¨×•×¤×™×œ</span>
               </TabsTrigger>
               <TabsTrigger value="treatments" className="flex items-center gap-1">
                 <Stethoscope className="w-4 h-4" />
-                <span className="hidden sm:inline">טיפולים</span>
-                <span className="sm:hidden">טיפולים</span>
+                <span className="hidden sm:inline">×˜×™×¤×•×œ×™×</span>
+                <span className="sm:hidden">×˜×™×¤×•×œ×™×</span>
               </TabsTrigger>
               <TabsTrigger value="workAreas" className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                <span className="hidden sm:inline">איזורי פעילות</span>
-                <span className="sm:hidden">איזורים</span>
+                <span className="hidden sm:inline">××™×–×•×¨×™ ×¤×¢×™×œ×•×ª</span>
+                <span className="sm:hidden">××™×–×•×¨×™×</span>
               </TabsTrigger>
               <TabsTrigger
                 value="bankDetails"
@@ -173,8 +173,8 @@ export default function ProfessionalEditModal({
                 disabled={isCreatingNew}
               >
                 <CreditCard className="w-4 h-4" />
-                <span className="hidden sm:inline">חשבון בנק</span>
-                <span className="sm:hidden">בנק</span>
+                <span className="hidden sm:inline">×—×©×‘×•×Ÿ ×‘× ×§</span>
+                <span className="sm:hidden">×‘× ×§</span>
               </TabsTrigger>
               <TabsTrigger
                 value="documents"
@@ -182,8 +182,8 @@ export default function ProfessionalEditModal({
                 disabled={isCreatingNew}
               >
                 <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">מסמכים</span>
-                <span className="sm:hidden">מסמכים</span>
+                <span className="hidden sm:inline">×ž×¡×ž×›×™×</span>
+                <span className="sm:hidden">×ž×¡×ž×›×™×</span>
               </TabsTrigger>
               <TabsTrigger
                 value="financial"
@@ -191,8 +191,8 @@ export default function ProfessionalEditModal({
                 disabled={isCreatingNew}
               >
                 <DollarSign className="w-4 h-4" />
-                <span className="hidden sm:inline">כספים</span>
-                <span className="sm:hidden">כספים</span>
+                <span className="hidden sm:inline">×›×¡×¤×™×</span>
+                <span className="sm:hidden">×›×¡×¤×™×</span>
               </TabsTrigger>
               <TabsTrigger
                 value="contract"
@@ -200,8 +200,8 @@ export default function ProfessionalEditModal({
                 disabled={isCreatingNew}
               >
                 <ScrollText className="w-4 h-4" />
-                <span className="hidden sm:inline">הסכמים</span>
-                <span className="sm:hidden">הסכמים</span>
+                <span className="hidden sm:inline">×”×¡×›×ž×™×</span>
+                <span className="sm:hidden">×”×¡×›×ž×™×</span>
               </TabsTrigger>
             </TabsList>
 
@@ -290,3 +290,4 @@ export default function ProfessionalEditModal({
     </Dialog>
   )
 }
+

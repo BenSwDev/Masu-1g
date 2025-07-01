@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -52,7 +52,7 @@ import type { GiftVoucher as GiftVoucherPlain } from "@/types/core"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { GuestInfo, GuestAddress } from "@/types/core"
 
-// ✅ תיקון: טיפוסים בטוחים במקום any
+// âœ… ×ª×™×§×•×Ÿ: ×˜×™×¤×•×¡×™× ×‘×˜×•×—×™× ×‘×ž×§×•× any
 interface UniversalBookingWizardProps {
   initialData: BookingInitialData
   voucher?: GiftVoucherPlain
@@ -379,7 +379,7 @@ export default function UniversalBookingWizard({
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
   const [abandonedBooking, setAbandonedBooking] = useState<any>(null)
-  // ✅ No longer needed - we create final booking directly
+  // âœ… No longer needed - we create final booking directly
   // Track price calculation requests
 
   const { toast } = useToast()
@@ -422,16 +422,16 @@ export default function UniversalBookingWizard({
                 } else {
                   toast({
                     variant: "destructive",
-                    title: "שגיאה ביצירת משתמש אורח",
-                    description: result.error || "נסה שוב",
+                    title: "×©×’×™××” ×‘×™×¦×™×¨×ª ×ž×©×ª×ž×© ××•×¨×—",
+                    description: result.error || "× ×¡×” ×©×•×‘",
                   })
                   // Don't block progression if guest creation fails
                 }
               } catch (error) {
                 toast({
                   variant: "destructive",
-                  title: "שגיאה ביצירת משתמש אורח",
-                  description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
+                  title: "×©×’×™××” ×‘×™×¦×™×¨×ª ×ž×©×ª×ž×© ××•×¨×—",
+                  description: "××™×¨×¢×” ×©×’×™××” ×‘×œ×ª×™ ×¦×¤×•×™×”. × ×¡×” ×©×•×‘.",
                 })
                 // Continue to next step even if user creation fails
               }
@@ -450,13 +450,13 @@ export default function UniversalBookingWizard({
 
   // Function to create initial pending booking
   const createInitialPendingBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
-    // ✅ תיקון: validation קריטי של userId
+    // âœ… ×ª×™×§×•×Ÿ: validation ×§×¨×™×˜×™ ×©×œ userId
     if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
       console.error("Invalid userId provided to createInitialPendingBooking:", userId)
       toast({
         variant: "destructive",
-        title: "שגיאה מערכתית",
-        description: "מזהה משתמש לא תקין. אנא נסה שוב.",
+        title: "×©×’×™××” ×ž×¢×¨×›×ª×™×ª",
+        description: "×ž×–×”×” ×ž×©×ª×ž×© ×œ× ×ª×§×™×Ÿ. ×× × × ×¡×” ×©×•×‘.",
       })
       return
     }
@@ -476,8 +476,8 @@ export default function UniversalBookingWizard({
 
       if (result.success) {
         toast({
-          title: "התחלת תהליך הזמנה",
-          description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
+          title: "×”×ª×—×œ×ª ×ª×”×œ×™×š ×”×–×ž× ×”",
+          description: "×”×”×–×ž× ×” × ×©×ž×¨×” ×‘×ž×¢×¨×›×ª ×•×ª×•×¤×™×¢ ×‘×¢×ž×•×“ ×”×–×ž× ×•×ª ×”×ž× ×”×œ",
         })
       } else {
         console.warn("Failed to save initial pending booking:", result.error)
@@ -687,7 +687,7 @@ export default function UniversalBookingWizard({
       return
     }
 
-    // ✅ תיקון: מניעת race condition בחישוב מחירים
+    // âœ… ×ª×™×§×•×Ÿ: ×ž× ×™×¢×ª race condition ×‘×—×™×©×•×‘ ×ž×—×™×¨×™×
     const currentCalculationId = Date.now()
     priceCalculationIdRef.current = currentCalculationId
 
@@ -712,9 +712,9 @@ export default function UniversalBookingWizard({
 
     const result = await calculateBookingPrice(payload)
 
-    // ✅ בדיקת race condition - וידוא שזה עדיין החישוב הרלוונטי
+    // âœ… ×‘×“×™×§×ª race condition - ×•×™×“×•× ×©×–×” ×¢×“×™×™×Ÿ ×”×—×™×©×•×‘ ×”×¨×œ×•×•× ×˜×™
     if (priceCalculationIdRef.current !== currentCalculationId) {
-      return // חישוב מיושן, התעלמות
+      return // ×—×™×©×•×‘ ×ž×™×•×©×Ÿ, ×”×ª×¢×œ×ž×•×ª
     }
 
     if (result.success && result.priceDetails) {
@@ -774,15 +774,15 @@ export default function UniversalBookingWizard({
     }
     setShowRecoveryDialog(false)
     toast({
-      title: "הטופס שוחזר בהצלחה",
-      description: "ניתן להמשיך מהנקודה בה עצרת",
+      title: "×”×˜×•×¤×¡ ×©×•×—×–×¨ ×‘×”×¦×œ×—×”",
+      description: "× ×™×ª×Ÿ ×œ×”×ž×©×™×š ×ž×”× ×§×•×“×” ×‘×” ×¢×¦×¨×ª",
     })
   }
 
   const handleStartFresh = () => {
     // Only clear guest-specific data, don't affect registered users
     if (!currentUser) {
-      // ✅ תיקון: ניקוי localStorage כוללני רק לאורחים
+      // âœ… ×ª×™×§×•×Ÿ: × ×™×§×•×™ localStorage ×›×•×œ×œ× ×™ ×¨×§ ×œ××•×¨×—×™×
       try {
         localStorage.removeItem("guestUserId")
         localStorage.removeItem("abandonedBooking")
@@ -823,20 +823,20 @@ export default function UniversalBookingWizard({
             // Create initial pending booking immediately
             await createInitialPendingBooking(result.userId, guestInfo)
           } else {
-            console.error("❌ Failed to create guest user:", result.error)
+            console.error("âŒ Failed to create guest user:", result.error)
             toast({
               variant: "destructive",
-              title: "שגיאה ביצירת משתמש אורח",
-              description: result.error || "נסה שוב",
+              title: "×©×’×™××” ×‘×™×¦×™×¨×ª ×ž×©×ª×ž×© ××•×¨×—",
+              description: result.error || "× ×¡×” ×©×•×‘",
             })
             return
           }
         } catch (error) {
-          console.error("❌ Error creating guest user:", error)
+          console.error("âŒ Error creating guest user:", error)
           toast({
             variant: "destructive",
-            title: "שגיאה ביצירת משתמש אורח",
-            description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
+            title: "×©×’×™××” ×‘×™×¦×™×¨×ª ×ž×©×ª×ž×© ××•×¨×—",
+            description: "××™×¨×¢×” ×©×’×™××” ×‘×œ×ª×™ ×¦×¤×•×™×”. × ×¡×” ×©×•×‘.",
           })
           return
         }
@@ -855,8 +855,8 @@ export default function UniversalBookingWizard({
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      // ✅ Skip payment step and create final booking directly
-      console.log("💰 Zero payment detected - creating final booking directly")
+      // âœ… Skip payment step and create final booking directly
+      console.log("ðŸ’° Zero payment detected - creating final booking directly")
       await handleFinalSubmit()
       return
     }
@@ -884,8 +884,8 @@ export default function UniversalBookingWizard({
     ) {
       toast({
         variant: "destructive",
-        title: "שגיאה בכתובת אימייל",
-        description: "אנא הזן כתובת אימייל תקינה עבור הנמען",
+        title: "×©×’×™××” ×‘×›×ª×•×‘×ª ××™×ž×™×™×œ",
+        description: "×× × ×”×–×Ÿ ×›×ª×•×‘×ª ××™×ž×™×™×œ ×ª×§×™× ×” ×¢×‘×•×¨ ×”× ×ž×¢×Ÿ",
       })
       return null
     }
@@ -912,7 +912,7 @@ export default function UniversalBookingWizard({
         t => t._id.toString() === bookingOptions.selectedTreatmentId
       )
 
-      // ✅ Add validation for voucher/subscription redemption
+      // âœ… Add validation for voucher/subscription redemption
       if (
         bookingOptions.source === "gift_voucher_redemption" &&
         bookingOptions.selectedGiftVoucherId
@@ -928,8 +928,8 @@ export default function UniversalBookingWizard({
           if (voucherTreatmentId !== bookingOptions.selectedTreatmentId) {
             toast({
               variant: "destructive",
-              title: "שגיאה בבחירת טיפול",
-              description: "הטיפול שנבחר לא תואם לשובר הטיפול",
+              title: "×©×’×™××” ×‘×‘×—×™×¨×ª ×˜×™×¤×•×œ",
+              description: "×”×˜×™×¤×•×œ ×©× ×‘×—×¨ ×œ× ×ª×•×× ×œ×©×•×‘×¨ ×”×˜×™×¤×•×œ",
             })
             return null
           }
@@ -951,8 +951,8 @@ export default function UniversalBookingWizard({
           if (subTreatmentId !== bookingOptions.selectedTreatmentId) {
             toast({
               variant: "destructive",
-              title: "שגיאה בבחירת טיפול",
-              description: "הטיפול שנבחר לא תואם למנוי",
+              title: "×©×’×™××” ×‘×‘×—×™×¨×ª ×˜×™×¤×•×œ",
+              description: "×”×˜×™×¤×•×œ ×©× ×‘×—×¨ ×œ× ×ª×•×× ×œ×ž× ×•×™",
             })
             return null
           }
@@ -1057,7 +1057,7 @@ export default function UniversalBookingWizard({
         : await createGuestBooking(payload)
 
       if (result.success && result.booking) {
-        // ✅ No longer tracking pending booking ID
+        // âœ… No longer tracking pending booking ID
         return String(result.booking._id)
       } else {
         toast({
@@ -1073,7 +1073,7 @@ export default function UniversalBookingWizard({
         return null
       }
     } catch (error) {
-      console.error("💥 Booking creation error:", error)
+      console.error("ðŸ’¥ Booking creation error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),
@@ -1094,40 +1094,40 @@ export default function UniversalBookingWizard({
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
-    console.log("🎯 handleFinalSubmit called - creating final booking", {
+    console.log("ðŸŽ¯ handleFinalSubmit called - creating final booking", {
       guestUserId,
       calculatedPrice: calculatedPrice?.finalAmount,
       currentStep,
     })
 
     setIsLoading(true)
-    console.log("⏳ Starting final booking creation...")
+    console.log("â³ Starting final booking creation...")
 
     try {
-      // ✅ Create the booking directly with confirmed status
+      // âœ… Create the booking directly with confirmed status
       const finalBookingId = await createFinalBooking()
       if (!finalBookingId) {
-        console.error("❌ Failed to create final booking")
+        console.error("âŒ Failed to create final booking")
         toast({
           variant: "destructive",
-          title: "שגיאה ביצירת ההזמנה",
-          description: "לא ניתן ליצור את ההזמנה. אנא נסה שוב.",
+          title: "×©×’×™××” ×‘×™×¦×™×¨×ª ×”×”×–×ž× ×”",
+          description: "×œ× × ×™×ª×Ÿ ×œ×™×¦×•×¨ ××ª ×”×”×–×ž× ×”. ×× × × ×¡×” ×©×•×‘.",
         })
         return
       }
 
-      console.log("✅ Final booking created successfully:", finalBookingId)
+      console.log("âœ… Final booking created successfully:", finalBookingId)
 
       // Clear saved form state on successful booking
       if (guestUserId) {
         localStorage.removeItem("guestUserId")
-        console.log("🗑️ Cleared localStorage")
+        console.log("ðŸ—‘ï¸ Cleared localStorage")
       }
 
       // Immediately redirect to confirmation page
-      console.log("🔄 Redirecting to confirmation page")
+      console.log("ðŸ”„ Redirecting to confirmation page")
       const confirmationUrl = `/bookings/confirmation?bookingId=${finalBookingId}&status=success`
-      console.log("🎯 Redirecting to:", confirmationUrl)
+      console.log("ðŸŽ¯ Redirecting to:", confirmationUrl)
 
       // Add a small delay to ensure state is updated
       setTimeout(() => {
@@ -1139,14 +1139,14 @@ export default function UniversalBookingWizard({
         description: t("bookings.success.bookingCreatedDescription"),
       })
     } catch (error) {
-      console.error("💥 Booking creation error:", error)
+      console.error("ðŸ’¥ Booking creation error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),
         description: t("bookings.errors.tryAgain"),
       })
     } finally {
-      console.log("🏁 handleFinalSubmit completed, setting loading to false")
+      console.log("ðŸ handleFinalSubmit completed, setting loading to false")
       setIsLoading(false)
     }
   }
@@ -1170,8 +1170,8 @@ export default function UniversalBookingWizard({
     ) {
       toast({
         variant: "destructive",
-        title: "שגיאה בכתובת אימייל",
-        description: "אנא הזן כתובת אימייל תקינה עבור הנמען",
+        title: "×©×’×™××” ×‘×›×ª×•×‘×ª ××™×ž×™×™×œ",
+        description: "×× × ×”×–×Ÿ ×›×ª×•×‘×ª ××™×ž×™×™×œ ×ª×§×™× ×” ×¢×‘×•×¨ ×”× ×ž×¢×Ÿ",
       })
       return null
     }
@@ -1198,7 +1198,7 @@ export default function UniversalBookingWizard({
         t => t._id.toString() === bookingOptions.selectedTreatmentId
       )
 
-      // ✅ Add validation for voucher/subscription redemption
+      // âœ… Add validation for voucher/subscription redemption
       if (
         bookingOptions.source === "gift_voucher_redemption" &&
         bookingOptions.selectedGiftVoucherId
@@ -1214,8 +1214,8 @@ export default function UniversalBookingWizard({
           if (voucherTreatmentId !== bookingOptions.selectedTreatmentId) {
             toast({
               variant: "destructive",
-              title: "שגיאה בבחירת טיפול",
-              description: "הטיפול שנבחר לא תואם לשובר הטיפול",
+              title: "×©×’×™××” ×‘×‘×—×™×¨×ª ×˜×™×¤×•×œ",
+              description: "×”×˜×™×¤×•×œ ×©× ×‘×—×¨ ×œ× ×ª×•×× ×œ×©×•×‘×¨ ×”×˜×™×¤×•×œ",
             })
             return null
           }
@@ -1237,15 +1237,15 @@ export default function UniversalBookingWizard({
           if (subTreatmentId !== bookingOptions.selectedTreatmentId) {
             toast({
               variant: "destructive",
-              title: "שגיאה בבחירת טיפול",
-              description: "הטיפול שנבחר לא תואם למנוי",
+              title: "×©×’×™××” ×‘×‘×—×™×¨×ª ×˜×™×¤×•×œ",
+              description: "×”×˜×™×¤×•×œ ×©× ×‘×—×¨ ×œ× ×ª×•×× ×œ×ž× ×•×™",
             })
             return null
           }
         }
       }
 
-      // ✅ Generate transaction ID for successful payment
+      // âœ… Generate transaction ID for successful payment
       const isProduction = process.env.NODE_ENV === "production"
       const transactionId = isProduction
         ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`
@@ -1284,8 +1284,8 @@ export default function UniversalBookingWizard({
         },
         priceDetails: calculatedPrice!,
         paymentDetails: {
-          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "paid", // ✅ Set as paid immediately
-          transactionId: calculatedPrice!.finalAmount === 0 ? undefined : transactionId, // ✅ Add transaction ID
+          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "paid", // âœ… Set as paid immediately
+          transactionId: calculatedPrice!.finalAmount === 0 ? undefined : transactionId, // âœ… Add transaction ID
         },
         guestInfo: {
           name: `${guestInfo.firstName} ${guestInfo.lastName}`,
@@ -1364,7 +1364,7 @@ export default function UniversalBookingWizard({
         return null
       }
     } catch (error) {
-      console.error("💥 Final booking creation error:", error)
+      console.error("ðŸ’¥ Final booking creation error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),
@@ -1464,8 +1464,8 @@ export default function UniversalBookingWizard({
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}
-            createPendingBooking={undefined} // ✅ No longer needed - we create final booking directly
-            pendingBookingId={null} // ✅ No longer needed
+            createPendingBooking={undefined} // âœ… No longer needed - we create final booking directly
+            pendingBookingId={null} // âœ… No longer needed
             isRedeeming={Boolean(voucher || userSubscription)}
           />
         )
@@ -1479,19 +1479,19 @@ export default function UniversalBookingWizard({
   const getStepTitle = () => {
     switch (currentStep) {
       case 1:
-        return t("bookings.steps.treatment.title") || "בחירת טיפול"
+        return t("bookings.steps.treatment.title") || "×‘×—×™×¨×ª ×˜×™×¤×•×œ"
       case 2:
-        return t("bookings.steps.scheduling.title") || "תזמון הטיפול"
+        return t("bookings.steps.scheduling.title") || "×ª×–×ž×•×Ÿ ×”×˜×™×¤×•×œ"
       case 3:
-        return currentUser ? "פרטים אישיים" : t("bookings.steps.guestInfo.title") || "פרטים אישיים"
+        return currentUser ? "×¤×¨×˜×™× ××™×©×™×™×" : t("bookings.steps.guestInfo.title") || "×¤×¨×˜×™× ××™×©×™×™×"
       case 4:
-        return t("bookings.addressStep.title") || "כתובת הטיפול"
+        return t("bookings.addressStep.title") || "×›×ª×•×‘×ª ×”×˜×™×¤×•×œ"
       case 5:
-        return t("bookings.steps.summary.title") || "סיכום ההזמנה"
+        return t("bookings.steps.summary.title") || "×¡×™×›×•× ×”×”×–×ž× ×”"
       case 6:
-        return t("bookings.steps.payment.title") || "תשלום"
+        return t("bookings.steps.payment.title") || "×ª×©×œ×•×"
       case 7:
-        return t("bookings.steps.confirmation.title") || "אישור הזמנה"
+        return t("bookings.steps.confirmation.title") || "××™×©×•×¨ ×”×–×ž× ×”"
       default:
         return ""
     }
@@ -1511,26 +1511,26 @@ export default function UniversalBookingWizard({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RotateCcw className="h-5 w-5" />
-              שחזור הזמנה
+              ×©×—×–×•×¨ ×”×–×ž× ×”
             </DialogTitle>
             <DialogDescription>
-              נמצאה הזמנה שלא הושלמה מהיום האחרון. האם תרצה להמשיך מהנקודה בה עצרת או להתחיל מחדש?
+              × ×ž×¦××” ×”×–×ž× ×” ×©×œ× ×”×•×©×œ×ž×” ×ž×”×™×•× ×”××—×¨×•×Ÿ. ×”×× ×ª×¨×¦×” ×œ×”×ž×©×™×š ×ž×”× ×§×•×“×” ×‘×” ×¢×¦×¨×ª ××• ×œ×”×ª×—×™×œ ×ž×—×“×©?
             </DialogDescription>
           </DialogHeader>
 
           {/* Debug info */}
           {abandonedBooking && (
             <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-              <div>שלב: {abandonedBooking.formState?.currentStep || "לא ידוע"}</div>
+              <div>×©×œ×‘: {abandonedBooking.formState?.currentStep || "×œ× ×™×“×•×¢"}</div>
               <div>
-                נשמר:{" "}
+                × ×©×ž×¨:{" "}
                 {abandonedBooking.formState?.savedAt
                   ? new Date(abandonedBooking.formState.savedAt).toLocaleString("he-IL")
-                  : "לא ידוע"}
+                  : "×œ× ×™×“×•×¢"}
               </div>
               {abandonedBooking.formState?.guestInfo?.firstName && (
                 <div>
-                  שם: {abandonedBooking.formState.guestInfo.firstName}{" "}
+                  ×©×: {abandonedBooking.formState.guestInfo.firstName}{" "}
                   {abandonedBooking.formState.guestInfo.lastName}
                 </div>
               )}
@@ -1539,9 +1539,9 @@ export default function UniversalBookingWizard({
 
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={handleStartFresh}>
-              התחל מחדש
+              ×”×ª×—×œ ×ž×—×“×©
             </Button>
-            <Button onClick={handleRecoverBooking}>המשך מהנקודה בה עצרתי</Button>
+            <Button onClick={handleRecoverBooking}>×”×ž×©×š ×ž×”× ×§×•×“×” ×‘×” ×¢×¦×¨×ª×™</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1571,3 +1571,5 @@ export default function UniversalBookingWizard({
     </div>
   )
 }
+
+

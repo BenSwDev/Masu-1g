@@ -1,12 +1,12 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 // Import creation steps

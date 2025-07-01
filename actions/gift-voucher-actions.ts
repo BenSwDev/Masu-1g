@@ -11,7 +11,7 @@ import type {
   GiftVoucherResponse,
   GiftVoucherListResponse,
   GiftVoucherRedemption,
-} from "@/types/core"
+} from "@/types/core/gift-voucher"
 
 // ============================================================================
 // UTILITY FUNCTIONS

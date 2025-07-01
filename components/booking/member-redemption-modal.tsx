@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -33,7 +33,7 @@ export default function MemberRedemptionModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("bookings.redeem.chooseTitle") || "מימוש שובר או מנוי"}</DialogTitle>
+          <DialogTitle>{t("bookings.redeem.chooseTitle") || "×ž×™×ž×•×© ×©×•×‘×¨ ××• ×ž× ×•×™"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {subscriptions?.map((sub: IUserSubscription) => (
@@ -44,7 +44,7 @@ export default function MemberRedemptionModal({
               )}
               <div className="mt-2 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-blue-800">{sub.code}</div>
-                <div className="text-xs text-blue-600 mt-1">קוד המנוי למימוש</div>
+                <div className="text-xs text-blue-600 mt-1">×§×•×“ ×”×ž× ×•×™ ×œ×ž×™×ž×•×©</div>
               </div>
             </div>
           ))}
@@ -52,22 +52,24 @@ export default function MemberRedemptionModal({
             <div key={v._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">
                 {v.voucherType === "monetary"
-                  ? t("giftVouchers.types.monetary") || "שובר כספי"
-                  : t("giftVouchers.types.treatment") || "שובר טיפול"}
+                  ? t("giftVouchers.types.monetary") || "×©×•×‘×¨ ×›×¡×¤×™"
+                  : t("giftVouchers.types.treatment") || "×©×•×‘×¨ ×˜×™×¤×•×œ"}
               </div>
               <div className="mt-2 p-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-green-800">{v.code}</div>
-                <div className="text-xs text-green-600 mt-1">קוד השובר למימוש</div>
+                <div className="text-xs text-green-600 mt-1">×§×•×“ ×”×©×•×‘×¨ ×œ×ž×™×ž×•×©</div>
               </div>
             </div>
           ))}
         </div>
         <Button variant="outline" onClick={() => setOpen(false)} className="mt-4 w-full">
-          {t("common.close") || "סגור"}
+          {t("common.close") || "×¡×’×•×¨"}
         </Button>
       </DialogContent>
     </Dialog>
   )
 }
+
+
 
 

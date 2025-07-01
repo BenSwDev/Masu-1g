@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import {
@@ -59,6 +59,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
+import type { GiftVoucherPlain } from "@/types/core"
+import { useToast } from "@/components/ui/use-toast"
 
 interface vouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
@@ -367,7 +369,7 @@ export function GiftVouchersClient({
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">₪{stats.revenue.toFixed(0)}</div>
+            <div className="text-2xl font-bold text-purple-600">â‚ª{stats.revenue.toFixed(0)}</div>
             <p className="text-xs text-muted-foreground">{t("vouchers.totalRevenue")}</p>
           </CardContent>
         </Card>
@@ -631,3 +633,6 @@ export function GiftVouchersClient({
     </div>
   )
 }
+
+
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useMemo, useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -213,12 +213,12 @@ export default function AdminBookingsClient() {
             {t("adminBookings.title")}
           </h2>
           <p className="text-muted-foreground">
-            ניהול כל ההזמנות במערכת - סה"כ {totalBookings} הזמנות
+            × ×™×”×•×œ ×›×œ ×”×”×–×ž× ×•×ª ×‘×ž×¢×¨×›×ª - ×¡×”"×› {totalBookings} ×”×–×ž× ×•×ª
           </p>
         </div>
         <Button onClick={handleCreateNewBooking} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          הזמנה חדשה
+          ×”×–×ž× ×” ×—×“×©×”
         </Button>
       </div>
 
@@ -244,12 +244,12 @@ export default function AdminBookingsClient() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("common.all")}</SelectItem>
-                <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                <SelectItem value="in_process">בטיפול</SelectItem>
-                <SelectItem value="confirmed">מאושר</SelectItem>
-                <SelectItem value="completed">הושלם</SelectItem>
-                <SelectItem value="cancelled">בוטל</SelectItem>
-                <SelectItem value="refunded">הוחזר</SelectItem>
+                <SelectItem value="pending_payment">×ž×ž×ª×™×Ÿ ×œ×ª×©×œ×•×</SelectItem>
+                <SelectItem value="in_process">×‘×˜×™×¤×•×œ</SelectItem>
+                <SelectItem value="confirmed">×ž××•×©×¨</SelectItem>
+                <SelectItem value="completed">×”×•×©×œ×</SelectItem>
+                <SelectItem value="cancelled">×‘×•×˜×œ</SelectItem>
+                <SelectItem value="refunded">×”×•×—×–×¨</SelectItem>
               </SelectContent>
             </Select>
 
@@ -290,8 +290,8 @@ export default function AdminBookingsClient() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("common.all")}</SelectItem>
-                          <SelectItem value="assigned">משויך למטפל</SelectItem>
-                          <SelectItem value="unassigned">לא משויך למטפל</SelectItem>
+                          <SelectItem value="assigned">×ž×©×•×™×š ×œ×ž×˜×¤×œ</SelectItem>
+                          <SelectItem value="unassigned">×œ× ×ž×©×•×™×š ×œ×ž×˜×¤×œ</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -371,3 +371,5 @@ export default function AdminBookingsClient() {
     </div>
   )
 }
+
+

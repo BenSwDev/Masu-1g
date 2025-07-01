@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 import { useState } from "react"
@@ -11,7 +11,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { LanguageSelector } from "@/components/common/language-selector"
 import { PhoneInput } from "@/components/common/phone-input"
 import { sendPasswordResetOTP, resetPasswordWithOTP } from "@/actions/password-reset-actions"
-import { ArrowLeft, Phone, Shield } from "lucide-react"
+import { ArrowLeft, Shield } from "lucide-react"
 import Link from "next/link"
 
 export function ForgotPasswordForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
@@ -19,11 +19,11 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [step, setStep] = useState<"phone" | "otp" | "password" | "success">("phone")
-  const [phone, setPhone] = useState("")
   const [otpCode, setOtpCode] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [obscuredPhone, setObscuredPhone] = useState("")
+  const [phone, setPhone] = useState("")
 
   const handlePhoneSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -31,7 +31,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
     setError("")
 
     try {
-      const result = await sendPasswordResetOTP(phone, language)
+      const result = await sendPasswordResetOTP(language)
 
       if (result.success) {
         setObscuredPhone(result.obscuredIdentifier || phone)
@@ -49,7 +49,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
   const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (otpCode.length !== 6) {
-      setError("אנא הכנס קוד OTP בן 6 ספרות")
+      setError("×× × ×”×›× ×¡ ×§×•×“ OTP ×‘×Ÿ 6 ×¡×¤×¨×•×ª")
       return
     }
     setStep("password")
@@ -61,13 +61,13 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
     setError("")
 
     if (newPassword !== confirmPassword) {
-      setError("הסיסמאות אינן תואמות")
+      setError("newPasswordAndConfirmPasswordDoNotMatch")
       setIsLoading(false)
       return
     }
 
     try {
-      const result = await resetPasswordWithOTP(phone, otpCode, newPassword)
+      const result = await resetPasswordWithOTP(otpCode, newPassword, language)
 
       if (result.success) {
         setStep("success")
@@ -89,13 +89,13 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
           <CardContent>
             <div className="text-center py-6">
               <Shield className="h-16 w-16 mx-auto mb-4 text-green-500" />
-              <h2 className="text-xl font-semibold mb-2">הסיסמה שונתה בהצלחה!</h2>
+              <h2 className="text-xl font-semibold mb-2">×”×¡×™×¡×ž×” ×©×•× ×ª×” ×‘×”×¦×œ×—×”!</h2>
               <p className="text-sm text-muted-foreground mb-6">
-                יכול עכשיו להתחבר עם הסיסמה החדשה
+                ×™×›×•×œ ×¢×›×©×™×• ×œ×”×ª×—×‘×¨ ×¢× ×”×¡×™×¡×ž×” ×”×—×“×©×”
               </p>
               <Link href="/auth/login">
                 <Button className="w-full bg-turquoise-500 hover:bg-turquoise-600">
-                  התחבר עכשיו
+                  ×”×ª×—×‘×¨ ×¢×›×©×™×•
                 </Button>
               </Link>
             </div>
@@ -114,32 +114,32 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
               <LanguageSelector />
             </div>
-            <CardTitle className="text-2xl font-bold text-turquoise-700">הכנס סיסמה חדשה</CardTitle>
-            <CardDescription>הכנס את הסיסמה החדשה שלך</CardDescription>
+            <CardTitle className="text-2xl font-bold text-turquoise-700">×”×›× ×¡ ×¡×™×¡×ž×” ×—×“×©×”</CardTitle>
+            <CardDescription>×”×›× ×¡ ××ª ×”×¡×™×¡×ž×” ×”×—×“×©×” ×©×œ×š</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">סיסמה חדשה</Label>
+                <Label htmlFor="newPassword">×¡×™×¡×ž×” ×—×“×©×”</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="הכנס סיסמה חדשה"
+                  placeholder="×”×›× ×¡ ×¡×™×¡×ž×” ×—×“×©×”"
                   required
                   minLength={8}
                   className="border-turquoise-200 focus-visible:ring-turquoise-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">אימות סיסמה</Label>
+                <Label htmlFor="confirmPassword">××™×ž×•×ª ×¡×™×¡×ž×”</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="הכנס את הסיסמה שוב"
+                  placeholder="×”×›× ×¡ ××ª ×”×¡×™×¡×ž×” ×©×•×‘"
                   required
                   minLength={8}
                   className="border-turquoise-200 focus-visible:ring-turquoise-500"
@@ -153,7 +153,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 disabled={isLoading || !newPassword || !confirmPassword}
                 className="w-full bg-turquoise-500 hover:bg-turquoise-600"
               >
-                {isLoading ? "מעדכן..." : "שנה סיסמה"}
+                {isLoading ? "×ž×¢×“×›×Ÿ..." : "×©× ×” ×¡×™×¡×ž×”"}
               </Button>
             </form>
           </CardContent>
@@ -171,13 +171,13 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
               <LanguageSelector />
             </div>
-            <CardTitle className="text-2xl font-bold text-turquoise-700">הכנס קוד אימות</CardTitle>
-            <CardDescription>שלחנו קוד אימות ל-{obscuredPhone}</CardDescription>
+            <CardTitle className="text-2xl font-bold text-turquoise-700">×”×›× ×¡ ×§×•×“ ××™×ž×•×ª</CardTitle>
+            <CardDescription>×©×œ×—× ×• ×§×•×“ ××™×ž×•×ª ×œ-{obscuredPhone}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleOtpSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="otpCode">קוד אימות (6 ספרות)</Label>
+                <Label htmlFor="otpCode">×§×•×“ ××™×ž×•×ª (6 ×¡×¤×¨×•×ª)</Label>
                 <Input
                   id="otpCode"
                   type="text"
@@ -197,7 +197,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 disabled={otpCode.length !== 6}
                 className="w-full bg-turquoise-500 hover:bg-turquoise-600"
               >
-                המשך
+                ×”×ž×©×š
               </Button>
               <Button
                 type="button"
@@ -206,7 +206,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 className="w-full"
               >
                 <ArrowLeft className="h-4 w-4 mx-2" />
-                חזרה
+                ×—×–×¨×”
               </Button>
             </form>
           </CardContent>
@@ -223,17 +223,17 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
           <div className={`absolute top-0 ${dir === "rtl" ? "left-0" : "right-0"} p-2`}>
             <LanguageSelector />
           </div>
-          <CardTitle className="text-2xl font-bold text-turquoise-700">שכחת סיסמה?</CardTitle>
-          <CardDescription>הכנס את מספר הטלפון שלך ונשלח לך קוד אימות</CardDescription>
+          <CardTitle className="text-2xl font-bold text-turquoise-700">×©×›×—×ª ×¡×™×¡×ž×”?</CardTitle>
+          <CardDescription>×”×›× ×¡ ××ª ×ž×¡×¤×¨ ×”×˜×œ×¤×•×Ÿ ×©×œ×š ×•× ×©×œ×— ×œ×š ×§×•×“ ××™×ž×•×ª</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePhoneSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">מספר טלפון</Label>
+              <Label htmlFor="phone">×ž×¡×¤×¨ ×˜×œ×¤×•×Ÿ</Label>
               <PhoneInput
                 fullNumberValue={phone}
                 onPhoneChange={setPhone}
-                placeholder="הכנס מספר טלפון"
+                placeholder={t("common.phoneNumber")}
                 className="border-turquoise-200 focus-visible:ring-turquoise-500"
                 required
               />
@@ -244,7 +244,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
               disabled={isLoading || !phone}
               className="w-full bg-turquoise-500 hover:bg-turquoise-600"
             >
-              {isLoading ? "שולח..." : "שלח קוד אימות"}
+              {isLoading ? "×©×•×œ×—..." : "×©×œ×— ×§×•×“ ××™×ž×•×ª"}
             </Button>
             <div className="text-center">
               <Link
@@ -252,7 +252,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 className="text-sm text-turquoise-600 underline-offset-4 hover:underline"
               >
                 <ArrowLeft className="h-4 w-4 mx-2 inline" />
-                חזרה להתחברות
+                ×—×–×¨×” ×œ×”×ª×—×‘×¨×•×ª
               </Link>
             </div>
           </form>
@@ -261,3 +261,4 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
     </div>
   )
 }
+

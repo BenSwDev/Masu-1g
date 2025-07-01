@@ -79,7 +79,7 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === "completed")
     const cancelledBookings = bookings.filter(
-      b => b.status === "cancelled_by_user" || b.status === "cancelled_by_admin"
+      b => b.status === "cancelled"
     )
     const noShowBookings = bookings.filter(b => b.status === "no_show")
 
@@ -135,8 +135,8 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
 
     const customerSummary: CustomerSummary = {
       userId: customer._id.toString(),
-      customerName: customer.name,
-      customerEmail: customer.email,
+      customerName: customer.name || "",
+      customerEmail: customer.email || "",
       customerPhone: customer.phone || "",
       joinDate: customer.createdAt,
       totalSpent,

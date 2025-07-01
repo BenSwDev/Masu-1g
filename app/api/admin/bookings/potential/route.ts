@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
       // Check if professional handles this treatment
       const treatmentId =
         typeof booking.treatmentId === "object" && booking.treatmentId && '_id' in booking.treatmentId
-          ? (booking.treatmentId as any)._id.toString()
-          : booking.treatmentId?.toString() || ''
+          ? (booking.treatmentId as any)._id?.toString() || ''
+          : (booking.treatmentId as any)?.toString() || ''
 
       const canHandleTreatment = professionalProfile.treatments.some(
         treatment => treatment.treatmentId?.toString() === treatmentId

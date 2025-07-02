@@ -6,7 +6,46 @@ import { ProfessionalEditPage } from "@/components/dashboard/admin/professional-
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
 import { getProfessionalById } from "../actions"
-import { Professional } from "@/lib/types/professional"
+import type { IProfessionalProfile } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
+import type { Professional } from "@/lib/types/professional"
+
+// פונקציה לטרנספורמציה של נתונים מהשרת
+function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
+  return {
+    _id: rawProfessional._id.toString(),
+    userId: rawProfessional.userId,
+    status: rawProfessional.status,
+    isActive: rawProfessional.isActive,
+    specialization: rawProfessional.specialization,
+    experience: rawProfessional.experience,
+    certifications: rawProfessional.certifications,
+    bio: rawProfessional.bio,
+    profileImage: rawProfessional.profileImage,
+    treatments: (rawProfessional.treatments || []).map(t => ({
+      treatmentId: t.treatmentId?.toString() || '',
+      durationId: t.durationId?.toString(),
+      professionalPrice: t.professionalPrice || 0,
+      treatmentName: (t as any).treatmentName
+    })),
+    workAreas: (rawProfessional.workAreas || []).map(w => ({
+      cityId: w.cityId?.toString() || '',
+      cityName: w.cityName || '',
+      distanceRadius: w.distanceRadius,
+      coveredCities: w.coveredCities || []
+    })),
+    totalEarnings: rawProfessional.totalEarnings || 0,
+    pendingPayments: rawProfessional.pendingPayments || 0,
+    adminNotes: rawProfessional.adminNotes,
+    rejectionReason: rawProfessional.rejectionReason,
+    appliedAt: rawProfessional.appliedAt,
+    approvedAt: rawProfessional.approvedAt,
+    rejectedAt: rawProfessional.rejectedAt,
+    lastActiveAt: rawProfessional.lastActiveAt,
+    createdAt: rawProfessional.createdAt,
+    updatedAt: rawProfessional.updatedAt
+  }
+}
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -87,7 +126,7 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
 
     return (
       <ProfessionalEditPage 
-        professional={result.professional as unknown as Professional}
+        professional={transformProfessionalData(result.professional)}
       />
     )
   } catch (error) {

@@ -35,23 +35,10 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const [isSaving, setIsSaving] = useState(false)
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
-    setUpdatedProfessional(prev => {
-      // בדיקה אם יש שינוי אמיתי
-      const hasActualChange = Object.keys(updatedData).some(key => {
-        const newValue = updatedData[key as keyof Professional]
-        const oldValue = prev[key as keyof Professional]
-        return JSON.stringify(newValue) !== JSON.stringify(oldValue)
-      })
-      
-      if (!hasActualChange) {
-        return prev // אין שינוי אמיתי
-      }
-      
-      return {
-        ...prev,
-        ...updatedData
-      }
-    })
+    setUpdatedProfessional(prev => ({
+      ...prev,
+      ...updatedData
+    }))
     setHasUnsavedChanges(true)
   }, [])
 

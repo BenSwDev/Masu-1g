@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Users, UserCheck, UserX, Shield, Briefcase, User, Crown, Activity, Calendar } from "lucide-react"
 
+// Force dynamic rendering since we use authentication
+export const dynamic = 'force-dynamic'
+
 interface UsersPageProps {
   searchParams: {
     search?: string

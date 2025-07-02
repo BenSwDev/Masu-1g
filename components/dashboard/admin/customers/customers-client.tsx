@@ -45,6 +45,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllCustomers, getAllPurchaseTransactions } from "@/app/dashboard/(user)/(roles)/admin/customers/actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
+import { useTranslation } from "@/lib/translations/i18n"
 import {
   Search,
   Users,
@@ -72,7 +73,10 @@ import {
   Clock,
   Star,
   Zap,
-  TrendingDown
+  TrendingDown,
+  CheckCircle,
+  X,
+  AlertCircle
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -88,6 +92,7 @@ interface CustomerStats {
 }
 
 export default function CustomersClient() {
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
@@ -151,16 +156,16 @@ export default function CustomersClient() {
         setTotalCount(result.data.totalCount)
       } else {
         toast({
-          title: 'שגיאה בטעינת הלקוחות',
-          description: result.error || 'אירעה שגיאה לא צפויה',
+          title: t('customers.error.loadFailed') || 'שגיאה בטעינת הלקוחות',
+          description: result.error || t('common.unknownError') || 'אירעה שגיאה לא צפויה',
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error('Error loading customers:', error)
       toast({
-        title: 'שגיאה בטעינת הלקוחות',
-        description: 'אירעה שגיאה לא צפויה',
+        title: t('customers.error.loadFailed') || 'שגיאה בטעינת הלקוחות',
+        description: t('common.unknownError') || 'אירעה שגיאה לא צפויה',
         variant: "destructive",
       })
     } finally {
@@ -178,16 +183,16 @@ export default function CustomersClient() {
         setTransactionsTotalPages(result.data.totalPages)
       } else {
         toast({
-          title: 'שגיאה בטעינת עסקאות הלקוח',
-          description: result.error || 'אירעה שגיאה לא צפויה',
+          title: t('customers.error.transactionsFailed') || 'שגיאה בטעינת עסקאות הלקוח',
+          description: result.error || t('common.unknownError') || 'אירעה שגיאה לא צפויה',
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error('Error loading customer transactions:', error)
       toast({
-        title: 'שגיאה בטעינת עסקאות הלקוח',
-        description: 'אירעה שגיאה לא צפויה',
+        title: t('customers.error.transactionsFailed') || 'שגיאה בטעינת עסקאות הלקוח',
+        description: t('common.unknownError') || 'אירעה שגיאה לא צפויה',
         variant: "destructive",
       })
     } finally {
@@ -329,20 +334,20 @@ export default function CustomersClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div dir={dir} className="space-y-6">
       {/* Enhanced Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-900">
-              סה״כ לקוחות
+              {t('customers.totalCustomers') || 'סה״כ לקוחות'}
             </CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-900">{stats.totalCustomers.toLocaleString()}</div>
             <p className="text-xs text-blue-700">
-              {stats.memberCustomers} רשומים • {stats.guestCustomers} אורחים
+              {stats.memberCustomers} {t('customers.registered') || 'רשומים'} • {stats.guestCustomers} {t('customers.guests') || 'אורחים'}
             </p>
           </CardContent>
         </Card>
@@ -350,14 +355,14 @@ export default function CustomersClient() {
         <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-900">
-              סה״כ הכנסות
+              {t('customers.totalRevenue') || 'סה״כ הכנסות'}
             </CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-900">{formatCurrency(stats.totalRevenue)}</div>
             <p className="text-xs text-green-700">
-              מכל הלקוחות במערכת
+              {t('customers.fromAllCustomers') || 'מכל הלקוחות במערכת'}
             </p>
           </CardContent>
         </Card>
@@ -365,14 +370,14 @@ export default function CustomersClient() {
         <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-900">
-              ממוצע הוצאה
+              {t('customers.averageSpending') || 'ממוצע הוצאה'}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900">{formatCurrency(stats.averageSpentPerCustomer)}</div>
             <p className="text-xs text-purple-700">
-              לכל לקוח במערכת
+              {t('customers.perCustomer') || 'לכל לקוח במערכת'}
             </p>
           </CardContent>
         </Card>
@@ -380,14 +385,14 @@ export default function CustomersClient() {
         <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-900">
-              לקוחות פעילים
+              {t('customers.activeCustomers') || 'לקוחות פעילים'}
             </CardTitle>
             <Activity className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-900">{stats.activeCustomers}</div>
             <p className="text-xs text-orange-700">
-              פעילים ב-30 הימים האחרונים
+              {t('customers.activeLast30Days') || 'פעילים ב-30 הימים האחרונים'}
             </p>
           </CardContent>
         </Card>
@@ -401,7 +406,7 @@ export default function CustomersClient() {
               <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="חיפוש לקוחות לפי שם, מייל או טלפון..."
+                  placeholder={t('customers.searchPlaceholder') || "חיפוש לקוחות לפי שם, מייל או טלפון..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pr-9 w-full sm:w-[300px]"
@@ -411,25 +416,25 @@ export default function CustomersClient() {
               <Select value={userTypeFilter} onValueChange={(value: 'all' | 'guests' | 'members') => setUserTypeFilter(value)}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="סינון לפי סוג" />
+                  <SelectValue placeholder={t('customers.filterByType') || "סינון לפי סוג"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">כל המשתמשים</SelectItem>
-                  <SelectItem value="guests">אורחים בלבד</SelectItem>
-                  <SelectItem value="members">משתמשים רשומים</SelectItem>
+                  <SelectItem value="all">{t('customers.allUsers') || 'כל המשתמשים'}</SelectItem>
+                  <SelectItem value="guests">{t('customers.guestsOnly') || 'אורחים בלבד'}</SelectItem>
+                  <SelectItem value="members">{t('customers.registeredOnly') || 'משתמשים רשומים'}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sortBy} onValueChange={(value: typeof sortBy) => setSortBy(value)}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="מיין לפי" />
+                  <SelectValue placeholder={t('customers.sortBy') || "מיין לפי"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lastActivity">פעילות אחרונה</SelectItem>
-                  <SelectItem value="totalSpent">סה״כ הוצאה</SelectItem>
-                  <SelectItem value="name">שם</SelectItem>
-                  <SelectItem value="joinDate">תאריך הצטרפות</SelectItem>
+                  <SelectItem value="lastActivity">{t('customers.lastActivity') || 'פעילות אחרונה'}</SelectItem>
+                  <SelectItem value="totalSpent">{t('customers.totalSpent') || 'סה״כ הוצאה'}</SelectItem>
+                  <SelectItem value="name">{t('customers.name') || 'שם'}</SelectItem>
+                  <SelectItem value="joinDate">{t('customers.joinDate') || 'תאריך הצטרפות'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -437,11 +442,11 @@ export default function CustomersClient() {
             <div className="flex items-center gap-2 w-full lg:w-auto">
               <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                רענן
+                {t('common.refresh') || 'רענן'}
               </Button>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
-                ייצא לאקסל
+                {t('common.exportToExcel') || 'ייצא לאקסל'}
               </Button>
             </div>
           </div>
@@ -700,275 +705,403 @@ export default function CustomersClient() {
           
           {selectedCustomer && (
             <div className="flex-1 overflow-hidden">
-              <Tabs defaultValue="overview" className="h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview" className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    סקירה כללית
-                  </TabsTrigger>
-                  <TabsTrigger value="transactions" className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    עסקאות
-                  </TabsTrigger>
-                  <TabsTrigger value="activity" className="flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    פעילות
-                  </TabsTrigger>
-                  <TabsTrigger value="analytics" className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    אנליטיקה
-                  </TabsTrigger>
-                </TabsList>
+                             <Tabs defaultValue="personal" className="h-full flex flex-col">
+                 <TabsList className="grid w-full grid-cols-5">
+                   <TabsTrigger value="personal" className="flex items-center gap-2">
+                     <User className="h-4 w-4" />
+                     {t('customers.tabs.personal') || 'מידע אישי'}
+                   </TabsTrigger>
+                   <TabsTrigger value="financial" className="flex items-center gap-2">
+                     <DollarSign className="h-4 w-4" />
+                     {t('customers.tabs.financial') || 'סיכום כספי'}
+                   </TabsTrigger>
+                   <TabsTrigger value="active" className="flex items-center gap-2">
+                     <Gift className="h-4 w-4" />
+                     {t('customers.tabs.active') || 'פריטים פעילים'}
+                   </TabsTrigger>
+                   <TabsTrigger value="transactions" className="flex items-center gap-2">
+                     <CreditCard className="h-4 w-4" />
+                     {t('customers.tabs.transactions') || 'עסקאות'}
+                   </TabsTrigger>
+                   <TabsTrigger value="activity" className="flex items-center gap-2">
+                     <Activity className="h-4 w-4" />
+                     {t('customers.tabs.activity') || 'פעילות'}
+                   </TabsTrigger>
+                 </TabsList>
 
-                <div className="flex-1 overflow-hidden mt-4">
-                  <TabsContent value="overview" className="h-full overflow-y-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Personal Information */}
-                      <Card className="border-blue-200 bg-blue-50/50">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <User className="h-5 w-5" />
-                            מידע אישי
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">שם מלא</p>
-                              <p className="text-lg font-semibold">{selectedCustomer.customerName}</p>
-                            </div>
-                            <Separator />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">כתובת מייל</p>
-                              <p className="font-medium">{selectedCustomer.customerEmail}</p>
-                            </div>
-                            {selectedCustomer.customerPhone && (
-                              <>
-                                <Separator />
-                                <div>
-                                  <p className="text-sm font-medium text-muted-foreground">מספר טלפון</p>
-                                  <p className="font-medium">{selectedCustomer.customerPhone}</p>
-                                </div>
-                              </>
-                            )}
-                            <Separator />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">תאריך הצטרפות</p>
-                              <p className="font-medium">{formatDate(selectedCustomer.joinDate)}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">סוג חשבון</p>
-                              <div className="mt-1">
-                                {getUserTypeBadge(selectedCustomer.userType)}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                                 <div className="flex-1 overflow-hidden mt-4">
+                   {/* Personal Information Tab */}
+                   <TabsContent value="personal" className="h-full overflow-y-auto">
+                     <Card className="border-blue-200 bg-blue-50/50">
+                       <CardHeader>
+                         <CardTitle className="text-lg flex items-center gap-2">
+                           <User className="h-5 w-5" />
+                           {t('customers.personalInfo') || 'מידע אישי'}
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent className="space-y-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-4">
+                             <div>
+                               <p className="text-sm font-medium text-muted-foreground">{t('customers.name') || 'שם מלא'}</p>
+                               <p className="text-lg font-semibold">{selectedCustomer.customerName}</p>
+                             </div>
+                             <Separator />
+                             <div>
+                               <p className="text-sm font-medium text-muted-foreground">{t('customers.email') || 'כתובת מייל'}</p>
+                               <p className="font-medium">{selectedCustomer.customerEmail}</p>
+                             </div>
+                             {selectedCustomer.customerPhone && (
+                               <>
+                                 <Separator />
+                                 <div>
+                                   <p className="text-sm font-medium text-muted-foreground">{t('customers.phone') || 'מספר טלפון'}</p>
+                                   <p className="font-medium">{selectedCustomer.customerPhone}</p>
+                                 </div>
+                               </>
+                             )}
+                           </div>
+                           <div className="space-y-4">
+                             <div>
+                               <p className="text-sm font-medium text-muted-foreground">{t('customers.joinDate') || 'תאריך הצטרפות'}</p>
+                               <p className="font-medium">{formatDate(selectedCustomer.joinDate)}</p>
+                             </div>
+                             <Separator />
+                             <div>
+                               <p className="text-sm font-medium text-muted-foreground">{t('customers.accountType') || 'סוג חשבון'}</p>
+                               <div className="mt-1">
+                                 {getUserTypeBadge(selectedCustomer.userType)}
+                               </div>
+                             </div>
+                             <Separator />
+                             <div>
+                               <p className="text-sm font-medium text-muted-foreground">{t('customers.lastActivity') || 'פעילות אחרונה'}</p>
+                               <p className="font-medium">{formatDateTime(selectedCustomer.lastActivity)}</p>
+                             </div>
+                           </div>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   </TabsContent>
 
-                      {/* Financial Summary */}
-                      <Card className="border-green-200 bg-green-50/50">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <DollarSign className="h-5 w-5" />
-                            סיכום כספי
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">סה״כ הוצאה</p>
-                              <p className="text-2xl font-bold text-green-600">
-                                {formatCurrency(selectedCustomer.totalSpent)}
-                              </p>
-                            </div>
-                            <Separator />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">ממוצע להזמנה</p>
-                              <p className="text-lg font-semibold">
-                                {formatCurrency(selectedCustomer.statistics.averageBookingValue)}
-                              </p>
-                            </div>
-                            <Separator />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">הזמנות שהושלמו</p>
-                              <p className="text-lg font-semibold text-blue-600">
-                                {selectedCustomer.statistics.completedBookings}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">הזמנות שבוטלו</p>
-                              <p className="text-lg font-semibold text-red-600">
-                                {selectedCustomer.statistics.cancelledBookings}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                   {/* Financial Summary Tab */}
+                   <TabsContent value="financial" className="h-full overflow-y-auto">
+                     <Card className="border-green-200 bg-green-50/50">
+                       <CardHeader>
+                         <CardTitle className="text-lg flex items-center gap-2">
+                           <DollarSign className="h-5 w-5" />
+                           {t('customers.financialSummary') || 'סיכום כספי'}
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                           <div className="text-center p-6 bg-white rounded-lg border">
+                             <div className="text-3xl font-bold text-green-600 mb-2">
+                               {formatCurrency(selectedCustomer.totalSpent)}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.totalSpent') || 'סה״כ הוצאה'}</div>
+                           </div>
+                           <div className="text-center p-6 bg-white rounded-lg border">
+                             <div className="text-2xl font-bold text-blue-600 mb-2">
+                               {formatCurrency(selectedCustomer.statistics.averageBookingValue)}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.averageBookingValue') || 'ממוצע להזמנה'}</div>
+                           </div>
+                           <div className="text-center p-6 bg-white rounded-lg border">
+                             <div className="text-2xl font-bold text-purple-600 mb-2">
+                               {selectedCustomer.totalBookings}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.totalBookings') || 'סה״כ הזמנות'}</div>
+                           </div>
+                         </div>
+                         <Separator className="my-6" />
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="text-center p-4 bg-green-50 rounded-lg border">
+                             <div className="text-xl font-bold text-green-600">
+                               {selectedCustomer.statistics.completedBookings}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.completedBookings') || 'הזמנות הושלמו'}</div>
+                           </div>
+                           <div className="text-center p-4 bg-red-50 rounded-lg border">
+                             <div className="text-xl font-bold text-red-600">
+                               {selectedCustomer.statistics.cancelledBookings}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.cancelledBookings') || 'הזמנות בוטלו'}</div>
+                           </div>
+                           <div className="text-center p-4 bg-orange-50 rounded-lg border">
+                             <div className="text-xl font-bold text-orange-600">
+                               {selectedCustomer.statistics.noShowBookings}
+                             </div>
+                             <div className="text-sm text-muted-foreground">{t('customers.noShowBookings') || 'לא הגיעו'}</div>
+                           </div>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   </TabsContent>
 
-                      {/* Active Items */}
-                      <Card className="border-purple-200 bg-purple-50/50">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Gift className="h-5 w-5" />
-                            פריטים פעילים
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                              <div className="flex items-center gap-2">
-                                <CreditCard className="h-4 w-4 text-blue-600" />
-                                <span className="font-medium">מנויים פעילים</span>
-                              </div>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                {selectedCustomer.activeSubscriptions}
-                              </Badge>
-                            </div>
-                            
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                              <div className="flex items-center gap-2">
-                                <Gift className="h-4 w-4 text-purple-600" />
-                                <span className="font-medium">שוברי מתנה פעילים</span>
-                              </div>
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                                {selectedCustomer.activeVouchers}
-                              </Badge>
-                            </div>
-                            
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                              <div className="flex items-center gap-2">
-                                <ShoppingBag className="h-4 w-4 text-green-600" />
-                                <span className="font-medium">סה״כ הזמנות</span>
-                              </div>
-                              <Badge variant="outline" className="bg-green-50 text-green-700">
-                                {selectedCustomer.totalBookings}
-                              </Badge>
-                            </div>
-                            
-                            <Separator />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">פעילות אחרונה</p>
-                              <p className="font-medium text-lg">
-                                {formatDateTime(selectedCustomer.lastActivity)}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
+                   {/* Active Items Tab */}
+                   <TabsContent value="active" className="h-full overflow-y-auto">
+                     <Card className="border-purple-200 bg-purple-50/50">
+                       <CardHeader>
+                         <CardTitle className="text-lg flex items-center gap-2">
+                           <Gift className="h-5 w-5" />
+                           {t('customers.activeItems') || 'פריטים פעילים'}
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent className="space-y-4">
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                             <div className="flex items-center gap-3">
+                               <div className="p-2 bg-blue-100 rounded-lg">
+                                 <CreditCard className="h-5 w-5 text-blue-600" />
+                               </div>
+                               <div>
+                                 <p className="font-medium">{t('customers.activeSubscriptions') || 'מנויים פעילים'}</p>
+                                 <p className="text-sm text-muted-foreground">{t('customers.subscriptionsDesc') || 'מנויים בתוקף'}</p>
+                               </div>
+                             </div>
+                             <Badge variant="outline" className="bg-blue-50 text-blue-700 text-lg px-3 py-1">
+                               {selectedCustomer.activeSubscriptions}
+                             </Badge>
+                           </div>
+                           
+                           <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                             <div className="flex items-center gap-3">
+                               <div className="p-2 bg-purple-100 rounded-lg">
+                                 <Gift className="h-5 w-5 text-purple-600" />
+                               </div>
+                               <div>
+                                 <p className="font-medium">{t('customers.activeVouchers') || 'שוברי מתנה פעילים'}</p>
+                                 <p className="text-sm text-muted-foreground">{t('customers.vouchersDesc') || 'שוברים בתוקף'}</p>
+                               </div>
+                             </div>
+                             <Badge variant="outline" className="bg-purple-50 text-purple-700 text-lg px-3 py-1">
+                               {selectedCustomer.activeVouchers}
+                             </Badge>
+                           </div>
+                           
+                           <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                             <div className="flex items-center gap-3">
+                               <div className="p-2 bg-green-100 rounded-lg">
+                                 <ShoppingBag className="h-5 w-5 text-green-600" />
+                               </div>
+                               <div>
+                                 <p className="font-medium">{t('customers.totalBookings') || 'סה״כ הזמנות'}</p>
+                                 <p className="text-sm text-muted-foreground">{t('customers.bookingsDesc') || 'כל ההזמנות'}</p>
+                               </div>
+                             </div>
+                             <Badge variant="outline" className="bg-green-50 text-green-700 text-lg px-3 py-1">
+                               {selectedCustomer.totalBookings}
+                             </Badge>
+                           </div>
+                         </div>
+                         
+                         <Separator className="my-6" />
+                         
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="p-4 bg-white rounded-lg border">
+                             <h4 className="font-semibold mb-2 flex items-center gap-2">
+                               <Ticket className="h-4 w-4" />
+                               {t('customers.subscriptionsPurchased') || 'מנויים שנרכשו'}
+                             </h4>
+                             <div className="text-2xl font-bold text-blue-600">
+                               {selectedCustomer.statistics.totalSubscriptionsPurchased}
+                             </div>
+                           </div>
+                           
+                           <div className="p-4 bg-white rounded-lg border">
+                             <h4 className="font-semibold mb-2 flex items-center gap-2">
+                               <Gift className="h-4 w-4" />
+                               {t('customers.vouchersPurchased') || 'שוברים שנרכשו'}
+                             </h4>
+                             <div className="text-2xl font-bold text-purple-600">
+                               {selectedCustomer.statistics.totalVouchersPurchased}
+                             </div>
+                           </div>
+                         </div>
+                       </CardContent>
+                     </Card>
+                   </TabsContent>
 
+                  {/* Transactions Tab */}
                   <TabsContent value="transactions" className="h-full overflow-y-auto">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <CreditCard className="h-5 w-5" />
-                          היסטוריית עסקאות
-                        </CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <CreditCard className="h-5 w-5" />
+                            {t('customers.transactionHistory') || 'היסטוריית עסקאות'}
+                          </CardTitle>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => loadCustomerTransactions(selectedCustomer.customerEmail)}
+                            disabled={loadingTransactions}
+                          >
+                            <RefreshCw className={`h-4 w-4 mr-2 ${loadingTransactions ? 'animate-spin' : ''}`} />
+                            {t('common.refresh') || 'רענן'}
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <PurchaseHistoryTable
-                          transactions={customerTransactions}
-                          isLoading={loadingTransactions}
-                          showCustomerInfo={false}
-                        />
+                        {loadingTransactions ? (
+                          <div className="flex justify-center py-8">
+                            <RefreshCw className="h-6 w-6 animate-spin" />
+                          </div>
+                        ) : customerTransactions.length > 0 ? (
+                          <div className="space-y-4">
+                            <PurchaseHistoryTable
+                              transactions={customerTransactions}
+                              showCustomerInfo={false}
+                            />
+                            
+                            {transactionsTotalPages > 1 && (
+                              <Pagination>
+                                <PaginationContent>
+                                  <PaginationPrevious 
+                                    onClick={() => handleTransactionsPageChange(transactionsPage - 1)}
+                                    className={transactionsPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+                                  />
+                                  {Array.from({ length: transactionsTotalPages }, (_, i) => i + 1).map((page) => (
+                                    <PaginationItem key={page}>
+                                      <PaginationLink
+                                        onClick={() => handleTransactionsPageChange(page)}
+                                        isActive={page === transactionsPage}
+                                      >
+                                        {page}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                  ))}
+                                  <PaginationNext 
+                                    onClick={() => handleTransactionsPageChange(transactionsPage + 1)}
+                                    className={transactionsPage >= transactionsTotalPages ? 'pointer-events-none opacity-50' : ''}
+                                  />
+                                </PaginationContent>
+                              </Pagination>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>{t('customers.noTransactions') || 'לא נמצאו עסקאות עבור לקוח זה'}</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
 
+                  {/* Activity Tab */}
                   <TabsContent value="activity" className="h-full overflow-y-auto">
-                    <div className="grid gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Activity className="h-5 w-5" />
-                            סטטיסטיקות פעילות מפורטות
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-4 bg-green-50 rounded-lg border">
-                              <div className="text-2xl font-bold text-green-600">
-                                {selectedCustomer.statistics.completedBookings}
-                              </div>
-                              <div className="text-sm text-muted-foreground">הזמנות הושלמו</div>
+                    <Card className="border-orange-200 bg-orange-50/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Activity className="h-5 w-5" />
+                          {t('customers.activityStats') || 'סטטיסטיקות פעילות מפורטות'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                          <div className="text-center p-6 bg-white rounded-lg border">
+                            <div className="p-3 bg-green-100 rounded-lg mx-auto w-fit mb-3">
+                              <CheckCircle className="h-6 w-6 text-green-600" />
                             </div>
-                            <div className="text-center p-4 bg-red-50 rounded-lg border">
-                              <div className="text-2xl font-bold text-red-600">
-                                {selectedCustomer.statistics.cancelledBookings}
-                              </div>
-                              <div className="text-sm text-muted-foreground">הזמנות בוטלו</div>
+                            <div className="text-2xl font-bold text-green-600 mb-1">
+                              {selectedCustomer.statistics.completedBookings}
                             </div>
-                            <div className="text-center p-4 bg-orange-50 rounded-lg border">
-                              <div className="text-2xl font-bold text-orange-600">
-                                {selectedCustomer.statistics.noShowBookings}
-                              </div>
-                              <div className="text-sm text-muted-foreground">לא הגיעו</div>
+                            <div className="text-sm text-muted-foreground">{t('customers.completedBookings') || 'הזמנות הושלמו'}</div>
+                          </div>
+                          
+                          <div className="text-center p-6 bg-white rounded-lg border">
+                            <div className="p-3 bg-red-100 rounded-lg mx-auto w-fit mb-3">
+                              <X className="h-6 w-6 text-red-600" />
                             </div>
-                            <div className="text-center p-4 bg-blue-50 rounded-lg border">
-                              <div className="text-2xl font-bold text-blue-600">
-                                {selectedCustomer.statistics.totalSubscriptionsPurchased}
+                            <div className="text-2xl font-bold text-red-600 mb-1">
+                              {selectedCustomer.statistics.cancelledBookings}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{t('customers.cancelledBookings') || 'הזמנות בוטלו'}</div>
+                          </div>
+                          
+                          <div className="text-center p-6 bg-white rounded-lg border">
+                            <div className="p-3 bg-orange-100 rounded-lg mx-auto w-fit mb-3">
+                              <AlertCircle className="h-6 w-6 text-orange-600" />
+                            </div>
+                            <div className="text-2xl font-bold text-orange-600 mb-1">
+                              {selectedCustomer.statistics.noShowBookings}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{t('customers.noShowBookings') || 'לא הגיעו'}</div>
+                          </div>
+                          
+                          <div className="text-center p-6 bg-white rounded-lg border">
+                            <div className="p-3 bg-blue-100 rounded-lg mx-auto w-fit mb-3">
+                              <Ticket className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div className="text-2xl font-bold text-blue-600 mb-1">
+                              {selectedCustomer.statistics.totalSubscriptionsPurchased}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{t('customers.subscriptionsPurchased') || 'מנויים נרכשו'}</div>
+                          </div>
+                        </div>
+                        
+                        <Separator className="my-6" />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="p-6 bg-white rounded-lg border">
+                            <h4 className="font-semibold mb-4 flex items-center gap-2">
+                              <BarChart3 className="h-5 w-5 text-blue-600" />
+                              {t('customers.successRate') || 'שיעור הצלחה'}
+                            </h4>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-blue-600 mb-2">
+                                {selectedCustomer.totalBookings > 0 
+                                  ? Math.round((selectedCustomer.statistics.completedBookings / selectedCustomer.totalBookings) * 100)
+                                  : 0}%
                               </div>
-                              <div className="text-sm text-muted-foreground">מנויים נרכשו</div>
+                              <div className="text-sm text-muted-foreground">
+                                {t('customers.outOf') || 'מתוך'} {selectedCustomer.totalBookings} {t('customers.bookings') || 'הזמנות'}
+                              </div>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                          
+                          <div className="p-6 bg-white rounded-lg border">
+                            <h4 className="font-semibold mb-4 flex items-center gap-2">
+                              <TrendingUp className="h-5 w-5 text-green-600" />
+                              {t('customers.customerRating') || 'דירוג לקוח'}
+                            </h4>
+                            <div className="text-center">
+                              {selectedCustomer.totalSpent > 1000 ? (
+                                <>
+                                  <div className="text-2xl mb-2">⭐</div>
+                                  <div className="font-semibold text-yellow-600">{t('customers.vipCustomer') || 'לקוח VIP'}</div>
+                                </>
+                              ) : selectedCustomer.totalSpent > 500 ? (
+                                <>
+                                  <div className="text-2xl mb-2">💎</div>
+                                  <div className="font-semibold text-blue-600">{t('customers.preferredCustomer') || 'לקוח מועדף'}</div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="text-2xl mb-2">👤</div>
+                                  <div className="font-semibold text-gray-600">{t('customers.regularCustomer') || 'לקוח רגיל'}</div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="p-6 bg-white rounded-lg border">
+                            <h4 className="font-semibold mb-4 flex items-center gap-2">
+                              <Clock className="h-5 w-5 text-purple-600" />
+                              {t('customers.activityLevel') || 'רמת פעילות'}
+                            </h4>
+                            <div className="text-center">
+                              {getActivityBadge(selectedCustomer)}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </TabsContent>
 
-                  <TabsContent value="analytics" className="h-full overflow-y-auto">
-                    <div className="grid gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5" />
-                            ניתוח התנהגות לקוח
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="p-4 bg-blue-50 rounded-lg border">
-                                <h4 className="font-semibold mb-2">דירוג לקוח</h4>
-                                <div className="flex items-center gap-2">
-                                  {selectedCustomer.totalSpent > 1000 ? (
-                                    <>
-                                      <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                                      <span className="font-medium">לקוח VIP</span>
-                                    </>
-                                  ) : selectedCustomer.totalSpent > 500 ? (
-                                    <>
-                                      <Star className="h-5 w-5 text-blue-500" />
-                                      <span className="font-medium">לקוח מועדף</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <User className="h-5 w-5 text-gray-500" />
-                                      <span className="font-medium">לקוח רגיל</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="p-4 bg-green-50 rounded-lg border">
-                                <h4 className="font-semibold mb-2">שיעור השלמה</h4>
-                                <div className="text-2xl font-bold text-green-600">
-                                  {selectedCustomer.totalBookings > 0 
-                                    ? Math.round((selectedCustomer.statistics.completedBookings / selectedCustomer.totalBookings) * 100)
-                                    : 0}%
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  מתוך {selectedCustomer.totalBookings} הזמנות
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
+
                 </div>
               </Tabs>
             </div>

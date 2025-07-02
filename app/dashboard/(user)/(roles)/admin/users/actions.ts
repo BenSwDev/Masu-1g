@@ -140,12 +140,12 @@ export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersRe
     }
 
     // Role filter
-    if (role) {
+    if (role && role !== "all") {
       query.roles = { $in: [role] }
     }
 
     // Gender filter
-    if (gender) {
+    if (gender && gender !== "all") {
       query.gender = gender
     }
 

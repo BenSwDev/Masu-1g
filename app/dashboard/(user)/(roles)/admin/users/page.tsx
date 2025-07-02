@@ -185,8 +185,8 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     // Parse search params
     const filters: UserFilters = {
       search: searchParams.search || "",
-      role: searchParams.role || "",
-      gender: searchParams.gender || "",
+      role: searchParams.role || "all",
+      gender: searchParams.gender || "all",
       emailVerified: searchParams.emailVerified ? searchParams.emailVerified === "true" : undefined,
       phoneVerified: searchParams.phoneVerified ? searchParams.phoneVerified === "true" : undefined,
       isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,

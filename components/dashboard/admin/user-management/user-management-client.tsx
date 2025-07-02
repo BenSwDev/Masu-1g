@@ -380,8 +380,8 @@ export default function UserManagementClient({
   const clearFilters = () => {
     updateFilters({
       search: "",
-      role: "",
-      gender: "",
+      role: "all",
+      gender: "all",
       emailVerified: undefined,
       phoneVerified: undefined,
       isActive: undefined
@@ -450,14 +450,14 @@ export default function UserManagementClient({
               <div className="flex flex-wrap gap-2">
                 {/* Role Filter */}
                 <Select
-                  value={filters.role || ""}
-                  onValueChange={(value) => updateFilters({ role: value || undefined })}
+                  value={filters.role || "all"}
+                  onValueChange={(value) => updateFilters({ role: value === "all" ? "all" : value })}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="תפקיד" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">כל התפקידים</SelectItem>
+                    <SelectItem value="all">כל התפקידים</SelectItem>
                     <SelectItem value="admin">מנהל</SelectItem>
                     <SelectItem value="professional">מטפל</SelectItem>
                     <SelectItem value="member">חבר</SelectItem>
@@ -467,14 +467,14 @@ export default function UserManagementClient({
 
                 {/* Gender Filter */}
                 <Select
-                  value={filters.gender || ""}
-                  onValueChange={(value) => updateFilters({ gender: value || undefined })}
+                  value={filters.gender || "all"}
+                  onValueChange={(value) => updateFilters({ gender: value === "all" ? "all" : value })}
                 >
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="מגדר" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">כל המגדרים</SelectItem>
+                    <SelectItem value="all">כל המגדרים</SelectItem>
                     <SelectItem value="male">זכר</SelectItem>
                     <SelectItem value="female">נקבה</SelectItem>
                     <SelectItem value="other">אחר</SelectItem>
@@ -483,23 +483,23 @@ export default function UserManagementClient({
 
                 {/* Status Filter */}
                 <Select
-                  value={filters.isActive === undefined ? "" : filters.isActive.toString()}
+                  value={filters.isActive === undefined ? "all" : filters.isActive.toString()}
                   onValueChange={(value) => updateFilters({ 
-                    isActive: value === "" ? undefined : value === "true" 
+                    isActive: value === "all" ? undefined : value === "true" 
                   })}
                 >
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="סטטוס" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">כל הסטטוסים</SelectItem>
+                    <SelectItem value="all">כל הסטטוסים</SelectItem>
                     <SelectItem value="true">פעילים</SelectItem>
                     <SelectItem value="false">לא פעילים</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {/* Clear Filters */}
-                {(filters.search || filters.role || filters.gender || filters.isActive !== undefined) && (
+                {(filters.search || (filters.role && filters.role !== "all") || (filters.gender && filters.gender !== "all") || filters.isActive !== undefined) && (
                   <Button 
                     variant="ghost" 
                     size="sm" 

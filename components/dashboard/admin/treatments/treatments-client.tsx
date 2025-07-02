@@ -69,8 +69,8 @@ import { TreatmentEditDialog } from "./treatment-edit-dialog"
 import { TreatmentViewDialog } from "./treatment-view-dialog"
 import { cn } from "@/lib/utils"
 
-// Types
-interface Treatment {
+// Types - Use the same type as returned from actions
+type Treatment = {
   _id: string
   name: string
   description?: string
@@ -88,8 +88,8 @@ interface Treatment {
   }>
   isActive: boolean
   allowTherapistGenderSelection?: boolean
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface Filters {
@@ -108,8 +108,8 @@ export function TreatmentsClient() {
   // State
   const [filters, setFilters] = useState<Filters>({
     search: "",
-    category: "",
-    pricingType: "",
+    category: "all",
+    pricingType: "all",
     isActive: undefined,
     sortBy: "createdAt",
     sortOrder: "desc"
@@ -126,11 +126,14 @@ export function TreatmentsClient() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["treatments", filters, currentPage, pageSize],
     queryFn: async () => {
-      const result = await getAllTreatments({
+      const queryFilters = {
         ...filters,
+        category: filters.category === "all" ? "" : filters.category,
+        pricingType: filters.pricingType === "all" ? "" : filters.pricingType,
         page: currentPage,
         limit: pageSize
-      })
+      }
+      const result = await getAllTreatments(queryFilters)
       return result
     },
     refetchOnWindowFocus: false
@@ -226,20 +229,20 @@ export function TreatmentsClient() {
 
   // Computed values
   const categoryOptions = [
-    { value: "", label: "כל הקטגוריות" },
+    { value: "all", label: "כל הקטגוריות" },
     { value: "massages", label: "עיסויים" },
     { value: "facial_treatments", label: "טיפולי פנים" },
     { value: "other", label: "אחר" }
   ]
 
   const pricingTypeOptions = [
-    { value: "", label: "כל סוגי התמחור" },
+    { value: "all", label: "כל סוגי התמחור" },
     { value: "fixed", label: "מחיר קבוע" },
     { value: "duration_based", label: "לפי משך זמן" }
   ]
 
   const statusOptions = [
-    { value: "", label: "כל הסטטוסים" },
+    { value: "all", label: "כל הסטטוסים" },
     { value: "true", label: "פעיל" },
     { value: "false", label: "לא פעיל" }
   ]

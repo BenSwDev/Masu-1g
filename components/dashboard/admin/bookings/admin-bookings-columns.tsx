@@ -104,12 +104,10 @@ const formatCreatedAtSafe = (date: string | Date | null | undefined): string => 
 // Admin Actions Component
 const AdminBookingActions = ({ 
   booking, 
-  t,
-  onViewBooking
+  t
 }: { 
   booking: PopulatedBooking; 
   t: TFunction;
-  onViewBooking?: (booking: PopulatedBooking) => void;
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
@@ -152,22 +150,6 @@ const AdminBookingActions = ({
 
   return (
     <div className="flex items-center space-x-1">
-      {/* View Booking Button */}
-      {onViewBooking && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            onViewBooking(booking)
-          }}
-          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          {t("adminBookings.actions.viewBooking")}
-        </Button>
-      )}
-      
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -478,19 +460,21 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
     const professional = booking.professionalId as any
     return (
       <>
-        <div className="space-y-1 group relative">
-          <div className="font-medium text-sm">{professional.name || t("common.unknown")}</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Phone className="h-3 w-3" />
-            {formatPhoneForDisplay(professional.phone || "")}
-          </div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Mail className="h-3 w-3" />
-            {professional.email || "-"}
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <div className="font-medium text-sm">{professional.name || t("common.unknown")}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Phone className="h-3 w-3" />
+              {formatPhoneForDisplay(professional.phone || "")}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Mail className="h-3 w-3" />
+              {professional.email || "-"}
+            </div>
           </div>
           
-          {/* Action buttons on hover */}
-          <div className="absolute top-0 left-0 w-full h-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+          {/* Action buttons - always visible */}
+          <div className="flex gap-1">
             <Button
               size="sm"
               variant="outline"
@@ -501,7 +485,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onMouseUp={(e) => e.stopPropagation()}
             >
               <UserCheck className="h-3 w-3 mr-1" />
-              {t("adminBookings.changeProfessional")}
+              עריכה
             </Button>
             <Button
               size="sm"
@@ -513,7 +497,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onMouseUp={(e) => e.stopPropagation()}
             >
               <UserX className="h-3 w-3 mr-1" />
-              {t("adminBookings.unassign")}
+              ביטול
             </Button>
           </div>
         </div>
@@ -1030,7 +1014,7 @@ const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: T
 export const getAdminBookingColumns = (
   t: TFunction, 
   locale: string,
-  onRowClick?: (booking: PopulatedBooking) => void
+  onViewBooking?: (booking: PopulatedBooking) => void
 ): ColumnDef<PopulatedBooking>[] => [
   // 1. Booking Number with Creation Date (default sort by createdAt DESC)
   {
@@ -1048,10 +1032,27 @@ export const getAdminBookingColumns = (
     cell: ({ row }) => {
       const bookingNumber = row.getValue("bookingNumber") as string
       const createdAt = row.original.createdAt
+      const booking = row.original
       return (
         <div className="space-y-1">
-          <div className="font-mono text-sm font-medium">
-            #{bookingNumber || "Unknown"}
+          <div className="flex items-center gap-2">
+            <div className="font-mono text-sm font-medium">
+              #{bookingNumber || "Unknown"}
+            </div>
+            {onViewBooking && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onViewBooking(booking)
+                }}
+                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                צפה
+              </Button>
+            )}
           </div>
           <div className="text-xs text-muted-foreground">
             {formatCreatedAtSafe(createdAt)}
@@ -1157,8 +1158,7 @@ export const getAdminBookingColumns = (
       >
         <AdminBookingActions 
           booking={row.original} 
-          t={t} 
-          onViewBooking={onRowClick}
+          t={t}
         />
       </div>
     ),

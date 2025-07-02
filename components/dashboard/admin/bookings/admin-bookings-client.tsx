@@ -101,8 +101,8 @@ export default function AdminBookingsClient() {
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 
-  const handleRowClick = (booking: PopulatedBooking) => {
-    // Navigate to the booking edit page instead of opening modal
+  const handleViewBooking = (booking: PopulatedBooking) => {
+    // Navigate to the booking edit page
     window.location.href = `/dashboard/admin/bookings/${booking._id}`
   }
 
@@ -115,7 +115,7 @@ export default function AdminBookingsClient() {
     window.location.href = "/dashboard/admin/bookings/new"
   }
 
-  const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language, handleRowClick])
+  const columns = useMemo(() => getAdminBookingColumns(t, language, handleViewBooking), [t, language, handleViewBooking])
 
   const handleRefresh = () => {
     refetch()
@@ -283,7 +283,6 @@ export default function AdminBookingsClient() {
           columns={columns}
           data={data?.bookings || []}
           searchKey="bookingNumber"
-          onRowClick={handleRowClick}
         />
       </div>
 

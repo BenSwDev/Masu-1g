@@ -627,3 +627,6 @@ export async function updatePartnerFromForm(
 
   return updatePartner(partnerId, partnerData)
 }
+
+// Legacy function name alias for backward compatibility
+export const removePartner = deletePartner

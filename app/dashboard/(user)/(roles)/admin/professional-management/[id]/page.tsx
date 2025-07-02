@@ -1,3 +1,4 @@
+import { Component, ErrorInfo, ReactNode } from "react"
 import { Suspense } from "react"
 import { Metadata } from "next"
 import { redirect, notFound } from "next/navigation"
@@ -9,6 +10,9 @@ import { getProfessionalById } from "../actions"
 import type { IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 import type { Professional } from "@/lib/types/professional"
+import { Button } from "@/components/common/ui/button"
+import { AlertTriangle, RefreshCw } from "lucide-react"
+import { ProfessionalEditErrorBoundary } from "@/components/dashboard/admin/professional-management/professional-edit-error-boundary"
 
 // פונקציה לטרנספורמציה של נתונים מהשרת
 function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
@@ -240,7 +244,9 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <Suspense fallback={<ProfessionalEditLoadingSkeleton />}>
-        <ProfessionalEditPageContent id={params.id} />
+        <ProfessionalEditErrorBoundary>
+          <ProfessionalEditPageContent id={params.id} />
+        </ProfessionalEditErrorBoundary>
       </Suspense>
     </div>
   )

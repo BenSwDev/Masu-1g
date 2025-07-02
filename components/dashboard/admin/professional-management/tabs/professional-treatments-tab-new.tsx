@@ -165,24 +165,28 @@ export default function ProfessionalTreatmentsTabNew({
 
   // Update selected treatments when professional data changes
   useEffect(() => {
-    const newSelected = professional.treatments?.map(t => ({
-      treatmentId: t.treatmentId,
-      durationId: t.durationId,
+    if (!professional._id) return
+    
+    const newSelected = professional.treatments?.map((t: any) => ({
+      treatmentId: String(t.treatmentId || ''),
+      durationId: t.durationId ? String(t.durationId) : undefined,
       professionalPrice: t.professionalPrice
     })) || []
     setSelectedTreatments(newSelected)
     
-    // Update categories with new selection
-    setCategories(prevCategories => prevCategories.map(cat => {
-      const categoryTreatmentIds = cat.treatments.map(t => t._id)
-      const selectedInCategory = newSelected.filter(s => categoryTreatmentIds.includes(s.treatmentId))
-      return {
-        ...cat,
-        selectedTreatments: selectedInCategory,
-        isExpanded: selectedInCategory.length > 0
-      }
-    }))
-  }, [professional.treatments])
+    // Update categories with new selection - only if we have categories loaded
+    if (categories.length > 0) {
+      setCategories(prevCategories => prevCategories.map(cat => {
+        const categoryTreatmentIds = cat.treatments.map(t => t._id)
+        const selectedInCategory = newSelected.filter(s => categoryTreatmentIds.includes(s.treatmentId))
+        return {
+          ...cat,
+          selectedTreatments: selectedInCategory,
+          isExpanded: selectedInCategory.length > 0
+        }
+      }))
+    }
+  }, [professional._id, categories.length])
 
   // Check for changes
   useEffect(() => {
@@ -354,7 +358,12 @@ export default function ProfessionalTreatmentsTabNew({
         })
         
         // Update parent component
-        const updatedTreatments = result.professional.treatments || []
+        const updatedTreatments = (result.professional.treatments || []).map((t: any) => ({
+          treatmentId: t.treatmentId?.toString() || t.treatmentId,
+          durationId: t.durationId?.toString() || t.durationId,
+          professionalPrice: t.professionalPrice,
+          treatmentName: t.treatmentName
+        }))
         onUpdate({ treatments: updatedTreatments })
         setHasChanges(false)
       } else {

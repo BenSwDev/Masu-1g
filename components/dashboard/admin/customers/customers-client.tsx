@@ -88,9 +88,7 @@ interface CustomerStats {
 }
 
 export default function CustomersClient() {
-  const { t, dir } = useTranslation()
   const { toast } = useToast()
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -153,16 +151,16 @@ export default function CustomersClient() {
         setTotalCount(result.data.totalCount)
       } else {
         toast({
-          title: t('customers.error.loadFailed') || 'שגיאה בטעינת הלקוחות',
-          description: result.error || t('common.unknownError'),
+          title: 'שגיאה בטעינת הלקוחות',
+          description: result.error || 'אירעה שגיאה לא צפויה',
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error('Error loading customers:', error)
       toast({
-        title: t('customers.error.loadFailed') || 'שגיאה בטעינת הלקוחות',
-        description: t('common.unknownError') || 'אירעה שגיאה לא צפויה',
+        title: 'שגיאה בטעינת הלקוחות',
+        description: 'אירעה שגיאה לא צפויה',
         variant: "destructive",
       })
     } finally {
@@ -180,16 +178,16 @@ export default function CustomersClient() {
         setTransactionsTotalPages(result.data.totalPages)
       } else {
         toast({
-          title: t('customers.error.transactionsFailed') || 'שגיאה בטעינת עסקאות הלקוח',
-          description: result.error || t('common.unknownError'),
+          title: 'שגיאה בטעינת עסקאות הלקוח',
+          description: result.error || 'אירעה שגיאה לא צפויה',
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error('Error loading customer transactions:', error)
       toast({
-        title: t('customers.error.transactionsFailed') || 'שגיאה בטעינת עסקאות הלקוח',
-        description: t('common.unknownError') || 'אירעה שגיאה לא צפויה',
+        title: 'שגיאה בטעינת עסקאות הלקוח',
+        description: 'אירעה שגיאה לא צפויה',
         variant: "destructive",
       })
     } finally {
@@ -234,10 +232,10 @@ export default function CustomersClient() {
   }
 
   const formatCurrency = (amount: number | undefined | null) => {
-    if (amount === undefined || amount === null) return '0 ש״ח'
+    if (amount === undefined || amount === null) return '0 ₪'
     const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
-    if (isNaN(numericAmount)) return '0 ש״ח'
-    return `${numericAmount.toLocaleString('he-IL')} ש״ח`
+    if (isNaN(numericAmount)) return '0 ₪'
+    return `${numericAmount.toLocaleString('he-IL')} ₪`
   }
 
   const formatDate = (date: Date) => {

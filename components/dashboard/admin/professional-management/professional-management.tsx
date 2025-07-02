@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Button } from "@/components/common/ui/button"
@@ -158,12 +159,6 @@ export function ProfessionalManagement({
       fetchProfessionals()
     }
   }, []) // ריק - רק בטעינה ראשונה
-
-  const handleRowClick = useCallback((professional: Professional) => {
-    router.push(`/dashboard/admin/professional-management/${professional._id}`)
-  }, [router])
-
-
 
   const handleCreateNew = useCallback(() => {
     router.push("/dashboard/admin/professional-management/new")
@@ -417,50 +412,52 @@ export function ProfessionalManagement({
                 </TableRow>
               ) : (
                 professionals.map((professional) => (
-                  <TableRow 
+                  <Link 
                     key={professional._id} 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => handleRowClick(professional)}
+                    href={`/dashboard/admin/professional-management/${professional._id}`}
+                    className="contents"
                   >
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
+                    <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors">
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="text-sm">
+                            {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(professional.status)}
+                      </TableCell>
+                      <TableCell>
                         <div className="text-sm">
-                          {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
+                          {professional.treatments?.length || 0} טיפולים
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {professional.workAreas?.length || 0} איזורים
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(professional.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {professional.treatments?.length || 0} טיפולים
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {professional.workAreas?.length || 0} איזורים
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {formatDate(professional.appliedAt)}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {formatDate(professional.appliedAt)}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </Link>
                 ))
               )}
             </TableBody>

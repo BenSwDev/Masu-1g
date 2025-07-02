@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
           profileId: profile._id,
           workAreas: profile.workAreas || [],
           treatments: profile.treatments || [],
-          preferredLanguage: prof.preferredLanguage
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))

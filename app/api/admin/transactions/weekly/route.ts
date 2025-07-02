@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdminSession } from "@/lib/auth/require-admin-session"
 import { connectDB } from "@/lib/db/mongodb"
+import { ObjectId } from "mongodb"
 
 export const dynamic = 'force-dynamic'
 
@@ -115,16 +116,22 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        // ✅ Get bookings data - paid bookings only
-        const bookings = await db.collection('bookings').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd },
-          status: { $in: ['confirmed', 'completed'] },
-          'paymentDetails.paymentStatus': 'paid'
+        // ✅ Get bookings data - paid bookings from CARDCOM payments
+        const payments = await db.collection('payments').find({
+          start_time: { $gte: dayStart, $lte: dayEnd },
+          complete: true,
+          booking_id: { $exists: true, $ne: null }
         }).toArray()
 
-        dayData.bookings.count = bookings.length
-        dayData.bookings.amount = bookings.reduce((sum, booking) => {
-          return sum + (booking.priceDetails?.finalAmount || booking.totalAmount || 0)
+        // Get corresponding bookings
+        const bookingIds = payments.map(p => p.booking_id).filter(Boolean)
+        const bookings = bookingIds.length > 0 ? await db.collection('bookings').find({
+          _id: { $in: bookingIds.map(id => new ObjectId(id)) }
+        }).toArray() : []
+
+        dayData.bookings.count = payments.length
+        dayData.bookings.amount = payments.reduce((sum, payment) => {
+          return sum + (payment.sum || 0)
         }, 0)
 
         // Calculate professional costs for bookings
@@ -132,16 +139,16 @@ export async function GET(request: NextRequest) {
           return sum + calculateProfessionalCosts(booking)
         }, 0)
 
-        // ✅ Get gift vouchers data - new purchases
-        const newVouchers = await db.collection('gift-vouchers').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd },
-          status: { $in: ['active', 'pending_send', 'sent'] }
+        // ✅ Get gift vouchers data - new purchases with payments
+        const voucherPayments = await db.collection('payments').find({
+          start_time: { $gte: dayStart, $lte: dayEnd },
+          complete: true,
+          'input_data.type': 'gift_voucher'
         }).toArray()
 
-        dayData.newVouchers.count = newVouchers.length
-        dayData.newVouchers.amount = newVouchers.reduce((sum, voucher) => {
-          // Use the primary 'amount' field which is always set correctly
-          return sum + (voucher.amount || 0)
+        dayData.newVouchers.count = voucherPayments.length
+        dayData.newVouchers.amount = voucherPayments.reduce((sum, payment) => {
+          return sum + (payment.sum || 0)
         }, 0)
 
         // ✅ Get redeemed vouchers - bookings that used vouchers
@@ -160,15 +167,16 @@ export async function GET(request: NextRequest) {
           return sum + (booking.priceDetails?.voucherAppliedAmount || 0)
         }, 0)
 
-        // ✅ Get user subscriptions data - new purchases
-        const newSubscriptions = await db.collection('user-subscriptions').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd },
-          status: { $in: ['active', 'expired', 'depleted'] } // Paid subscriptions
+        // ✅ Get user subscriptions data - new purchases with payments
+        const subscriptionPayments = await db.collection('payments').find({
+          start_time: { $gte: dayStart, $lte: dayEnd },
+          complete: true,
+          'input_data.type': 'subscription'
         }).toArray()
 
-        dayData.newSubscriptions.count = newSubscriptions.length
-        dayData.newSubscriptions.amount = newSubscriptions.reduce((sum, sub) => {
-          return sum + (sub.paymentAmount || 0)
+        dayData.newSubscriptions.count = subscriptionPayments.length
+        dayData.newSubscriptions.amount = subscriptionPayments.reduce((sum, payment) => {
+          return sum + (payment.sum || 0)
         }, 0)
 
         // ✅ Get redeemed subscriptions - bookings that used subscriptions

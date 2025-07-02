@@ -152,8 +152,7 @@ export async function sendUnifiedProfessionalNotifications(
           bookingId: new mongoose.Types.ObjectId(options.bookingId),
           professionalId: new mongoose.Types.ObjectId(professionalId),
           phoneNumber: professional.phone,
-          status: "pending",
-          expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
+          status: "pending"
         })
 
         await response.save()

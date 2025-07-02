@@ -23,9 +23,6 @@ export interface IProfessionalResponse extends Document {
   respondedAt?: Date
   responseMethod?: "sms" | "app" | "phone"
   
-  // Expiry
-  expiresAt: Date
-  
   // Metadata
   createdAt: Date
   updatedAt: Date
@@ -63,14 +60,6 @@ const ProfessionalResponseSchema = new Schema<IProfessionalResponse>({
   responseMethod: { 
     type: String, 
     enum: ["sms", "app", "phone"]
-  },
-  
-  // Expiry (default 30 minutes)
-  expiresAt: { 
-    type: Date, 
-    required: true,
-    default: () => new Date(Date.now() + 30 * 60 * 1000),
-    index: true
   }
 }, {
   timestamps: true,
@@ -80,29 +69,20 @@ const ProfessionalResponseSchema = new Schema<IProfessionalResponse>({
 
 // Compound indexes for better performance
 ProfessionalResponseSchema.index({ bookingId: 1, professionalId: 1 }, { unique: true })
-ProfessionalResponseSchema.index({ status: 1, expiresAt: 1 })
-ProfessionalResponseSchema.index({ bookingId: 1, status: 1 })
+ProfessionalResponseSchema.index({ status: 1 })
 
 // Static method to find pending responses for a booking
 ProfessionalResponseSchema.statics.findPendingForBooking = function(bookingId: string) {
   return this.find({
     bookingId: new mongoose.Types.ObjectId(bookingId),
-    status: "pending",
-    expiresAt: { $gt: new Date() }
+    status: "pending"
   }).populate('professionalId', 'name phone')
 }
 
-// Static method to expire old responses
+// Static method to expire old responses (no longer needed without time limits)
 ProfessionalResponseSchema.statics.expireOldResponses = function() {
-  return this.updateMany(
-    {
-      status: "pending",
-      expiresAt: { $lt: new Date() }
-    },
-    {
-      status: "expired"
-    }
-  )
+  // No-op function - responses no longer expire automatically
+  return Promise.resolve({ modifiedCount: 0 })
 }
 
 // Method to accept response

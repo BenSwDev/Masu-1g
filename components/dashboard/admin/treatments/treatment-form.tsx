@@ -143,7 +143,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
         result = await updateTreatment(treatment._id, treatmentData)
       } else {
         console.log("Creating new treatment")
-        result = await createTreatment(treatmentData)
+        result = await createTreatment(treatmentData as any)
       }
 
       console.log("Treatment operation result:", result)

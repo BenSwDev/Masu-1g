@@ -120,7 +120,11 @@ const AdminUserSubscriptionsClient = ({
       })
 
       if (result.success && result.userSubscriptions && result.pagination) {
-        setUserSubscriptions(result.userSubscriptions as PopulatedUserSubscription[])
+        setUserSubscriptions(result.userSubscriptions.map((sub: any) => ({
+          ...sub,
+          treatmentId: sub.treatmentId as any,
+          subscriptionId: sub.subscriptionId as any,
+        })))
         setPagination(result.pagination)
         if (showRefreshToast) {
           toast.success(t("userSubscriptions.notifications.dataRefreshed"))
@@ -468,9 +472,9 @@ const AdminUserSubscriptionsClient = ({
                   {userSubscriptions.map((subscription) => (
                     <UserSubscriptionRow
                       key={String(subscription._id)}
-                      userSubscription={subscription}
+                      userSubscription={subscription as any}
                       onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
-                      onEdit={handleEdit}
+                      onEdit={handleEdit as any}
                     />
                   ))}
                 </tbody>

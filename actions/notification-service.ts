@@ -373,13 +373,7 @@ export async function handleProfessionalResponse(
     
     // Validate response
     if (response.status !== "pending") {
-      return { success: false, error: "Response already processed or expired" }
-    }
-    
-    if (response.expiresAt < new Date()) {
-      response.status = "expired"
-      await response.save()
-      return { success: false, error: "Response has expired" }
+      return { success: false, error: "Response already processed" }
     }
     
     // Check booking availability

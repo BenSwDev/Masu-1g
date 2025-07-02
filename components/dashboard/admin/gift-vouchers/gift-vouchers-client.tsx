@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { Plus, Filter, RotateCcw, Loader2, Gift, RefreshCw, Download, TrendingUp, Users, List, Grid3x3 } from "lucide-react"
 import { format } from "date-fns"
-
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -21,10 +20,9 @@ import {
 import { CustomPagination as Pagination } from "@/components/common/ui/pagination"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { useIsMobile } from "@/components/common/ui/use-mobile"
 import { Badge } from "@/components/common/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useIsMobile } from "@/components/common/ui/use-mobile"
-
 import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
 import GiftVoucherAdminCard from "./gift-voucher-admin-card"
@@ -148,7 +146,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   }, [search, filterVoucherType, filterStatus, filterDateRange, loadVouchers])
 
   const handleSearchAndFilter = () => {
-    setCurrentPage(1) // Reset to first page on new search/filter
+    setPagination({ ...pagination, page: 1 }) // Reset to first page on new search/filter
     loadVouchers(1, search, {
       voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
       status: filterStatus === "all" ? undefined : filterStatus,
@@ -395,8 +393,8 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
                   initialFocus
                   mode="range"
                   defaultMonth={filterDateRange?.from}
-                  selected={filterDateRange}
-                  onSelect={setFilterDateRange}
+                  selected={filterDateRange?.from ? { from: filterDateRange.from, to: filterDateRange.to } : undefined}
+                  onSelect={(date) => setFilterDateRange(date as any)}
                   numberOfMonths={2}
                 />
               </PopoverContent>

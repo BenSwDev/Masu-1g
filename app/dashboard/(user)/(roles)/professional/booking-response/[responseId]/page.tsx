@@ -33,7 +33,7 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
               asChild
               className="bg-green-600 hover:bg-green-700"
             >
-              <a href={`/professional/booking-response/${responseId}?action=accept`}>
+              <a href={`/dashboard/professional/booking-response/${responseId}?action=accept`}>
                 <CheckCircle className="h-4 w-4 mr-2" />
                 אקבל את ההזמנה
               </a>
@@ -42,7 +42,7 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
               asChild
               variant="destructive"
             >
-              <a href={`/professional/booking-response/${responseId}?action=decline`}>
+              <a href={`/dashboard/professional/booking-response/${responseId}?action=decline`}>
                 <XCircle className="h-4 w-4 mr-2" />
                 אדחה את ההזמנה
               </a>

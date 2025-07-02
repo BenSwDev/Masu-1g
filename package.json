@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "lint:fix:all": "next lint --fix && next lint --fix --fix-all",
+    "type-check": "tsc --noEmit",
     "update-translations": "node scripts/update-translations.js",
     "cities": "node scripts/seed-cities-temp.js",
     "init-data": "ts-node --project tsconfig.json scripts/init-data.ts"

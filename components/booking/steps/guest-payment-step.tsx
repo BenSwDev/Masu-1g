@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/translations/i18n";
 import { usePaymentModal } from "@/hooks/use-payment-modal";
+import { toast } from "sonner";
 import { Button } from "@/components/common/ui/button";
 import {
   Card,
@@ -39,6 +40,7 @@ import {
   Mail,
   MessageSquare,
   Globe,
+  Shield,
 } from "lucide-react";
 import type { CalculatedPriceDetails } from "@/types/booking";
 
@@ -115,8 +117,7 @@ export function GuestPaymentStep({
       console.log("🎯 Calling onConfirm (handleFinalSubmit)")
       onConfirm();
     },
-    onFailure: customFailureHandler,
-    pendingBookingId: null // ✅ Not needed anymore
+    onFailure: customFailureHandler
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
@@ -173,11 +174,73 @@ export function GuestPaymentStep({
     return `₪${amount.toFixed(2)}`;
   };
 
-  const handlePayNow = async () => {
-    if (isCountingDown || !termsAccepted) return;
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
-    // Only open the payment modal - don't create booking or execute any other actions
-    openModal();
+  const handlePayNow = async () => {
+    if (isCountingDown || !termsAccepted || isPaymentLoading) return;
+
+    setIsPaymentLoading(true);
+
+    try {
+      // Create booking if needed
+      let finalBookingId = pendingBookingId;
+      if (createPendingBooking && !finalBookingId) {
+        finalBookingId = await createPendingBooking();
+        if (!finalBookingId) {
+          throw new Error("Failed to create booking");
+        }
+      }
+
+      if (!finalBookingId) {
+        throw new Error("No booking ID available");
+      }
+
+      // Update guest info with consents
+      const customerAlertsMethod = bookerNotificationMethod === "both" ? "email" as const : 
+                                  bookerNotificationMethod === "sms" ? "sms" as const : "email" as const;
+      const patientAlertsMethod = recipientNotificationMethod === "both" ? "email" as const : 
+                                 recipientNotificationMethod === "sms" ? "sms" as const : "email" as const;
+
+      const updatedGuestInfo = {
+        ...guestInfo,
+        consents: {
+          customerAlerts: customerAlertsMethod,
+          patientAlerts: patientAlertsMethod,
+          marketingOptIn: marketingConsent,
+          termsAccepted: termsAccepted,
+        }
+      };
+      setGuestInfo(updatedGuestInfo);
+
+      // Create payment with CARDCOM
+      const paymentResponse = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: finalBookingId,
+          amount: calculatedPrice?.finalAmount || 0,
+          description: `הזמנת טיפול - הזמנה ${finalBookingId}`,
+          customerName: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim(),
+          customerEmail: guestInfo.email,
+          customerPhone: guestInfo.phone
+        })
+      });
+
+      const paymentData = await paymentResponse.json();
+
+      if (paymentData.success && paymentData.redirectUrl) {
+        // Redirect to CARDCOM payment page
+        window.location.href = paymentData.redirectUrl;
+      } else {
+        throw new Error(paymentData.error || 'שגיאה ביצירת התשלום');
+      }
+      
+    } catch (error) {
+      console.error("Payment preparation failed:", error);
+      toast.error(error instanceof Error ? error.message : "שגיאה בהכנת התשלום");
+    } finally {
+      setIsPaymentLoading(false);
+    }
   };
 
   if (!calculatedPrice || (calculatedPrice.finalAmount === 0 && calculatedPrice.isFullyCoveredByVoucherOrSubscription)) {
@@ -575,11 +638,11 @@ export function GuestPaymentStep({
           </Button>
           <Button
             onClick={handlePayNow}
-            disabled={isLoading || isCountingDown || !termsAccepted}
+            disabled={isLoading || isPaymentLoading || isCountingDown || !termsAccepted}
             size="lg"
             className="px-8"
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {(isLoading || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isCountingDown
               ? `נסה שוב בעוד ${countdown} שניות`
               : `שלם כעת ${formatPrice(calculatedPrice.finalAmount)}`}
@@ -597,38 +660,31 @@ export function GuestPaymentStep({
           <div className="space-y-6" dir={dir}>
             {paymentStatus === "pending" && (
               <>
-                {/* CardComm iframe simulation */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
-                  <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    כאן יהיה IFRAME של CARDCOMM
+                {/* CARDCOM Payment Processing */}
+                <div className="border-2 border-primary/20 rounded-lg p-8 text-center bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
+                  <h3 className="text-lg font-semibold text-primary mb-2">
+                    מעבר לתשלום מאובטח
                   </h3>
-                  <p className="text-gray-500">
-                    ממשק התשלום המאובטח של CardComm
+                  <p className="text-gray-600 mb-4">
+                    עכשיו תועבר/י לדף התשלום המאובטח של CARDCOM
                   </p>
-                  <div className="mt-4 p-4 bg-white border rounded">
-                    <p className="text-sm text-gray-600">
+                  <div className="mt-4 p-4 bg-white border rounded-lg shadow-sm">
+                    <p className="text-sm text-gray-600 mb-2">
                       סכום לתשלום:{" "}
-                      <span className="font-bold">
+                      <span className="font-bold text-primary">
                         {formatPrice(calculatedPrice.finalAmount)}
                       </span>
                     </p>
+                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                      <Shield className="h-3 w-3" />
+                      תשלום מאובטח עם הצפנה SSL
+                    </div>
                   </div>
-                </div>
-
-                {/* Demo buttons */}
-                <div className="flex gap-4 justify-center">
-                  <Button
-                    onClick={handlePaymentSuccess}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    דימוי הצלחה
-                  </Button>
-                  <Button onClick={() => handlePaymentFailure("תשלום נכשל עקב בעיה טכנית")} variant="destructive">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    דימוי כישלון
-                  </Button>
+                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    מכין את התשלום...
+                  </div>
                 </div>
               </>
             )}

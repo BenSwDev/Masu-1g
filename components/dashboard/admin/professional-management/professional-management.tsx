@@ -90,7 +90,7 @@ export function ProfessionalManagement({
     try {
       const result = await getProfessionals({
         page,
-        limit: pagination.limit,
+        limit: 10, // קבוע
         search: searchTerm,
         status: statusFilter === "all" ? undefined : statusFilter,
         sortBy,
@@ -122,7 +122,7 @@ export function ProfessionalManagement({
     } finally {
       if (showLoadingState) setLoading(false)
     }
-  }, [pagination.limit, searchTerm, statusFilter, sortBy, sortOrder, toast])
+  }, [searchTerm, statusFilter, sortBy, sortOrder, toast])
 
   // Refresh data
   const refreshData = useCallback(async () => {
@@ -145,19 +145,19 @@ export function ProfessionalManagement({
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm]) // רק searchTerm
 
   // Filter and sort effects
   useEffect(() => {
     fetchProfessionals(1)
-  }, [statusFilter, sortBy, sortOrder])
+  }, [statusFilter, sortBy, sortOrder]) // רק הפילטרים
 
   // Initial load effect
   useEffect(() => {
     if (initialProfessionals.length === 0) {
       fetchProfessionals()
     }
-  }, [])
+  }, []) // ריק - רק בטעינה ראשונה
 
   const handleRowClick = useCallback((professional: Professional) => {
     router.push(`/dashboard/admin/professional-management/${professional._id}`)

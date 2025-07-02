@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongodb"
+import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { smsService } from "@/lib/notifications/sms-service"

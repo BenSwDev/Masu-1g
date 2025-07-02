@@ -109,6 +109,6 @@ const PaymentSchema: Schema<IPayment> = new Schema(
 PaymentSchema.index({ order_id: 1, created_at: -1 })
 PaymentSchema.index({ booking_id: 1, created_at: -1 })
 PaymentSchema.index({ complete: 1, has_token: 1 })
-PaymentSchema.index({ transaction_id: 1 }, { sparse: true })
+// transaction_id אינדקס מוגדר כ-sparse בשדה עצמו
 
 export const Payment: Model<IPayment> = mongoose.models.Payment || mongoose.model<IPayment>("Payment", PaymentSchema) 

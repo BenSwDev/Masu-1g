@@ -99,14 +99,20 @@ export class CardcomService {
       testMode: process.env.CARDCOM_TEST_MODE === "true",
     }
 
-    // ולידציה של הגדרות
+    // הגדרות יאומתו בזמן השימוש בפונקציות
+  }
+
+  /**
+   * בדיקת הגדרות CARDCOM
+   */
+  private validateConfig(): { valid: boolean; error?: string } {
     if (!this.config.terminalNumber || !this.config.username || !this.config.apiKey) {
-      logger.error("CARDCOM configuration missing", {
-        hasTerminal: !!this.config.terminalNumber,
-        hasUsername: !!this.config.username,
-        hasApiKey: !!this.config.apiKey,
-      })
+      return {
+        valid: false,
+        error: "CARDCOM configuration missing - please check environment variables"
+      }
     }
+    return { valid: true }
   }
 
   /**
@@ -121,6 +127,12 @@ export class CardcomService {
     customerPhone?: string
     resultUrl?: string
   }): Promise<{ success: boolean; data?: CreatePaymentResponse; error?: string }> {
+    // בדיקת הגדרות
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
     try {
       // URL אחיד לתוצאות תשלום
       const resultUrl = params.resultUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/payment/result`
@@ -168,6 +180,12 @@ export class CardcomService {
     token: string
     paymentId: string
   }): Promise<{ success: boolean; data?: DirectChargeResponse; error?: string }> {
+    // בדיקת הגדרות
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
     try {
       const payload: DirectChargeRequest = {
         TerminalNumber: this.config.terminalNumber,
@@ -207,6 +225,12 @@ export class CardcomService {
     token: string
     paymentId: string
   }): Promise<{ success: boolean; data?: DirectChargeResponse; error?: string }> {
+    // בדיקת הגדרות
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
     try {
       const payload: DirectChargeRequest = {
         TerminalNumber: this.config.terminalNumber,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import dbConnect from "@/lib/db/mongodb"
+import dbConnect from "@/lib/db/mongoose"
 import { CityDistance } from "@/lib/db/models/city-distance"
 
 export async function POST(request: NextRequest) {

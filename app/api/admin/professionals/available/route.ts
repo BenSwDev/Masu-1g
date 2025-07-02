@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { dbConnect } from "@/lib/db/mongodb"
+import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 
 /**

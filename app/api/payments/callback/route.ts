@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const internalDealNumber = searchParams.get("InternalDealNumber")
     const last4 = searchParams.get("last4")
     const tokenData = searchParams.get("tokenData")
+    const isMockPayment = searchParams.get("mock") === "true"
 
     logger.info("Payment callback received", {
       status,
@@ -31,7 +32,8 @@ export async function GET(request: NextRequest) {
       sum,
       returnValue,
       internalDealNumber,
-      hasTokenData: !!tokenData
+      hasTokenData: !!tokenData,
+      isMockPayment
     })
 
     if (!paymentId && !returnValue) {
@@ -74,20 +76,43 @@ export async function GET(request: NextRequest) {
     }
 
     // אם יש נתוני טוקן - הצפנה ושמירה
-    if (isSuccess && tokenData && token === "1") {
+    if (isSuccess && token === "1") {
       try {
-        const parsedTokenData: TokenData = JSON.parse(decodeURIComponent(tokenData))
+        let parsedTokenData: TokenData
+        
+        if (isMockPayment) {
+          // במצב בדיקה - יצירת נתוני טוקן מדומים
+          parsedTokenData = {
+            token: "TEST_TOKEN_" + Math.random().toString(36).substr(2, 16),
+            last4: "1234",
+            name: "Test Customer",
+            phone: "050-1234567",
+            email: "test@example.com"
+          }
+          logger.info("Mock token data created for test payment", {
+            paymentId: finalPaymentId,
+            last4: parsedTokenData.last4
+          })
+        } else if (tokenData) {
+          // במצב ייצור - פענוח נתוני טוקן אמיתיים
+          parsedTokenData = JSON.parse(decodeURIComponent(tokenData))
+        } else {
+          throw new Error("No token data available")
+        }
+        
         const encryptedTokenData = cardcomService.encryptTokenData(parsedTokenData)
         updateData.result_data.tokenData = encryptedTokenData
         
         logger.info("Token data encrypted and saved", {
           paymentId: finalPaymentId,
-          last4: parsedTokenData.last4
+          last4: parsedTokenData.last4,
+          isMock: isMockPayment
         })
       } catch (error) {
         logger.error("Failed to process token data", {
           paymentId: finalPaymentId,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
+          isMock: isMockPayment
         })
       }
     }

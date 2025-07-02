@@ -265,6 +265,16 @@ export class CardcomService {
    * שליחת בקשה ל-CARDCOM
    */
   private async sendRequest(endpoint: string, data: any): Promise<any> {
+    // במצב בדיקה - מחזיר תגובה מדומה
+    if (this.config.testMode) {
+      logger.info("CARDCOM TEST MODE - returning mock response", {
+        endpoint,
+        testMode: true,
+      })
+      
+      return this.getMockResponse(endpoint, data)
+    }
+
     const url = `${this.config.baseUrl}/${endpoint}`
 
     const response = await fetch(url, {
@@ -282,6 +292,35 @@ export class CardcomService {
 
     const result = await response.json()
     return result
+  }
+
+  /**
+   * תגובות מדומות למצב בדיקה
+   */
+  private getMockResponse(endpoint: string, data: any): any {
+    const baseResponse = {
+      ResponseCode: "0",
+      Description: "הצלחה - מצב בדיקה",
+    }
+
+    switch (endpoint) {
+      case "LowProfile":
+        return {
+          ...baseResponse,
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true`,
+          LowProfileCode: "TEST_" + Math.random().toString(36).substr(2, 9),
+        }
+
+      case "Charge":
+        return {
+          ...baseResponse,
+          InternalDealNumber: "TEST_" + Math.random().toString(36).substr(2, 9),
+          TransactionID: "TXN_" + Math.random().toString(36).substr(2, 9),
+        }
+
+      default:
+        return baseResponse
+    }
   }
 
   /**

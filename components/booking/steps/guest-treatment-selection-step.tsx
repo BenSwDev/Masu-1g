@@ -318,13 +318,30 @@ export function GuestTreatmentSelectionStep({
     setRedemptionError(null)
     
     try {
-      // Get guest phone from guestInfo prop
-      const guestPhone = guestInfo?.phone
-      const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id, guestPhone)
+      const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id)
       
       if (result.success && result.redemption) {
         // Update booking options with redemption data
         const redemption = result.redemption
+        
+        // 🔒 Auto-lock treatment and duration for subscriptions and treatment vouchers
+        let autoSelectedTreatment = undefined
+        let autoSelectedDuration = undefined
+        
+        if (redemption.type === "subscription" && (redemption.data as any)?.treatmentId) {
+          autoSelectedTreatment = (redemption.data as any).treatmentId
+          // If subscription has a specific duration, auto-select it
+          if ((redemption.data as any)?.selectedDurationId) {
+            autoSelectedDuration = (redemption.data as any).selectedDurationId
+          }
+        } else if (redemption.type === "treatment_voucher" && (redemption.data as any)?.treatmentId) {
+          autoSelectedTreatment = (redemption.data as any).treatmentId
+          // If voucher has a specific duration, auto-select it
+          if ((redemption.data as any)?.selectedDurationId) {
+            autoSelectedDuration = (redemption.data as any).selectedDurationId
+          }
+        }
+        
         setBookingOptions(prev => ({
           ...prev,
           redemptionCode: redemptionCode.trim(),
@@ -342,7 +359,10 @@ export function GuestTreatmentSelectionStep({
             : undefined,
           appliedCouponCode: redemption.type.includes("coupon")
             ? redemptionCode.trim()
-            : undefined
+            : undefined,
+          // 🔒 Auto-select locked treatment and duration
+          selectedTreatmentId: autoSelectedTreatment || prev.selectedTreatmentId,
+          selectedDurationId: autoSelectedDuration || prev.selectedDurationId
         }))
         
         // Update redemption data for locked fields logic
@@ -370,7 +390,10 @@ export function GuestTreatmentSelectionStep({
       source: "new_purchase",
       selectedGiftVoucherId: undefined,
       selectedUserSubscriptionId: undefined,
-      appliedCouponCode: undefined
+      appliedCouponCode: undefined,
+      // Clear auto-selected treatment and duration
+      selectedTreatmentId: undefined,
+      selectedDurationId: undefined
     }))
     
     // Clear redemption data for locked fields logic

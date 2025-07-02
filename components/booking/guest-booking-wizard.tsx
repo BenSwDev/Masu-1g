@@ -243,14 +243,10 @@ export default function UniversalBookingWizard({
     }
   }, [voucher, userSubscription, currentUser, redemptionData])
 
-  const lockedFields = useMemo(() => {
-    // 🎯 PRIORITY 1: Legal redemption locks (HIGHEST PRIORITY - CANNOT BE OVERRIDDEN)
-    // These fields are COMPLETELY LOCKED when redeeming vouchers/subscriptions
-    
-    // Check redemption data from code input first (most authoritative)
+  const [lockedFields, setLockedFields] = useState<readonly string[]>(() => {
+    // Initial calculation
     if (redemptionData) {
       const redemption = redemptionData
-      
       // For ALL vouchers (all are gifts) - LOCK recipient info (only recipient can redeem)
       if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.recipientName) {
         const fields = ["firstName", "lastName"] as const
@@ -258,17 +254,14 @@ export default function UniversalBookingWizard({
         const fieldsWithEmail = redemption.data?.recipientEmail ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
         return fieldsWithEmail
       }
-      
       // For subscriptions - LOCK purchaser info (only purchaser can redeem)
       if (redemption.type === "subscription") {
-        // If subscription was purchased by a logged-in user, lock ALL their fields
         if (redemption.data?.userId && currentUser?.id === redemption.data.userId.toString()) {
           const baseFields = ["firstName", "lastName"] as const
           const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
           const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
           return fieldsWithEmail
         }
-        // If subscription was purchased by a guest, lock guest purchaser info
         else if (redemption.data?.guestInfo) {
           const baseFields = ["firstName", "lastName"] as const
           const fieldsWithPhone = redemption.data.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
@@ -276,29 +269,24 @@ export default function UniversalBookingWizard({
           return fieldsWithEmail
         }
       }
-      
-      // Since ALL vouchers are gifts, this section is no longer needed
-      // All voucher ownership is handled by the recipient logic above
     }
     
-    // Check voucher passed as props (legacy flow) - ALL vouchers are gifts
+    // Check voucher passed as props (legacy flow)
     if (voucher?.recipientName) {
       const fields = ["firstName", "lastName", "phone"] as const
       const fieldsWithEmail = voucher.recipientEmail ? [...fields, "email"] as const : fields
       return fieldsWithEmail
     }
     
-    // Check voucher purchased by guest (legacy flow)
     if ((voucher as any)?.guestInfo) {
       return ["firstName", "lastName", "phone", "email"] as const
     }
     
-    // Check subscription purchased by guest (legacy flow)
     if ((userSubscription as any)?.guestInfo) {
       return ["firstName", "lastName", "email", "phone"] as const
     }
     
-    // 👤 PRIORITY 2: Logged in user locks (ONLY if no redemption)
+    // Logged in user locks (ONLY if no redemption)
     if (currentUser) {
       const baseFields = ["firstName", "lastName"] as const
       const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
@@ -306,14 +294,79 @@ export default function UniversalBookingWizard({
       return fieldsWithEmail
     }
     
-    // 👥 PRIORITY 3: No locks for guests (all fields editable)
     return [] as const
+  })
+  
+  // Update locked fields when redemption data changes
+  useEffect(() => {
+    const calculateLockedFields = (): readonly string[] => {
+      // Check redemption data from code input first (most authoritative)  
+      if (redemptionData) {
+        const redemption = redemptionData
+        
+        // For ALL vouchers (all are gifts) - LOCK recipient info (only recipient can redeem)
+        if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.recipientName) {
+          const fields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = redemption.data?.recipientPhone ? [...fields, "phone"] as const : fields
+          const fieldsWithEmail = redemption.data?.recipientEmail ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          return fieldsWithEmail
+        }
+        
+        // For subscriptions - LOCK purchaser info (only purchaser can redeem)
+        if (redemption.type === "subscription") {
+          // If subscription was purchased by a logged-in user, lock ALL their fields
+          if (redemption.data?.userId && currentUser?.id === redemption.data.userId.toString()) {
+            const baseFields = ["firstName", "lastName"] as const
+            const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
+            const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+            return fieldsWithEmail
+          }
+          // If subscription was purchased by a guest, lock guest purchaser info
+          else if (redemption.data?.guestInfo) {
+            const baseFields = ["firstName", "lastName"] as const
+            const fieldsWithPhone = redemption.data.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
+            const fieldsWithEmail = redemption.data.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+            return fieldsWithEmail
+          }
+        }
+      }
+      
+      // Check voucher passed as props (legacy flow) - ALL vouchers are gifts
+      if (voucher?.recipientName) {
+        const fields = ["firstName", "lastName", "phone"] as const
+        const fieldsWithEmail = voucher.recipientEmail ? [...fields, "email"] as const : fields
+        return fieldsWithEmail
+      }
+      
+      // Check voucher purchased by guest (legacy flow)
+      if ((voucher as any)?.guestInfo) {
+        return ["firstName", "lastName", "phone", "email"] as const
+      }
+      
+      // Check subscription purchased by guest (legacy flow)
+      if ((userSubscription as any)?.guestInfo) {
+        return ["firstName", "lastName", "email", "phone"] as const
+      }
+      
+      // 👤 PRIORITY 2: Logged in user locks (ONLY if no redemption)
+      if (currentUser) {
+        const baseFields = ["firstName", "lastName"] as const
+        const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
+        const fieldsWithEmail = currentUser.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+        return fieldsWithEmail
+      }
+      
+      // 👥 PRIORITY 3: No locks for guests (all fields editable)
+      return [] as const
+    }
+    
+    setLockedFields(calculateLockedFields())
   }, [voucher, userSubscription, currentUser, redemptionData])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
-  const hideBookingForSomeoneElse = useMemo(() => {
+  const [hideBookingForSomeoneElse, setHideBookingForSomeoneElse] = useState(() => {
     return Boolean(voucher || userSubscription || redemptionData)
-  }, [voucher, userSubscription, redemptionData])
+  })
 
   const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
   
@@ -370,6 +423,54 @@ export default function UniversalBookingWizard({
   }
 
   const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>(defaultBookingOptions)
+  
+  // Update hideBookingForSomeoneElse when redemption data changes
+  useEffect(() => {
+    setHideBookingForSomeoneElse(Boolean(voucher || userSubscription || redemptionData || bookingOptions.redemptionData))
+  }, [voucher, userSubscription, redemptionData, bookingOptions.redemptionData])
+  
+  // Update guest info when booking options redemption data changes
+  useEffect(() => {
+    if (bookingOptions.redemptionData && Object.keys(prefilledGuestInfo).length > 0) {
+      setGuestInfoState(prefilledGuestInfo)
+    }
+  }, [bookingOptions.redemptionData, prefilledGuestInfo])
+  
+  // Update locked fields when booking options redemption data changes
+  useEffect(() => {
+    if (bookingOptions.redemptionData) {
+      const redemption = bookingOptions.redemptionData
+      
+      // For ALL vouchers (all are gifts) - LOCK recipient info (only recipient can redeem)
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && (redemption.data as any)?.recipientName) {
+        const fields = ["firstName", "lastName"] as const
+        const fieldsWithPhone = (redemption.data as any)?.recipientPhone ? [...fields, "phone"] as const : fields
+        const fieldsWithEmail = (redemption.data as any)?.recipientEmail ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+        setLockedFields(fieldsWithEmail)
+        return
+      }
+      
+      // For subscriptions - LOCK purchaser info (only purchaser can redeem)
+      if (redemption.type === "subscription") {
+        // If subscription was purchased by a logged-in user, lock ALL their fields
+        if ((redemption.data as any)?.userId && currentUser?.id === (redemption.data as any).userId.toString()) {
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          setLockedFields(fieldsWithEmail)
+          return
+        }
+        // If subscription was purchased by a guest, lock guest purchaser info
+        else if ((redemption.data as any)?.guestInfo) {
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = (redemption.data as any).guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = (redemption.data as any).guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          setLockedFields(fieldsWithEmail)
+          return
+        }
+      }
+    }
+  }, [bookingOptions.redemptionData, currentUser])
   
   const [calculatedPrice, setCalculatedPrice] = useState<CalculatedPriceDetails | null>(null)
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])

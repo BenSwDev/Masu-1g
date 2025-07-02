@@ -3548,8 +3548,7 @@ export async function sendNotificationToSuitableProfessionals(
  */
 export async function validateRedemptionCode(
   code: string,
-  userId?: string,
-  guestPhone?: string // Add guest phone parameter
+  userId?: string
 ): Promise<{ success: boolean; redemption?: RedemptionCode; error?: string }> {
   try {
     await dbConnect()
@@ -3587,46 +3586,8 @@ export async function validateRedemptionCode(
         const isValid = isNotExpired && isValidStatus && isActiveOrSent && hasBalance
         
         if (isValid) {
-          // ✅ ALL VOUCHERS ARE GIFTS - Ownership validation
-          // Since ALL vouchers are gifts, check recipient phone (ownerUserId)
-          if (voucher.recipientPhone) {
-            // For gift vouchers, check if current user/guest is the recipient
-            if (userId) {
-              // For logged-in users, we'll check in the frontend/component level
-              // since we need to fetch user phone from session
-            } else if (guestPhone) {
-              // For guests, normalize and compare phone numbers
-              const normalizePhone = (phone: string) => {
-                let cleaned = phone.replace(/[^\d+]/g, "")
-                if (!cleaned.startsWith("+")) {
-                  if (cleaned.startsWith("0")) {
-                    cleaned = "+972" + cleaned.substring(1)
-                  } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-                    cleaned = "+972" + cleaned
-                  } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-                    cleaned = "+" + cleaned
-                  } else {
-                    cleaned = "+972" + cleaned
-                  }
-                }
-                if (cleaned.startsWith("+9720")) {
-                  cleaned = "+972" + cleaned.substring(5)
-                }
-                return cleaned
-              }
-
-              const normalizedRecipientPhone = normalizePhone(voucher.recipientPhone)
-              const normalizedGuestPhone = normalizePhone(guestPhone)
-              
-              if (normalizedRecipientPhone !== normalizedGuestPhone) {
-                return { success: false, error: "השובר לא שייך למספר הטלפון שלך." }
-              }
-            }
-          } else {
-            // If no recipient phone, we need to check ownership via ownerUserId
-            // This should not happen in the new system since all vouchers should have recipient info
-            logger.warn("Gift voucher without recipient phone found", { voucherId: voucher._id })
-          }
+          // ✅ Skip ownership validation at code validation stage
+          // Ownership will be validated later during booking creation
           
           // Ensure treatmentId is properly handled for treatment vouchers
           let enhancedVoucher = { ...voucher }
@@ -3675,39 +3636,8 @@ export async function validateRedemptionCode(
           return { success: false, error: "המנוי לא שייך למשתמש זה" }
         }
         
-        // ✅ Add ownership validation for guest subscriptions
-        if (!userId && userSubscription.guestInfo?.phone) {
-          if (!guestPhone) {
-            return { success: false, error: "נדרש מספר טלפון לבדיקת בעלות על המנוי" }
-          }
-          
-          // Normalize and compare phone numbers
-          const normalizePhone = (phone: string) => {
-            let cleaned = phone.replace(/[^\d+]/g, "")
-            if (!cleaned.startsWith("+")) {
-              if (cleaned.startsWith("0")) {
-                cleaned = "+972" + cleaned.substring(1)
-              } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-                cleaned = "+972" + cleaned
-              } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-                cleaned = "+" + cleaned
-              } else {
-                cleaned = "+972" + cleaned
-              }
-            }
-            if (cleaned.startsWith("+9720")) {
-              cleaned = "+972" + cleaned.substring(5)
-            }
-            return cleaned
-          }
-
-          const normalizedSubscriptionPhone = normalizePhone(userSubscription.guestInfo.phone)
-          const normalizedGuestPhone = normalizePhone(guestPhone)
-          
-          if (normalizedSubscriptionPhone !== normalizedGuestPhone) {
-            return { success: false, error: "המנוי לא שייך למספר הטלפון שלך." }
-          }
-        }
+        // ✅ Skip ownership validation at code validation stage
+        // Ownership will be validated later during booking creation
         
         // Ensure treatmentId is properly handled
         let enhancedSubscription = { ...userSubscription }

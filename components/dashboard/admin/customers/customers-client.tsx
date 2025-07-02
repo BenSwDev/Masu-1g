@@ -39,7 +39,9 @@ import {
   SelectValue,
 } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { useTranslation } from "@/lib/translations/i18n"
+import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/common/ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAllCustomers, getAllPurchaseTransactions } from "@/app/dashboard/(user)/(roles)/admin/customers/actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
@@ -59,9 +61,31 @@ import {
   DollarSign,
   UserCheck,
   UserX,
+  Activity,
+  ShoppingBag,
+  Ticket,
+  BarChart3,
+  Filter,
+  SortAsc,
+  SortDesc,
+  MapPin,
+  Clock,
+  Star,
+  Zap,
+  TrendingDown
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+interface CustomerStats {
+  totalCustomers: number
+  totalRevenue: number
+  averageSpentPerCustomer: number
+  activeCustomers: number
+  guestCustomers: number
+  memberCustomers: number
+  topSpenders: CustomerSummary[]
+  recentlyActive: CustomerSummary[]
+}
 
 export default function CustomersClient() {
   const { t, dir } = useTranslation()
@@ -74,10 +98,11 @@ export default function CustomersClient() {
   const [totalCount, setTotalCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'guests' | 'members'>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'totalSpent' | 'lastActivity' | 'joinDate'>('lastActivity')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSummary | null>(null)
   const [customerTransactions, setCustomerTransactions] = useState<PurchaseTransaction[]>([])
   const [loadingTransactions, setLoadingTransactions] = useState(false)
-  const [transactionsError, setTransactionsError] = useState<string | null>(null)
   const [transactionsPage, setTransactionsPage] = useState(1)
   const [transactionsTotalPages, setTransactionsTotalPages] = useState(1)
   const limit = 20
@@ -88,7 +113,41 @@ export default function CustomersClient() {
       const result = await getAllCustomers(page, limit, search, userType)
       
       if (result.success && result.data) {
-        setCustomers(result.data.customers)
+        let sortedCustomers = [...result.data.customers]
+        
+        // Apply sorting
+        sortedCustomers.sort((a, b) => {
+          let aValue: any, bValue: any
+          
+          switch (sortBy) {
+            case 'name':
+              aValue = a.customerName.toLowerCase()
+              bValue = b.customerName.toLowerCase()
+              break
+            case 'totalSpent':
+              aValue = a.totalSpent
+              bValue = b.totalSpent
+              break
+            case 'lastActivity':
+              aValue = new Date(a.lastActivity).getTime()
+              bValue = new Date(b.lastActivity).getTime()
+              break
+            case 'joinDate':
+              aValue = new Date(a.joinDate).getTime()
+              bValue = new Date(b.joinDate).getTime()
+              break
+            default:
+              return 0
+          }
+          
+          if (sortOrder === 'asc') {
+            return aValue > bValue ? 1 : -1
+          } else {
+            return aValue < bValue ? 1 : -1
+          }
+        })
+        
+        setCustomers(sortedCustomers)
         setCurrentPage(result.data.currentPage)
         setTotalPages(result.data.totalPages)
         setTotalCount(result.data.totalCount)
@@ -141,7 +200,7 @@ export default function CustomersClient() {
   useEffect(() => {
     loadCustomers(1, searchQuery, userTypeFilter)
     setCurrentPage(1)
-  }, [searchQuery, userTypeFilter])
+  }, [searchQuery, userTypeFilter, sortBy, sortOrder])
 
   useEffect(() => {
     loadCustomers()
@@ -165,6 +224,15 @@ export default function CustomersClient() {
     loadCustomerTransactions(selectedCustomer?.userId || "", newPage)
   }
 
+  const toggleSort = (field: typeof sortBy) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortOrder('desc')
+    }
+  }
+
   const formatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null) return '0 ש״ח'
     const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
@@ -174,6 +242,10 @@ export default function CustomersClient() {
 
   const formatDate = (date: Date) => {
     return format(new Date(date), "dd/MM/yyyy", { locale: he })
+  }
+
+  const formatDateTime = (date: Date) => {
+    return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: he })
   }
 
   const getUserTypeBadge = (userType?: 'guest' | 'member') => {
@@ -193,387 +265,714 @@ export default function CustomersClient() {
     )
   }
 
-  // Calculate summary stats
-  const summaryStats = {
-    totalCustomers: totalCount,
-    totalRevenue: customers.reduce((sum, c) => sum + c.totalSpent, 0),
-    averageSpentPerCustomer: customers.length > 0 ? customers.reduce((sum, c) => sum + c.totalSpent, 0) / customers.length : 0,
-    activeCustomers: customers.filter(c => {
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      return c.lastActivity >= thirtyDaysAgo
-    }).length,
-    guestCustomers: customers.filter(c => c.userType === 'guest').length,
-    memberCustomers: customers.filter(c => c.userType === 'member').length,
+  const getActivityBadge = (customer: CustomerSummary) => {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    if (customer.lastActivity >= thirtyDaysAgo) {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Zap className="h-3 w-3 mr-1" />
+          פעיל
+        </Badge>
+      )
+    }
+    
+    const ninetyDaysAgo = new Date()
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+    
+    if (customer.lastActivity >= ninetyDaysAgo) {
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          <Clock className="h-3 w-3 mr-1" />
+          בינוני
+        </Badge>
+      )
+    }
+    
+    return (
+      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+        <TrendingDown className="h-3 w-3 mr-1" />
+        לא פעיל
+      </Badge>
+    )
+  }
+
+  const calculateStats = (): CustomerStats => {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0)
+    const activeCustomers = customers.filter(c => c.lastActivity >= thirtyDaysAgo)
+    const topSpenders = [...customers]
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 5)
+    const recentlyActive = [...customers]
+      .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+      .slice(0, 5)
+
+    return {
+      totalCustomers: totalCount,
+      totalRevenue,
+      averageSpentPerCustomer: customers.length > 0 ? totalRevenue / customers.length : 0,
+      activeCustomers: activeCustomers.length,
+      guestCustomers: customers.filter(c => c.userType === 'guest').length,
+      memberCustomers: customers.filter(c => c.userType === 'member').length,
+      topSpenders,
+      recentlyActive
+    }
+  }
+
+  const stats = calculateStats()
+
+  const getSortIcon = (field: typeof sortBy) => {
+    if (sortBy !== field) return null
+    return sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
   }
 
   return (
-    <div dir={dir} className="space-y-6">
-      {/* Summary Cards */}
+    <div className="space-y-6">
+      {/* Enhanced Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('customers.summary.totalCustomers') || 'סה״כ לקוחות'}
+            <CardTitle className="text-sm font-medium text-blue-900">
+              סה״כ לקוחות
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summaryStats.totalCustomers}</div>
-            <p className="text-xs text-muted-foreground">
-              {summaryStats.memberCustomers} רשומים, {summaryStats.guestCustomers} אורחים
+            <div className="text-2xl font-bold text-blue-900">{stats.totalCustomers.toLocaleString()}</div>
+            <p className="text-xs text-blue-700">
+              {stats.memberCustomers} רשומים • {stats.guestCustomers} אורחים
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('customers.summary.totalRevenue') || 'סה״כ הכנסות'}
+            <CardTitle className="text-sm font-medium text-green-900">
+              סה״כ הכנסות
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summaryStats.totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('customers.summary.fromAllCustomers') || 'מכל הלקוחות'}
+            <div className="text-2xl font-bold text-green-900">{formatCurrency(stats.totalRevenue)}</div>
+            <p className="text-xs text-green-700">
+              מכל הלקוחות במערכת
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('customers.summary.averageSpent') || 'ממוצע הוצאה'}
+            <CardTitle className="text-sm font-medium text-purple-900">
+              ממוצע הוצאה
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summaryStats.averageSpentPerCustomer)}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('customers.summary.perCustomer') || 'לכל לקוח'}
+            <div className="text-2xl font-bold text-purple-900">{formatCurrency(stats.averageSpentPerCustomer)}</div>
+            <p className="text-xs text-purple-700">
+              לכל לקוח במערכת
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('customers.summary.activeCustomers') || 'לקוחות פעילים'}
+            <CardTitle className="text-sm font-medium text-orange-900">
+              לקוחות פעילים
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summaryStats.activeCustomers}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('customers.summary.last30Days') || 'ב-30 הימים האחרונים'}
+            <div className="text-2xl font-bold text-orange-900">{stats.activeCustomers}</div>
+            <p className="text-xs text-orange-700">
+              פעילים ב-30 הימים האחרונים
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
+      {/* Enhanced Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="relative flex-1 md:flex-none">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={t('customers.searchPlaceholder') || 'חיפוש לקוחות...'}
+                  placeholder="חיפוש לקוחות לפי שם, מייל או טלפון..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 w-full md:w-[300px]"
+                  className="pr-9 w-full sm:w-[300px]"
                 />
               </div>
+              
               <Select value={userTypeFilter} onValueChange={(value: 'all' | 'guests' | 'members') => setUserTypeFilter(value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t('customers.filterByType') || 'סינון לפי סוג'} />
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="סינון לפי סוג" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('customers.allUsers') || 'כל המשתמשים'}</SelectItem>
-                  <SelectItem value="guests">{t('customers.guests') || 'אורחים'}</SelectItem>
-                  <SelectItem value="members">{t('customers.members') || 'משתמשים רשומים'}</SelectItem>
+                  <SelectItem value="all">כל המשתמשים</SelectItem>
+                  <SelectItem value="guests">אורחים בלבד</SelectItem>
+                  <SelectItem value="members">משתמשים רשומים</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={(value: typeof sortBy) => setSortBy(value)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="מיין לפי" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lastActivity">פעילות אחרונה</SelectItem>
+                  <SelectItem value="totalSpent">סה״כ הוצאה</SelectItem>
+                  <SelectItem value="name">שם</SelectItem>
+                  <SelectItem value="joinDate">תאריך הצטרפות</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t('common.refresh') || 'רענן'}
+            
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                רענן
               </Button>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
-                {t('common.export') || 'ייצא'}
+                ייצא לאקסל
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Customers Table */}
+      {/* Enhanced Customers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('customers.title') || 'לקוחות'}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            רשימת לקוחות
+            <Badge variant="secondary" className="mr-2">
+              {totalCount.toLocaleString()} לקוחות
+            </Badge>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('customers.name') || 'שם'}</TableHead>
-                <TableHead>{t('customers.email') || 'אימייל'}</TableHead>
-                <TableHead>{t('customers.phone') || 'טלפון'}</TableHead>
-                <TableHead>{t('customers.totalSpent') || 'סה״כ הוצאה'}</TableHead>
-                <TableHead>{t('customers.lastActivity') || 'פעילות אחרונה'}</TableHead>
-                <TableHead>{t('customers.status') || 'סטטוס'}</TableHead>
-                <TableHead>{t('customers.actions') || 'פעולות'}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    {t('common.loading') || 'טוען...'}
-                  </TableCell>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => toggleSort('name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      פרטי לקוח
+                      {getSortIcon('name')}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      פרטי קשר
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => toggleSort('totalSpent')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      הוצאה כוללת
+                      {getSortIcon('totalSpent')}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4" />
+                      פעילות
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => toggleSort('lastActivity')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      פעילות אחרונה
+                      {getSortIcon('lastActivity')}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      פעולות
+                    </div>
+                  </TableHead>
                 </TableRow>
-              ) : customers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    {t('customers.noCustomers') || 'לא נמצאו לקוחות'}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                customers.map((customer) => (
-                  <TableRow key={customer.userId}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{customer.customerName}</span>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        טוען נתונים...
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>{customer.customerEmail}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{customer.customerPhone || '-'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatCurrency(customer.totalSpent)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatDate(customer.lastActivity)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getUserTypeBadge(customer.userType)}
-                        {customer.activeSubscriptions > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {customer.activeSubscriptions} {t('customers.subscriptions') || 'מנויים'}
-                          </Badge>
-                        )}
-                        {customer.activeVouchers > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {customer.activeVouchers} {t('customers.vouchers') || 'שוברים'}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCustomerView(customer)}
-                        className="flex items-center gap-1"
-                      >
-                        <Eye className="h-3 w-3" />
-                        {t('customers.viewDetails') || 'צפה בפרטים'}
-                      </Button>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Users className="h-8 w-8" />
+                        <p>לא נמצאו לקוחות התואמים לחיפוש</p>
+                        {searchQuery && (
+                          <Button variant="outline" size="sm" onClick={() => setSearchQuery("")}>
+                            נקה חיפוש
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map((customer) => (
+                    <TableRow key={customer.userId} className="hover:bg-muted/50 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{customer.customerName}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              {getUserTypeBadge(customer.userType)}
+                              {getActivityBadge(customer)}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
+                            <span>{customer.customerEmail}</span>
+                          </div>
+                          {customer.customerPhone && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              <span>{customer.customerPhone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-lg font-semibold text-green-600">
+                          {formatCurrency(customer.totalSpent)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          ממוצע: {formatCurrency(customer.statistics.averageBookingValue)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="outline" className="text-xs">
+                            <ShoppingBag className="h-3 w-3 mr-1" />
+                            {customer.totalBookings} הזמנות
+                          </Badge>
+                          {customer.activeSubscriptions > 0 && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                              <CreditCard className="h-3 w-3 mr-1" />
+                              {customer.activeSubscriptions} מנויים
+                            </Badge>
+                          )}
+                          {customer.activeVouchers > 0 && (
+                            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+                              <Gift className="h-3 w-3 mr-1" />
+                              {customer.activeVouchers} שוברים
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {formatDate(customer.lastActivity)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          נרשם: {formatDate(customer.joinDate)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCustomerView(customer)}
+                          className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                        >
+                          <Eye className="h-4 w-4" />
+                          צפה בפרטים
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Pagination */}
+      {/* Enhanced Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (currentPage > 1) handlePageChange(currentPage - 1)
-                  }}
-                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-              
-              {[...Array(totalPages)].map((_, index) => {
-                const page = index + 1
-                const showPage = 
-                  page === 1 || 
-                  page === totalPages || 
-                  (page >= currentPage - 2 && page <= currentPage + 2)
-                
-                if (!showPage) {
-                  if (page === currentPage - 3 || page === currentPage + 3) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )
-                  }
-                  return null
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              הקודם
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {[...Array(Math.min(totalPages, 7))].map((_, index) => {
+                let page: number
+                if (totalPages <= 7) {
+                  page = index + 1
+                } else if (currentPage <= 4) {
+                  page = index + 1
+                } else if (currentPage >= totalPages - 3) {
+                  page = totalPages - 6 + index
+                } else {
+                  page = currentPage - 3 + index
                 }
                 
                 return (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handlePageChange(page)
-                      }}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(page)}
+                    className="w-10"
+                  >
+                    {page}
+                  </Button>
                 )
               })}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (currentPage < totalPages) handlePageChange(currentPage + 1)
-                  }}
-                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              הבא
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Customer Details Modal */}
+      {/* Enhanced Customer Details Modal */}
       <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {t('customers.customerDetails') || 'פרטי לקוח'} - {selectedCustomer?.customerName}
-              {selectedCustomer && getUserTypeBadge(selectedCustomer.userType)}
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  פרטי לקוח: {selectedCustomer?.customerName}
+                  {selectedCustomer && getUserTypeBadge(selectedCustomer.userType)}
+                  {selectedCustomer && getActivityBadge(selectedCustomer)}
+                </div>
+              </div>
             </DialogTitle>
             <DialogDescription>
-              {t('customers.customerDetailsDesc') || 'צפה בכל הפעילות והעסקאות של הלקוח'}
+              צפה בכל הפעילות, העסקאות והסטטיסטיקות המפורטות של הלקוח
             </DialogDescription>
           </DialogHeader>
           
           {selectedCustomer && (
-            <div className="space-y-6">
-              {/* Customer Info Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{t('customers.personalInfo') || 'מידע אישי'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.name') || 'שם'}:</p>
-                      <p className="font-medium">{selectedCustomer.customerName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.email') || 'אימייל'}:</p>
-                      <p className="font-medium">{selectedCustomer.customerEmail}</p>
-                    </div>
-                    {selectedCustomer.customerPhone && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('customers.phone') || 'טלפון'}:</p>
-                        <p className="font-medium">{selectedCustomer.customerPhone}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.joinDate') || 'תאריך הצטרפות'}:</p>
-                      <p className="font-medium">{formatDate(selectedCustomer.joinDate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">סוג משתמש:</p>
-                      {getUserTypeBadge(selectedCustomer.userType)}
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="flex-1 overflow-hidden">
+              <Tabs defaultValue="overview" className="h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="overview" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    סקירה כללית
+                  </TabsTrigger>
+                  <TabsTrigger value="transactions" className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    עסקאות
+                  </TabsTrigger>
+                  <TabsTrigger value="activity" className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    פעילות
+                  </TabsTrigger>
+                  <TabsTrigger value="analytics" className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    אנליטיקה
+                  </TabsTrigger>
+                </TabsList>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{t('customers.statistics') || 'סטטיסטיקות'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.totalSpent') || 'סה״כ הוצאה'}:</p>
-                      <p className="font-medium text-lg">{formatCurrency(selectedCustomer.totalSpent)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.completedBookings') || 'הזמנות שהושלמו'}:</p>
-                      <p className="font-medium">{selectedCustomer.statistics.completedBookings}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.averageBookingValue') || 'ערך ממוצע להזמנה'}:</p>
-                      <p className="font-medium">{formatCurrency(selectedCustomer.statistics.averageBookingValue)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex-1 overflow-hidden mt-4">
+                  <TabsContent value="overview" className="h-full overflow-y-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Personal Information */}
+                      <Card className="border-blue-200 bg-blue-50/50">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <User className="h-5 w-5" />
+                            מידע אישי
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">שם מלא</p>
+                              <p className="text-lg font-semibold">{selectedCustomer.customerName}</p>
+                            </div>
+                            <Separator />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">כתובת מייל</p>
+                              <p className="font-medium">{selectedCustomer.customerEmail}</p>
+                            </div>
+                            {selectedCustomer.customerPhone && (
+                              <>
+                                <Separator />
+                                <div>
+                                  <p className="text-sm font-medium text-muted-foreground">מספר טלפון</p>
+                                  <p className="font-medium">{selectedCustomer.customerPhone}</p>
+                                </div>
+                              </>
+                            )}
+                            <Separator />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">תאריך הצטרפות</p>
+                              <p className="font-medium">{formatDate(selectedCustomer.joinDate)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">סוג חשבון</p>
+                              <div className="mt-1">
+                                {getUserTypeBadge(selectedCustomer.userType)}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{t('customers.activeItems') || 'פריטים פעילים'}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.activeSubscriptions') || 'מנויים פעילים'}:</p>
-                      <p className="font-medium">{selectedCustomer.activeSubscriptions}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.activeVouchers') || 'שוברים פעילים'}:</p>
-                      <p className="font-medium">{selectedCustomer.activeVouchers}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t('customers.lastActivity') || 'פעילות אחרונה'}:</p>
-                      <p className="font-medium">{formatDate(selectedCustomer.lastActivity)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                      {/* Financial Summary */}
+                      <Card className="border-green-200 bg-green-50/50">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <DollarSign className="h-5 w-5" />
+                            סיכום כספי
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">סה״כ הוצאה</p>
+                              <p className="text-2xl font-bold text-green-600">
+                                {formatCurrency(selectedCustomer.totalSpent)}
+                              </p>
+                            </div>
+                            <Separator />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">ממוצע להזמנה</p>
+                              <p className="text-lg font-semibold">
+                                {formatCurrency(selectedCustomer.statistics.averageBookingValue)}
+                              </p>
+                            </div>
+                            <Separator />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">הזמנות שהושלמו</p>
+                              <p className="text-lg font-semibold text-blue-600">
+                                {selectedCustomer.statistics.completedBookings}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">הזמנות שבוטלו</p>
+                              <p className="text-lg font-semibold text-red-600">
+                                {selectedCustomer.statistics.cancelledBookings}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-              {/* Customer Transactions */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">
-                  {t('customers.transactionHistory') || 'היסטוריית עסקאות'}
-                </h3>
-                <PurchaseHistoryTable
-                  transactions={customerTransactions}
-                  isLoading={loadingTransactions}
-                  showCustomerInfo={true}
-                />
-              </div>
+                      {/* Active Items */}
+                      <Card className="border-purple-200 bg-purple-50/50">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Gift className="h-5 w-5" />
+                            פריטים פעילים
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium">מנויים פעילים</span>
+                              </div>
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                {selectedCustomer.activeSubscriptions}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div className="flex items-center gap-2">
+                                <Gift className="h-4 w-4 text-purple-600" />
+                                <span className="font-medium">שוברי מתנה פעילים</span>
+                              </div>
+                              <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                                {selectedCustomer.activeVouchers}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                              <div className="flex items-center gap-2">
+                                <ShoppingBag className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">סה״כ הזמנות</span>
+                              </div>
+                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                                {selectedCustomer.totalBookings}
+                              </Badge>
+                            </div>
+                            
+                            <Separator />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">פעילות אחרונה</p>
+                              <p className="font-medium text-lg">
+                                {formatDateTime(selectedCustomer.lastActivity)}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="transactions" className="h-full overflow-y-auto">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <CreditCard className="h-5 w-5" />
+                          היסטוריית עסקאות
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <PurchaseHistoryTable
+                          transactions={customerTransactions}
+                          isLoading={loadingTransactions}
+                          showCustomerInfo={false}
+                        />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="activity" className="h-full overflow-y-auto">
+                    <div className="grid gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Activity className="h-5 w-5" />
+                            סטטיסטיקות פעילות מפורטות
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="text-center p-4 bg-green-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-green-600">
+                                {selectedCustomer.statistics.completedBookings}
+                              </div>
+                              <div className="text-sm text-muted-foreground">הזמנות הושלמו</div>
+                            </div>
+                            <div className="text-center p-4 bg-red-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-red-600">
+                                {selectedCustomer.statistics.cancelledBookings}
+                              </div>
+                              <div className="text-sm text-muted-foreground">הזמנות בוטלו</div>
+                            </div>
+                            <div className="text-center p-4 bg-orange-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-orange-600">
+                                {selectedCustomer.statistics.noShowBookings}
+                              </div>
+                              <div className="text-sm text-muted-foreground">לא הגיעו</div>
+                            </div>
+                            <div className="text-center p-4 bg-blue-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {selectedCustomer.statistics.totalSubscriptionsPurchased}
+                              </div>
+                              <div className="text-sm text-muted-foreground">מנויים נרכשו</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="analytics" className="h-full overflow-y-auto">
+                    <div className="grid gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5" />
+                            ניתוח התנהגות לקוח
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="p-4 bg-blue-50 rounded-lg border">
+                                <h4 className="font-semibold mb-2">דירוג לקוח</h4>
+                                <div className="flex items-center gap-2">
+                                  {selectedCustomer.totalSpent > 1000 ? (
+                                    <>
+                                      <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                                      <span className="font-medium">לקוח VIP</span>
+                                    </>
+                                  ) : selectedCustomer.totalSpent > 500 ? (
+                                    <>
+                                      <Star className="h-5 w-5 text-blue-500" />
+                                      <span className="font-medium">לקוח מועדף</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <User className="h-5 w-5 text-gray-500" />
+                                      <span className="font-medium">לקוח רגיל</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="p-4 bg-green-50 rounded-lg border">
+                                <h4 className="font-semibold mb-2">שיעור השלמה</h4>
+                                <div className="text-2xl font-bold text-green-600">
+                                  {selectedCustomer.totalBookings > 0 
+                                    ? Math.round((selectedCustomer.statistics.completedBookings / selectedCustomer.totalBookings) * 100)
+                                    : 0}%
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  מתוך {selectedCustomer.totalBookings} הזמנות
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                </div>
+              </Tabs>
             </div>
           )}
         </DialogContent>

@@ -12,7 +12,8 @@ import type { Professional } from "@/lib/types/professional"
 
 // פונקציה לטרנספורמציה של נתונים מהשרת
 function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
-  return {
+  try {
+    return {
     _id: rawProfessional._id.toString(),
     userId: rawProfessional.userId,
     status: rawProfessional.status,
@@ -22,18 +23,42 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
     certifications: rawProfessional.certifications,
     bio: rawProfessional.bio,
     profileImage: rawProfessional.profileImage,
-    treatments: (rawProfessional.treatments || []).map(t => ({
-      treatmentId: t.treatmentId?.toString() || '',
-      durationId: t.durationId?.toString(),
-      professionalPrice: t.professionalPrice || 0,
-      treatmentName: (t as any).treatmentName
-    })),
-    workAreas: (rawProfessional.workAreas || []).map(w => ({
-      cityId: w.cityId?.toString() || '',
-      cityName: w.cityName || '',
-      distanceRadius: w.distanceRadius,
-      coveredCities: w.coveredCities || []
-    })),
+    treatments: (rawProfessional.treatments || []).map(t => {
+      try {
+        return {
+          treatmentId: t.treatmentId?.toString() || '',
+          durationId: t.durationId?.toString(),
+          professionalPrice: t.professionalPrice || 0,
+          treatmentName: (t as any).treatmentName || ''
+        }
+      } catch (error) {
+        console.error('Error mapping treatment:', error, t)
+        return {
+          treatmentId: '',
+          durationId: undefined,
+          professionalPrice: 0,
+          treatmentName: ''
+        }
+      }
+    }),
+    workAreas: (rawProfessional.workAreas || []).map(w => {
+      try {
+        return {
+          cityId: w.cityId?.toString() || '',
+          cityName: w.cityName || '',
+          distanceRadius: w.distanceRadius || '20km',
+          coveredCities: w.coveredCities || []
+        }
+      } catch (error) {
+        console.error('Error mapping work area:', error, w)
+        return {
+          cityId: '',
+          cityName: '',
+          distanceRadius: '20km' as const,
+          coveredCities: []
+        }
+      }
+    }),
     totalEarnings: rawProfessional.totalEarnings || 0,
     pendingPayments: rawProfessional.pendingPayments || 0,
     adminNotes: rawProfessional.adminNotes,
@@ -44,6 +69,33 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
     lastActiveAt: rawProfessional.lastActiveAt,
     createdAt: rawProfessional.createdAt,
     updatedAt: rawProfessional.updatedAt
+  }
+  } catch (error) {
+    console.error('Error transforming professional data:', error, rawProfessional)
+    // Return a safe default object
+    return {
+      _id: rawProfessional._id?.toString() || '',
+      userId: rawProfessional.userId,
+      status: rawProfessional.status || 'pending_admin_approval',
+      isActive: false,
+      specialization: '',
+      experience: '',
+      certifications: [],
+      bio: '',
+      profileImage: '',
+      treatments: [],
+      workAreas: [],
+      totalEarnings: 0,
+      pendingPayments: 0,
+      adminNotes: '',
+      rejectionReason: '',
+      appliedAt: rawProfessional.appliedAt || new Date(),
+      approvedAt: rawProfessional.approvedAt,
+      rejectedAt: rawProfessional.rejectedAt,
+      lastActiveAt: rawProfessional.lastActiveAt,
+      createdAt: rawProfessional.createdAt || new Date(),
+      updatedAt: rawProfessional.updatedAt || new Date()
+    }
   }
 }
 

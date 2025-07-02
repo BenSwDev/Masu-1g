@@ -25,6 +25,8 @@ interface ProfessionalEditPageProps {
 }
 
 export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps) {
+  console.log('ProfessionalEditPage rendered with professional:', professional)
+  
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()

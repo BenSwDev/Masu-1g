@@ -176,9 +176,12 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
       notFound()
     }
 
+    // Transform data once and memoize it
+    const transformedProfessional = transformProfessionalData(result.professional)
+
     return (
       <ProfessionalEditPage 
-        professional={transformProfessionalData(result.professional)}
+        professional={transformedProfessional}
       />
     )
   } catch (error) {

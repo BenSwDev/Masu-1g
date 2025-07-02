@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -35,6 +35,11 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Update state when professional prop changes
+  useEffect(() => {
+    setUpdatedProfessional(professional)
+  }, [professional._id])
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({

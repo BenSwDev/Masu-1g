@@ -6,6 +6,7 @@ import { ProfessionalEditPage } from "@/components/dashboard/admin/professional-
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
 import { getProfessionalById } from "../actions"
+import { Professional } from "@/lib/types/professional"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -86,7 +87,7 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
 
     return (
       <ProfessionalEditPage 
-        professional={result.professional}
+        professional={result.professional as unknown as Professional}
       />
     )
   } catch (error) {

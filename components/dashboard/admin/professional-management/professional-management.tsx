@@ -412,13 +412,9 @@ export function ProfessionalManagement({
                 </TableRow>
               ) : (
                 professionals.map((professional) => (
-                  <Link 
-                    key={professional._id} 
-                    href={`/dashboard/admin/professional-management/${professional._id}`}
-                    className="contents"
-                  >
-                    <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors">
-                      <TableCell>
+                  <TableRow key={professional._id}>
+                    <TableCell>
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="font-medium">
                             {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
@@ -427,37 +423,42 @@ export function ProfessionalManagement({
                             {typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm">
-                            {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(professional.status)}
-                      </TableCell>
-                      <TableCell>
+                        <Link href={`/dashboard/admin/professional-management/${professional._id}`}>
+                          <Button variant="outline" size="sm">
+                            צפייה
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
                         <div className="text-sm">
-                          {professional.treatments?.length || 0} טיפולים
+                          {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {professional.workAreas?.length || 0} איזורים
+                        <div className="text-sm text-muted-foreground">
+                          {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {formatDate(professional.appliedAt)}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </Link>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(professional.status)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {professional.treatments?.length || 0} טיפולים
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {professional.workAreas?.length || 0} איזורים
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {formatDate(professional.appliedAt)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>

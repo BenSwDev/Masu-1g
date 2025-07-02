@@ -23,13 +23,27 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
     certifications: rawProfessional.certifications,
     bio: rawProfessional.bio,
     profileImage: rawProfessional.profileImage,
-    treatments: (rawProfessional.treatments || []).map(t => {
+    treatments: (rawProfessional.treatments || []).map((t: any) => {
       try {
+        // Handle MongoDB ObjectId format
+        const treatmentId = typeof t.treatmentId === 'object' && t.treatmentId?.$oid 
+          ? t.treatmentId.$oid 
+          : t.treatmentId?.toString() || ''
+        
+        const durationId = typeof t.durationId === 'object' && t.durationId?.$oid 
+          ? t.durationId.$oid 
+          : t.durationId?.toString()
+        
+        // Handle MongoDB NumberInt format
+        const professionalPrice = typeof t.professionalPrice === 'object' && t.professionalPrice?.$numberInt 
+          ? parseInt(t.professionalPrice.$numberInt) 
+          : t.professionalPrice || 0
+        
         return {
-          treatmentId: t.treatmentId?.toString() || '',
-          durationId: t.durationId?.toString(),
-          professionalPrice: t.professionalPrice || 0,
-          treatmentName: (t as any).treatmentName || ''
+          treatmentId,
+          durationId,
+          professionalPrice,
+          treatmentName: t.treatmentName || ''
         }
       } catch (error) {
         console.error('Error mapping treatment:', error, t)
@@ -41,10 +55,15 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
         }
       }
     }),
-    workAreas: (rawProfessional.workAreas || []).map(w => {
+    workAreas: (rawProfessional.workAreas || []).map((w: any) => {
       try {
+        // Handle MongoDB ObjectId format
+        const cityId = typeof w.cityId === 'object' && w.cityId?.$oid 
+          ? w.cityId.$oid 
+          : w.cityId?.toString() || ''
+          
         return {
-          cityId: w.cityId?.toString() || '',
+          cityId,
           cityName: w.cityName || '',
           distanceRadius: w.distanceRadius || '20km',
           coveredCities: w.coveredCities || []
@@ -59,16 +78,32 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
         }
       }
     }),
-    totalEarnings: rawProfessional.totalEarnings || 0,
-    pendingPayments: rawProfessional.pendingPayments || 0,
+    totalEarnings: typeof rawProfessional.totalEarnings === 'object' && (rawProfessional.totalEarnings as any)?.$numberInt 
+      ? parseInt((rawProfessional.totalEarnings as any).$numberInt) 
+      : rawProfessional.totalEarnings || 0,
+    pendingPayments: typeof rawProfessional.pendingPayments === 'object' && (rawProfessional.pendingPayments as any)?.$numberInt 
+      ? parseInt((rawProfessional.pendingPayments as any).$numberInt) 
+      : rawProfessional.pendingPayments || 0,
     adminNotes: rawProfessional.adminNotes,
     rejectionReason: rawProfessional.rejectionReason,
-    appliedAt: rawProfessional.appliedAt,
-    approvedAt: rawProfessional.approvedAt,
-    rejectedAt: rawProfessional.rejectedAt,
-    lastActiveAt: rawProfessional.lastActiveAt,
-    createdAt: rawProfessional.createdAt,
-    updatedAt: rawProfessional.updatedAt
+    appliedAt: typeof rawProfessional.appliedAt === 'object' && (rawProfessional.appliedAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.appliedAt as any).$date.$numberLong)) 
+      : rawProfessional.appliedAt,
+    approvedAt: typeof rawProfessional.approvedAt === 'object' && (rawProfessional.approvedAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.approvedAt as any).$date.$numberLong)) 
+      : rawProfessional.approvedAt,
+    rejectedAt: typeof rawProfessional.rejectedAt === 'object' && (rawProfessional.rejectedAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.rejectedAt as any).$date.$numberLong)) 
+      : rawProfessional.rejectedAt,
+    lastActiveAt: typeof rawProfessional.lastActiveAt === 'object' && (rawProfessional.lastActiveAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.lastActiveAt as any).$date.$numberLong)) 
+      : rawProfessional.lastActiveAt,
+    createdAt: typeof rawProfessional.createdAt === 'object' && (rawProfessional.createdAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.createdAt as any).$date.$numberLong)) 
+      : rawProfessional.createdAt,
+    updatedAt: typeof rawProfessional.updatedAt === 'object' && (rawProfessional.updatedAt as any)?.$date?.$numberLong 
+      ? new Date(parseInt((rawProfessional.updatedAt as any).$date.$numberLong)) 
+      : rawProfessional.updatedAt
   }
   } catch (error) {
     console.error('Error transforming professional data:', error, rawProfessional)

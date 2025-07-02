@@ -55,6 +55,8 @@ export default function ProfessionalTreatmentsTab({
   onUpdate,
   disabled = false
 }: ProfessionalTreatmentsTabProps) {
+  console.log('ProfessionalTreatmentsTabSimple rendered with professional:', professional._id, professional.treatments?.length)
+  
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -71,7 +73,7 @@ export default function ProfessionalTreatmentsTab({
       const selectedIds = new Set(professional.treatments.map(t => t.treatmentId))
       setSelectedTreatments(selectedIds)
     }
-  }, [professional.treatments])
+  }, [professional._id]) // רק כשהמטפל משתנה, לא כל פעם שהטיפולים משתנים
 
   // Load available treatments
   useEffect(() => {

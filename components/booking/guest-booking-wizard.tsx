@@ -1374,6 +1374,14 @@ export default function UniversalBookingWizard({
           
           if (recipientResult.success) {
             targetUserId = recipientResult.userId
+          } else {
+            console.error("Failed to find/create voucher recipient user:", recipientResult.error)
+            toast({
+              variant: "destructive",
+              title: "שגיאה ביצירת הזמנה",
+              description: "לא הצלחנו לאמת את בעלות השובר. אנא נסה שוב.",
+            })
+            return null
           }
         }
         // For subscriptions - booking goes to purchaser
@@ -1390,6 +1398,14 @@ export default function UniversalBookingWizard({
           
           if (purchaserResult.success) {
             targetUserId = purchaserResult.userId
+          } else {
+            console.error("Failed to find/create subscription purchaser user:", purchaserResult.error)
+            toast({
+              variant: "destructive",
+              title: "שגיאה ביצירת הזמנה",
+              description: "לא הצלחנו לאמת את בעלות המנוי. אנא נסה שוב.",
+            })
+            return null
           }
         }
       } else if (currentUser) {

@@ -192,8 +192,16 @@ export default function ProfessionalTreatmentsTabNew({
       professionalPrice: t.professionalPrice
     })) || []
     
-    const hasChanges = JSON.stringify(selectedTreatments.sort((a, b) => a.treatmentId.localeCompare(b.treatmentId))) !== 
-                       JSON.stringify(originalTreatments.sort((a, b) => a.treatmentId.localeCompare(b.treatmentId)))
+    // Simple array length and basic comparison instead of JSON.stringify
+    const hasChanges = selectedTreatments.length !== originalTreatments.length ||
+      selectedTreatments.some(selected => 
+        !originalTreatments.some(original => 
+          original.treatmentId === selected.treatmentId &&
+          original.durationId === selected.durationId &&
+          original.professionalPrice === selected.professionalPrice
+        )
+      )
+    
     setHasChanges(hasChanges)
   }, [selectedTreatments, professional.treatments])
 

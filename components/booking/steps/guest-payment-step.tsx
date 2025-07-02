@@ -632,21 +632,65 @@ export function GuestPaymentStep({
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={onPrev} disabled={isLoading}>
-            חזור
-          </Button>
-          <Button
-            onClick={handlePayNow}
-            disabled={isLoading || isPaymentLoading || isCountingDown || !termsAccepted}
-            size="lg"
-            className="px-8"
-          >
-            {(isLoading || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isCountingDown
-              ? `נסה שוב בעוד ${countdown} שניות`
-              : `שלם כעת ${formatPrice(calculatedPrice.finalAmount)}`}
-          </Button>
+        <div className="space-y-4">
+          {/* כפתורי דמיה לבדיקות */}
+          <Card className="border-dashed border-2 border-yellow-300 bg-yellow-50">
+            <CardContent className="pt-6">
+              <div className="text-center mb-4">
+                <AlertTriangle className="mx-auto h-6 w-6 text-yellow-600 mb-2" />
+                <h3 className="text-lg font-medium text-yellow-800">
+                  כפתורי דמיה - לבדיקות בלבד
+                </h3>
+                <p className="text-sm text-yellow-700">
+                  כפתורים אלה מדמים הצלחה/כישלון בתשלום ללא חיוב אמיתי
+                </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => {
+                    console.log("🟢 Demo Success clicked");
+                    handlePaymentSuccess();
+                  }}
+                  variant="outline"
+                  className="border-green-500 text-green-700 hover:bg-green-50"
+                  disabled={isLoading || isCountingDown || !termsAccepted}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  דמיה: הצלחה
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log("🔴 Demo Failure clicked");
+                    handlePaymentFailure("בדיקת כישלון מדומה");
+                  }}
+                  variant="outline"
+                  className="border-red-500 text-red-700 hover:bg-red-50"
+                  disabled={isLoading || isCountingDown || !termsAccepted}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  דמיה: כישלון
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* כפתורי ניווט רגילים */}
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={onPrev} disabled={isLoading}>
+              חזור
+            </Button>
+            <Button
+              onClick={handlePayNow}
+              disabled={isLoading || isPaymentLoading || isCountingDown || !termsAccepted}
+              size="lg"
+              className="px-8"
+            >
+              {(isLoading || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isCountingDown
+                ? `נסה שוב בעוד ${countdown} שניות`
+                : `שלם כעת (CARDCOM) ${formatPrice(calculatedPrice.finalAmount)}`}
+            </Button>
+          </div>
         </div>
       </div>
 

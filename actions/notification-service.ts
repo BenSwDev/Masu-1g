@@ -23,38 +23,67 @@ import mongoose from "mongoose"
 export async function sendOTP(
   phone: string,
   language: "he" | "en" | "ru" = "he"
-): Promise<{ success: boolean; error?: string; messageId?: string }> {
+): Promise<{ success: boolean; error?: string; messageId?: string; obscuredIdentifier?: string }> {
   try {
     await dbConnect()
+
+    // Import models
+    const VerificationToken = (await import("@/lib/db/models/verification-token")).default
+    const User = (await import("@/lib/db/models/user")).default
+
+    // Check if user exists with this phone
+    const user = await User.findOne({ phone }).lean()
+    if (!user) {
+      // For security, don't reveal if phone exists or not
+      return { 
+        success: true, // Return success to not reveal phone existence
+        messageId: "security_dummy",
+        obscuredIdentifier: phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2')
+      }
+    }
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     
-    // Store OTP in database (simplified for now)
-    // TODO: Create proper OTP verification model if needed
+    // Store OTP in database
+    await VerificationToken.deleteMany({ 
+      identifier: phone, 
+      identifierType: "phone" 
+    })
+
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+    await VerificationToken.create({
+      identifier: phone,
+      identifierType: "phone",
+      code: otp,
+      expiresAt,
+      attempts: 0
+    })
     
-    // Send SMS
-    const smsResult = await smsService.sendNotification(
+    // Send SMS using notification manager
+    const notificationResult = await unifiedNotificationService.sendNotification(
       {
         type: "phone",
         value: phone,
         language
       },
       {
-        type: "password-reset", // Use existing type for now
-        otp
+        type: "otp",
+        code: otp,
+        expiresIn: 10
       }
     )
 
-    if (smsResult.success) {
+    if (notificationResult.success) {
       return { 
         success: true, 
-        messageId: smsResult.messageId 
+        messageId: notificationResult.messageId,
+        obscuredIdentifier: phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2')
       }
     } else {
       return { 
         success: false, 
-        error: smsResult.error || "Failed to send OTP" 
+        error: notificationResult.error || "Failed to send OTP" 
       }
     }
 
@@ -73,17 +102,74 @@ export async function sendOTP(
 export async function verifyOTP(
   phone: string,
   otp: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; userId?: string; message?: string }> {
   try {
     await dbConnect()
     
-    // TODO: Implement proper OTP verification when model is available
-    // For now, return success for development
-    return { success: true }
+    // Import models
+    const VerificationToken = (await import("@/lib/db/models/verification-token")).default
+    const User = (await import("@/lib/db/models/user")).default
+    
+    // Check if user exists with this phone
+    const user = await User.findOne({ phone }).lean()
+    if (!user) {
+      return { 
+        success: false, 
+        error: "PHONE_NOT_FOUND",
+        message: "מספר טלפון לא נמצא במערכת" 
+      }
+    }
+
+    // Find valid OTP token
+    const now = new Date()
+    const otpToken = await VerificationToken.findOne({
+      identifier: phone,
+      identifierType: "phone",
+      code: otp,
+      expiresAt: { $gt: now }
+    })
+
+    if (!otpToken) {
+      return { 
+        success: false, 
+        error: "INVALID_OTP",
+        message: "קוד OTP לא תקף או פג תוקף" 
+      }
+    }
+
+    // Check attempts limit
+    if (otpToken.attempts >= 3) {
+      // Delete the token to prevent further attempts
+      await VerificationToken.deleteOne({ _id: otpToken._id })
+      return { 
+        success: false, 
+        error: "TOO_MANY_ATTEMPTS",
+        message: "יותר מדי ניסיונות. אנא בקש קוד חדש" 
+      }
+    }
+
+    // Increment attempts
+    await VerificationToken.updateOne(
+      { _id: otpToken._id },
+      { $inc: { attempts: 1 } }
+    )
+
+    // Delete the used token
+    await VerificationToken.deleteOne({ _id: otpToken._id })
+
+    return { 
+      success: true, 
+      userId: user._id.toString(),
+      message: "OTP verified successfully" 
+    }
 
   } catch (error) {
     logger.error("Error verifying OTP:", error)
-    return { success: false, error: "Failed to verify OTP" }
+    return { 
+      success: false, 
+      error: "VERIFICATION_ERROR",
+      message: "שגיאה באימות הקוד" 
+    }
   }
 }
 

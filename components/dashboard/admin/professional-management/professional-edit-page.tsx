@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -34,13 +34,26 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleUpdate = (updatedData: Partial<Professional>) => {
-    setUpdatedProfessional(prev => ({
-      ...prev,
-      ...updatedData
-    }))
+  const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
+    setUpdatedProfessional(prev => {
+      // בדיקה אם יש שינוי אמיתי
+      const hasActualChange = Object.keys(updatedData).some(key => {
+        const newValue = updatedData[key as keyof Professional]
+        const oldValue = prev[key as keyof Professional]
+        return JSON.stringify(newValue) !== JSON.stringify(oldValue)
+      })
+      
+      if (!hasActualChange) {
+        return prev // אין שינוי אמיתי
+      }
+      
+      return {
+        ...prev,
+        ...updatedData
+      }
+    })
     setHasUnsavedChanges(true)
-  }
+  }, [])
 
   const handleBack = () => {
     if (hasUnsavedChanges) {

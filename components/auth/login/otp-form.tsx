@@ -251,11 +251,11 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           description: t("login.otpSentToPhone"),
         })
       } else {
-        setError(result.message)
+        setError(result.error || result.message || "שגיאה בשליחת הקוד")
 
         toast({
           title: t("errors.otpSendFailed"),
-          description: result.message,
+          description: result.error || result.message || "שגיאה בשליחת הקוד",
           variant: "destructive",
         })
       }
@@ -350,11 +350,11 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           }, 500)
         }
       } else {
-        setError(result.message)
+        setError(result.message || result.error || "קוד לא תקף")
 
         toast({
           title: t("errors.otpVerificationFailed"),
-          description: result.message,
+          description: result.message || result.error || "קוד לא תקף",
           variant: "destructive",
         })
       }

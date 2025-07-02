@@ -107,9 +107,9 @@ export function GuestInfoStep({
   }).refine((data) => {
     if (data.isBookingForSomeoneElse) {
       return (
-        data.recipientFirstName &&
-        data.recipientLastName &&
-        data.recipientPhone &&
+        data.recipientFirstName && data.recipientFirstName.trim() &&
+        data.recipientLastName && data.recipientLastName.trim() &&
+        data.recipientPhone && data.recipientPhone.trim() &&
         (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
       )
     }
@@ -117,6 +117,55 @@ export function GuestInfoStep({
   }, {
     message: t("guestInfo.validation.recipientDetailsRequired"),
     path: ["recipientFirstName"]
+  }).refine((data) => {
+    // Additional validation for recipient first name
+    if (data.isBookingForSomeoneElse && (!data.recipientFirstName || !data.recipientFirstName.trim())) {
+      return false
+    }
+    return true
+  }, {
+    message: "שם פרטי של מקבל הטיפול נדרש",
+    path: ["recipientFirstName"]
+  }).refine((data) => {
+    // Additional validation for recipient last name
+    if (data.isBookingForSomeoneElse && (!data.recipientLastName || !data.recipientLastName.trim())) {
+      return false
+    }
+    return true
+  }, {
+    message: "שם משפחה של מקבל הטיפול נדרש",
+    path: ["recipientLastName"]
+  }).refine((data) => {
+    // Additional validation for recipient phone
+    if (data.isBookingForSomeoneElse && (!data.recipientPhone || !data.recipientPhone.trim())) {
+      return false
+    }
+    return true
+  }, {
+    message: "טלפון מקבל הטיפול נדרש",
+    path: ["recipientPhone"]
+  }).refine((data) => {
+    // Additional validation for recipient birth date and gender when required
+    if (data.isBookingForSomeoneElse && !hideRecipientBirthGender) {
+      if (!data.recipientBirthDate) {
+        return false
+      }
+    }
+    return true
+  }, {
+    message: "תאריך לידה של מקבל הטיפול נדרש",
+    path: ["recipientBirthDate"]
+  }).refine((data) => {
+    // Additional validation for recipient gender when required
+    if (data.isBookingForSomeoneElse && !hideRecipientBirthGender) {
+      if (!data.recipientGender) {
+        return false
+      }
+    }
+    return true
+  }, {
+    message: "מגדר מקבל הטיפול נדרש",
+    path: ["recipientGender"]
   }).refine((data) => {
     // Check age requirement for recipient when booking for someone else
     if (!hideRecipientBirthGender && data.isBookingForSomeoneElse && data.recipientBirthDate) {

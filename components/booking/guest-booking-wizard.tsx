@@ -973,6 +973,36 @@ export default function UniversalBookingWizard({
       return null
     }
 
+    // Validate recipient details if booking for someone else
+    if (guestInfo.isBookingForSomeoneElse) {
+      if (!guestInfo.recipientFirstName?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "שם פרטי של מקבל הטיפול נדרש",
+          description: "אנא מלא את השם הפרטי של מקבל הטיפול",
+        })
+        return null
+      }
+      
+      if (!guestInfo.recipientLastName?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "שם משפחה של מקבל הטיפול נדרש",
+          description: "אנא מלא את שם המשפחה של מקבל הטיפול",
+        })
+        return null
+      }
+      
+      if (!guestInfo.recipientPhone?.trim()) {
+        toast({
+          variant: "destructive",
+          title: "טלפון מקבל הטיפול נדרש",
+          description: "אנא מלא את מספר הטלפון של מקבל הטיפול",
+        })
+        return null
+      }
+    }
+
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
@@ -1070,13 +1100,15 @@ export default function UniversalBookingWizard({
         },
         isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
-          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          ? (guestInfo.recipientFirstName?.trim() && guestInfo.recipientLastName?.trim() 
+              ? `${guestInfo.recipientFirstName.trim()} ${guestInfo.recipientLastName.trim()}`
+              : undefined)
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientEmail
           : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientPhone!
+          ? guestInfo.recipientPhone
           : guestInfo.phone,
         recipientBirthDate: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientBirthDate
@@ -1323,13 +1355,15 @@ export default function UniversalBookingWizard({
         },
         isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
-          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          ? (guestInfo.recipientFirstName?.trim() && guestInfo.recipientLastName?.trim() 
+              ? `${guestInfo.recipientFirstName.trim()} ${guestInfo.recipientLastName.trim()}`
+              : undefined)
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientEmail
           : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientPhone!
+          ? guestInfo.recipientPhone
           : guestInfo.phone,
         recipientBirthDate: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientBirthDate

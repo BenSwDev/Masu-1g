@@ -1,27 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import User, { type IUser, UserRole } from "../../../../../../lib/db/models/user"
-import * as bcrypt from "bcryptjs"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import dbConnect from "@/lib/db/mongoose"
+import User, { type IUser, UserRole } from "@/lib/db/models/user"
+import bcrypt from "bcryptjs"
 import { Types } from "mongoose"
-import {
-  requireAdminSession,
-  connectToDatabase,
-  AdminLogger,
-  handleAdminError,
-  validatePaginationOptions,
-  revalidateAdminPath,
-  createSuccessResult,
-  createErrorResult,
-  createPaginatedResult,
-  serializeMongoObject,
-  validateObjectId,
-  buildSearchQuery,
-  buildSortQuery,
-  type AdminActionResult,
-  type PaginatedResult,
-  type AdminActionOptions
-} from "../../../../../../lib/auth/admin-helpers"
 
 // Types for user management
 export interface UserData {
@@ -37,7 +22,7 @@ export interface UserData {
   phoneVerified?: Date
   createdAt: Date
   updatedAt: Date
-  isActive?: boolean
+  isActive: boolean
 }
 
 export interface CreateUserData {
@@ -61,58 +46,97 @@ export interface UpdateUserData {
   isActive?: boolean
 }
 
-export interface UserFilters extends AdminActionOptions {
+export interface UserFilters {
+  search?: string
   role?: string
   gender?: string
   emailVerified?: boolean
   phoneVerified?: boolean
   isActive?: boolean
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+}
+
+export interface GetUsersResult {
+  users: UserData[]
+  totalUsers: number
+  totalPages: number
+  currentPage: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+export interface ActionResult {
+  success: boolean
+  error?: string
+  data?: any
 }
 
 export interface UserStats {
   totalUsers: number
-  totalAdmins: number
-  totalProfessionals: number
-  totalMembers: number
-  totalPartners: number
   activeUsers: number
+  inactiveUsers: number
   verifiedUsers: number
-  newUsersThisMonth: number
+  unverifiedUsers: number
+  roleStats: {
+    admin: number
+    professional: number
+    member: number
+    partner: number
+    guest: number
+  }
+  genderStats: {
+    male: number
+    female: number
+    other: number
+  }
+  recentRegistrations: number // Last 30 days
+}
+
+/**
+ * Check if user has admin privileges
+ */
+async function requireAdminAuth() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.roles?.includes("admin")) {
+    throw new Error("Unauthorized: Admin access required")
+  }
+  return session
 }
 
 /**
  * Get all users with filters and pagination
  */
-export async function getAllUsers(
-  filters: UserFilters = {}
-): Promise<AdminActionResult<PaginatedResult<UserData>>> {
-  const adminLogger = new AdminLogger("getAllUsers")
-  
+export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    const { page, limit, skip } = validatePaginationOptions(filters)
+    await requireAdminAuth()
+    await dbConnect()
+
     const {
-      role,
-      gender,
+      search = "",
+      role = "",
+      gender = "",
       emailVerified,
       phoneVerified,
       isActive,
-      search,
+      page = 1,
+      limit = 20,
       sortBy = "createdAt",
       sortOrder = "desc"
     } = filters
 
-    adminLogger.info("Fetching users", { filters, page, limit })
-
     // Build query
-    const query: Record<string, any> = {}
+    const query: any = {}
 
     // Search filter
     if (search) {
-      const searchQuery = buildSearchQuery(search, ["name", "email", "phone"])
-      Object.assign(query, searchQuery)
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ]
     }
 
     // Role filter
@@ -142,103 +166,91 @@ export async function getAllUsers(
 
     // Get total count
     const totalUsers = await User.countDocuments(query)
-
-    adminLogger.info("Found users matching query", { totalUsers, query })
+    const totalPages = Math.ceil(totalUsers / limit)
+    const skip = (page - 1) * limit
 
     // Get users with pagination and sorting
-    const sortQuery = buildSortQuery(sortBy, sortOrder)
     const users = await User.find(query)
       .select("-password") // Exclude password
-      .sort(sortQuery)
+      .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
       .skip(skip)
       .limit(limit)
       .lean()
 
-    // Serialize users
-    const serializedUsers = users.map(user => ({
-      ...serializeMongoObject<any>(user),
-      _id: user._id.toString()
-    })) as UserData[]
-
-    adminLogger.info("Successfully fetched users", { count: serializedUsers.length })
-    return createPaginatedResult(serializedUsers, totalUsers, page, limit)
+    return {
+      users: users.map(user => ({
+        ...user,
+        _id: user._id.toString(),
+        isActive: user.isActive ?? true // Default to true if not set
+      })) as UserData[],
+      totalUsers,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
   } catch (error) {
-    return handleAdminError(error, "getAllUsers")
+    console.error("Error getting users:", error)
+    throw new Error(error instanceof Error ? error.message : "Failed to get users")
   }
 }
 
 /**
  * Get user by ID
  */
-export async function getUserById(userId: string): Promise<AdminActionResult<UserData>> {
-  const adminLogger = new AdminLogger("getUserById")
-  
+export async function getUserById(userId: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(userId, "מזהה משתמש")
-    
-    adminLogger.info("Fetching user by ID", { userId })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
 
     const user = await User.findById(userId).select("-password").lean()
     
     if (!user) {
-      adminLogger.warn("User not found", { userId })
-      return createErrorResult("משתמש לא נמצא")
+      return { success: false, error: "User not found" }
     }
 
-    const serializedUser = {
-      ...serializeMongoObject<any>(user),
-      _id: user._id.toString()
-    } as UserData
-
-    adminLogger.info("Successfully fetched user", { userId })
-    return createSuccessResult(serializedUser)
+    return {
+      success: true,
+      data: {
+        ...user,
+        _id: user._id.toString(),
+        isActive: user.isActive ?? true
+      } as UserData
+    }
   } catch (error) {
-    return handleAdminError(error, "getUserById")
+    console.error("Error getting user:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get user" }
   }
 }
 
 /**
  * Create new user
  */
-export async function createUser(userData: CreateUserData): Promise<AdminActionResult<UserData>> {
-  const adminLogger = new AdminLogger("createUser")
-  
+export async function createUser(userData: CreateUserData): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Creating new user", { phone: userData.phone, roles: userData.roles })
+    await requireAdminAuth()
+    await dbConnect()
 
     // Validate required fields
-    if (!userData.name?.trim()) {
-      return createErrorResult("שם נדרש")
-    }
-    if (!userData.phone?.trim()) {
-      return createErrorResult("טלפון נדרש")
-    }
-    if (!userData.password?.trim()) {
-      return createErrorResult("סיסמה נדרשת")
-    }
-    if (!userData.roles?.length) {
-      return createErrorResult("לפחות תפקיד אחד נדרש")
+    if (!userData.name || !userData.phone || !userData.password) {
+      return { success: false, error: "Missing required fields" }
     }
 
     // Check if phone already exists
     const existingUser = await User.findOne({ phone: userData.phone })
     if (existingUser) {
-      adminLogger.warn("User with phone already exists", { phone: userData.phone })
-      return createErrorResult("משתמש עם מספר טלפון זה כבר קיים")
+      return { success: false, error: "משתמש עם מספר טלפון זה כבר קיים במערכת" }
     }
 
     // Check if email already exists (if provided)
     if (userData.email) {
-      const existingEmailUser = await User.findOne({ email: userData.email })
-      if (existingEmailUser) {
-        adminLogger.warn("User with email already exists", { email: userData.email })
-        return createErrorResult("משתמש עם כתובת מייל זו כבר קיים")
+      const existingEmail = await User.findOne({ email: userData.email })
+      if (existingEmail) {
+        return { success: false, error: "משתמש עם כתובת מייל זו כבר קיים במערכת" }
       }
     }
 
@@ -246,280 +258,360 @@ export async function createUser(userData: CreateUserData): Promise<AdminActionR
     const hashedPassword = await bcrypt.hash(userData.password, 12)
 
     // Create user
-    const newUser = new User({
-      ...userData,
+    const user = new User({
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
       password: hashedPassword,
+      gender: userData.gender,
+      dateOfBirth: userData.dateOfBirth,
+      roles: userData.roles,
       isActive: true,
-      activeRole: userData.roles[0] // Set first role as active
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
 
-    await newUser.save()
-    revalidateAdminPath("/dashboard/admin/users")
+    await user.save()
 
-    const serializedUser = {
-      ...serializeMongoObject<any>(newUser.toObject()),
-      _id: newUser._id.toString()
-    } as UserData
+    revalidatePath("/dashboard/admin/users")
 
-    adminLogger.info("Successfully created user", { userId: newUser._id.toString() })
-    return createSuccessResult(serializedUser)
+    return {
+      success: true,
+      data: {
+        ...user.toObject(),
+        _id: user._id.toString(),
+        password: undefined // Don't return password
+      }
+    }
   } catch (error) {
-    return handleAdminError(error, "createUser")
+    console.error("Error creating user:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create user" }
   }
 }
 
 /**
  * Update user
  */
-export async function updateUser(
-  userId: string, 
-  userData: UpdateUserData
-): Promise<AdminActionResult<UserData>> {
-  const adminLogger = new AdminLogger("updateUser")
-  
+export async function updateUser(userId: string, userData: UpdateUserData): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(userId, "מזהה משתמש")
-    
-    adminLogger.info("Updating user", { userId, updates: Object.keys(userData) })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
 
     const user = await User.findById(userId)
     if (!user) {
-      adminLogger.warn("User not found for update", { userId })
-      return createErrorResult("משתמש לא נמצא")
+      return { success: false, error: "User not found" }
     }
 
     // Check if phone is being changed and already exists
     if (userData.phone && userData.phone !== user.phone) {
       const existingUser = await User.findOne({ phone: userData.phone, _id: { $ne: userId } })
       if (existingUser) {
-        adminLogger.warn("Phone already exists for another user", { phone: userData.phone })
-        return createErrorResult("מספר טלפון זה כבר קיים במערכת")
+        return { success: false, error: "משתמש עם מספר טלפון זה כבר קיים במערכת" }
       }
     }
 
     // Check if email is being changed and already exists
     if (userData.email && userData.email !== user.email) {
-      const existingUser = await User.findOne({ email: userData.email, _id: { $ne: userId } })
-      if (existingUser) {
-        adminLogger.warn("Email already exists for another user", { email: userData.email })
-        return createErrorResult("כתובת מייל זו כבר קיימת במערכת")
+      const existingEmail = await User.findOne({ email: userData.email, _id: { $ne: userId } })
+      if (existingEmail) {
+        return { success: false, error: "משתמש עם כתובת מייל זו כבר קיים במערכת" }
       }
     }
 
-    // Update user fields
-    Object.keys(userData).forEach(key => {
-      if (userData[key as keyof UpdateUserData] !== undefined) {
-        (user as any)[key] = userData[key as keyof UpdateUserData]
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        ...userData,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    ).select("-password")
+
+    revalidatePath("/dashboard/admin/users")
+
+    return {
+      success: true,
+      data: {
+        ...updatedUser?.toObject(),
+        _id: updatedUser?._id.toString()
       }
-    })
-
-    await user.save()
-    revalidateAdminPath("/dashboard/admin/users")
-
-    const serializedUser = {
-      ...serializeMongoObject<any>(user.toObject()),
-      _id: user._id.toString()
-    } as UserData
-
-    adminLogger.info("Successfully updated user", { userId })
-    return createSuccessResult(serializedUser)
+    }
   } catch (error) {
-    return handleAdminError(error, "updateUser")
+    console.error("Error updating user:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update user" }
   }
 }
 
 /**
- * Delete user
+ * Delete user (soft delete by setting isActive to false)
  */
-export async function deleteUser(userId: string): Promise<AdminActionResult<boolean>> {
-  const adminLogger = new AdminLogger("deleteUser")
-  
+export async function deleteUser(userId: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(userId, "מזהה משתמש")
-    
-    adminLogger.info("Deleting user", { userId })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
 
     const user = await User.findById(userId)
     if (!user) {
-      adminLogger.warn("User not found for deletion", { userId })
-      return createErrorResult("משתמש לא נמצא")
+      return { success: false, error: "User not found" }
     }
 
-    // Check if user has critical data that prevents deletion
-    // This is where you'd add business logic checks
+    // Don't allow deleting admin users
+    if (user.roles.includes("admin")) {
+      return { success: false, error: "לא ניתן למחוק משתמש מנהל" }
+    }
+
+    // Soft delete by setting isActive to false
+    await User.findByIdAndUpdate(userId, { 
+      isActive: false,
+      updatedAt: new Date()
+    })
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting user:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete user" }
+  }
+}
+
+/**
+ * Permanently delete user (use with caution)
+ */
+export async function permanentlyDeleteUser(userId: string): Promise<ActionResult> {
+  try {
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, error: "User not found" }
+    }
+
+    // Don't allow deleting admin users
+    if (user.roles.includes("admin")) {
+      return { success: false, error: "לא ניתן למחוק משתמש מנהל" }
+    }
 
     await User.findByIdAndDelete(userId)
-    revalidateAdminPath("/dashboard/admin/users")
 
-    adminLogger.info("Successfully deleted user", { userId })
-    return createSuccessResult(true)
+    revalidatePath("/dashboard/admin/users")
+
+    return { success: true }
   } catch (error) {
-    return handleAdminError(error, "deleteUser")
+    console.error("Error permanently deleting user:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to permanently delete user" }
   }
 }
 
 /**
  * Reset user password
  */
-export async function resetUserPassword(
-  userId: string, 
-  newPassword: string = "User123!"
-): Promise<AdminActionResult<boolean>> {
-  const adminLogger = new AdminLogger("resetUserPassword")
-  
+export async function resetUserPassword(userId: string, newPassword: string = "User123!"): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(userId, "מזהה משתמש")
-    
-    if (!newPassword?.trim()) {
-      return createErrorResult("סיסמה חדשה נדרשת")
-    }
+    await requireAdminAuth()
+    await dbConnect()
 
-    adminLogger.info("Resetting user password", { userId })
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
 
     const user = await User.findById(userId)
     if (!user) {
-      adminLogger.warn("User not found for password reset", { userId })
-      return createErrorResult("משתמש לא נמצא")
+      return { success: false, error: "User not found" }
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12)
-    user.password = hashedPassword
-    await user.save()
+    
+    await User.findByIdAndUpdate(userId, { 
+      password: hashedPassword,
+      updatedAt: new Date()
+    })
 
-    revalidateAdminPath("/dashboard/admin/users")
+    revalidatePath("/dashboard/admin/users")
 
-    adminLogger.info("Successfully reset user password", { userId })
-    return createSuccessResult(true)
+    return {
+      success: true,
+      data: { newPassword }
+    }
   } catch (error) {
-    return handleAdminError(error, "resetUserPassword")
+    console.error("Error resetting password:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to reset password" }
   }
 }
 
 /**
  * Toggle user role
  */
-export async function toggleUserRole(
-  userId: string, 
-  role: string
-): Promise<AdminActionResult<UserData>> {
-  const adminLogger = new AdminLogger("toggleUserRole")
-  
+export async function toggleUserRole(userId: string, role: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(userId, "מזהה משתמש")
-    
-    if (!role?.trim()) {
-      return createErrorResult("תפקיד נדרש")
-    }
+    await requireAdminAuth()
+    await dbConnect()
 
-    adminLogger.info("Toggling user role", { userId, role })
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
 
     const user = await User.findById(userId)
     if (!user) {
-      adminLogger.warn("User not found for role toggle", { userId })
-      return createErrorResult("משתמש לא נמצא")
+      return { success: false, error: "User not found" }
     }
 
-    // Toggle role
-    if (user.roles.includes(role as any)) {
-      // Remove role (but ensure at least one role remains)
-      if (user.roles.length > 1) {
-        user.roles = user.roles.filter(r => r !== role)
-        // Update active role if it was the removed role
-        if (user.activeRole === role) {
-          user.activeRole = user.roles[0]
-        }
-      } else {
-        adminLogger.warn("Cannot remove last role from user", { userId, role })
-        return createErrorResult("לא ניתן להסיר את התפקיד האחרון של המשתמש")
+    const hasRole = user.roles.includes(role as any)
+    let updatedRoles = [...user.roles]
+
+    if (hasRole) {
+      // Remove role
+      updatedRoles = updatedRoles.filter(r => r !== role)
+      
+      // Ensure user has at least one role
+      if (updatedRoles.length === 0) {
+        updatedRoles = ["member"]
       }
     } else {
       // Add role
-      user.roles.push(role as any)
+      updatedRoles.push(role as any)
     }
 
-    await user.save()
-    revalidateAdminPath("/dashboard/admin/users")
+    await User.findByIdAndUpdate(userId, { 
+      roles: updatedRoles,
+      updatedAt: new Date()
+    })
 
-    const serializedUser = {
-      ...serializeMongoObject<any>(user.toObject()),
-      _id: user._id.toString()
-    } as UserData
+    revalidatePath("/dashboard/admin/users")
 
-    adminLogger.info("Successfully toggled user role", { userId, role })
-    return createSuccessResult(serializedUser)
+    return { success: true, data: { roles: updatedRoles } }
   } catch (error) {
-    return handleAdminError(error, "toggleUserRole")
+    console.error("Error toggling user role:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to toggle user role" }
+  }
+}
+
+/**
+ * Toggle user active status
+ */
+export async function toggleUserStatus(userId: string): Promise<ActionResult> {
+  try {
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(userId)) {
+      return { success: false, error: "Invalid user ID" }
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, error: "User not found" }
+    }
+
+    // Don't allow deactivating admin users
+    if (user.roles.includes("admin")) {
+      return { success: false, error: "לא ניתן לבטל הפעלה של משתמש מנהל" }
+    }
+
+    const newStatus = !user.isActive
+    
+    await User.findByIdAndUpdate(userId, { 
+      isActive: newStatus,
+      updatedAt: new Date()
+    })
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { success: true, data: { isActive: newStatus } }
+  } catch (error) {
+    console.error("Error toggling user status:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to toggle user status" }
   }
 }
 
 /**
  * Get user statistics
  */
-export async function getUserStats(): Promise<AdminActionResult<UserStats>> {
-  const adminLogger = new AdminLogger("getUserStats")
-  
+export async function getUserStats(): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching user statistics")
+    await requireAdminAuth()
+    await dbConnect()
 
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Run all queries in parallel for better performance
     const [
       totalUsers,
-      totalAdmins,
-      totalProfessionals,
-      totalMembers,
-      totalPartners,
       activeUsers,
-      verifiedUsers,
-      newUsersThisMonth
+      verifiedEmailUsers,
+      verifiedPhoneUsers,
+      recentUsers,
+      roleStats,
+      genderStats
     ] = await Promise.all([
       User.countDocuments({}),
-      User.countDocuments({ roles: { $in: [UserRole.ADMIN] } }),
-      User.countDocuments({ roles: { $in: [UserRole.PROFESSIONAL] } }),
-      User.countDocuments({ roles: { $in: [UserRole.MEMBER] } }),
-      User.countDocuments({ roles: { $in: [UserRole.PARTNER] } }),
-      User.countDocuments({ isActive: true }),
-      User.countDocuments({ 
-        $or: [
-          { emailVerified: { $exists: true, $ne: null } },
-          { phoneVerified: { $exists: true, $ne: null } }
-        ]
-      }),
-      User.countDocuments({ createdAt: { $gte: startOfMonth } })
+      User.countDocuments({ isActive: { $ne: false } }),
+      User.countDocuments({ emailVerified: { $exists: true, $ne: null } }),
+      User.countDocuments({ phoneVerified: { $exists: true, $ne: null } }),
+      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+      User.aggregate([
+        { $unwind: "$roles" },
+        { $group: { _id: "$roles", count: { $sum: 1 } } }
+      ]),
+      User.aggregate([
+        { $group: { _id: "$gender", count: { $sum: 1 } } }
+      ])
     ])
+
+    // Process role stats
+    const roleStatsMap = {
+      admin: 0,
+      professional: 0,
+      member: 0,
+      partner: 0,
+      guest: 0
+    }
+    roleStats.forEach((stat: any) => {
+      if (stat._id in roleStatsMap) {
+        roleStatsMap[stat._id as keyof typeof roleStatsMap] = stat.count
+      }
+    })
+
+    // Process gender stats
+    const genderStatsMap = {
+      male: 0,
+      female: 0,
+      other: 0
+    }
+    genderStats.forEach((stat: any) => {
+      if (stat._id in genderStatsMap) {
+        genderStatsMap[stat._id as keyof typeof genderStatsMap] = stat.count
+      }
+    })
 
     const stats: UserStats = {
       totalUsers,
-      totalAdmins,
-      totalProfessionals,
-      totalMembers,
-      totalPartners,
       activeUsers,
-      verifiedUsers,
-      newUsersThisMonth
+      inactiveUsers: totalUsers - activeUsers,
+      verifiedUsers: Math.max(verifiedEmailUsers, verifiedPhoneUsers),
+      unverifiedUsers: totalUsers - Math.max(verifiedEmailUsers, verifiedPhoneUsers),
+      roleStats: roleStatsMap,
+      genderStats: genderStatsMap,
+      recentRegistrations: recentUsers
     }
 
-    adminLogger.info("Successfully fetched user statistics", stats)
-    return createSuccessResult(stats)
+    return { success: true, data: stats }
   } catch (error) {
-    return handleAdminError(error, "getUserStats")
+    console.error("Error getting user stats:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get user stats" }
   }
 } 

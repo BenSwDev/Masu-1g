@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
@@ -40,6 +40,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/common/ui/tooltip"
 import { 
   Search, 
   Plus, 
@@ -52,11 +58,26 @@ import {
   Crown,
   Briefcase,
   User,
+  Users,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Filter,
+  RefreshCw,
+  Download,
+  Eye,
+  EyeOff,
+  Settings,
+  Mail,
+  Phone,
+  Calendar,
+  Activity,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { format } from "date-fns"
+import { he } from "date-fns/locale"
 import { 
   type UserData, 
   type GetUsersResult, 
@@ -64,7 +85,8 @@ import {
   getAllUsers,
   deleteUser,
   resetUserPassword,
-  toggleUserRole
+  toggleUserRole,
+  toggleUserStatus
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 import UserCreateDialog from "./user-create-dialog"
 import UserEditDialog from "./user-edit-dialog"
@@ -72,13 +94,11 @@ import UserEditDialog from "./user-edit-dialog"
 interface UserManagementClientProps {
   initialData: GetUsersResult
   initialFilters: UserFilters
-  stats?: any
 }
 
 export default function UserManagementClient({ 
   initialData, 
-  initialFilters,
-  stats 
+  initialFilters
 }: UserManagementClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -90,6 +110,8 @@ export default function UserManagementClient({
   const [totalUsers, setTotalUsers] = useState(initialData.totalUsers)
   const [totalPages, setTotalPages] = useState(initialData.totalPages)
   const [currentPage, setCurrentPage] = useState(initialData.currentPage)
+  const [hasNextPage, setHasNextPage] = useState(initialData.hasNextPage)
+  const [hasPrevPage, setHasPrevPage] = useState(initialData.hasPrevPage)
   const [filters, setFilters] = useState<UserFilters>(initialFilters)
   const [loading, setLoading] = useState(false)
 
@@ -103,9 +125,15 @@ export default function UserManagementClient({
   // Action states
   const [resettingPassword, setResettingPassword] = useState<string | null>(null)
   const [togglingRole, setTogglingRole] = useState<string | null>(null)
+  const [togglingStatus, setTogglingStatus] = useState<string | null>(null)
+
+  // Memoized values
+  const displayUsers = useMemo(() => {
+    return users.filter(user => user.isActive !== false || filters.isActive === false)
+  }, [users, filters.isActive])
 
   // Update URL and fetch data
-  const updateFilters = async (newFilters: Partial<UserFilters>) => {
+  const updateFilters = useCallback(async (newFilters: Partial<UserFilters>) => {
     const updatedFilters = { ...filters, ...newFilters, page: 1 }
     setFilters(updatedFilters)
 
@@ -121,9 +149,11 @@ export default function UserManagementClient({
     
     // Fetch new data
     await fetchUsers(updatedFilters)
-  }
+  }, [filters, router])
 
-  const fetchUsers = async (searchFilters: UserFilters = filters) => {
+  const fetchUsers = useCallback(async (searchFilters: UserFilters = filters) => {
+    if (loading) return
+    
     setLoading(true)
     try {
       const result = await getAllUsers(searchFilters)
@@ -131,6 +161,8 @@ export default function UserManagementClient({
       setTotalUsers(result.totalUsers)
       setTotalPages(result.totalPages)
       setCurrentPage(result.currentPage)
+      setHasNextPage(result.hasNextPage)
+      setHasPrevPage(result.hasPrevPage)
     } catch (error) {
       toast({
         variant: "destructive",
@@ -140,9 +172,9 @@ export default function UserManagementClient({
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, loading, toast])
 
-  const handlePageChange = async (page: number) => {
+  const handlePageChange = useCallback(async (page: number) => {
     const newFilters = { ...filters, page }
     setFilters(newFilters)
     
@@ -151,7 +183,7 @@ export default function UserManagementClient({
     router.push(`/dashboard/admin/users?${params.toString()}`)
     
     await fetchUsers(newFilters)
-  }
+  }, [filters, searchParams, router, fetchUsers])
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return
@@ -162,21 +194,21 @@ export default function UserManagementClient({
         if (result.success) {
           toast({
             title: "הצלחה",
-            description: "המשתמש נמחק בהצלחה"
+            description: "המשתמש הוסתר בהצלחה"
           })
           await fetchUsers()
         } else {
           toast({
             variant: "destructive",
             title: "שגיאה",
-            description: result.error || "אירעה שגיאה במחיקת המשתמש"
+            description: result.error || "אירעה שגיאה בהסתרת המשתמש"
           })
         }
       } catch (error) {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "אירעה שגיאה במחיקת המשתמש"
+          description: "אירעה שגיאה בהסתרת המשתמש"
         })
       } finally {
         setDeleteDialogOpen(false)
@@ -192,7 +224,8 @@ export default function UserManagementClient({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: `הסיסמה אופסה ל: ${result.data.newPassword}`
+          description: `הסיסמה אופסה ל: ${result.data.newPassword}`,
+          duration: 10000
         })
       } else {
         toast({
@@ -212,6 +245,34 @@ export default function UserManagementClient({
     }
   }
 
+  const handleToggleUserStatus = async (userId: string) => {
+    setTogglingStatus(userId)
+    try {
+      const result = await toggleUserStatus(userId)
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: result.data.isActive ? "המשתמש הופעל בהצלחה" : "המשתמש בוטל בהצלחה"
+        })
+        await fetchUsers()
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "אירעה שגיאה בשינוי סטטוס המשתמש"
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "אירעה שגיאה בשינוי סטטוס המשתמש"
+      })
+    } finally {
+      setTogglingStatus(null)
+    }
+  }
+
   const handleToggleRole = async (userId: string, role: string) => {
     setTogglingRole(userId)
     try {
@@ -219,21 +280,21 @@ export default function UserManagementClient({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "התפקיד עודכן בהצלחה"
+          description: "תפקיד המשתמש עודכן בהצלחה"
         })
         await fetchUsers()
       } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "אירעה שגיאה בעדכון התפקיד"
+          description: result.error || "אירעה שגיאה בעדכון תפקיד המשתמש"
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "אירעה שגיאה בעדכון התפקיד"
+        description: "אירעה שגיאה בעדכון תפקיד המשתמש"
       })
     } finally {
       setTogglingRole(null)
@@ -241,303 +302,459 @@ export default function UserManagementClient({
   }
 
   const getRoleBadge = (roles: string[]) => {
-    const roleConfig = {
-      admin: { label: "מנהל", variant: "destructive" as const, icon: Crown },
-      professional: { label: "מטפל", variant: "default" as const, icon: Briefcase },
-      member: { label: "חבר", variant: "secondary" as const, icon: User },
-      partner: { label: "שותף", variant: "outline" as const, icon: Shield }
-    }
-
     return roles.map(role => {
+      const roleConfig = {
+        admin: { label: "מנהל", icon: Crown, variant: "default" as const, color: "bg-amber-100 text-amber-800 border-amber-200" },
+        professional: { label: "מטפל", icon: Briefcase, variant: "secondary" as const, color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+        member: { label: "חבר", icon: User, variant: "outline" as const, color: "bg-blue-100 text-blue-800 border-blue-200" },
+        partner: { label: "שותף", icon: Shield, variant: "outline" as const, color: "bg-indigo-100 text-indigo-800 border-indigo-200" }
+      }
+      
       const config = roleConfig[role as keyof typeof roleConfig]
       if (!config) return null
       
       const Icon = config.icon
+      
       return (
-        <Badge key={role} variant={config.variant} className="flex items-center gap-1">
-          <Icon className="w-3 h-3" />
+        <Badge key={role} className={`text-xs ${config.color} hover:opacity-80`}>
+          <Icon className="w-3 h-3 mr-1" />
           {config.label}
         </Badge>
       )
     }).filter(Boolean)
   }
 
+  const getStatusBadge = (user: UserData) => {
+    const isActive = user.isActive !== false
+    
+    if (isActive) {
+      return (
+        <Badge className="text-xs bg-green-100 text-green-800 border-green-200">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          פעיל
+        </Badge>
+      )
+    } else {
+      return (
+        <Badge className="text-xs bg-red-100 text-red-800 border-red-200">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          לא פעיל
+        </Badge>
+      )
+    }
+  }
+
+  const getVerificationBadges = (user: UserData) => {
+    return (
+      <div className="flex gap-1">
+        {user.emailVerified ? (
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+            <Mail className="w-3 h-3 mr-1" />
+            מייל ✓
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500 border-gray-200">
+            <Mail className="w-3 h-3 mr-1" />
+            מייל
+          </Badge>
+        )}
+        {user.phoneVerified ? (
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+            <Phone className="w-3 h-3 mr-1" />
+            טלפון ✓
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500 border-gray-200">
+            <Phone className="w-3 h-3 mr-1" />
+            טלפון
+          </Badge>
+        )}
+      </div>
+    )
+  }
+
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("he-IL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
+    return format(new Date(date), "dd/MM/yyyy", { locale: he })
+  }
+
+  const clearFilters = () => {
+    updateFilters({
+      search: "",
+      role: "",
+      gender: "",
+      emailVerified: undefined,
+      phoneVerified: undefined,
+      isActive: undefined
     })
   }
 
   return (
-    <div className="space-y-6">
-      {/* Filters and Actions */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>רשימת משתמשים</CardTitle>
-            <Button onClick={() => setCreateDialogOpen(true)} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              משתמש חדש
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="חיפוש לפי שם, מייל או טלפון..."
-                value={filters.search || ""}
-                onChange={(e) => updateFilters({ search: e.target.value })}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Role Filter */}
-            <Select
-              value={filters.role || ""}
-              onValueChange={(value) => updateFilters({ role: value || undefined })}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="סנן לפי תפקיד" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">כל התפקידים</SelectItem>
-                <SelectItem value="admin">מנהל</SelectItem>
-                <SelectItem value="professional">מטפל</SelectItem>
-                <SelectItem value="member">חבר</SelectItem>
-                <SelectItem value="partner">שותף</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Gender Filter */}
-            <Select
-              value={filters.gender || ""}
-              onValueChange={(value) => updateFilters({ gender: value || undefined })}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="סנן לפי מגדר" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">כל המגדרים</SelectItem>
-                <SelectItem value="male">זכר</SelectItem>
-                <SelectItem value="female">נקבה</SelectItem>
-                <SelectItem value="other">אחר</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Users Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>משתמש</TableHead>
-                  <TableHead>פרטי קשר</TableHead>
-                  <TableHead>תפקידים</TableHead>
-                  <TableHead>אימותים</TableHead>
-                  <TableHead>תאריך הצטרפות</TableHead>
-                  <TableHead className="w-[100px]">פעולות</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={6}>
-                        <div className="animate-pulse h-12 bg-gray-200 rounded"></div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      לא נמצאו משתמשים
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((user) => (
-                    <TableRow key={user._id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.gender === "male" ? "זכר" : user.gender === "female" ? "נקבה" : "אחר"}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm">{formatPhoneForDisplay(user.phone)}</div>
-                          {user.email && (
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {getRoleBadge(user.roles)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {user.emailVerified ? (
-                            <Badge variant="default" className="text-xs">
-                              <UserCheck className="w-3 h-3 mr-1" />
-                              מייל
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              <UserX className="w-3 h-3 mr-1" />
-                              מייל
-                            </Badge>
-                          )}
-                          {user.phoneVerified ? (
-                            <Badge variant="default" className="text-xs">
-                              <UserCheck className="w-3 h-3 mr-1" />
-                              טלפון
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              <UserX className="w-3 h-3 mr-1" />
-                              טלפון
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDate(user.createdAt)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>פעולות</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingUser(user)
-                                setEditDialogOpen(true)
-                              }}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              עריכה
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleResetPassword(user._id)}
-                              disabled={resettingPassword === user._id}
-                            >
-                              <Key className="mr-2 h-4 w-4" />
-                              {resettingPassword === user._id ? "מאפס..." : "איפוס סיסמה"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {!user.roles.includes("admin") && (
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => {
-                                  setDeletingUser(user)
-                                  setDeleteDialogOpen(true)
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                מחיקה
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                מציג {((currentPage - 1) * (filters.limit || 20)) + 1} עד {Math.min(currentPage * (filters.limit || 20), totalUsers)} מתוך {totalUsers} משתמשים
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Filters and Actions */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  רשימת משתמשים
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  מציג {displayUsers.length} מתוך {totalUsers} משתמשים
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1 || loading}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => fetchUsers()}
+                  disabled={loading}
+                  className="flex items-center gap-2"
                 >
-                  <ChevronRight className="w-4 h-4" />
-                  הקודם
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  רענן
                 </Button>
-                <span className="text-sm font-medium">
-                  עמוד {currentPage} מתוך {totalPages}
-                </span>
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages || loading}
+                  className="flex items-center gap-2"
                 >
-                  הבא
-                  <ChevronLeft className="w-4 h-4" />
+                  <Download className="w-4 h-4" />
+                  ייצא
+                </Button>
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)} 
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  משתמש חדש
                 </Button>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="חיפוש לפי שם, מייל או טלפון..."
+                  value={filters.search || ""}
+                  onChange={(e) => updateFilters({ search: e.target.value })}
+                  className="pl-10"
+                />
+              </div>
 
-      {/* Create User Dialog */}
-      <UserCreateDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={() => {
-          setCreateDialogOpen(false)
-          fetchUsers()
-        }}
-      />
+              {/* Filters */}
+              <div className="flex flex-wrap gap-2">
+                {/* Role Filter */}
+                <Select
+                  value={filters.role || ""}
+                  onValueChange={(value) => updateFilters({ role: value || undefined })}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="תפקיד" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">כל התפקידים</SelectItem>
+                    <SelectItem value="admin">מנהל</SelectItem>
+                    <SelectItem value="professional">מטפל</SelectItem>
+                    <SelectItem value="member">חבר</SelectItem>
+                    <SelectItem value="partner">שותף</SelectItem>
+                  </SelectContent>
+                </Select>
 
-      {/* Edit User Dialog */}
-      <UserEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        user={editingUser}
-        onSuccess={() => {
-          setEditDialogOpen(false)
-          setEditingUser(null)
-          fetchUsers()
-        }}
-      />
+                {/* Gender Filter */}
+                <Select
+                  value={filters.gender || ""}
+                  onValueChange={(value) => updateFilters({ gender: value || undefined })}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="מגדר" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">כל המגדרים</SelectItem>
+                    <SelectItem value="male">זכר</SelectItem>
+                    <SelectItem value="female">נקבה</SelectItem>
+                    <SelectItem value="other">אחר</SelectItem>
+                  </SelectContent>
+                </Select>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-            <AlertDialogDescription>
-              פעולה זו תמחק את המשתמש {deletingUser?.name} לצמיתות.
-              לא ניתן לבטל פעולה זו.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteUser}
-              disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isPending ? "מוחק..." : "מחק"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+                {/* Status Filter */}
+                <Select
+                  value={filters.isActive === undefined ? "" : filters.isActive.toString()}
+                  onValueChange={(value) => updateFilters({ 
+                    isActive: value === "" ? undefined : value === "true" 
+                  })}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="סטטוס" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">כל הסטטוסים</SelectItem>
+                    <SelectItem value="true">פעילים</SelectItem>
+                    <SelectItem value="false">לא פעילים</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Clear Filters */}
+                {(filters.search || filters.role || filters.gender || filters.isActive !== undefined) && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearFilters}
+                    className="text-muted-foreground"
+                  >
+                    נקה מסננים
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>משתמש</TableHead>
+                    <TableHead>פרטי קשר</TableHead>
+                    <TableHead>תפקידים</TableHead>
+                    <TableHead>סטטוס</TableHead>
+                    <TableHead>אימותים</TableHead>
+                    <TableHead>תאריך הצטרפות</TableHead>
+                    <TableHead className="w-[100px]">פעולות</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell colSpan={7}>
+                          <div className="animate-pulse h-12 bg-gray-100 rounded"></div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : displayUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <User className="h-8 w-8 text-muted-foreground" />
+                          <p>לא נמצאו משתמשים</p>
+                          {(filters.search || filters.role || filters.gender) && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters}>
+                              נקה מסננים
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    displayUsers.map((user) => (
+                      <TableRow key={user._id} className={user.isActive === false ? "opacity-60" : ""}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                                {user.name.charAt(0).toUpperCase()}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {user.gender === "male" ? "זכר" : user.gender === "female" ? "נקבה" : "אחר"}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-muted-foreground" />
+                              {formatPhoneForDisplay(user.phone)}
+                            </div>
+                            {user.email && (
+                              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                {user.email}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {getRoleBadge(user.roles)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(user)}
+                        </TableCell>
+                        <TableCell>
+                          {getVerificationBadges(user)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-muted-foreground" />
+                            {formatDate(user.createdAt)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>פעולות</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingUser(user)
+                                  setEditDialogOpen(true)
+                                }}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                עריכה
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem
+                                onClick={() => handleResetPassword(user._id)}
+                                disabled={resettingPassword === user._id}
+                              >
+                                <Key className="mr-2 h-4 w-4" />
+                                {resettingPassword === user._id ? "מאפס..." : "איפוס סיסמה"}
+                              </DropdownMenuItem>
+
+                              {!user.roles.includes("admin") && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  
+                                  <DropdownMenuItem
+                                    onClick={() => handleToggleUserStatus(user._id)}
+                                    disabled={togglingStatus === user._id}
+                                  >
+                                    {user.isActive !== false ? (
+                                      <>
+                                        <EyeOff className="mr-2 h-4 w-4" />
+                                        {togglingStatus === user._id ? "מבטל..." : "בטל הפעלה"}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        {togglingStatus === user._id ? "מפעיל..." : "הפעל"}
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      setDeletingUser(user)
+                                      setDeleteDialogOpen(true)
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    הסתר לצמיתות
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-muted-foreground">
+                  מציג {((currentPage - 1) * (filters.limit || 20)) + 1} עד {Math.min(currentPage * (filters.limit || 20), totalUsers)} מתוך {totalUsers} משתמשים
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!hasPrevPage || loading}
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                    הקודם
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium px-2">
+                      עמוד {currentPage} מתוך {totalPages}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasNextPage || loading}
+                    className="flex items-center gap-1"
+                  >
+                    הבא
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Create User Dialog */}
+        <UserCreateDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={() => {
+            setCreateDialogOpen(false)
+            fetchUsers()
+          }}
+        />
+
+        {/* Edit User Dialog */}
+        <UserEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          user={editingUser}
+          onSuccess={() => {
+            setEditDialogOpen(false)
+            setEditingUser(null)
+            fetchUsers()
+          }}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+              <AlertDialogDescription>
+                פעולה זו תסתיר את המשתמש "{deletingUser?.name}" מהרשימה.
+                המשתמש לא יוכל להתחבר למערכת אך הנתונים שלו יישמרו.
+                <br />
+                <strong>ניתן לבטל פעולה זו בעתיד.</strong>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>ביטול</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteUser}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={isPending}
+              >
+                {isPending ? "מסתיר..." : "הסתר משתמש"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </TooltipProvider>
   )
 } 

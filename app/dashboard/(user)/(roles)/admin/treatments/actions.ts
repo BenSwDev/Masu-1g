@@ -1,63 +1,40 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import Treatment, { type ITreatment, type ITreatmentDuration } from "../../../../../../lib/db/models/treatment"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import dbConnect from "@/lib/db/mongoose"
+import Treatment, { type ITreatment, type ITreatmentDuration } from "@/lib/db/models/treatment"
+import { logger } from "@/lib/logs/logger"
 import { Types } from "mongoose"
-import {
-  requireAdminSession,
-  connectToDatabase,
-  AdminLogger,
-  handleAdminError,
-  validatePaginationOptions,
-  revalidateAdminPath,
-  createSuccessResult,
-  createErrorResult,
-  createPaginatedResult,
-  serializeMongoObject,
-  validateObjectId,
-  buildSearchQuery,
-  buildSortQuery,
-  type AdminActionResult,
-  type PaginatedResult,
-  type AdminActionOptions
-} from "../../../../../../lib/auth/admin-helpers"
 
-// Types
+// Types for treatment management
 export interface TreatmentData {
   _id: string
   name: string
   description?: string
-  category: "massages" | "facial_treatments"
-  isActive: boolean
+  category: string
   pricingType: "fixed" | "duration_based"
   fixedPrice?: number
   fixedProfessionalPrice?: number
   defaultDurationMinutes?: number
-  durations?: Array<{
+  durations: Array<{
     _id: string
     minutes: number
     price: number
     professionalPrice: number
     isActive: boolean
   }>
+  isActive: boolean
   allowTherapistGenderSelection?: boolean
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface TreatmentFilters extends AdminActionOptions {
-  category?: "massages" | "facial_treatments"
-  isActive?: boolean
-  pricingType?: "fixed" | "duration_based"
-  minPrice?: number
-  maxPrice?: number
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface CreateTreatmentData {
   name: string
   description?: string
-  category: "massages" | "facial_treatments"
-  isActive?: boolean
+  category: string
   pricingType: "fixed" | "duration_based"
   fixedPrice?: number
   fixedProfessionalPrice?: number
@@ -66,16 +43,16 @@ export interface CreateTreatmentData {
     minutes: number
     price: number
     professionalPrice: number
-    isActive?: boolean
+    isActive: boolean
   }>
+  isActive?: boolean
   allowTherapistGenderSelection?: boolean
 }
 
 export interface UpdateTreatmentData {
   name?: string
   description?: string
-  category?: "massages" | "facial_treatments"
-  isActive?: boolean
+  category?: string
   pricingType?: "fixed" | "duration_based"
   fixedPrice?: number
   fixedProfessionalPrice?: number
@@ -85,633 +62,560 @@ export interface UpdateTreatmentData {
     minutes: number
     price: number
     professionalPrice: number
-    isActive?: boolean
+    isActive: boolean
   }>
+  isActive?: boolean
   allowTherapistGenderSelection?: boolean
 }
 
-export interface TreatmentStatistics {
+export interface TreatmentFilters {
+  search?: string
+  category?: string
+  pricingType?: string
+  isActive?: boolean
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+}
+
+export interface GetTreatmentsResult {
+  treatments: TreatmentData[]
+  totalTreatments: number
+  totalPages: number
+  currentPage: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+export interface ActionResult {
+  success: boolean
+  error?: string
+  data?: any
+}
+
+export interface TreatmentStats {
   totalTreatments: number
   activeTreatments: number
   inactiveTreatments: number
-  massageTreatments: number
-  facialTreatments: number
-  fixedPricingTreatments: number
-  durationBasedTreatments: number
-  averageFixedPrice: number
-  newTreatmentsThisMonth: number
+  categoryStats: {
+    massages: number
+    facial_treatments: number
+    other: number
+  }
+  pricingTypeStats: {
+    fixed: number
+    duration_based: number
+  }
+  averagePrice: number
+  priceRange: {
+    min: number
+    max: number
+  }
+  recentlyAdded: number // Last 30 days
 }
 
-export interface TreatmentCategory {
-  name: string
-  count: number
+// Authentication helper
+async function requireAdminAuth() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles?.includes("admin")) {
+    throw new Error("Unauthorized: Admin access required")
+  }
+  return session
 }
 
 /**
- * Gets all treatments with filtering, sorting, and pagination
+ * Get all treatments with filtering and pagination
  */
-export async function getTreatments(
-  filters: TreatmentFilters = {}
-): Promise<AdminActionResult<PaginatedResult<TreatmentData>>> {
-  const adminLogger = new AdminLogger("getTreatments")
-  
+export async function getAllTreatments(filters: TreatmentFilters = {}): Promise<GetTreatmentsResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    const { page, limit, skip } = validatePaginationOptions(filters)
+    await requireAdminAuth()
+    await dbConnect()
+
     const {
-      category,
+      search = "",
+      category = "",
+      pricingType = "",
       isActive,
-      pricingType,
-      minPrice,
-      maxPrice,
-      search,
+      page = 1,
+      limit = 20,
       sortBy = "createdAt",
       sortOrder = "desc"
     } = filters
 
-    adminLogger.info("Fetching treatments", { filters, page, limit })
-
     // Build query
-    const query: Record<string, any> = {}
-
-    // Search filter
+    const query: any = {}
+    
     if (search) {
-      const searchQuery = buildSearchQuery(search, ["name", "description", "category"])
-      Object.assign(query, searchQuery)
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } }
+      ]
     }
-
-    // Category filter
+    
     if (category) {
       query.category = category
     }
-
-    // Active status filter
+    
+    if (pricingType) {
+      query.pricingType = pricingType
+    }
+    
     if (typeof isActive === "boolean") {
       query.isActive = isActive
     }
 
-    // Pricing type filter
-    if (pricingType) {
-      query.pricingType = pricingType
+    // Build sort
+    const sort: any = {}
+    sort[sortBy] = sortOrder === "asc" ? 1 : -1
+
+    // Execute queries
+    const [treatments, totalTreatments] = await Promise.all([
+      Treatment.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Treatment.countDocuments(query)
+    ])
+
+    // Transform data
+    const transformedTreatments: TreatmentData[] = treatments.map(treatment => ({
+      ...treatment,
+      _id: treatment._id.toString(),
+      durations: treatment.durations?.map(d => ({
+        ...d,
+        _id: d._id?.toString() || ""
+      })) || []
+    }))
+
+    const totalPages = Math.ceil(totalTreatments / limit)
+    const hasNextPage = page < totalPages
+    const hasPrevPage = page > 1
+
+    return {
+      treatments: transformedTreatments,
+      totalTreatments,
+      totalPages,
+      currentPage: page,
+      hasNextPage,
+      hasPrevPage
     }
-
-    // Price range filters
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      query.$or = [
-        // For fixed pricing
-        {},
-        // For duration-based pricing
-        { "durations.price": {} }
-      ]
-      
-      if (minPrice !== undefined) {
-        query.$or[0].fixedPrice = { $gte: minPrice }
-        query.$or[1]["durations.price"].$gte = minPrice
-      }
-      if (maxPrice !== undefined) {
-        query.$or[0].fixedPrice = { ...query.$or[0].fixedPrice, $lte: maxPrice }
-        query.$or[1]["durations.price"] = { ...query.$or[1]["durations.price"], $lte: maxPrice }
-      }
-    }
-
-    // Get total count
-    const totalTreatments = await Treatment.countDocuments(query)
-
-    adminLogger.info("Found treatments matching query", { totalTreatments, query })
-
-    // Get treatments with pagination and sorting
-    const sortQuery = buildSortQuery(sortBy, sortOrder)
-    const treatments = await Treatment.find(query)
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit)
-      .lean()
-
-    // Process treatments
-    const treatmentsData: TreatmentData[] = treatments.map((treatment: any) => {
-      const serialized = serializeMongoObject<any>(treatment)
-      return {
-        _id: serialized._id.toString(),
-        name: serialized.name,
-        description: serialized.description,
-        category: serialized.category,
-        isActive: serialized.isActive,
-        pricingType: serialized.pricingType,
-        fixedPrice: serialized.fixedPrice,
-        fixedProfessionalPrice: serialized.fixedProfessionalPrice,
-        defaultDurationMinutes: serialized.defaultDurationMinutes,
-        durations: serialized.durations?.map((d: any) => ({
-          _id: d._id?.toString() || new Types.ObjectId().toString(),
-          minutes: d.minutes,
-          price: d.price,
-          professionalPrice: d.professionalPrice,
-          isActive: d.isActive
-        })),
-        allowTherapistGenderSelection: serialized.allowTherapistGenderSelection,
-        createdAt: serialized.createdAt,
-        updatedAt: serialized.updatedAt
-      }
-    })
-
-    adminLogger.info("Successfully fetched treatments", { count: treatmentsData.length })
-    return createPaginatedResult(treatmentsData, totalTreatments, page, limit)
   } catch (error) {
-    return handleAdminError(error, "getTreatments")
+    console.error("Error getting treatments:", error)
+    return {
+      treatments: [],
+      totalTreatments: 0,
+      totalPages: 0,
+      currentPage: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    }
   }
 }
 
 /**
  * Get treatment by ID
  */
-export async function getTreatmentById(treatmentId: string): Promise<AdminActionResult<TreatmentData>> {
-  const adminLogger = new AdminLogger("getTreatmentById")
-  
+export async function getTreatmentById(treatmentId: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(treatmentId, "מזהה טיפול")
-    
-    adminLogger.info("Fetching treatment by ID", { treatmentId })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID" }
+    }
 
     const treatment = await Treatment.findById(treatmentId).lean()
-
+    
     if (!treatment) {
-      adminLogger.warn("Treatment not found", { treatmentId })
-      return createErrorResult("טיפול לא נמצא")
+      return { success: false, error: "Treatment not found" }
     }
 
-    const serialized = serializeMongoObject<any>(treatment)
-    const treatmentData: TreatmentData = {
-      _id: serialized._id.toString(),
-      name: serialized.name,
-      description: serialized.description,
-      category: serialized.category,
-      isActive: serialized.isActive,
-      pricingType: serialized.pricingType,
-      fixedPrice: serialized.fixedPrice,
-      fixedProfessionalPrice: serialized.fixedProfessionalPrice,
-      defaultDurationMinutes: serialized.defaultDurationMinutes,
-      durations: serialized.durations?.map((d: any) => ({
-        _id: d._id?.toString() || new Types.ObjectId().toString(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive
-      })),
-      allowTherapistGenderSelection: serialized.allowTherapistGenderSelection,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
+    return {
+      success: true,
+      data: {
+        ...treatment,
+        _id: treatment._id.toString(),
+        durations: treatment.durations?.map(d => ({
+          ...d,
+          _id: d._id?.toString() || ""
+        })) || []
+      } as TreatmentData
     }
-
-    adminLogger.info("Successfully fetched treatment", { treatmentId })
-    return createSuccessResult(treatmentData)
   } catch (error) {
-    return handleAdminError(error, "getTreatmentById")
+    console.error("Error getting treatment:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get treatment" }
   }
 }
 
 /**
  * Create new treatment
  */
-export async function createTreatment(treatmentData: CreateTreatmentData): Promise<AdminActionResult<TreatmentData>> {
-  const adminLogger = new AdminLogger("createTreatment")
-  
+export async function createTreatment(treatmentData: CreateTreatmentData): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Creating new treatment", { name: treatmentData.name })
+    await requireAdminAuth()
+    await dbConnect()
 
     // Validate required fields
-    if (!treatmentData.name?.trim()) {
-      return createErrorResult("שם הטיפול נדרש")
-    }
-    if (!treatmentData.category) {
-      return createErrorResult("קטגוריה נדרשת")
-    }
-    if (!treatmentData.pricingType) {
-      return createErrorResult("סוג תמחור נדרש")
-    }
-
-    // Validate based on pricing type
-    if (treatmentData.pricingType === "fixed") {
-      if (!treatmentData.fixedPrice || treatmentData.fixedPrice <= 0) {
-        return createErrorResult("מחיר קבוע נדרש ויחייב להיות חיובי")
-      }
-      if (!treatmentData.fixedProfessionalPrice || treatmentData.fixedProfessionalPrice <= 0) {
-        return createErrorResult("מחיר מטפל נדרש ויחייב להיות חיובי")
-      }
-    } else if (treatmentData.pricingType === "duration_based") {
-      if (!treatmentData.durations || treatmentData.durations.length === 0) {
-        return createErrorResult("לפחות משך זמן אחד נדרש עבור תמחור לפי זמן")
-      }
-      
-      // Validate durations
-      for (const duration of treatmentData.durations) {
-        if (!duration.minutes || duration.minutes <= 0) {
-          return createErrorResult("משך זמן חייב להיות חיובי")
-        }
-        if (!duration.price || duration.price <= 0) {
-          return createErrorResult("מחיר חייב להיות חיובי")
-        }
-        if (!duration.professionalPrice || duration.professionalPrice <= 0) {
-          return createErrorResult("מחיר מטפל חייב להיות חיובי")
-        }
-      }
+    if (!treatmentData.name || !treatmentData.category || !treatmentData.pricingType) {
+      return { success: false, error: "Missing required fields" }
     }
 
     // Check if treatment name already exists
     const existingTreatment = await Treatment.findOne({ 
-      name: { $regex: new RegExp(`^${treatmentData.name.trim()}$`, "i") }
+      name: { $regex: new RegExp(`^${treatmentData.name}$`, 'i') }
     })
-
     if (existingTreatment) {
-      adminLogger.warn("Treatment name already exists", { name: treatmentData.name })
-      return createErrorResult("טיפול עם שם זה כבר קיים")
+      return { success: false, error: "טיפול עם שם זה כבר קיים במערכת" }
+    }
+
+    // Validate pricing data
+    if (treatmentData.pricingType === "fixed") {
+      if (!treatmentData.fixedPrice || treatmentData.fixedPrice <= 0) {
+        return { success: false, error: "Fixed price must be greater than 0" }
+      }
+      if (!treatmentData.defaultDurationMinutes || treatmentData.defaultDurationMinutes <= 0) {
+        return { success: false, error: "Default duration must be greater than 0" }
+      }
+    } else if (treatmentData.pricingType === "duration_based") {
+      if (!treatmentData.durations || treatmentData.durations.length === 0) {
+        return { success: false, error: "Duration-based treatments must have at least one duration option" }
+      }
+      for (const duration of treatmentData.durations) {
+        if (duration.minutes <= 0 || duration.price <= 0) {
+          return { success: false, error: "All duration options must have positive minutes and price" }
+        }
+      }
     }
 
     // Create treatment
     const treatment = new Treatment({
-      name: treatmentData.name.trim(),
-      description: treatmentData.description?.trim(),
-      category: treatmentData.category,
-      isActive: treatmentData.isActive !== false,
-      pricingType: treatmentData.pricingType,
-      fixedPrice: treatmentData.fixedPrice,
-      fixedProfessionalPrice: treatmentData.fixedProfessionalPrice,
-      defaultDurationMinutes: treatmentData.defaultDurationMinutes,
-      durations: treatmentData.durations?.map(d => ({
-        _id: new Types.ObjectId(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive !== false
-      })),
-      allowTherapistGenderSelection: treatmentData.allowTherapistGenderSelection || false
+      ...treatmentData,
+      isActive: treatmentData.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
 
     await treatment.save()
-    revalidateAdminPath("/dashboard/admin/treatments")
-    revalidateAdminPath("/our-treatments")
 
-    const serialized = serializeMongoObject<any>(treatment.toObject())
-    const result: TreatmentData = {
-      _id: serialized._id.toString(),
-      name: serialized.name,
-      description: serialized.description,
-      category: serialized.category,
-      isActive: serialized.isActive,
-      pricingType: serialized.pricingType,
-      fixedPrice: serialized.fixedPrice,
-      fixedProfessionalPrice: serialized.fixedProfessionalPrice,
-      defaultDurationMinutes: serialized.defaultDurationMinutes,
-      durations: serialized.durations?.map((d: any) => ({
-        _id: d._id.toString(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive
-      })),
-      allowTherapistGenderSelection: serialized.allowTherapistGenderSelection,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
-    }
+    revalidatePath("/dashboard/admin/treatments")
 
-    adminLogger.info("Successfully created treatment", { treatmentId: result._id })
-    return createSuccessResult(result)
+         return {
+       success: true,
+       data: {
+         ...treatment.toObject(),
+         _id: (treatment._id as any).toString(),
+         durations: treatment.durations?.map(d => ({
+           ...d,
+           _id: d._id?.toString() || ""
+         })) || []
+       }
+     }
   } catch (error) {
-    return handleAdminError(error, "createTreatment")
+    console.error("Error creating treatment:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create treatment" }
   }
 }
 
 /**
  * Update treatment
  */
-export async function updateTreatment(
-  treatmentId: string,
-  treatmentData: UpdateTreatmentData
-): Promise<AdminActionResult<TreatmentData>> {
-  const adminLogger = new AdminLogger("updateTreatment")
-  
+export async function updateTreatment(treatmentId: string, treatmentData: UpdateTreatmentData): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(treatmentId, "מזהה טיפול")
-    
-    adminLogger.info("Updating treatment", { treatmentId, updates: Object.keys(treatmentData) })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID" }
+    }
 
     const treatment = await Treatment.findById(treatmentId)
     if (!treatment) {
-      adminLogger.warn("Treatment not found for update", { treatmentId })
-      return createErrorResult("טיפול לא נמצא")
+      return { success: false, error: "Treatment not found" }
     }
 
     // Check if name is being changed and already exists
     if (treatmentData.name && treatmentData.name !== treatment.name) {
       const existingTreatment = await Treatment.findOne({ 
-        name: { $regex: new RegExp(`^${treatmentData.name.trim()}$`, "i") },
+        name: { $regex: new RegExp(`^${treatmentData.name}$`, 'i') },
         _id: { $ne: treatmentId }
       })
       if (existingTreatment) {
-        adminLogger.warn("Treatment name already exists for another treatment", { name: treatmentData.name })
-        return createErrorResult("שם טיפול זה כבר קיים במערכת")
+        return { success: false, error: "טיפול עם שם זה כבר קיים במערכת" }
       }
     }
 
-    // Validate based on pricing type changes
-    const newPricingType = treatmentData.pricingType || treatment.pricingType
-    
-    if (newPricingType === "fixed") {
-      const newFixedPrice = treatmentData.fixedPrice !== undefined ? treatmentData.fixedPrice : treatment.fixedPrice
-      const newFixedProfessionalPrice = treatmentData.fixedProfessionalPrice !== undefined ? treatmentData.fixedProfessionalPrice : treatment.fixedProfessionalPrice
-      
-      if (!newFixedPrice || newFixedPrice <= 0) {
-        return createErrorResult("מחיר קבוע נדרש ויחייב להיות חיובי")
+    // Validate pricing data if being updated
+    if (treatmentData.pricingType === "fixed") {
+      if (treatmentData.fixedPrice !== undefined && treatmentData.fixedPrice <= 0) {
+        return { success: false, error: "Fixed price must be greater than 0" }
       }
-      if (!newFixedProfessionalPrice || newFixedProfessionalPrice <= 0) {
-        return createErrorResult("מחיר מטפל נדרש ויחייב להיות חיובי")
+      if (treatmentData.defaultDurationMinutes !== undefined && treatmentData.defaultDurationMinutes <= 0) {
+        return { success: false, error: "Default duration must be greater than 0" }
       }
-    } else if (newPricingType === "duration_based") {
-      const newDurations = treatmentData.durations || treatment.durations
-      
-      if (!newDurations || newDurations.length === 0) {
-        return createErrorResult("לפחות משך זמן אחד נדרש עבור תמחור לפי זמן")
+    } else if (treatmentData.pricingType === "duration_based") {
+      if (treatmentData.durations && treatmentData.durations.length === 0) {
+        return { success: false, error: "Duration-based treatments must have at least one duration option" }
       }
-      
-      // Validate durations if provided
       if (treatmentData.durations) {
         for (const duration of treatmentData.durations) {
-          if (!duration.minutes || duration.minutes <= 0) {
-            return createErrorResult("משך זמן חייב להיות חיובי")
-          }
-          if (!duration.price || duration.price <= 0) {
-            return createErrorResult("מחיר חייב להיות חיובי")
-          }
-          if (!duration.professionalPrice || duration.professionalPrice <= 0) {
-            return createErrorResult("מחיר מטפל חייב להיות חיובי")
+          if (duration.minutes <= 0 || duration.price <= 0) {
+            return { success: false, error: "All duration options must have positive minutes and price" }
           }
         }
       }
     }
 
-    // Update treatment fields
-    if (treatmentData.name) {
-      treatment.name = treatmentData.name.trim()
-    }
-    if (treatmentData.description !== undefined) {
-      treatment.description = treatmentData.description?.trim()
-    }
-    if (treatmentData.category) {
-      treatment.category = treatmentData.category
-    }
-    if (typeof treatmentData.isActive === "boolean") {
-      treatment.isActive = treatmentData.isActive
-    }
-    if (treatmentData.pricingType) {
-      treatment.pricingType = treatmentData.pricingType
-    }
-    if (treatmentData.fixedPrice !== undefined) {
-      treatment.fixedPrice = treatmentData.fixedPrice
-    }
-    if (treatmentData.fixedProfessionalPrice !== undefined) {
-      treatment.fixedProfessionalPrice = treatmentData.fixedProfessionalPrice
-    }
-    if (treatmentData.defaultDurationMinutes !== undefined) {
-      treatment.defaultDurationMinutes = treatmentData.defaultDurationMinutes
-    }
-    if (treatmentData.durations) {
-      treatment.durations = treatmentData.durations.map(d => ({
-        _id: d._id ? new Types.ObjectId(d._id) : new Types.ObjectId(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive !== false
-      })) as ITreatmentDuration[]
-    }
-    if (typeof treatmentData.allowTherapistGenderSelection === "boolean") {
-      treatment.allowTherapistGenderSelection = treatmentData.allowTherapistGenderSelection
-    }
+    // Update treatment
+    const updatedTreatment = await Treatment.findByIdAndUpdate(
+      treatmentId,
+      {
+        ...treatmentData,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    ).lean()
 
-    await treatment.save()
+    revalidatePath("/dashboard/admin/treatments")
 
-    revalidateAdminPath("/dashboard/admin/treatments")
-    revalidateAdminPath("/our-treatments")
-
-    const serialized = serializeMongoObject<any>(treatment.toObject())
-    const result: TreatmentData = {
-      _id: serialized._id.toString(),
-      name: serialized.name,
-      description: serialized.description,
-      category: serialized.category,
-      isActive: serialized.isActive,
-      pricingType: serialized.pricingType,
-      fixedPrice: serialized.fixedPrice,
-      fixedProfessionalPrice: serialized.fixedProfessionalPrice,
-      defaultDurationMinutes: serialized.defaultDurationMinutes,
-      durations: serialized.durations?.map((d: any) => ({
-        _id: d._id.toString(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive
-      })),
-      allowTherapistGenderSelection: serialized.allowTherapistGenderSelection,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
+    return {
+      success: true,
+      data: {
+        ...updatedTreatment,
+        _id: updatedTreatment?._id.toString(),
+        durations: updatedTreatment?.durations?.map(d => ({
+          ...d,
+          _id: d._id?.toString() || ""
+        })) || []
+      }
     }
-
-    adminLogger.info("Successfully updated treatment", { treatmentId })
-    return createSuccessResult(result)
   } catch (error) {
-    return handleAdminError(error, "updateTreatment")
+    console.error("Error updating treatment:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update treatment" }
   }
 }
 
 /**
  * Delete treatment
  */
-export async function deleteTreatment(treatmentId: string): Promise<AdminActionResult<boolean>> {
-  const adminLogger = new AdminLogger("deleteTreatment")
-  
+export async function deleteTreatment(treatmentId: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(treatmentId, "מזהה טיפול")
-    
-    adminLogger.info("Deleting treatment", { treatmentId })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID" }
+    }
 
     const treatment = await Treatment.findById(treatmentId)
     if (!treatment) {
-      adminLogger.warn("Treatment not found for deletion", { treatmentId })
-      return createErrorResult("טיפול לא נמצא")
+      return { success: false, error: "Treatment not found" }
     }
 
-    // Check if treatment is being used in active bookings
-    // This is where you'd add business logic checks
+    // Check if treatment is used in any active bookings or subscriptions
+    // This would require checking related collections
+    // For now, we'll just delete it
 
     await Treatment.findByIdAndDelete(treatmentId)
-    revalidateAdminPath("/dashboard/admin/treatments")
-    revalidateAdminPath("/our-treatments")
 
-    adminLogger.info("Successfully deleted treatment", { treatmentId })
-    return createSuccessResult(true)
+    revalidatePath("/dashboard/admin/treatments")
+
+    return { success: true }
   } catch (error) {
-    return handleAdminError(error, "deleteTreatment")
+    console.error("Error deleting treatment:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete treatment" }
   }
 }
 
 /**
  * Toggle treatment status
  */
-export async function toggleTreatmentStatus(treatmentId: string): Promise<AdminActionResult<TreatmentData>> {
-  const adminLogger = new AdminLogger("toggleTreatmentStatus")
-  
+export async function toggleTreatmentStatus(treatmentId: string): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(treatmentId, "מזהה טיפול")
-    
-    adminLogger.info("Toggling treatment status", { treatmentId })
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID" }
+    }
 
     const treatment = await Treatment.findById(treatmentId)
     if (!treatment) {
-      adminLogger.warn("Treatment not found for status toggle", { treatmentId })
-      return createErrorResult("טיפול לא נמצא")
+      return { success: false, error: "Treatment not found" }
     }
 
-    treatment.isActive = !treatment.isActive
-    await treatment.save()
+    const newStatus = !treatment.isActive
+    
+    await Treatment.findByIdAndUpdate(treatmentId, { 
+      isActive: newStatus,
+      updatedAt: new Date()
+    })
 
-    revalidateAdminPath("/dashboard/admin/treatments")
-    revalidateAdminPath("/our-treatments")
+    revalidatePath("/dashboard/admin/treatments")
 
-    const serialized = serializeMongoObject<any>(treatment.toObject())
-    const result: TreatmentData = {
-      _id: serialized._id.toString(),
-      name: serialized.name,
-      description: serialized.description,
-      category: serialized.category,
-      isActive: serialized.isActive,
-      pricingType: serialized.pricingType,
-      fixedPrice: serialized.fixedPrice,
-      fixedProfessionalPrice: serialized.fixedProfessionalPrice,
-      defaultDurationMinutes: serialized.defaultDurationMinutes,
-      durations: serialized.durations?.map((d: any) => ({
-        _id: d._id.toString(),
-        minutes: d.minutes,
-        price: d.price,
-        professionalPrice: d.professionalPrice,
-        isActive: d.isActive
-      })),
-      allowTherapistGenderSelection: serialized.allowTherapistGenderSelection,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
+    return { 
+      success: true, 
+      data: { 
+        isActive: newStatus,
+        message: newStatus ? "הטיפול הופעל בהצלחה" : "הטיפול בוטל בהצלחה"
+      } 
     }
-
-    adminLogger.info("Successfully toggled treatment status", { treatmentId, newStatus: treatment.isActive })
-    return createSuccessResult(result)
   } catch (error) {
-    return handleAdminError(error, "toggleTreatmentStatus")
+    console.error("Error toggling treatment status:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to toggle treatment status" }
+  }
+}
+
+/**
+ * Duplicate treatment
+ */
+export async function duplicateTreatment(treatmentId: string): Promise<ActionResult> {
+  try {
+    await requireAdminAuth()
+    await dbConnect()
+
+    if (!Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID" }
+    }
+
+    const originalTreatment = await Treatment.findById(treatmentId).lean()
+    if (!originalTreatment) {
+      return { success: false, error: "Treatment not found" }
+    }
+
+    // Create new treatment with "Copy" suffix
+    const newName = `${originalTreatment.name} - עותק`
+    
+    // Check if name already exists and add number if needed
+    let finalName = newName
+    let counter = 1
+    while (await Treatment.findOne({ name: { $regex: new RegExp(`^${finalName}$`, 'i') } })) {
+      finalName = `${newName} ${counter}`
+      counter++
+    }
+
+    const duplicatedTreatment = new Treatment({
+      ...originalTreatment,
+      _id: undefined,
+      name: finalName,
+      isActive: false, // Start as inactive
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+
+    await duplicatedTreatment.save()
+
+    revalidatePath("/dashboard/admin/treatments")
+
+         return {
+       success: true,
+       data: {
+         ...duplicatedTreatment.toObject(),
+         _id: (duplicatedTreatment._id as any).toString(),
+         durations: duplicatedTreatment.durations?.map(d => ({
+           ...d,
+           _id: d._id?.toString() || ""
+         })) || []
+       }
+     }
+  } catch (error) {
+    console.error("Error duplicating treatment:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to duplicate treatment" }
   }
 }
 
 /**
  * Get treatment statistics
  */
-export async function getTreatmentStatistics(): Promise<AdminActionResult<TreatmentStatistics>> {
-  const adminLogger = new AdminLogger("getTreatmentStatistics")
-  
+export async function getTreatmentStats(): Promise<ActionResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching treatment statistics")
+    await requireAdminAuth()
+    await dbConnect()
 
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Run all queries in parallel for better performance
     const [
       totalTreatments,
       activeTreatments,
-      inactiveTreatments,
-      massageTreatments,
-      facialTreatments,
-      fixedPricingTreatments,
-      durationBasedTreatments,
-      averageFixedPriceResult,
-      newTreatmentsThisMonth
+      recentTreatments,
+      categoryStats,
+      pricingTypeStats,
+      priceStats
     ] = await Promise.all([
       Treatment.countDocuments({}),
       Treatment.countDocuments({ isActive: true }),
-      Treatment.countDocuments({ isActive: false }),
-      Treatment.countDocuments({ category: "massages" }),
-      Treatment.countDocuments({ category: "facial_treatments" }),
-      Treatment.countDocuments({ pricingType: "fixed" }),
-      Treatment.countDocuments({ pricingType: "duration_based" }),
+      Treatment.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       Treatment.aggregate([
-        { $match: { pricingType: "fixed" } },
-        { $group: { _id: null, averagePrice: { $avg: "$fixedPrice" } } }
+        { $group: { _id: "$category", count: { $sum: 1 } } }
       ]),
-      Treatment.countDocuments({ createdAt: { $gte: startOfMonth } })
+      Treatment.aggregate([
+        { $group: { _id: "$pricingType", count: { $sum: 1 } } }
+      ]),
+      Treatment.aggregate([
+        {
+          $group: {
+            _id: null,
+            avgFixed: { $avg: "$fixedPrice" },
+            minFixed: { $min: "$fixedPrice" },
+            maxFixed: { $max: "$fixedPrice" },
+            avgDuration: { $avg: "$durations.price" },
+            minDuration: { $min: "$durations.price" },
+            maxDuration: { $max: "$durations.price" }
+          }
+        }
+      ])
     ])
 
-    const avgFixedPrice = averageFixedPriceResult[0]?.averagePrice || 0
-    const averageFixedPrice = Math.round(avgFixedPrice * 100) / 100
+    // Process category stats
+    const categoryStatsMap = {
+      massages: 0,
+      facial_treatments: 0,
+      other: 0
+    }
+    categoryStats.forEach((stat: any) => {
+      if (stat._id in categoryStatsMap) {
+        categoryStatsMap[stat._id as keyof typeof categoryStatsMap] = stat.count
+      } else {
+        categoryStatsMap.other += stat.count
+      }
+    })
 
-    const statistics: TreatmentStatistics = {
+    // Process pricing type stats
+    const pricingTypeStatsMap = {
+      fixed: 0,
+      duration_based: 0
+    }
+    pricingTypeStats.forEach((stat: any) => {
+      if (stat._id in pricingTypeStatsMap) {
+        pricingTypeStatsMap[stat._id as keyof typeof pricingTypeStatsMap] = stat.count
+      }
+    })
+
+    // Process price stats
+    const priceStatsData = priceStats[0] || {}
+    const averagePrice = Math.round(((priceStatsData.avgFixed || 0) + (priceStatsData.avgDuration || 0)) / 2)
+    const minPrice = Math.min(priceStatsData.minFixed || Infinity, priceStatsData.minDuration || Infinity)
+    const maxPrice = Math.max(priceStatsData.maxFixed || 0, priceStatsData.maxDuration || 0)
+
+    const stats: TreatmentStats = {
       totalTreatments,
       activeTreatments,
-      inactiveTreatments,
-      massageTreatments,
-      facialTreatments,
-      fixedPricingTreatments,
-      durationBasedTreatments,
-      averageFixedPrice,
-      newTreatmentsThisMonth
+      inactiveTreatments: totalTreatments - activeTreatments,
+      categoryStats: categoryStatsMap,
+      pricingTypeStats: pricingTypeStatsMap,
+      averagePrice: isFinite(averagePrice) ? averagePrice : 0,
+      priceRange: {
+        min: isFinite(minPrice) ? minPrice : 0,
+        max: isFinite(maxPrice) ? maxPrice : 0
+      },
+      recentlyAdded: recentTreatments
     }
 
-    adminLogger.info("Successfully fetched treatment statistics", statistics)
-    return createSuccessResult(statistics)
+    return { success: true, data: stats }
   } catch (error) {
-    return handleAdminError(error, "getTreatmentStatistics")
+    console.error("Error getting treatment stats:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get treatment stats" }
   }
-}
-
-/**
- * Get treatment categories
- */
-export async function getTreatmentCategories(): Promise<AdminActionResult<TreatmentCategory[]>> {
-  const adminLogger = new AdminLogger("getTreatmentCategories")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching treatment categories")
-
-    const categories = await Treatment.aggregate([
-      { $group: { _id: "$category", count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ])
-
-    const result: TreatmentCategory[] = categories.map((cat: any) => ({
-      name: cat._id,
-      count: cat.count
-    }))
-
-    adminLogger.info("Successfully fetched treatment categories", { categoriesCount: result.length })
-    return createSuccessResult(result)
-  } catch (error) {
-    return handleAdminError(error, "getTreatmentCategories")
-  }
-}
-
-// Legacy function name alias for backward compatibility
-export const getAllTreatments = getTreatments 
+} 

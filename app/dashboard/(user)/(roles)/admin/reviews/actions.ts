@@ -1,29 +1,15 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import Review, { type IReview } from "../../../../../../lib/db/models/review"
-import User from "../../../../../../lib/db/models/user"
-import Treatment from "../../../../../../lib/db/models/treatment"
-import Booking from "../../../../../../lib/db/models/booking"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth/auth"
+import { logger } from "@/lib/logs/logger"
+import dbConnect from "@/lib/db/mongoose"
+import Review, { type IReview } from "@/lib/db/models/review"
+import User from "@/lib/db/models/user"
+import Treatment from "@/lib/db/models/treatment"
+import Booking from "@/lib/db/models/booking"
 import { Types } from "mongoose"
-import {
-  requireAdminSession,
-  connectToDatabase,
-  AdminLogger,
-  handleAdminError,
-  validatePaginationOptions,
-  revalidateAdminPath,
-  createSuccessResult,
-  createErrorResult,
-  createPaginatedResult,
-  serializeMongoObject,
-  validateObjectId,
-  buildSearchQuery,
-  buildSortQuery,
-  type AdminActionResult,
-  type PaginatedResult,
-  type AdminActionOptions
-} from "../../../../../../lib/auth/admin-helpers"
 
 // Types
 export interface ReviewData {
@@ -44,75 +30,90 @@ export interface ReviewData {
   bookingNumber?: string
 }
 
-export interface ReviewFilters extends AdminActionOptions {
+export interface GetAllReviewsOptions {
+  page?: number
+  limit?: number
   rating?: number
   hasProfessionalResponse?: boolean
   professionalId?: string
   treatmentId?: string
-  userId?: string
+  sortBy?: "createdAt" | "rating"
+  sortDirection?: "asc" | "desc"
+  search?: string
 }
 
-export interface ReviewStatistics {
-  totalReviews: number
-  averageRating: number
-  ratingDistribution: {
-    [key: number]: number
+export interface GetAllReviewsResult {
+  success: boolean
+  reviews?: ReviewData[]
+  pagination?: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
   }
-  reviewsWithResponse: number
-  reviewsWithoutResponse: number
-  recentReviews: number
-  pendingResponses: number
+  error?: string
 }
 
-export interface FilterOption {
-  value: string
-  label: string
+export interface UpdateProfessionalResponseResult {
+  success: boolean
+  error?: string
 }
 
-export interface ReviewFiltersData {
-  professionals: FilterOption[]
-  treatments: FilterOption[]
-  users: FilterOption[]
+export interface DeleteReviewResult {
+  success: boolean
+  error?: string
+}
+
+export interface GetReviewStatisticsResult {
+  success: boolean
+  statistics?: {
+    totalReviews: number
+    averageRating: number
+    ratingDistribution: {
+      [key: number]: number
+    }
+    reviewsWithResponse: number
+    reviewsWithoutResponse: number
+  }
+  error?: string
 }
 
 /**
  * Gets all reviews with filtering, sorting, and pagination
+ * @param options Filtering, sorting, and pagination options
+ * @returns GetAllReviewsResult
  */
-export async function getAllReviews(
-  filters: ReviewFilters = {}
-): Promise<AdminActionResult<PaginatedResult<ReviewData>>> {
-  const adminLogger = new AdminLogger("getAllReviews")
-  
+export async function getAllReviews(options: GetAllReviewsOptions = {}): Promise<GetAllReviewsResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    const { page, limit, skip } = validatePaginationOptions(filters)
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
     const {
+      page = 1,
+      limit = 20,
       rating,
       hasProfessionalResponse,
       professionalId,
       treatmentId,
-      userId,
-      search,
       sortBy = "createdAt",
-      sortOrder = "desc"
-    } = filters
-
-    adminLogger.info("Fetching reviews", { filters, page, limit })
+      sortDirection = "desc",
+      search,
+    } = options
 
     // Build query
     const query: Record<string, any> = {}
 
-    // Rating filter
     if (rating) {
       query.rating = rating
     }
 
-    // Professional response filter
     if (typeof hasProfessionalResponse === "boolean") {
       if (hasProfessionalResponse) {
-        query.professionalResponse = { $exists: true, $ne: null, $nin: ["", null] }
+        query.professionalResponse = { $exists: true, $ne: null, $ne: "" }
       } else {
         query.$or = [
           { professionalResponse: { $exists: false } },
@@ -122,417 +123,287 @@ export async function getAllReviews(
       }
     }
 
-    // Professional filter
     if (professionalId) {
-      validateObjectId(professionalId, "מזהה מטפל")
       query.professionalId = new Types.ObjectId(professionalId)
     }
 
-    // Treatment filter
     if (treatmentId) {
-      validateObjectId(treatmentId, "מזהה טיפול")
       query.treatmentId = new Types.ObjectId(treatmentId)
     }
 
-    // User filter
-    if (userId) {
-      validateObjectId(userId, "מזהה משתמש")
-      query.userId = new Types.ObjectId(userId)
-    }
-
-    // Search filter
+    // Text search in comments
     if (search) {
-      const searchQuery = buildSearchQuery(search, ["comment", "professionalResponse"])
-      Object.assign(query, searchQuery)
+      query.$or = [
+        { comment: { $regex: search, $options: "i" } },
+        { professionalResponse: { $regex: search, $options: "i" } }
+      ]
     }
 
-    // Get total count
-    const totalReviews = await Review.countDocuments(query)
+    // Sorting
+    const sort: Record<string, 1 | -1> = {}
+    sort[sortBy] = sortDirection === "asc" ? 1 : -1
 
-    adminLogger.info("Found reviews matching query", { totalReviews, query })
+    const skip = (page - 1) * limit
 
-    // Get reviews with pagination and sorting
-    const sortQuery = buildSortQuery(sortBy, sortOrder)
-    const reviews = await Review.find(query)
-      .populate("userId", "name email")
-      .populate("professionalId", "name email")
-      .populate("treatmentId", "name")
-      .populate("bookingId", "bookingNumber")
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit)
-      .lean()
+    // Execute queries
+    const [reviews, total] = await Promise.all([
+      Review.find(query)
+        .populate("userId", "name email")
+        .populate("professionalId", "name email")
+        .populate("treatmentId", "name")
+        .populate("bookingId", "bookingNumber")
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Review.countDocuments(query),
+    ])
 
-    // Process reviews
-    const reviewsData: ReviewData[] = reviews.map((review: any) => {
-      const serialized = serializeMongoObject<any>(review)
-      return {
-        _id: serialized._id.toString(),
-        bookingId: serialized.bookingId?._id?.toString() || "",
-        bookingNumber: serialized.bookingId?.bookingNumber,
-        userId: serialized.userId?._id?.toString() || "",
-        userName: serialized.userId?.name || "משתמש לא ידוע",
-        userEmail: serialized.userId?.email || "",
-        professionalId: serialized.professionalId?._id?.toString() || "",
-        professionalName: serialized.professionalId?.name || "מטפל לא ידוע",
-        treatmentId: serialized.treatmentId?._id?.toString() || "",
-        treatmentName: serialized.treatmentId?.name || "טיפול לא ידוע",
-        rating: serialized.rating,
-        comment: serialized.comment,
-        professionalResponse: serialized.professionalResponse,
-        createdAt: serialized.createdAt,
-        updatedAt: serialized.updatedAt
-      }
-    })
+    const reviewsData: ReviewData[] = reviews.map((review: any) => ({
+      _id: review._id.toString(),
+      bookingId: review.bookingId._id.toString(),
+      bookingNumber: review.bookingId?.bookingNumber,
+      userId: review.userId._id.toString(),
+      userName: review.userId?.name || "Unknown",
+      userEmail: review.userId?.email || "",
+      professionalId: review.professionalId._id.toString(),
+      professionalName: review.professionalId?.name || "Unknown",
+      treatmentId: review.treatmentId._id.toString(),
+      treatmentName: review.treatmentId?.name || "Unknown",
+      rating: review.rating,
+      comment: review.comment,
+      professionalResponse: review.professionalResponse,
+      createdAt: review.createdAt.toISOString(),
+      updatedAt: review.updatedAt.toISOString(),
+    }))
 
-    adminLogger.info("Successfully fetched reviews", { count: reviewsData.length })
-    return createPaginatedResult(reviewsData, totalReviews, page, limit)
+    return {
+      success: true,
+      reviews: reviewsData,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
   } catch (error) {
-    return handleAdminError(error, "getAllReviews")
-  }
-}
-
-/**
- * Get review by ID
- */
-export async function getReviewById(reviewId: string): Promise<AdminActionResult<ReviewData>> {
-  const adminLogger = new AdminLogger("getReviewById")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(reviewId, "מזהה ביקורת")
-    
-    adminLogger.info("Fetching review by ID", { reviewId })
-
-    const review = await Review.findById(reviewId)
-      .populate("userId", "name email")
-      .populate("professionalId", "name email")
-      .populate("treatmentId", "name")
-      .populate("bookingId", "bookingNumber")
-      .lean()
-
-    if (!review) {
-      adminLogger.warn("Review not found", { reviewId })
-      return createErrorResult("ביקורת לא נמצאה")
-    }
-
-    const serialized = serializeMongoObject<any>(review)
-    const reviewData: ReviewData = {
-      _id: serialized._id.toString(),
-      bookingId: serialized.bookingId?._id?.toString() || "",
-      bookingNumber: serialized.bookingId?.bookingNumber,
-      userId: serialized.userId?._id?.toString() || "",
-      userName: serialized.userId?.name || "משתמש לא ידוע",
-      userEmail: serialized.userId?.email || "",
-      professionalId: serialized.professionalId?._id?.toString() || "",
-      professionalName: serialized.professionalId?.name || "מטפל לא ידוע",
-      treatmentId: serialized.treatmentId?._id?.toString() || "",
-      treatmentName: serialized.treatmentId?.name || "טיפול לא ידוע",
-      rating: serialized.rating,
-      comment: serialized.comment,
-      professionalResponse: serialized.professionalResponse,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
-    }
-
-    adminLogger.info("Successfully fetched review", { reviewId })
-    return createSuccessResult(reviewData)
-  } catch (error) {
-    return handleAdminError(error, "getReviewById")
+    logger.error("Error fetching reviews:", error)
+    return { success: false, error: "Failed to fetch reviews" }
   }
 }
 
 /**
  * Updates or adds a professional response to a review
+ * @param reviewId Review ID
+ * @param response Professional response text
+ * @returns UpdateProfessionalResponseResult
  */
 export async function updateReviewResponse(
   reviewId: string,
   response: string
-): Promise<AdminActionResult<ReviewData>> {
-  const adminLogger = new AdminLogger("updateReviewResponse")
-  
+): Promise<UpdateProfessionalResponseResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(reviewId, "מזהה ביקורת")
-    
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
     if (!response?.trim()) {
-      return createErrorResult("תגובה נדרשת")
+      return { success: false, error: "Response cannot be empty" }
     }
 
-    adminLogger.info("Updating review response", { reviewId })
+    if (response.length > 1000) {
+      return { success: false, error: "Response cannot exceed 1000 characters" }
+    }
 
-    const review = await Review.findById(reviewId)
+    const review = await Review.findByIdAndUpdate(
+      reviewId,
+      { professionalResponse: response.trim() },
+      { new: true }
+    )
+
     if (!review) {
-      adminLogger.warn("Review not found for response update", { reviewId })
-      return createErrorResult("ביקורת לא נמצאה")
+      return { success: false, error: "Review not found" }
     }
 
-    review.professionalResponse = response.trim()
-    review.updatedAt = new Date()
-    await review.save()
-
-    revalidateAdminPath("/dashboard/admin/reviews")
-
-    // Get updated review with populated fields
-    const updatedReview = await Review.findById(reviewId)
-      .populate("userId", "name email")
-      .populate("professionalId", "name email")
-      .populate("treatmentId", "name")
-      .populate("bookingId", "bookingNumber")
-      .lean()
-
-    const serialized = serializeMongoObject<any>(updatedReview)
-    const reviewData: ReviewData = {
-      _id: serialized._id.toString(),
-      bookingId: serialized.bookingId?._id?.toString() || "",
-      bookingNumber: serialized.bookingId?.bookingNumber,
-      userId: serialized.userId?._id?.toString() || "",
-      userName: serialized.userId?.name || "משתמש לא ידוע",
-      userEmail: serialized.userId?.email || "",
-      professionalId: serialized.professionalId?._id?.toString() || "",
-      professionalName: serialized.professionalId?.name || "מטפל לא ידוע",
-      treatmentId: serialized.treatmentId?._id?.toString() || "",
-      treatmentName: serialized.treatmentId?.name || "טיפול לא ידוע",
-      rating: serialized.rating,
-      comment: serialized.comment,
-      professionalResponse: serialized.professionalResponse,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
-    }
-
-    adminLogger.info("Successfully updated review response", { reviewId })
-    return createSuccessResult(reviewData)
+    revalidatePath("/dashboard/admin/reviews")
+    return { success: true }
   } catch (error) {
-    return handleAdminError(error, "updateReviewResponse")
+    logger.error("Error updating professional response:", error)
+    return { success: false, error: "Failed to update professional response" }
   }
 }
 
 /**
  * Deletes a professional response from a review
+ * @param reviewId Review ID
+ * @returns UpdateProfessionalResponseResult
  */
-export async function deleteProfessionalResponse(reviewId: string): Promise<AdminActionResult<ReviewData>> {
-  const adminLogger = new AdminLogger("deleteProfessionalResponse")
-  
+export async function deleteProfessionalResponse(reviewId: string): Promise<UpdateProfessionalResponseResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(reviewId, "מזהה ביקורת")
-    
-    adminLogger.info("Deleting professional response", { reviewId })
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
 
-    const review = await Review.findById(reviewId)
+    await dbConnect()
+
+    const review = await Review.findByIdAndUpdate(
+      reviewId,
+      { $unset: { professionalResponse: 1 } },
+      { new: true }
+    )
+
     if (!review) {
-      adminLogger.warn("Review not found for response deletion", { reviewId })
-      return createErrorResult("ביקורת לא נמצאה")
+      return { success: false, error: "Review not found" }
     }
 
-    review.professionalResponse = undefined
-    review.updatedAt = new Date()
-    await review.save()
-
-    revalidateAdminPath("/dashboard/admin/reviews")
-
-    // Get updated review with populated fields
-    const updatedReview = await Review.findById(reviewId)
-      .populate("userId", "name email")
-      .populate("professionalId", "name email")
-      .populate("treatmentId", "name")
-      .populate("bookingId", "bookingNumber")
-      .lean()
-
-    const serialized = serializeMongoObject<any>(updatedReview)
-    const reviewData: ReviewData = {
-      _id: serialized._id.toString(),
-      bookingId: serialized.bookingId?._id?.toString() || "",
-      bookingNumber: serialized.bookingId?.bookingNumber,
-      userId: serialized.userId?._id?.toString() || "",
-      userName: serialized.userId?.name || "משתמש לא ידוע",
-      userEmail: serialized.userId?.email || "",
-      professionalId: serialized.professionalId?._id?.toString() || "",
-      professionalName: serialized.professionalId?.name || "מטפל לא ידוע",
-      treatmentId: serialized.treatmentId?._id?.toString() || "",
-      treatmentName: serialized.treatmentId?.name || "טיפול לא ידוע",
-      rating: serialized.rating,
-      comment: serialized.comment,
-      professionalResponse: serialized.professionalResponse,
-      createdAt: serialized.createdAt,
-      updatedAt: serialized.updatedAt
-    }
-
-    adminLogger.info("Successfully deleted professional response", { reviewId })
-    return createSuccessResult(reviewData)
+    revalidatePath("/dashboard/admin/reviews")
+    return { success: true }
   } catch (error) {
-    return handleAdminError(error, "deleteProfessionalResponse")
+    logger.error("Error deleting professional response:", error)
+    return { success: false, error: "Failed to delete professional response" }
   }
 }
 
 /**
- * Deletes a review
+ * Deletes a review (admin only, extreme cases)
+ * @param reviewId Review ID
+ * @returns DeleteReviewResult
  */
-export async function deleteReview(reviewId: string): Promise<AdminActionResult<boolean>> {
-  const adminLogger = new AdminLogger("deleteReview")
-  
+export async function deleteReview(reviewId: string): Promise<DeleteReviewResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(reviewId, "מזהה ביקורת")
-    
-    adminLogger.info("Deleting review", { reviewId })
-
-    const review = await Review.findById(reviewId)
-    if (!review) {
-      adminLogger.warn("Review not found for deletion", { reviewId })
-      return createErrorResult("ביקורת לא נמצאה")
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    await Review.findByIdAndDelete(reviewId)
-    revalidateAdminPath("/dashboard/admin/reviews")
+    await dbConnect()
 
-    adminLogger.info("Successfully deleted review", { reviewId })
-    return createSuccessResult(true)
+    const review = await Review.findByIdAndDelete(reviewId)
+
+    if (!review) {
+      return { success: false, error: "Review not found" }
+    }
+
+    revalidatePath("/dashboard/admin/reviews")
+    return { success: true }
   } catch (error) {
-    return handleAdminError(error, "deleteReview")
+    logger.error("Error deleting review:", error)
+    return { success: false, error: "Failed to delete review" }
   }
 }
 
 /**
- * Gets review statistics
+ * Gets review statistics for admin dashboard
+ * @returns GetReviewStatisticsResult
  */
-export async function getReviewStatistics(): Promise<AdminActionResult<ReviewStatistics>> {
-  const adminLogger = new AdminLogger("getReviewStatistics")
-  
+export async function getReviewStatistics(): Promise<GetReviewStatisticsResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching review statistics")
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
 
-    const now = new Date()
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+    await dbConnect()
 
-    // Run all queries in parallel for better performance
     const [
       totalReviews,
       averageRatingResult,
       ratingDistribution,
       reviewsWithResponse,
-      reviewsWithoutResponse,
-      recentReviews
     ] = await Promise.all([
-      Review.countDocuments({}),
+      Review.countDocuments(),
       Review.aggregate([
-        { $group: { _id: null, averageRating: { $avg: "$rating" } } }
+        { $group: { _id: null, average: { $avg: "$rating" } } }
       ]),
       Review.aggregate([
         { $group: { _id: "$rating", count: { $sum: 1 } } },
         { $sort: { _id: 1 } }
       ]),
-      Review.countDocuments({ 
-        professionalResponse: { $exists: true, $ne: null, $nin: ["", null] } 
+      Review.countDocuments({
+        professionalResponse: { $exists: true, $ne: null, $ne: "" }
       }),
-      Review.countDocuments({ 
-        $or: [
-          { professionalResponse: { $exists: false } },
-          { professionalResponse: null },
-          { professionalResponse: "" }
-        ]
-      }),
-      Review.countDocuments({ createdAt: { $gte: lastMonth } })
     ])
 
-    const averageRating = averageRatingResult[0]?.averageRating || 0
-
-    // Build rating distribution object
+    const averageRating = averageRatingResult[0]?.average || 0
     const ratingDist: { [key: number]: number } = {}
+    
+    // Initialize all ratings to 0
     for (let i = 1; i <= 5; i++) {
       ratingDist[i] = 0
     }
+    
+    // Fill in actual counts
     ratingDistribution.forEach((item: any) => {
       ratingDist[item._id] = item.count
     })
 
-    const statistics: ReviewStatistics = {
-      totalReviews,
-      averageRating: Math.round(averageRating * 100) / 100,
-      ratingDistribution: ratingDist,
-      reviewsWithResponse,
-      reviewsWithoutResponse,
-      recentReviews,
-      pendingResponses: reviewsWithoutResponse
+    return {
+      success: true,
+      statistics: {
+        totalReviews,
+        averageRating: Math.round(averageRating * 100) / 100,
+        ratingDistribution: ratingDist,
+        reviewsWithResponse,
+        reviewsWithoutResponse: totalReviews - reviewsWithResponse,
+      },
     }
-
-    adminLogger.info("Successfully fetched review statistics", statistics)
-    return createSuccessResult(statistics)
   } catch (error) {
-    return handleAdminError(error, "getReviewStatistics")
+    logger.error("Error fetching review statistics:", error)
+    return { success: false, error: "Failed to fetch review statistics" }
   }
 }
 
 /**
- * Gets filter options for reviews
+ * Gets lists for filter dropdowns
+ * @returns Filter options for professionals and treatments
  */
-export async function getReviewFilters(): Promise<AdminActionResult<ReviewFiltersData>> {
-  const adminLogger = new AdminLogger("getReviewFilters")
-  
+export async function getReviewFilters(): Promise<{
+  success: boolean
+  filters?: {
+    professionals: Array<{ value: string; label: string }>
+    treatments: Array<{ value: string; label: string }>
+  }
+  error?: string
+}> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching review filters")
-
-    // Get all unique professionals, treatments, and users from reviews
-    const [professionals, treatments, users] = await Promise.all([
-      Review.aggregate([
-        { $group: { _id: "$professionalId" } },
-        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "professional" } },
-        { $unwind: "$professional" },
-        { $project: { _id: 1, name: "$professional.name", email: "$professional.email" } },
-        { $sort: { name: 1 } }
-      ]),
-      Review.aggregate([
-        { $group: { _id: "$treatmentId" } },
-        { $lookup: { from: "treatments", localField: "_id", foreignField: "_id", as: "treatment" } },
-        { $unwind: "$treatment" },
-        { $project: { _id: 1, name: "$treatment.name" } },
-        { $sort: { name: 1 } }
-      ]),
-      Review.aggregate([
-        { $group: { _id: "$userId" } },
-        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
-        { $unwind: "$user" },
-        { $project: { _id: 1, name: "$user.name", email: "$user.email" } },
-        { $sort: { name: 1 } }
-      ])
-    ])
-
-    const filtersData: ReviewFiltersData = {
-      professionals: professionals.map((prof: any) => ({
-        value: prof._id.toString(),
-        label: prof.name || prof.email || `מטפל ${prof._id.toString().slice(-6)}`
-      })),
-      treatments: treatments.map((treatment: any) => ({
-        value: treatment._id.toString(),
-        label: treatment.name || `טיפול ${treatment._id.toString().slice(-6)}`
-      })),
-      users: users.map((user: any) => ({
-        value: user._id.toString(),
-        label: user.name || user.email || `משתמש ${user._id.toString().slice(-6)}`
-      }))
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    adminLogger.info("Successfully fetched review filters", { 
-      professionalsCount: filtersData.professionals.length,
-      treatmentsCount: filtersData.treatments.length,
-      usersCount: filtersData.users.length
-    })
-    return createSuccessResult(filtersData)
+    await dbConnect()
+
+    const [professionals, treatments] = await Promise.all([
+      User.find({ roles: "professional" })
+        .select("name email")
+        .sort({ name: 1 })
+        .lean(),
+      Treatment.find({ isActive: true })
+        .select("name")
+        .sort({ name: 1 })
+        .lean(),
+    ])
+
+    return {
+      success: true,
+      filters: {
+        professionals: professionals.map((prof: any) => ({
+          value: prof._id.toString(),
+          label: prof.name || prof.email,
+        })),
+        treatments: treatments.map((treatment: any) => ({
+          value: treatment._id.toString(),
+          label: treatment.name,
+        })),
+      },
+    }
   } catch (error) {
-    return handleAdminError(error, "getReviewFilters")
+    logger.error("Error fetching review filters:", error)
+    return { success: false, error: "Failed to fetch filter options" }
   }
 } 

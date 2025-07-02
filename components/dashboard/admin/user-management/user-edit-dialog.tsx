@@ -19,6 +19,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/common/ui/form"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
@@ -30,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/common/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Badge } from "@/components/common/ui/badge"
 import { useToast } from "@/components/common/ui/use-toast"
 import { PhoneInput } from "@/components/common/phone-input"
 import { 
@@ -38,16 +41,54 @@ import {
   type UserData, 
   type UpdateUserData 
 } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Lock, 
+  Calendar,
+  Crown,
+  Briefcase,
+  Shield,
+  Edit,
+  Key,
+  AlertCircle,
+  CheckCircle2,
+  UserCheck,
+  UserX
+} from "lucide-react"
 
 const updateUserSchema = z.object({
-  name: z.string().min(2, "השם חייב להכיל לפחות 2 תווים"),
-  email: z.string().email("כתובת מייל לא תקינה").optional().or(z.literal("")),
-  phone: z.string().min(10, "מספר טלפון לא תקין"),
+  name: z.string()
+    .min(2, "השם חייב להכיל לפחות 2 תווים")
+    .max(50, "השם לא יכול להכיל יותר מ-50 תווים")
+    .regex(/^[א-ת\s\-']+$|^[a-zA-Z\s\-']+$/, "השם יכול להכיל רק אותיות בעברית או אנגלית"),
+  email: z.string()
+    .email("כתובת מייל לא תקינה")
+    .optional()
+    .or(z.literal("")),
+  phone: z.string()
+    .min(10, "מספר טלפון לא תקין")
+    .max(15, "מספר טלפון לא תקין"),
   gender: z.enum(["male", "female", "other"], {
     required_error: "יש לבחור מגדר"
   }),
   dateOfBirth: z.string().optional(),
-  roles: z.array(z.enum(["admin", "professional", "member", "partner"])).min(1, "יש לבחור לפחות תפקיד אחד")
+  roles: z.array(z.enum(["admin", "professional", "member", "partner"]))
+    .min(1, "יש לבחור לפחות תפקיד אחד")
+    .max(4, "לא ניתן לבחור יותר מ-4 תפקידים"),
+  isActive: z.boolean().default(true)
+}).refine((data) => {
+  if (data.dateOfBirth) {
+    const birthDate = new Date(data.dateOfBirth)
+    const today = new Date()
+    const age = today.getFullYear() - birthDate.getFullYear()
+    return age >= 16 && age <= 120
+  }
+  return true
+}, {
+  message: "גיל חייב להיות בין 16 ל-120",
+  path: ["dateOfBirth"]
 })
 
 type UpdateUserFormData = z.infer<typeof updateUserSchema>
@@ -58,6 +99,13 @@ interface UserEditDialogProps {
   user: UserData | null
   onSuccess: () => void
 }
+
+const roleOptions = [
+  { value: "member", label: "חבר", icon: User, description: "משתמש רגיל במערכת", color: "bg-blue-100 text-blue-800" },
+  { value: "professional", label: "מטפל", icon: Briefcase, description: "מטפל מקצועי", color: "bg-emerald-100 text-emerald-800" },
+  { value: "partner", label: "שותף", icon: Shield, description: "שותף עסקי", color: "bg-indigo-100 text-indigo-800" },
+  { value: "admin", label: "מנהל", icon: Crown, description: "מנהל מערכת", color: "bg-amber-100 text-amber-800" }
+]
 
 export default function UserEditDialog({
   open,
@@ -77,9 +125,13 @@ export default function UserEditDialog({
       phone: "",
       gender: "male",
       dateOfBirth: "",
-      roles: ["member"]
+      roles: ["member"],
+      isActive: true
     }
   })
+
+  const selectedRoles = form.watch("roles")
+  const isActive = form.watch("isActive")
 
   // Update form when user changes
   useEffect(() => {
@@ -90,7 +142,8 @@ export default function UserEditDialog({
         phone: user.phone || "",
         gender: user.gender || "male",
         dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
-        roles: user.roles || ["member"]
+        roles: user.roles || ["member"],
+        isActive: user.isActive !== false
       })
     }
   }, [user, open, form])
@@ -101,12 +154,13 @@ export default function UserEditDialog({
     setLoading(true)
     try {
       const userData: UpdateUserData = {
-        name: data.name,
-        email: data.email || undefined,
+        name: data.name.trim(),
+        email: data.email?.trim() || undefined,
         phone: data.phone,
         gender: data.gender,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        roles: data.roles
+        roles: data.roles,
+        isActive: data.isActive
       }
 
       const result = await updateUser(user._id, userData)
@@ -114,21 +168,22 @@ export default function UserEditDialog({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: "המשתמש עודכן בהצלחה"
+          description: "המשתמש עודכן בהצלחה",
+          duration: 5000
         })
         onSuccess()
       } else {
         toast({
           variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "אירעה שגיאה בעדכון המשתמש"
+          title: "שגיאה בעדכון המשתמש",
+          description: result.error || "אירעה שגיאה לא צפויה"
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "שגיאה",
-        description: "אירעה שגיאה בעדכון המשתמש"
+        title: "שגיאה בעדכון המשתמש",
+        description: "אירעה שגיאה בתקשורת עם השרת"
       })
     } finally {
       setLoading(false)
@@ -144,20 +199,21 @@ export default function UserEditDialog({
       if (result.success) {
         toast({
           title: "הצלחה",
-          description: `הסיסמה אופסה ל: ${result.data.newPassword}`
+          description: `הסיסמה אופסה ל: ${result.data.newPassword}`,
+          duration: 10000
         })
       } else {
         toast({
           variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "אירעה שגיאה באיפוס הסיסמה"
+          title: "שגיאה באיפוס הסיסמה",
+          description: result.error || "אירעה שגיאה לא צפויה"
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "שגיאה",
-        description: "אירעה שגיאה באיפוס הסיסמה"
+        title: "שגיאה באיפוס הסיסמה",
+        description: "אירעה שגיאה בתקשורת עם השרת"
       })
     } finally {
       setResettingPassword(false)
@@ -169,219 +225,383 @@ export default function UserEditDialog({
     if (checked) {
       form.setValue("roles", [...currentRoles, role as any])
     } else {
-      form.setValue("roles", currentRoles.filter(r => r !== role))
+      const newRoles = currentRoles.filter(r => r !== role)
+      // Ensure at least one role is selected
+      if (newRoles.length === 0) {
+        form.setValue("roles", ["member"])
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: "חייב לבחור לפחות תפקיד אחד"
+        })
+      } else {
+        form.setValue("roles", newRoles)
+      }
     }
+  }
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("he-IL")
   }
 
   if (!user) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>עריכת משתמש</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit className="h-5 w-5" />
+            עריכת משתמש - {user.name}
+          </DialogTitle>
           <DialogDescription>
-            ערוך את פרטי המשתמש {user.name}
+            ערוך את פרטי המשתמש. שדות עם * הם חובה.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Name */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>שם מלא *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="הכנס שם מלא" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            {/* User Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  סטטוס משתמש
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {isActive ? (
+                      <UserCheck className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <UserX className="h-5 w-5 text-red-600" />
+                    )}
+                    <div>
+                      <h4 className="font-medium">
+                        {isActive ? "משתמש פעיל" : "משתמש לא פעיל"}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isActive 
+                          ? "המשתמש יכול להתחבר ולהשתמש במערכת" 
+                          : "המשתמש לא יכול להתחבר למערכת"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={user.roles.includes("admin")}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                {user.roles.includes("admin") && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    לא ניתן לבטל הפעלה של משתמש מנהל
+                  </p>
                 )}
-              />
+              </CardContent>
+            </Card>
 
-              {/* Gender */}
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>מגדר *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+            {/* Personal Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  מידע אישי
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Name */}
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>שם מלא *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="הכנס שם מלא" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Gender */}
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מגדר *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר מגדר" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">זכר</SelectItem>
+                            <SelectItem value="female">נקבה</SelectItem>
+                            <SelectItem value="other">אחר</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Date of Birth */}
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>תאריך לידה</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר מגדר" />
-                        </SelectTrigger>
+                        <Input 
+                          type="date" 
+                          {...field}
+                          max={new Date(new Date().setFullYear(new Date().getFullYear() - 16)).toISOString().split('T')[0]}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">זכר</SelectItem>
-                        <SelectItem value="female">נקבה</SelectItem>
-                        <SelectItem value="other">אחר</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormDescription>
+                        גיל מינימלי: 16 שנים
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Phone */}
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>מספר טלפון *</FormLabel>
-                    <FormControl>
-                      <PhoneInput
-                        fullNumberValue={field.value}
-                        onPhoneChange={field.onChange}
-                        placeholder="הכנס מספר טלפון"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* User Info */}
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    מידע נוסף
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">נוצר בתאריך:</span>
+                      <span className="ml-2 font-medium">{formatDate(user.createdAt)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">עודכן לאחרונה:</span>
+                      <span className="ml-2 font-medium">{formatDate(user.updatedAt)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">מייל מאומת:</span>
+                      <span className="ml-2">
+                        {user.emailVerified ? (
+                          <Badge className="text-xs bg-green-100 text-green-800">כן</Badge>
+                        ) : (
+                          <Badge className="text-xs bg-gray-100 text-gray-800">לא</Badge>
+                        )}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">טלפון מאומת:</span>
+                      <span className="ml-2">
+                        {user.phoneVerified ? (
+                          <Badge className="text-xs bg-green-100 text-green-800">כן</Badge>
+                        ) : (
+                          <Badge className="text-xs bg-gray-100 text-gray-800">לא</Badge>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>כתובת מייל</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="הכנס כתובת מייל" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  פרטי קשר
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Phone */}
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מספר טלפון *</FormLabel>
+                        <FormControl>
+                          <PhoneInput
+                            fullNumberValue={field.value}
+                            onPhoneChange={field.onChange}
+                            placeholder="הכנס מספר טלפון"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Date of Birth */}
-            <FormField
-              control={form.control}
-              name="dateOfBirth"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>תאריך לידה</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  {/* Email */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>כתובת מייל</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="הכנס כתובת מייל" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          אופציונלי - לקבלת הודעות מהמערכת
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Password Reset */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  ניהול סיסמה
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">איפוס סיסמה</h4>
+                    <p className="text-sm text-muted-foreground">
+                      צור סיסמה חדשה אוטומטית עבור המשתמש
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetPassword}
+                    disabled={resettingPassword}
+                    className="flex items-center gap-2"
+                  >
+                    <Key className="h-4 w-4" />
+                    {resettingPassword ? "מאפס..." : "איפוס סיסמה"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Roles */}
-            <FormField
-              control={form.control}
-              name="roles"
-              render={() => (
-                <FormItem>
-                  <FormLabel>תפקידים *</FormLabel>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { value: "member", label: "חבר" },
-                      { value: "professional", label: "מטפל" },
-                      { value: "partner", label: "שותף" },
-                      { value: "admin", label: "מנהל" }
-                    ].map((role) => (
-                      <FormField
-                        key={role.value}
-                        control={form.control}
-                        name="roles"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(role.value as any)}
-                                onCheckedChange={(checked) => 
-                                  handleRoleChange(role.value, checked as boolean)
-                                }
-                              />
-                            </FormControl>
-                            <FormLabel className="text-sm font-normal">
-                              {role.label}
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  תפקידים במערכת
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="roles"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>בחר תפקידים *</FormLabel>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {roleOptions.map((role) => {
+                          const Icon = role.icon
+                          const isSelected = selectedRoles.includes(role.value as any)
+                          
+                          return (
+                            <div
+                              key={role.value}
+                              className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/5 shadow-sm' 
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => handleRoleChange(role.value, !isSelected)}
+                            >
+                              <div className="flex items-start gap-3">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => 
+                                    handleRoleChange(role.value, checked as boolean)
+                                  }
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Icon className="h-4 w-4" />
+                                    <span className="font-medium">{role.label}</span>
+                                    {isSelected && (
+                                      <Badge className={`text-xs ${role.color}`}>
+                                        נבחר
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">
+                                    {role.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <FormDescription>
+                        ניתן לבחור מספר תפקידים. לפחות תפקיד אחד נדרש.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-            {/* User Info Display */}
-            <div className="border-t pt-4">
-              <h4 className="text-sm font-medium mb-2">מידע נוסף</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                <div>
-                  <strong>תאריך הצטרפות:</strong>
-                  <br />
-                  {new Date(user.createdAt).toLocaleDateString("he-IL")}
-                </div>
-                <div>
-                  <strong>עדכון אחרון:</strong>
-                  <br />
-                  {new Date(user.updatedAt).toLocaleDateString("he-IL")}
-                </div>
-                <div>
-                  <strong>מייל מאומת:</strong>
-                  <br />
-                  {user.emailVerified ? "כן" : "לא"}
-                </div>
-                <div>
-                  <strong>טלפון מאומת:</strong>
-                  <br />
-                  {user.phoneVerified ? "כן" : "לא"}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleResetPassword}
-                disabled={loading || resettingPassword}
-                className="w-full sm:w-auto"
+            {/* Actions */}
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
               >
-                {resettingPassword ? "מאפס..." : "איפוס סיסמה"}
+                ביטול
               </Button>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={loading}
-                  className="flex-1 sm:flex-none"
-                >
-                  ביטול
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="flex-1 sm:flex-none"
-                >
-                  {loading ? "שומר..." : "שמור שינויים"}
-                </Button>
-              </div>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    מעדכן משתמש...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    עדכן משתמש
+                  </>
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

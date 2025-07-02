@@ -1,14 +1,14 @@
 // types/booking.d.ts
 import type { Types } from "mongoose"
-import type { IBooking, IPriceDetails, IPaymentDetails, IBookingConsents, IEnhancedPaymentDetails, IBookingReview } from "../lib/db/models/booking"
-import type { IAddress } from "../lib/db/models/address"
-import type { IUser } from "../lib/db/models/user"
-import type { ITreatment, ITreatmentDuration } from "../lib/db/models/treatment"
-import type { ICoupon } from "../lib/db/models/coupon"
-import type { IGiftVoucher } from "../lib/db/models/gift-voucher"
-import type { IUserSubscription } from "../lib/db/models/user-subscription"
-import type { ISubscription } from "../lib/db/models/subscription"
-import type { IPaymentMethod } from "../lib/db/models/payment-method"
+import type { IBooking, IPriceDetails, IPaymentDetails, IBookingConsents, IEnhancedPaymentDetails, IBookingReview } from "@/lib/db/models/booking"
+import type { IAddress } from "@/lib/db/models/address"
+import type { IUser } from "@/lib/db/models/user"
+import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
+import type { ICoupon } from "@/lib/db/models/coupon"
+import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import type { IUserSubscription } from "@/lib/db/models/user-subscription"
+import type { ISubscription } from "@/lib/db/models/subscription"
+import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
 // Add missing TimeSlot interface
 export interface TimeSlot {

@@ -2,43 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../../../../../lib/auth/auth"
-import dbConnect from "../../../../../../lib/db/mongoose"
-import { logger } from "../../../../../../lib/logs/logger"
-import Booking, { type IBooking, type BookingStatus } from "../../../../../../lib/db/models/booking"
-import User, { type IUser, UserRole } from "../../../../../../lib/db/models/user"
-import Review, { type IReview } from "../../../../../../lib/db/models/review"
-import Treatment, { type ITreatment } from "../../../../../../lib/db/models/treatment"
-import PaymentMethod, { type IPaymentMethod } from "../../../../../../lib/db/models/payment-method"
-import { WorkingHoursSettings } from "../../../../../../lib/db/models/working-hours"
-import Coupon from "../../../../../../lib/db/models/coupon"
-import GiftVoucher from "../../../../../../lib/db/models/gift-voucher"
-import { getNextSequenceValue } from "../../../../../../lib/db/models/counter"
-import type { PopulatedBooking } from "../../../../../../types/booking"
+import { authOptions } from "@/lib/auth/auth"
+import dbConnect from "@/lib/db/mongoose"
+import Booking, { type IBooking, type BookingStatus } from "@/lib/db/models/booking"
+import User, { type IUser, UserRole } from "@/lib/db/models/user"
+import Review, { type IReview } from "@/lib/db/models/review"
+import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
+import PaymentMethod, { type IPaymentMethod } from "@/lib/db/models/payment-method"
+import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
+import Coupon from "@/lib/db/models/coupon"
+import GiftVoucher from "@/lib/db/models/gift-voucher"
+import { getNextSequenceValue } from "@/lib/db/models/counter"
+import { logger } from "@/lib/logs/logger"
+import type { PopulatedBooking } from "@/types/booking"
 import { Types } from "mongoose"
-import { unifiedNotificationService } from "../../../../../../lib/notifications/unified-notification-service"
-import type { NotificationRecipient } from "../../../../../../lib/notifications/notification-types"
-import {
-  requireAdminSession,
-  connectToDatabase,
-  AdminLogger,
-  handleAdminError,
-  validatePaginationOptions,
-  revalidateAdminPath,
-  createSuccessResult,
-  createErrorResult,
-  createPaginatedResult,
-  serializeMongoObject,
-  validateObjectId,
-  buildSearchQuery,
-  buildSortQuery,
-  type AdminActionResult,
-  type PaginatedResult,
-  type AdminActionOptions
-} from "../../../../../../lib/auth/admin-helpers"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
+import type { NotificationRecipient } from "@/lib/notifications/notification-types"
 
-// Interfaces
-export interface GetAllBookingsFilters extends AdminActionOptions {
+export interface GetAllBookingsFilters {
   status?: string
   professional?: string
   treatment?: string
@@ -46,38 +27,680 @@ export interface GetAllBookingsFilters extends AdminActionOptions {
   priceRange?: string
   address?: string
   subscription_id?: string
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortDirection?: "asc" | "desc"
+  search?: string
 }
 
-export interface BookingUpdateData {
-  status?: BookingStatus
-  bookingDateTime?: Date
-  recipientName?: string
-  recipientPhone?: string
-  recipientEmail?: string
-  notes?: string
-  professionalId?: string
-  paymentStatus?: "pending" | "paid" | "failed" | "not_required"
+export interface GetAllBookingsResult {
+  bookings: PopulatedBooking[]
+  totalPages: number
+  totalBookings: number
 }
 
-export interface BookingInitialData {
-  treatments: ITreatment[]
-  paymentMethods: any[]
-  workingHours: any
-  activeCoupons: any[]
-  activeGiftVouchers: any[]
+export interface UpdateBookingResult {
+  success: boolean
+  error?: string
+  booking?: IBooking
 }
 
-export interface ProfessionalInfo {
-  _id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  isActive: boolean
-  gender?: string
+export interface AssignProfessionalResult {
+  success: boolean
+  error?: string
+  booking?: IBooking
 }
 
-export interface CreateBookingData {
+export interface GetBookingByIdResult {
+  success: boolean
+  error?: string
+  booking?: PopulatedBooking
+}
+
+export interface CancelBookingResult {
+  success: boolean
+  error?: string
+  booking?: IBooking
+}
+
+export interface GetBookingInitialDataResult {
+  success: boolean
+  error?: string
+  data?: {
+    treatments: ITreatment[]
+    paymentMethods: any[]
+    workingHours: any
+    activeCoupons: any[]
+    activeGiftVouchers: any[]
+  }
+}
+
+export interface GetAvailableProfessionalsResult {
+  success: boolean
+  error?: string
+  professionals?: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    phone: string
+    isActive: boolean
+    gender?: string
+  }>
+}
+
+export interface GetSuitableProfessionalsResult {
+  success: boolean
+  error?: string
+  professionals?: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    phone: string
+    isActive: boolean
+    gender?: string
+  }>
+}
+
+/**
+ * Gets all bookings with optional filters
+ * @param filters Optional filters for bookings
+ * @returns GetAllBookingsResult
+ */
+export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promise<GetAllBookingsResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized")
+    }
+
+    await dbConnect()
+
+    const {
+      status,
+      professional,
+      treatment,
+      dateRange,
+      priceRange,
+      address,
+      subscription_id,
+      page = 1,
+      limit = 20,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+      search,
+    } = filters
+
+    const query: Record<string, unknown> = {}
+
+    // Add filters to query
+    if (status) query.status = status
+    
+    if (professional) {
+      try {
+        // Validate professional ID
+        if (!Types.ObjectId.isValid(professional)) {
+          console.error("Invalid professional ID:", professional)
+          throw new Error("Invalid professional ID format")
+        }
+        query.professionalId = new Types.ObjectId(professional)
+        console.log("Filtering bookings for professional:", professional)
+      } catch (error) {
+        console.error("Error processing professional filter:", error)
+        // Return empty result if professional ID is invalid
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+    
+    if (treatment) {
+      try {
+        if (!Types.ObjectId.isValid(treatment)) {
+          console.error("Invalid treatment ID:", treatment)
+          throw new Error("Invalid treatment ID format")
+        }
+        query.treatmentId = new Types.ObjectId(treatment)
+      } catch (error) {
+        console.error("Error processing treatment filter:", error)
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+    
+    if (subscription_id) {
+      try {
+        if (!Types.ObjectId.isValid(subscription_id)) {
+          console.error("Invalid subscription ID:", subscription_id)
+          throw new Error("Invalid subscription ID format")
+        }
+        query["priceDetails.redeemedUserSubscriptionId"] = new Types.ObjectId(subscription_id)
+      } catch (error) {
+        console.error("Error processing subscription filter:", error)
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+
+    if (address) query["bookingAddressSnapshot.fullAddress"] = {
+      $regex: address,
+      $options: "i",
+    }
+
+    // Handle date range filter
+    if (dateRange) {
+      const [startDate, endDate] = dateRange.split(",")
+      if (startDate && endDate) {
+        query.bookingDateTime = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        }
+      }
+    }
+
+    // Handle price range filter
+    if (priceRange) {
+      const [minPrice, maxPrice] = priceRange.split(",")
+      if (minPrice && maxPrice) {
+        query["priceDetails.finalAmount"] = {
+          $gte: Number(minPrice),
+          $lte: Number(maxPrice),
+        }
+      }
+    }
+
+    // Handle search
+    if (search) {
+      query.$or = [
+        { "recipientName": { $regex: search, $options: "i" } },
+        { "recipientPhone": { $regex: search, $options: "i" } },
+        { "recipientEmail": { $regex: search, $options: "i" } },
+        { "bookingAddressSnapshot.fullAddress": { $regex: search, $options: "i" } },
+        { "bookingNumber": { $regex: search, $options: "i" } },
+      ]
+    }
+
+    // Get total count for pagination
+    const totalBookings = await Booking.countDocuments(query)
+    const totalPages = Math.ceil(totalBookings / limit)
+
+    console.log("Booking query:", JSON.stringify(query, null, 2))
+    console.log(`Found ${totalBookings} bookings matching query`)
+
+    // Get bookings with pagination and sorting
+    const bookings = await Booking.find(query)
+      .sort({ [sortBy]: sortDirection === "desc" ? -1 : 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate("treatmentId")
+      .populate("professionalId")
+      .populate("userId")
+      .populate("priceDetails.appliedCouponId")
+      .populate("priceDetails.appliedGiftVoucherId")
+      .populate("priceDetails.redeemedUserSubscriptionId")
+      .populate("paymentDetails.paymentMethodId")
+      .lean()
+
+    console.log(`Retrieved ${bookings.length} bookings after pagination`)
+    
+    // Log first booking details for debugging
+    if (bookings.length > 0) {
+      console.log("First booking sample:", {
+        id: bookings[0]._id,
+        bookingNumber: bookings[0].bookingNumber,
+        professionalId: bookings[0].professionalId,
+        status: bookings[0].status
+      })
+    }
+
+    return {
+      bookings: bookings.map(booking => ({
+        ...booking,
+        _id: booking._id.toString(),
+        treatmentId: booking.treatmentId ? {
+          ...booking.treatmentId,
+          _id: new Types.ObjectId(booking.treatmentId._id.toString()),
+        } : null,
+        professionalId: booking.professionalId ? {
+          ...booking.professionalId,
+          _id: new Types.ObjectId(booking.professionalId._id.toString()),
+        } : null,
+        userId: booking.userId ? {
+          ...booking.userId,
+          _id: new Types.ObjectId(booking.userId._id.toString()),
+        } : null,
+      })) as unknown as PopulatedBooking[],
+      totalPages,
+      totalBookings,
+    }
+  } catch (error) {
+    logger.error("Error fetching all bookings:", error)
+    throw error
+  }
+}
+
+/**
+ * Gets a specific booking by ID with full population
+ * @param bookingId The ID of the booking to retrieve
+ * @returns GetBookingByIdResult
+ */
+export async function getBookingById(bookingId: string): Promise<GetBookingByIdResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+      .populate("treatmentId")
+      .populate("professionalId")
+      .populate("userId")
+      .populate("priceDetails.appliedCouponId")
+      .populate("priceDetails.appliedGiftVoucherId")
+      .populate("priceDetails.redeemedUserSubscriptionId")
+      .populate("paymentDetails.paymentMethodId")
+      .lean()
+
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    return {
+      success: true,
+      booking: {
+        ...booking,
+        _id: new Types.ObjectId(booking._id.toString()),
+        treatmentId: booking.treatmentId ? {
+          ...booking.treatmentId,
+          _id: new Types.ObjectId(booking.treatmentId._id.toString()),
+        } : null,
+        professionalId: booking.professionalId ? {
+          ...booking.professionalId,
+          _id: new Types.ObjectId(booking.professionalId._id.toString()),
+        } : null,
+        userId: booking.userId ? {
+          ...booking.userId,
+          _id: new Types.ObjectId(booking.userId._id.toString()),
+        } : null,
+      } as unknown as PopulatedBooking,
+    }
+  } catch (error) {
+    logger.error("Error fetching booking by ID:", error)
+    return { success: false, error: "Failed to fetch booking" }
+  }
+}
+
+/**
+ * Gets initial data needed for creating a new booking
+ * @returns GetBookingInitialDataResult
+ */
+export async function getBookingInitialData(): Promise<GetBookingInitialDataResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // Get all active treatments
+    const treatments = await Treatment.find({ isActive: true })
+      .select("name description pricingType fixedPrice defaultDurationMinutes durations")
+      .lean()
+
+    // Get payment methods (system payment methods) - just get basic info
+    const paymentMethodsRaw = await PaymentMethod.find({ isSystemMethod: true })
+      .select("type displayName isActive")
+      .lean()
+
+    // Get working hours settings
+    const workingHours = await WorkingHoursSettings.findOne().lean()
+
+    // Get active coupons
+    const activeCoupons = await Coupon.find({
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+      $or: [
+        { maxUses: { $exists: false } },
+        { $expr: { $lt: ["$currentUses", "$maxUses"] } }
+      ]
+    }).lean()
+
+    // Get active gift vouchers
+    const activeGiftVouchers = await GiftVoucher.find({
+      status: "active",
+      expiresAt: { $gt: new Date() },
+      $expr: { $gt: ["$remainingValue", 0] }
+    }).lean()
+
+    return {
+      success: true,
+      data: {
+        treatments,
+        paymentMethods: paymentMethodsRaw || [],
+        workingHours,
+        activeCoupons,
+        activeGiftVouchers
+      }
+    }
+  } catch (error) {
+    logger.error("Error fetching booking initial data:", error)
+    return { success: false, error: "Failed to fetch initial data" }
+  }
+}
+
+/**
+ * Updates a booking by admin
+ * @param bookingId The ID of the booking to update
+ * @param updates The updates to apply to the booking
+ * @returns UpdateBookingResult
+ */
+export async function updateBookingByAdmin(
+  bookingId: string,
+  updates: {
+    status?: BookingStatus
+    bookingDateTime?: Date
+    recipientName?: string
+    recipientPhone?: string
+    recipientEmail?: string
+    notes?: string
+    professionalId?: string
+    paymentStatus?: "pending" | "paid" | "failed" | "not_required"
+  }
+): Promise<UpdateBookingResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    // Apply updates
+    if (updates.status) booking.status = updates.status
+    if (updates.bookingDateTime) booking.bookingDateTime = updates.bookingDateTime
+    if (updates.recipientName) booking.recipientName = updates.recipientName
+    if (updates.recipientPhone) booking.recipientPhone = updates.recipientPhone
+    if (updates.recipientEmail) booking.recipientEmail = updates.recipientEmail
+    if (updates.notes) booking.notes = updates.notes
+    if (updates.professionalId) booking.professionalId = new Types.ObjectId(updates.professionalId)
+    if (updates.paymentStatus) booking.paymentDetails.paymentStatus = updates.paymentStatus
+
+    // Ensure required fields have valid values for backward compatibility
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+
+    await booking.save()
+    revalidatePath("/dashboard/admin/bookings")
+
+    return { success: true, booking }
+  } catch (error) {
+    logger.error("Error updating booking:", error)
+    return { success: false, error: "Failed to update booking" }
+  }
+}
+
+/**
+ * Assigns a professional to a booking
+ * @param bookingId The ID of the booking
+ * @param professionalId The ID of the professional to assign
+ * @returns AssignProfessionalResult
+ */
+export async function assignProfessionalToBooking(
+  bookingId: string,
+  professionalId: string,
+): Promise<AssignProfessionalResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    const professional = await User.findById(professionalId)
+    if (!professional || !professional.roles.includes("professional")) {
+      return { success: false, error: "Professional not found" }
+    }
+
+    booking.professionalId = new Types.ObjectId(professionalId)
+    booking.status = "confirmed"
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+
+    await booking.save()
+    revalidatePath("/dashboard/admin/bookings")
+
+    return { success: true, booking }
+  } catch (error) {
+    logger.error("Error assigning professional:", error)
+    return { success: false, error: "Failed to assign professional" }
+  }
+}
+
+/**
+ * Cancels a booking
+ * @param bookingId The ID of the booking to cancel
+ * @param reason The reason for cancellation
+ * @returns CancelBookingResult
+ */
+export async function cancelBooking(
+  bookingId: string,
+  reason: string,
+): Promise<CancelBookingResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    if (booking.status === "cancelled" || booking.status === "refunded") {
+      return { success: false, error: "Booking is already cancelled or refunded" }
+    }
+
+    booking.status = "cancelled"
+    booking.cancellationReason = reason
+    booking.cancelledBy = "admin"
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
+    await booking.save()
+    revalidatePath("/dashboard/admin/bookings")
+
+    return { success: true, booking }
+  } catch (error) {
+    logger.error("Error cancelling booking:", error)
+    return { success: false, error: "Failed to cancel booking" }
+  }
+}
+
+/**
+ * Gets all available professionals for booking assignment
+ * @returns GetAvailableProfessionalsResult
+ */
+export async function getAvailableProfessionals(): Promise<GetAvailableProfessionalsResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const professionals = await User.find({
+      roles: UserRole.PROFESSIONAL,
+      isActive: true,
+    })
+      .select("name email phone")
+      .lean()
+
+    return {
+      success: true,
+      professionals: professionals.map(prof => {
+        const [firstName, ...lastNameParts] = prof.name.split(" ")
+        const lastName = lastNameParts.join(" ")
+        return {
+          _id: prof._id.toString(),
+          firstName,
+          lastName,
+          email: prof.email || "",
+          phone: prof.phone || "",
+          isActive: true,
+        }
+      }),
+    }
+  } catch (error) {
+    logger.error("Error fetching available professionals:", error)
+    return { success: false, error: "Failed to fetch professionals" }
+  }
+}
+
+/**
+ * Gets all suitable professionals for a booking based on treatment and preferences
+ * @param bookingId The ID of the booking
+ * @returns GetSuitableProfessionalsResult
+ */
+export async function getSuitableProfessionals(bookingId: string): Promise<GetSuitableProfessionalsResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+      .populate("treatmentId")
+      .lean()
+
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    // Get all active professionals
+    const professionals = await User.find({
+      roles: UserRole.PROFESSIONAL,
+      isActive: true,
+      // If there's a gender preference, filter by it
+      ...(booking.therapistGenderPreference !== "any" && {
+        gender: booking.therapistGenderPreference,
+      }),
+    })
+      .select("name email phone gender")
+      .lean()
+
+    return {
+      success: true,
+      professionals: professionals.map(prof => {
+        const [firstName, ...lastNameParts] = prof.name.split(" ")
+        const lastName = lastNameParts.join(" ")
+        return {
+          _id: prof._id.toString(),
+          firstName,
+          lastName,
+          email: prof.email || "",
+          phone: prof.phone || "",
+          isActive: true,
+          gender: prof.gender,
+        }
+      }),
+    }
+  } catch (error) {
+    logger.error("Error fetching suitable professionals:", error)
+    return { success: false, error: "Failed to fetch suitable professionals" }
+  }
+}
+
+export interface CreateBookingResult {
+  success: boolean
+  error?: string
+  booking?: PopulatedBooking
+}
+
+/**
+ * Creates a new booking
+ * @param bookingData The booking data
+ * @returns CreateBookingResult
+ */
+export async function createNewBooking(bookingData: {
   // Customer data
   bookedByUserName?: string
   bookedByUserEmail?: string  
@@ -130,579 +753,14 @@ export interface CreateBookingData {
   giftGreeting?: string
   couponId?: string
   source?: string
-}
-
-/**
- * Gets all bookings with optional filters and pagination
- */
-export async function getAllBookings(
-  filters: GetAllBookingsFilters = {}
-): Promise<AdminActionResult<PaginatedResult<PopulatedBooking>>> {
-  const adminLogger = new AdminLogger("getAllBookings")
-  
+}): Promise<CreateBookingResult> {
   try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    const { page, limit, skip } = validatePaginationOptions(filters)
-    const {
-      status,
-      professional,
-      treatment,
-      dateRange,
-      priceRange,
-      address,
-      subscription_id,
-      search,
-      sortBy = "createdAt",
-      sortOrder = "desc"
-    } = filters
-
-    adminLogger.info("Fetching bookings", { filters, page, limit })
-
-    const query: Record<string, unknown> = {}
-
-    // Add filters to query
-    if (status) query.status = status
-    
-    if (professional) {
-      try {
-        validateObjectId(professional, "מזהה מטפל")
-        query.professionalId = new Types.ObjectId(professional)
-        adminLogger.info("Filtering bookings for professional", { professional })
-      } catch (error) {
-        adminLogger.error("Invalid professional ID", { professional, error })
-        return createErrorResult("מזהה מטפל לא תקין")
-      }
-    }
-    
-    if (treatment) {
-      try {
-        validateObjectId(treatment, "מזהה טיפול")
-        query.treatmentId = new Types.ObjectId(treatment)
-      } catch (error) {
-        adminLogger.error("Invalid treatment ID", { treatment, error })
-        return createErrorResult("מזהה טיפול לא תקין")
-      }
-    }
-    
-    if (subscription_id) {
-      try {
-        validateObjectId(subscription_id, "מזהה מנוי")
-        query["priceDetails.redeemedUserSubscriptionId"] = new Types.ObjectId(subscription_id)
-      } catch (error) {
-        adminLogger.error("Invalid subscription ID", { subscription_id, error })
-        return createErrorResult("מזהה מנוי לא תקין")
-      }
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    if (address) {
-      query["bookingAddressSnapshot.fullAddress"] = {
-        $regex: address,
-        $options: "i",
-      }
-    }
-
-    // Handle date range filter
-    if (dateRange) {
-      const [startDate, endDate] = dateRange.split(",")
-      if (startDate && endDate) {
-        query.bookingDateTime = {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate),
-        }
-      }
-    }
-
-    // Handle price range filter
-    if (priceRange) {
-      const [minPrice, maxPrice] = priceRange.split(",")
-      if (minPrice && maxPrice) {
-        query["priceDetails.finalAmount"] = {
-          $gte: Number(minPrice),
-          $lte: Number(maxPrice),
-        }
-      }
-    }
-
-    // Handle search
-    if (search) {
-      const searchQuery = buildSearchQuery(search, [
-        "recipientName",
-        "recipientPhone", 
-        "recipientEmail",
-        "bookingAddressSnapshot.fullAddress",
-        "bookingNumber"
-      ])
-      Object.assign(query, searchQuery)
-    }
-
-    // Get total count for pagination
-    const totalBookings = await Booking.countDocuments(query)
-
-    adminLogger.info("Found bookings matching query", { totalBookings, query })
-
-    // Get bookings with pagination and sorting
-    const sortQuery = buildSortQuery(sortBy, sortOrder)
-    const bookings = await Booking.find(query)
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit)
-      .populate("treatmentId")
-      .populate("professionalId")
-      .populate("userId")
-      .populate("priceDetails.appliedCouponId")
-      .populate("priceDetails.appliedGiftVoucherId")
-      .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId")
-      .lean()
-
-    adminLogger.info("Retrieved bookings after pagination", { count: bookings.length })
-
-    // Serialize and transform bookings
-    const serializedBookings = bookings.map(booking => {
-      const serialized = serializeMongoObject<any>(booking)
-      return {
-        ...serialized,
-        _id: serialized._id.toString(),
-        treatmentId: serialized.treatmentId ? {
-          ...serialized.treatmentId,
-          _id: serialized.treatmentId._id.toString(),
-        } : null,
-        professionalId: serialized.professionalId ? {
-          ...serialized.professionalId,
-          _id: serialized.professionalId._id.toString(),
-        } : null,
-        userId: serialized.userId ? {
-          ...serialized.userId,
-          _id: serialized.userId._id.toString(),
-        } : null,
-      }
-    }) as PopulatedBooking[]
-
-    return createPaginatedResult(serializedBookings, totalBookings, page, limit)
-  } catch (error) {
-    return handleAdminError(error, "getAllBookings")
-  }
-}
-
-/**
- * Gets a specific booking by ID with full population
- */
-export async function getBookingById(
-  bookingId: string
-): Promise<AdminActionResult<PopulatedBooking>> {
-  const adminLogger = new AdminLogger("getBookingById")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingId, "מזהה הזמנה")
-    
-    adminLogger.info("Fetching booking by ID", { bookingId })
-
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .populate("professionalId")
-      .populate("userId")
-      .populate("priceDetails.appliedCouponId")
-      .populate("priceDetails.appliedGiftVoucherId")
-      .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId")
-      .lean()
-
-    if (!booking) {
-      adminLogger.warn("Booking not found", { bookingId })
-      return createErrorResult("הזמנה לא נמצאה")
-    }
-
-    const serialized = serializeMongoObject<any>(booking)
-    const result = {
-      ...serialized,
-      _id: serialized._id.toString(),
-      treatmentId: serialized.treatmentId ? {
-        ...serialized.treatmentId,
-        _id: serialized.treatmentId._id.toString(),
-      } : null,
-      professionalId: serialized.professionalId ? {
-        ...serialized.professionalId,
-        _id: serialized.professionalId._id.toString(),
-      } : null,
-      userId: serialized.userId ? {
-        ...serialized.userId,
-        _id: serialized.userId._id.toString(),
-      } : null,
-    } as PopulatedBooking
-
-    adminLogger.info("Successfully fetched booking", { bookingId })
-    return createSuccessResult(result)
-  } catch (error) {
-    return handleAdminError(error, "getBookingById")
-  }
-}
-
-/**
- * Gets initial data needed for creating a new booking
- */
-export async function getBookingInitialData(): Promise<AdminActionResult<BookingInitialData>> {
-  const adminLogger = new AdminLogger("getBookingInitialData")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching booking initial data")
-
-    // Get all active treatments
-    const treatments = await Treatment.find({ isActive: true })
-      .select("name description pricingType fixedPrice defaultDurationMinutes durations")
-      .lean()
-
-    // Get payment methods (system payment methods)
-    const paymentMethodsRaw = await PaymentMethod.find({ isSystemMethod: true })
-      .select("type displayName isActive")
-      .lean()
-
-    // Get working hours settings
-    const workingHours = await WorkingHoursSettings.findOne().lean()
-
-    // Get active coupons
-    const activeCoupons = await Coupon.find({
-      isActive: true,
-      expiresAt: { $gt: new Date() },
-      $or: [
-        { maxUses: { $exists: false } },
-        { $expr: { $lt: ["$currentUses", "$maxUses"] } }
-      ]
-    }).lean()
-
-    // Get active gift vouchers
-    const activeGiftVouchers = await GiftVoucher.find({
-      status: "active",
-      expiresAt: { $gt: new Date() },
-      $expr: { $gt: ["$remainingValue", 0] }
-    }).lean()
-
-    const data: BookingInitialData = {
-      treatments: serializeMongoObject(treatments),
-      paymentMethods: serializeMongoObject(paymentMethodsRaw || []),
-      workingHours: serializeMongoObject(workingHours),
-      activeCoupons: serializeMongoObject(activeCoupons),
-      activeGiftVouchers: serializeMongoObject(activeGiftVouchers)
-    }
-
-    adminLogger.info("Successfully fetched initial data")
-    return createSuccessResult(data)
-  } catch (error) {
-    return handleAdminError(error, "getBookingInitialData")
-  }
-}
-
-/**
- * Updates a booking by admin
- */
-export async function updateBookingByAdmin(
-  bookingId: string,
-  updates: BookingUpdateData
-): Promise<AdminActionResult<IBooking>> {
-  const adminLogger = new AdminLogger("updateBookingByAdmin")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingId, "מזהה הזמנה")
-    
-    adminLogger.info("Updating booking", { bookingId, updates })
-
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return createErrorResult("הזמנה לא נמצאה")
-    }
-
-    // Apply updates
-    if (updates.status) booking.status = updates.status
-    if (updates.bookingDateTime) booking.bookingDateTime = updates.bookingDateTime
-    if (updates.recipientName) booking.recipientName = updates.recipientName
-    if (updates.recipientPhone) booking.recipientPhone = updates.recipientPhone
-    if (updates.recipientEmail) booking.recipientEmail = updates.recipientEmail
-    if (updates.notes) booking.notes = updates.notes
-    if (updates.professionalId) {
-      validateObjectId(updates.professionalId, "מזהה מטפל")
-      booking.professionalId = new Types.ObjectId(updates.professionalId)
-    }
-    if (updates.paymentStatus) booking.paymentDetails.paymentStatus = updates.paymentStatus
-
-    // Ensure required fields have valid values for backward compatibility
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
-    if (!booking.consents) {
-      booking.consents = {
-        customerAlerts: "email",
-        patientAlerts: "email",
-        marketingOptIn: false,
-        termsAccepted: false
-      }
-    }
-
-    await booking.save()
-    revalidatePath("/dashboard/admin/bookings")
-
-    adminLogger.info("Successfully updated booking", { bookingId })
-    return createSuccessResult(serializeMongoObject(booking))
-  } catch (error) {
-    return handleAdminError(error, "updateBookingByAdmin")
-  }
-}
-
-/**
- * Assigns a professional to a booking
- */
-export async function assignProfessionalToBooking(
-  bookingId: string,
-  professionalId: string,
-): Promise<AdminActionResult<IBooking>> {
-  const adminLogger = new AdminLogger("assignProfessionalToBooking")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingId, "מזהה הזמנה")
-    validateObjectId(professionalId, "מזהה מטפל")
-    
-    adminLogger.info("Assigning professional to booking", { bookingId, professionalId })
-
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return createErrorResult("הזמנה לא נמצאה")
-    }
-
-    const professional = await User.findById(professionalId)
-    if (!professional || !professional.roles.includes("professional")) {
-      return createErrorResult("מטפל לא נמצא")
-    }
-
-    booking.professionalId = new Types.ObjectId(professionalId)
-    booking.status = "confirmed"
-    
-    // Ensure required fields have valid values for backward compatibility
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
-    if (!booking.consents) {
-      booking.consents = {
-        customerAlerts: "email",
-        patientAlerts: "email",
-        marketingOptIn: false,
-        termsAccepted: false
-      }
-    }
-
-    await booking.save()
-    revalidatePath("/dashboard/admin/bookings")
-
-    adminLogger.info("Successfully assigned professional", { bookingId, professionalId })
-    return createSuccessResult(serializeMongoObject(booking))
-  } catch (error) {
-    return handleAdminError(error, "assignProfessionalToBooking")
-  }
-}
-
-/**
- * Cancels a booking
- */
-export async function cancelBooking(
-  bookingId: string,
-  reason: string,
-): Promise<AdminActionResult<IBooking>> {
-  const adminLogger = new AdminLogger("cancelBooking")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingId, "מזהה הזמנה")
-    
-    if (!reason?.trim()) {
-      return createErrorResult("סיבת ביטול נדרשת")
-    }
-    
-    adminLogger.info("Cancelling booking", { bookingId, reason })
-
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return createErrorResult("הזמנה לא נמצאה")
-    }
-
-    if (booking.status === "cancelled" || booking.status === "refunded") {
-      return createErrorResult("ההזמנה כבר בוטלה או הוחזרה")
-    }
-
-    booking.status = "cancelled"
-    booking.cancellationReason = reason
-    booking.cancelledBy = "admin"
-    
-    // Ensure required fields have valid values for backward compatibility
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
-    if (!booking.consents) {
-      booking.consents = {
-        customerAlerts: "email",
-        patientAlerts: "email",
-        marketingOptIn: false,
-        termsAccepted: false
-      }
-    }
-    
-    await booking.save()
-    revalidatePath("/dashboard/admin/bookings")
-
-    adminLogger.info("Successfully cancelled booking", { bookingId })
-    return createSuccessResult(serializeMongoObject(booking))
-  } catch (error) {
-    return handleAdminError(error, "cancelBooking")
-  }
-}
-
-/**
- * Gets all available professionals for booking assignment
- */
-export async function getAvailableProfessionals(): Promise<AdminActionResult<ProfessionalInfo[]>> {
-  const adminLogger = new AdminLogger("getAvailableProfessionals")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    adminLogger.info("Fetching available professionals")
-
-    const professionals = await User.find({
-      roles: UserRole.PROFESSIONAL,
-      isActive: true,
-    })
-      .select("name email phone")
-      .lean()
-
-    const result = professionals.map(prof => {
-      const [firstName, ...lastNameParts] = prof.name.split(" ")
-      const lastName = lastNameParts.join(" ")
-      return {
-        _id: prof._id.toString(),
-        firstName,
-        lastName,
-        email: prof.email || "",
-        phone: prof.phone || "",
-        isActive: true,
-      }
-    })
-
-    adminLogger.info("Successfully fetched professionals", { count: result.length })
-    return createSuccessResult(result)
-  } catch (error) {
-    return handleAdminError(error, "getAvailableProfessionals")
-  }
-}
-
-/**
- * Gets all suitable professionals for a booking based on treatment and preferences
- */
-export async function getSuitableProfessionals(
-  bookingId: string
-): Promise<AdminActionResult<ProfessionalInfo[]>> {
-  const adminLogger = new AdminLogger("getSuitableProfessionals")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingId, "מזהה הזמנה")
-    
-    adminLogger.info("Fetching suitable professionals", { bookingId })
-
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .lean()
-
-    if (!booking) {
-      return createErrorResult("הזמנה לא נמצאה")
-    }
-
-    // Get all active professionals
-    const query: any = {
-      roles: UserRole.PROFESSIONAL,
-      isActive: true,
-    }
-    
-    // If there's a gender preference, filter by it
-    if (booking.therapistGenderPreference !== "any") {
-      query.gender = booking.therapistGenderPreference
-    }
-    
-    const professionals = await User.find(query)
-      .select("name email phone gender")
-      .lean()
-
-    const result = professionals.map(prof => {
-      const [firstName, ...lastNameParts] = prof.name.split(" ")
-      const lastName = lastNameParts.join(" ")
-      return {
-        _id: prof._id.toString(),
-        firstName,
-        lastName,
-        email: prof.email || "",
-        phone: prof.phone || "",
-        isActive: true,
-        gender: prof.gender,
-      }
-    })
-
-    adminLogger.info("Successfully fetched suitable professionals", { 
-      bookingId, 
-      count: result.length 
-    })
-    return createSuccessResult(result)
-  } catch (error) {
-    return handleAdminError(error, "getSuitableProfessionals")
-  }
-}
-
-/**
- * Creates a new booking
- */
-export async function createNewBooking(
-  bookingData: CreateBookingData
-): Promise<AdminActionResult<PopulatedBooking>> {
-  const adminLogger = new AdminLogger("createNewBooking")
-  
-  try {
-    await requireAdminSession()
-    await connectToDatabase()
-    
-    validateObjectId(bookingData.treatmentId, "מזהה טיפול")
-    
-    adminLogger.info("Creating new booking", { bookingData })
+    await dbConnect()
 
     // Generate proper booking number using sequence
     const nextBookingNum = await getNextSequenceValue("bookingNumber")
@@ -711,7 +769,7 @@ export async function createNewBooking(
     // Get treatment details for proper pricing
     const treatment = await Treatment.findById(bookingData.treatmentId).lean()
     if (!treatment) {
-      return createErrorResult("טיפול לא נמצא")
+      return { success: false, error: "Treatment not found" }
     }
 
     // Calculate proper pricing data
@@ -726,7 +784,7 @@ export async function createNewBooking(
       status: "pending_payment",
       bookingDateTime: bookingData.startTime,
       step: 1,
-      treatmentCategory: new Types.ObjectId(), // Generate a new ObjectId as category reference
+              treatmentCategory: new Types.ObjectId(), // Generate a new ObjectId as category reference
       staticTreatmentPrice,
       staticTherapistPay,
       companyFee,
@@ -770,17 +828,18 @@ export async function createNewBooking(
 
     revalidatePath("/dashboard/admin/bookings")
 
-    const result = serializeMongoObject<PopulatedBooking>({
-      ...populatedBooking,
-      _id: populatedBooking?._id?.toString() || "",
-    })
-
-    adminLogger.info("Successfully created booking", { 
-      bookingId: result._id,
-      bookingNumber 
-    })
-    return createSuccessResult(result)
+    return {
+      success: true,
+      booking: {
+        ...populatedBooking,
+        _id: populatedBooking?._id?.toString() || "",
+      } as PopulatedBooking
+    }
   } catch (error) {
-    return handleAdminError(error, "createNewBooking")
+    logger.error("Error creating new booking:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create booking"
+    }
   }
 } 

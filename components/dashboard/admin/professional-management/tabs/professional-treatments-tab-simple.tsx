@@ -69,11 +69,34 @@ export default function ProfessionalTreatmentsTab({
 
   // Initialize selected treatments from professional data
   useEffect(() => {
-    if (professional.treatments) {
-      const selectedIds = new Set(professional.treatments.map(t => t.treatmentId))
-      setSelectedTreatments(selectedIds)
+    console.log('ProfessionalTreatmentsTabSimple useEffect triggered for professional:', professional._id)
+    console.log('Professional treatments:', professional.treatments)
+    
+    if (professional.treatments && Array.isArray(professional.treatments)) {
+      try {
+        const selectedIds = new Set(
+          professional.treatments
+            .filter(t => t && t.treatmentId) // Filter out invalid entries
+            .map(t => {
+              // Safely extract treatmentId
+              const treatmentId = typeof t.treatmentId === 'string' 
+                ? t.treatmentId 
+                : t.treatmentId?.toString() || ''
+              return treatmentId
+            })
+            .filter(id => id) // Remove empty IDs
+        )
+        console.log('Setting selected treatments:', Array.from(selectedIds))
+        setSelectedTreatments(selectedIds)
+      } catch (error) {
+        console.error('Error processing professional treatments:', error)
+        setSelectedTreatments(new Set())
+      }
+    } else {
+      console.log('No treatments found, setting empty set')
+      setSelectedTreatments(new Set())
     }
-  }, [professional._id]) // רק כשהמטפל משתנה, לא כל פעם שהטיפולים משתנים
+  }, [professional._id, professional.treatments?.length]) // Only trigger when ID or treatments count changes
 
   // Load available treatments
   useEffect(() => {

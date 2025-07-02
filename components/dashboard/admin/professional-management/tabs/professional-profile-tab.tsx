@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -24,6 +24,8 @@ export default function ProfessionalProfileTab({
   isCreatingNew = false,
   onCreated
 }: ProfessionalProfileTabProps) {
+  console.log('ProfessionalProfileTab rendered for professional:', professional._id)
+  
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -31,7 +33,7 @@ export default function ProfessionalProfileTab({
     name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
     email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
     phone: typeof professional.userId === 'object' ? professional.userId.phone || "" : "",
-    gender: typeof professional.userId === 'object' ? professional.userId.gender || "" : "",
+    gender: typeof professional.userId === 'object' ? (professional.userId.gender as "male" | "female") || "male" : "male",
     birthDate: typeof professional.userId === 'object' && professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
   })
   
@@ -44,6 +46,29 @@ export default function ProfessionalProfileTab({
   
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Sync state with props when professional changes
+  useEffect(() => {
+    console.log('ProfessionalProfileTab syncing state for professional:', professional._id)
+    
+    setUserDetails({
+      name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
+      email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
+      phone: typeof professional.userId === 'object' ? professional.userId.phone || "" : "",
+      gender: typeof professional.userId === 'object' ? (professional.userId.gender as "male" | "female") || "male" : "male",
+      birthDate: typeof professional.userId === 'object' && professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
+    })
+    
+    setProfessionalDetails({
+      status: professional.status,
+      isActive: professional.isActive,
+      adminNotes: professional.adminNotes || "",
+      rejectionReason: professional.rejectionReason || ""
+    })
+    
+    // Reset changes flag when syncing with new data
+    setHasChanges(false)
+  }, [professional._id]) // Only sync when professional ID changes
 
   const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
     setUserDetails(prev => ({
@@ -95,7 +120,35 @@ export default function ProfessionalProfileTab({
 
       // Update local state with the new data
       if (result.professional) {
-        onUpdate(result.professional)
+        // Transform the result to match our Professional type
+        const transformedProfessional: Partial<Professional> = {
+          _id: result.professional._id?.toString() || professional._id,
+          status: result.professional.status,
+          isActive: result.professional.isActive,
+          adminNotes: result.professional.adminNotes,
+          rejectionReason: result.professional.rejectionReason,
+          updatedAt: result.professional.updatedAt ? new Date(result.professional.updatedAt) : new Date()
+        }
+        
+        // Update userId if it exists in the result
+        if (result.professional.userId && typeof result.professional.userId === 'object') {
+          transformedProfessional.userId = {
+            _id: result.professional.userId._id?.toString() || (typeof professional.userId === 'object' ? professional.userId._id : ''),
+            name: result.professional.userId.name || (typeof professional.userId === 'object' ? professional.userId.name : ''),
+            email: result.professional.userId.email || (typeof professional.userId === 'object' ? professional.userId.email : ''),
+            phone: result.professional.userId.phone || (typeof professional.userId === 'object' ? professional.userId.phone : ''),
+            gender: (result.professional.userId.gender as "male" | "female") || (typeof professional.userId === 'object' ? professional.userId.gender : 'male'),
+            dateOfBirth: result.professional.userId.dateOfBirth ? new Date(result.professional.userId.dateOfBirth) : (typeof professional.userId === 'object' ? professional.userId.dateOfBirth : undefined),
+            createdAt: typeof professional.userId === 'object' ? professional.userId.createdAt : new Date(),
+            updatedAt: result.professional.userId.updatedAt ? new Date(result.professional.userId.updatedAt) : new Date(),
+            role: typeof professional.userId === 'object' ? professional.userId.role : 'member',
+            isActive: typeof professional.userId === 'object' ? professional.userId.isActive : true,
+            preferences: typeof professional.userId === 'object' ? professional.userId.preferences : {},
+            addresses: typeof professional.userId === 'object' ? professional.userId.addresses : []
+          }
+        }
+        
+        onUpdate(transformedProfessional)
       }
       setHasChanges(false)
       

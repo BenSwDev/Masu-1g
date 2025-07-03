@@ -299,7 +299,7 @@ export async function sendBookingConfirmationToUser(
     }
 
     if (recipients.length > 0) {
-      await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
+      await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData as any)
     }
 
     return { success: true }

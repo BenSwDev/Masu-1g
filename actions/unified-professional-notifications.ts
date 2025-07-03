@@ -159,7 +159,7 @@ export async function sendUnifiedProfessionalNotifications(
 
         // Prepare notification
         const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`
-        const userLanguage = professional.preferredLanguage || "he"
+        const userLanguage = "he"
 
         const notificationData = {
           type: "professional-booking-notification" as const,

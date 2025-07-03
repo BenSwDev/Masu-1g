@@ -133,7 +133,7 @@ export default function ProfessionalProfileTab({
         // Update userId if it exists in the result
         if (result.professional.userId && typeof result.professional.userId === 'object') {
           transformedProfessional.userId = {
-            _id: result.professional.userId._id?.toString() || (typeof professional.userId === 'object' ? professional.userId._id : ''),
+            id: result.professional.userId._id?.toString() || (typeof professional.userId === 'object' ? professional.userId._id : ''),
             name: result.professional.userId.name || (typeof professional.userId === 'object' ? professional.userId.name : ''),
             email: result.professional.userId.email || (typeof professional.userId === 'object' ? professional.userId.email : ''),
             phone: result.professional.userId.phone || (typeof professional.userId === 'object' ? professional.userId.phone : ''),

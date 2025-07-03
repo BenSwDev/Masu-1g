@@ -688,6 +688,17 @@ export async function calculateBookingPrice(
     priceDetails.finalAmount = Math.max(0, currentTotalDue)
     priceDetails.isFullyCoveredByVoucherOrSubscription = priceDetails.finalAmount === 0
 
+    // Debug logging
+    logger.info("Price calculation result:", {
+      basePrice: priceDetails.basePrice,
+      totalSurchargesAmount: priceDetails.totalSurchargesAmount,
+      treatmentPriceAfterSubscriptionOrTreatmentVoucher: priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
+      subtotalBeforeGeneralReductions,
+      finalAmount: priceDetails.finalAmount,
+      bookingDateTime: validatedPayload.bookingDateTime,
+      surcharges: priceDetails.surcharges
+    })
+
     // Calculate professional payment and office commission
     // 1. Base treatment professional payment (המטפל מקבל את החלק שלו תמיד, גם אם הטיפול מכוסה)
     let baseProfessionalPayment = 0
@@ -860,8 +871,8 @@ export async function createBooking(
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
         status: validatedPayload.priceDetails.finalAmount === 0 || validatedPayload.paymentDetails.paymentStatus === "paid"
-          ? "in_process" 
-          : "pending_payment", // Will be updated to "in_process" after successful payment
+          ? "pending_professional" 
+          : "pending_payment", // Will be updated to "pending_professional" after successful payment
         // Required fields with defaults for backward compatibility
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
         staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
@@ -1563,7 +1574,7 @@ export async function professionalAcceptBooking(
       if (!booking) {
         throw new Error("bookings.errors.bookingNotFound")
       }
-      if (booking.status !== "in_process" || booking.professionalId) {
+      if (booking.status !== "pending_professional" || booking.professionalId) {
         throw new Error("bookings.errors.bookingNotAvailableForProfessionalAssignment")
       }
 
@@ -1710,7 +1721,7 @@ export async function professionalMarkCompleted(
     if (booking.professionalId?.toString() !== professionalId) {
       return { success: false, error: "common.forbidden" }
     }
-    if (!["confirmed", "in_process"].includes(booking.status)) {
+    if (!["confirmed", "pending_professional"].includes(booking.status)) {
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForCompletion" }
     }
 
@@ -2444,7 +2455,7 @@ export async function createGuestBooking(
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
         status: validatedPayload.priceDetails.finalAmount === 0 || validatedPayload.paymentDetails.paymentStatus === "paid"
-          ? "in_process" 
+          ? "pending_professional" 
           : "pending_payment",
         // Calculated fields based on treatment
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
@@ -3238,7 +3249,7 @@ export async function updateBookingStatusAfterPayment(
         // Payment successful - update status to paid
       booking.paymentDetails.paymentStatus = "paid"
       booking.paymentDetails.transactionId = transactionId
-      booking.status = "in_process" // Now in process - paid but not assigned professional
+      booking.status = "pending_professional" // Now pending professional assignment
       
       // Find suitable professionals and save to booking
         const suitableProfessionalsResult = await findSuitableProfessionals(bookingId)

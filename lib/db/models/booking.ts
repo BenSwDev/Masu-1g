@@ -2,8 +2,8 @@ import mongoose, { Schema, type Document, type Model, type Types } from "mongoos
 
 export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
-  | "in_process" // בטיפול - שולם אבל לא שויך מטפל (מה שהמנהל רואה)
-  | "confirmed" // מאושר - מה שהלקוח רואה במקום "in_process"
+  | "pending_professional" // ממתינה לשיוך מטפל - שולם אבל לא שויך מטפל
+  | "confirmed" // מאושר - שויך מטפל
   | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
   | "refunded" // הוחזר - בוטל עם החזר

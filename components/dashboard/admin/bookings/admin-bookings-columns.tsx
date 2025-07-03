@@ -340,7 +340,7 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 
   const statusConfig: Record<string, { variant: "secondary" | "destructive"; color: string }> = {
     pending_payment: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
-    in_process: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
+    pending_professional: { variant: "secondary" as const, color: "bg-orange-100 text-orange-800" },
     confirmed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
     completed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
     cancelled: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
@@ -351,7 +351,7 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 
   const statusLabels: Record<string, string> = {
     pending_payment: "ממתין לתשלום",
-    in_process: "בטיפול",
+    pending_professional: "ממתינה לשיוך מטפל",
     confirmed: "מאושר",
     completed: "הושלם",
     cancelled: "בוטל",
@@ -479,7 +479,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
 
   const hasSuitableProfessionals = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
   const hasAnyProfessionals = (professionalsToShow?.length || 0) > 0
-  const canSendNotifications = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
+  const canSendNotifications = !booking.professionalId && ["confirmed", "pending_professional"].includes(booking.status)
 
   // If professional is assigned
   if (booking?.professionalId) {

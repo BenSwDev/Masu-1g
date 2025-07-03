@@ -1207,6 +1207,7 @@
       },
       "expired": "פג תוקף",
       "export": "ייצוא",
+      "exportToExcel": "ייצא לאקסל",
       "failedToLoadTreatments": "שגיאה בטעינת טיפולים.",
       "featureComingSoon": "תכונה זו תהיה זמינה בקרוב!",
       "female": "נקבה",
@@ -2811,7 +2812,39 @@
       "booking": "הזמנה",
       "subscription": "מנוי",
       "giftVoucher": "שובר מתנה",
-      "comingSoon": "בקרוב: רשימה מלאה של כל העסקאות והמימושים"
+      "comingSoon": "בקרוב: רשימה מלאה של כל העסקאות והמימושים",
+      "errors": {
+        "loadFailed": "שגיאה בטעינת העסקאות",
+        "dayDetailsFailed": "שגיאה בטעינת פרטי היום"
+      },
+      "loadingData": "טוען נתונים...",
+      "weeklyReport": "דוח שבועי",
+      "navigation": {
+        "previousWeek": "שבוע קודם",
+        "currentWeek": "שבוע נוכחי",
+        "nextWeek": "שבוע הבא"
+      },
+      "columns": {
+        "date": "תאריך",
+        "bookings": "הזמנות",
+        "newVouchers": "שוברים חדשים",
+        "redeemedVouchers": "שוברים מומשו",
+        "newSubscriptions": "מנויים חדשים",
+        "redeemedSubscriptions": "מנויים מומשו",
+        "newCoupons": "קופונים חדשים",
+        "redeemedCoupons": "קופונים מומשו",
+        "newPartnerCoupons": "קופונים שותפים חדשים",
+        "redeemedPartnerCoupons": "קופונים שותפים מומשו",
+        "totalRevenue": "סה״כ הכנסות",
+        "totalRedemptions": "סה״כ מימושים",
+        "professionalCosts": "עלויות מטפלים",
+        "officeProfit": "רווח המשרד"
+      },
+      "viewDayDetails": "צפה בפרטי היום",
+      "summary": {
+        "weekTotal": "סיכום השבוע"
+      },
+      "noData": "אין נתונים זמינים"
     },
     "users": {
       "addUser": "הוסף משתמש",
@@ -3780,7 +3813,47 @@
     "activeSubscriptions": "מנויים פעילים",
     "activeVouchers": "שוברים פעילים",
     "lastActivity": "פעילות אחרונה",
-    "transactionHistory": "היסטוריית עסקאות"
+    "transactionHistory": "היסטוריית עסקאות",
+    "totalCustomers": "סה״כ לקוחות",
+    "registered": "רשומים",
+    "guests": "אורחים",
+    "totalRevenue": "סה״כ הכנסות",
+    "fromAllCustomers": "מכל הלקוחות במערכת",
+    "averageSpending": "ממוצע הוצאה",
+    "perCustomer": "לכל לקוח במערכת",
+    "activeCustomers": "לקוחות פעילים",
+    "activeLast30Days": "פעילים ב-30 הימים האחרונים",
+    "filterByType": "סינון לפי סוג",
+    "allUsers": "כל המשתמשים",
+    "guestsOnly": "אורחים בלבד",
+    "registeredOnly": "משתמשים רשומים",
+    "sortBy": "מיין לפי",
+    "tabs": {
+      "personal": "מידע אישי",
+      "financial": "סיכום כספי",
+      "active": "פריטים פעילים",
+      "transactions": "עסקאות",
+      "activity": "פעילות"
+    },
+    "accountType": "סוג חשבון",
+    "financialSummary": "סיכום כספי",
+    "totalBookings": "סה״כ הזמנות",
+    "cancelledBookings": "הזמנות בוטלו",
+    "noShowBookings": "לא הגיעו",
+    "subscriptionsDesc": "מנויים בתוקף",
+    "vouchersDesc": "שוברים בתוקף",
+    "bookingsDesc": "כל ההזמנות",
+    "subscriptionsPurchased": "מנויים שנרכשו",
+    "vouchersPurchased": "שוברים שנרכשו",
+    "noTransactions": "לא נמצאו עסקאות עבור לקוח זה",
+    "activityStats": "סטטיסטיקות פעילות מפורטות",
+    "successRate": "שיעור הצלחה",
+    "outOf": "מתוך",
+    "customerRating": "דירוג לקוח",
+    "vipCustomer": "לקוח VIP",
+    "preferredCustomer": "לקוח מועדף",
+    "regularCustomer": "לקוח רגיל",
+    "activityLevel": "רמת פעילות"
   },
   "giftVouchers": {
     "fields": {

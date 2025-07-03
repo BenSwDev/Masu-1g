@@ -15,7 +15,7 @@ interface CustomUser {
   name?: string | null
   image?: string | null
   phone?: string
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female"
   dateOfBirth?: Date
   roles?: string[]
   password?: string
@@ -273,7 +273,7 @@ export const authOptions: NextAuthOptions = {
         session.user.roles = token.roles as string[]
         session.user.activeRole = token.activeRole as string
         session.user.phone = token.phone as string
-        session.user.gender = token.gender as "male" | "female" | "other"
+        session.user.gender = token.gender as "male" | "female"
         session.user.dateOfBirth = token.dateOfBirth as Date
         session.user.treatmentPreferences = token.treatmentPreferences as ITreatmentPreferences // Add to session
         session.user.notificationPreferences = token.notificationPreferences as INotificationPreferences // Add to session

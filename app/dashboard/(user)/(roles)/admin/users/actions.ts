@@ -14,7 +14,7 @@ export interface UserData {
   name: string
   email?: string
   phone: string
-  gender: "male" | "female" | "other"
+  gender: "male" | "female" 
   dateOfBirth?: Date
   roles: ("admin" | "professional" | "member" | "partner")[]
   activeRole?: string
@@ -30,7 +30,7 @@ export interface CreateUserData {
   email?: string
   phone: string
   password: string
-  gender: "male" | "female" | "other"
+  gender: "male" | "female" 
   dateOfBirth?: Date
   roles: ("admin" | "professional" | "member" | "partner")[]
 }
@@ -39,7 +39,7 @@ export interface UpdateUserData {
   name?: string
   email?: string
   phone?: string
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female" 
   dateOfBirth?: Date
   roles?: ("admin" | "professional" | "member" | "partner")[]
   activeRole?: string

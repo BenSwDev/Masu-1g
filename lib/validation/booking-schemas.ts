@@ -117,7 +117,7 @@ export const SchedulingDetailsSchema = z
     recipientPhone: z.string().optional(),
     recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
     recipientBirthDate: z.date().optional(),
-    recipientGender: z.enum(["male", "female", "other"]).optional(),
+    recipientGender: z.enum(["male", "female"]).optional(),
   })
   .refine(
     (data) => {
@@ -303,7 +303,7 @@ export const CalculatePricePayloadSchema = z.object({
   recipientPhone: z.string().optional(),
   recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  recipientGender: z.enum(["male", "female"]).optional(),
   guestPhone: z.string().optional(), // Add guest phone for ownership validation
 })
 
@@ -351,7 +351,7 @@ export const CreateBookingPayloadSchema = z.object({
   recipientPhone: z.string().optional(),
   recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  recipientGender: z.enum(["male", "female"]).optional(),
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
   recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(),
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
@@ -437,7 +437,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
     }),
   recipientEmail: z.string().email("Invalid email format").optional(),
   recipientBirthDate: z.date().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  recipientGender: z.enum(["male", "female"]).optional(),
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
   recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(),
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),

@@ -117,8 +117,8 @@ export default function NotificationPreferencesSelector({
     : "העדפות התראה עבורך"
 
   const description = isForRecipient
-    ? "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
-    : "בחר כיצד תרצה לקבל את האישורים והעדכונים על ההזמנה"
+    ? "איך הנמען ירצה לקבל את פרטי ההזמנה והעידכונים?"
+    : "איך תרצה לקבל את פרטי ההזמנה והעידכונים?"
 
   return (
     <Card className={className}>

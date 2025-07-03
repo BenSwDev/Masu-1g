@@ -40,7 +40,7 @@ interface GuestInfo {
   email?: string
   phone: string
   birthDate?: Date
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female" 
   notes?: string
   isBookingForSomeoneElse?: boolean
   recipientFirstName?: string
@@ -48,7 +48,7 @@ interface GuestInfo {
   recipientEmail?: string
   recipientPhone?: string
   recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
+  recipientGender?: "male" | "female" 
   // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both"
   bookerNotificationLanguage?: "he" | "en" | "ru"
@@ -87,7 +87,7 @@ interface UniversalBookingWizardProps {
     name?: string
     email?: string
     phone?: string
-    gender?: "male" | "female" | "other"
+    gender?: "male" | "female" 
     dateOfBirth?: Date
     roles?: string[]
   } | null // User session data if logged in

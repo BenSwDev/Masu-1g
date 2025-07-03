@@ -20,7 +20,7 @@ interface GuestInfo {
   email: string
   phone: string
   birthDate?: Date
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female"
   notes?: string
   isBookingForSomeoneElse?: boolean
   recipientFirstName?: string
@@ -28,7 +28,7 @@ interface GuestInfo {
   recipientEmail?: string
   recipientPhone?: string
   recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
+  recipientGender?: "male" | "female"
 }
 
 interface GuestSummaryStepProps {

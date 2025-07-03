@@ -221,7 +221,6 @@ export default function BookingCreateCustomerStep({
                     <SelectContent>
                       <SelectItem value="male">זכר</SelectItem>
                       <SelectItem value="female">נקבה</SelectItem>
-                      <SelectItem value="other">אחר</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -362,7 +361,6 @@ export default function BookingCreateCustomerStep({
                       <SelectContent>
                         <SelectItem value="male">זכר</SelectItem>
                         <SelectItem value="female">נקבה</SelectItem>
-                        <SelectItem value="other">אחר</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

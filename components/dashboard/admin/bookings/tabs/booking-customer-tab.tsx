@@ -226,7 +226,6 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                     <Badge variant="outline">
                       {booking.recipientGender === "male" && "גבר"}
                       {booking.recipientGender === "female" && "אישה"}
-                      {booking.recipientGender === "other" && "אחר"}
                     </Badge>
                   </div>
                 )}

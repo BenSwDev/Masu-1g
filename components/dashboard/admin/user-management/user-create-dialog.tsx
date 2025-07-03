@@ -70,7 +70,7 @@ const createUserSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "הסיסמה חייבת להכיל לפחות אות קטנה, אות גדולה ומספר"),
   confirmPassword: z.string()
     .min(8, "אישור הסיסמה חייב להכיל לפחות 8 תווים"),
-  gender: z.enum(["male", "female", "other"], {
+  gender: z.enum(["male", "female"], {
     required_error: "יש לבחור מגדר"
   }),
   dateOfBirth: z.string().optional(),
@@ -280,7 +280,6 @@ export default function UserCreateDialog({
                           <SelectContent>
                             <SelectItem value="male">זכר</SelectItem>
                             <SelectItem value="female">נקבה</SelectItem>
-                            <SelectItem value="other">אחר</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

@@ -2797,7 +2797,7 @@ export async function createGuestUser(guestInfo: {
   email?: string
   phone: string
   birthDate?: Date
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   // שימוש בפונקציה החדשה
   const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")

@@ -44,7 +44,7 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
     lastName: rest.join(" ") || "",
     email: (currentUser?.email as string) || "",
     phone: (currentUser?.phone as string) || "",
-    gender: undefined as "male" | "female" | "other" | undefined,
+    gender: undefined as "male" | "female" | undefined,
     birthDate: undefined as Date | undefined,
   }
 

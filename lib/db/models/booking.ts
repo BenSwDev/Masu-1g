@@ -109,7 +109,7 @@ export interface IBooking extends Document {
   recipientPhone?: string // Phone of the person receiving the treatment
   recipientEmail?: string // Email of the person receiving the treatment
   recipientBirthDate?: Date // Birth date of the person receiving the treatment
-  recipientGender?: "male" | "female" | "other" // Gender of the person receiving the treatment
+  recipientGender?: "male" | "female" // Gender of the person receiving the treatment
   isBookingForSomeoneElse?: boolean // NEW FIELD
   formState?: { // NEW FIELD for storing form data for recovery
     currentStep: number
@@ -286,7 +286,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientPhone: { type: String, trim: true },
     recipientEmail: { type: String, trim: true },
     recipientBirthDate: { type: Date },
-    recipientGender: { type: String, enum: ["male", "female", "other"] },
+    recipientGender: { type: String, enum: ["male", "female"] },
     isBookingForSomeoneElse: { type: Boolean, default: false },
     reviewReminderSentAt: { type: Date },
     formState: {

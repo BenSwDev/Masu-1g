@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2 } from "lucide-react"
+import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { ITreatment } from "@/lib/db/models/treatment"
@@ -36,6 +36,46 @@ interface GuestTreatmentSelectionStepProps {
   currentUser?: any
   setRedemptionData?: React.Dispatch<React.SetStateAction<any>>
   guestInfo?: { phone?: string } // Add guest info for phone validation
+}
+
+// Component for expandable treatment description
+const TreatmentDescription = ({ description }: { description: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  if (!description) return null
+  
+  const shouldShowReadMore = description.length > 100
+  const displayText = shouldShowReadMore && !isExpanded 
+    ? description.substring(0, 50) + "..." 
+    : description
+  
+  return (
+    <div className="text-sm text-muted-foreground mt-1">
+      <p>{displayText}</p>
+      {shouldShowReadMore && (
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsExpanded(!isExpanded)
+          }}
+          className="text-primary hover:text-primary/80 text-sm font-medium mt-1 flex items-center gap-1 transition-colors"
+        >
+          {isExpanded ? (
+            <>
+              <span>קרא פחות</span>
+              <ChevronUp className="h-3 w-3" />
+            </>
+          ) : (
+            <>
+              <span>קרא עוד</span>
+              <ChevronDown className="h-3 w-3" />
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  )
 }
 
 export function GuestTreatmentSelectionStep({
@@ -628,10 +668,10 @@ export function GuestTreatmentSelectionStep({
                       disabled={isLocked}
                     />
                     <div className="flex-1 flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{treatment.name}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{treatment.description}</p>
-                      </div>
+                                              <div>
+                          <h4 className="font-medium">{treatment.name}</h4>
+                          <TreatmentDescription description={treatment.description || ""} />
+                        </div>
                       <div className="text-right">
                         {showPrice && treatment.pricingType === "fixed" && (
                           <div className="text-lg font-semibold text-primary">

@@ -141,10 +141,10 @@ export default function ProfessionalProfileTab({
             dateOfBirth: result.professional.userId.dateOfBirth ? new Date(result.professional.userId.dateOfBirth) : (typeof professional.userId === 'object' ? professional.userId.dateOfBirth : undefined),
             createdAt: typeof professional.userId === 'object' ? professional.userId.createdAt : new Date(),
             updatedAt: result.professional.userId.updatedAt ? new Date(result.professional.userId.updatedAt) : new Date(),
-            role: typeof professional.userId === 'object' ? professional.userId.role : 'member',
+            role: typeof professional.userId === 'object' ? professional.userId.roles : 'member',
             isActive: typeof professional.userId === 'object' ? professional.userId.isActive : true,
-            preferences: typeof professional.userId === 'object' ? professional.userId.preferences : {},
-            addresses: typeof professional.userId === 'object' ? professional.userId.addresses : []
+            preferences: typeof professional.userId === 'object' ? professional.userId.preferences : {} as any,
+            addresses: typeof professional.userId === 'object' ? professional.userId.addresses : [] as any[]
           }
         }
         

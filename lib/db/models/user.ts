@@ -24,7 +24,7 @@ export interface IUser extends Document {
   email?: string
   phone: string
   password?: string
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female"
   dateOfBirth?: Date
   image?: string
   emailVerified?: Date
@@ -67,7 +67,7 @@ const UserSchema: Schema = new Schema(
     },
     gender: {
       type: String,
-      enum: ["male", "female", "other"],
+      enum: ["male", "female"],
       required: true,
     },
     dateOfBirth: {

@@ -50,7 +50,7 @@ interface GuestInfo {
   email: string;
   phone: string;
   birthDate?: Date;
-  gender?: "male" | "female" | "other";
+  gender?: "male" | "female";
   notes?: string;
   isBookingForSomeoneElse?: boolean;
   recipientFirstName?: string;
@@ -58,7 +58,7 @@ interface GuestInfo {
   recipientEmail?: string;
   recipientPhone?: string;
   recipientBirthDate?: Date;
-  recipientGender?: "male" | "female" | "other";
+  recipientGender?: "male" | "female";
   // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both";
   bookerNotificationLanguage?: "he" | "en" | "ru";
@@ -126,16 +126,16 @@ export function GuestPaymentStep({
   const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("sms");
   const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("sms");
 
-  // Notification preferences state
+  // Notification preferences state - Default to "both" (email + SMS)
   const [bookerNotificationMethod, setBookerNotificationMethod] = useState<
     "email" | "sms" | "both"
-  >(guestInfo.bookerNotificationMethod || "sms");
+  >(guestInfo.bookerNotificationMethod || "both");
   const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<
     "he" | "en" | "ru"
   >(guestInfo.bookerNotificationLanguage || "he");
   const [recipientNotificationMethod, setRecipientNotificationMethod] =
     useState<"email" | "sms" | "both">(
-      guestInfo.recipientNotificationMethod || "sms",
+      guestInfo.recipientNotificationMethod || "both",
     );
   const [recipientNotificationLanguage, setRecipientNotificationLanguage] =
     useState<"he" | "en" | "ru">(
@@ -395,7 +395,7 @@ export function GuestPaymentStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              העדפות התראות
+              איך תרצה לקבל את פרטי ההזמנה והעידכונים?
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">

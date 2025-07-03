@@ -42,7 +42,7 @@ const formSchema = z.object({
   email: z.string().email().optional(),
   phone: z.preprocess(v => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().min(5).optional()),
   password: z.preprocess(v => (typeof v === "string" && v === "" ? undefined : v), z.string().min(6).optional()),
-  gender: z.enum(["male", "female", "other"]).default("male"),
+  gender: z.enum(["male", "female"]).default("male"),
   businessNumber: z.string().min(2),
   contactName: z.string().min(2),
 })
@@ -60,7 +60,7 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       password: "",
-      gender: (initialData?.gender as "male" | "female" | "other") || "male",
+      gender: (initialData?.gender as "male" | "female") || "male",
       businessNumber: initialData?.businessNumber || "",
       contactName: initialData?.contactName || "",
     },
@@ -72,7 +72,7 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       password: "",
-      gender: (initialData?.gender as "male" | "female" | "other") || "male",
+      gender: (initialData?.gender as "male" | "female") || "male",
       businessNumber: initialData?.businessNumber || "",
       contactName: initialData?.contactName || "",
     })
@@ -185,7 +185,6 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
                       <SelectContent>
                         <SelectItem value="male">זכר</SelectItem>
                         <SelectItem value="female">נקבה</SelectItem>
-                        <SelectItem value="other">אחר</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>

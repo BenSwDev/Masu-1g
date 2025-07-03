@@ -90,6 +90,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   const [addressType, setAddressType] = useState<"apartment" | "house" | "office" | "hotel" | "other">(
     (address.addressType as "apartment" | "house" | "office" | "hotel" | "other") || "apartment"
   )
+  const [showNotesField, setShowNotesField] = useState(!!address.notes)
 
   const form = useForm<GuestAddressFormData>({
     resolver: zodResolver(addressSchema),
@@ -203,7 +204,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                             <SelectItem value="apartment">דירה</SelectItem>
                             <SelectItem value="house">בית פרטי</SelectItem>
                             <SelectItem value="office">משרד</SelectItem>
-                            <SelectItem value="hotel">מלון</SelectItem>
+                            <SelectItem value="hotel">מלון/צימר</SelectItem>
                             <SelectItem value="other">אחר</SelectItem>
                           </SelectContent>
                         </Select>
@@ -354,7 +355,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                     name="roomNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>מספר חדר</FormLabel>
+                        <FormLabel>מספר חדר/שם חדר</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -404,19 +405,40 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("bookings.addressStep.notes") || "הערות נוספות"}</FormLabel>
-                    <FormControl>
-                      <Textarea rows={2} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Notes checkbox and field */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="show-address-notes"
+                    checked={showNotesField}
+                    onCheckedChange={(checked) => {
+                      setShowNotesField(!!checked)
+                      if (!checked) {
+                        form.setValue("notes", "")
+                      }
+                    }}
+                  />
+                  <label htmlFor="show-address-notes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    הוסף הערות כתובת
+                  </label>
+                </div>
+                
+                {showNotesField && (
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.notes") || "הערות נוספות"}</FormLabel>
+                        <FormControl>
+                          <Textarea rows={2} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
               
               <div className="flex justify-between mt-4">
                 <Button variant="outline" type="button" onClick={onPrev}>{t("common.back")}</Button>

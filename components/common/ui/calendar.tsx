@@ -19,6 +19,7 @@ export type CalendarProps = {
   toYear?: number
   captionLayout?: "dropdown" | "dropdown-buttons"
   showOutsideDays?: boolean
+  isBookingMode?: boolean
 }
 
 const MONTHS_IN_YEAR = 12
@@ -36,6 +37,7 @@ function Calendar({
   toYear = new Date().getFullYear() + 10,
   captionLayout = "dropdown-buttons",
   showOutsideDays = true,
+  isBookingMode,
   ...props
 }: CalendarProps) {
   const { t, language } = useTranslation()
@@ -337,18 +339,34 @@ function Calendar({
           >
             {t("common.today")}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const birthYear = new Date().getFullYear() - 25 // Default to 25 years ago
-              setCurrentYear(birthYear)
-              setCurrentMonth(new Date(birthYear, 0, 1))
-            }}
-            className="text-xs h-7"
-          >
-            {t("common.birthYear")}
-          </Button>
+          {isBookingMode && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1))
+                  setCurrentYear(tomorrow.getFullYear())
+                  setCurrentMonth(tomorrow)
+                }}
+                className="text-xs h-7"
+              >
+                {t("common.tomorrow")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7))
+                  setCurrentYear(nextWeek.getFullYear())
+                  setCurrentMonth(nextWeek)
+                }}
+                className="text-xs h-7"
+              >
+                {t("common.nextWeek")}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

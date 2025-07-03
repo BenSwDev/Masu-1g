@@ -477,7 +477,6 @@ export default function UserManagementClient({
                     <SelectItem value="all">כל המגדרים</SelectItem>
                     <SelectItem value="male">זכר</SelectItem>
                     <SelectItem value="female">נקבה</SelectItem>
-                    <SelectItem value="other">אחר</SelectItem>
                   </SelectContent>
                 </Select>
 

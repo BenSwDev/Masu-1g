@@ -168,7 +168,7 @@ export async function checkUserExists(phone: string) {
 export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
   name: string
   email?: string
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female"
   dateOfBirth?: Date
 }) {
   const requestId = `find_create_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`

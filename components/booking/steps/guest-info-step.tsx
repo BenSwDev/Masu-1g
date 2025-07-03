@@ -26,7 +26,7 @@ interface GuestInfo {
   email?: string
   phone: string
   birthDate?: Date
-  gender?: "male" | "female" | "other"
+  gender?: "male" | "female" 
   notes?: string
   isBookingForSomeoneElse?: boolean
   recipientFirstName?: string
@@ -34,7 +34,7 @@ interface GuestInfo {
   recipientEmail?: string
   recipientPhone?: string
   recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
+  recipientGender?: "male" | "female" 
   // Gift options
   isGift?: boolean
   greetingMessage?: string
@@ -70,6 +70,7 @@ export function GuestInfoStep({
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
     guestInfo.isBookingForSomeoneElse ?? defaultBookingForSomeoneElse
   )
+  const [showNotesField, setShowNotesField] = useState(!!guestInfo.notes)
 
   // Helper function to check if date is at least 16 years old
   const isAtLeast16YearsOld = (date: Date) => {
@@ -90,7 +91,7 @@ export function GuestInfoStep({
     email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional(),
     phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
     birthDate: z.date().optional(),
-    gender: z.enum(["male", "female", "other"]).optional(),
+    gender: z.enum(["male", "female"]).optional(),
     notes: z.string().optional(),
     isBookingForSomeoneElse: z.boolean().default(false),
     recipientFirstName: z.string().optional(),
@@ -98,7 +99,7 @@ export function GuestInfoStep({
     recipientEmail: z.string().optional(),
     recipientPhone: z.string().optional(),
     recipientBirthDate: z.date().optional(),
-    recipientGender: z.enum(["male", "female", "other"]).optional(),
+    recipientGender: z.enum(["male", "female"]).optional(),
     isGift: z.boolean().default(false),
     greetingMessage: z.string().optional(),
     sendOption: z.enum(["immediate", "scheduled"]).optional(),
@@ -492,7 +493,6 @@ export function GuestInfoStep({
                           <SelectContent>
                             <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
                             <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
-                            <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -502,22 +502,43 @@ export function GuestInfoStep({
                 </div>
               )}
 
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                      <FileText className="h-4 w-4" />
-                      {t("guestInfo.notes")}
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t("guestInfo.notesPlaceholder")} rows={3} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Notes checkbox and field */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="show-notes"
+                    checked={showNotesField}
+                    onCheckedChange={(checked) => {
+                      setShowNotesField(!!checked)
+                      if (!checked) {
+                        form.setValue("notes", "")
+                      }
+                    }}
+                  />
+                  <label htmlFor="show-notes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    הוסף הערות נוספות
+                  </label>
+                </div>
+                
+                {showNotesField && (
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                          <FileText className="h-4 w-4" />
+                          {t("guestInfo.notes")}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea placeholder={t("guestInfo.notesPlaceholder")} rows={3} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
             </CardContent>
           </Card>
 
@@ -681,7 +702,6 @@ export function GuestInfoStep({
                             <SelectContent>
                               <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
                               <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
-                              <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

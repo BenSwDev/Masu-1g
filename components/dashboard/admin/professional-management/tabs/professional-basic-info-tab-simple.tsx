@@ -362,7 +362,7 @@ export default function ProfessionalBasicInfoTab({
                 <Label htmlFor="gender" className="text-sm font-medium">
                   מגדר *
                 </Label>
-                <Select value={formData.gender} onValueChange={(value: "male" | "female" | "other") => setFormData(prev => ({ ...prev, gender: value }))}>
+                <Select value={formData.gender} onValueChange={(value: "male" | "female") => setFormData(prev => ({ ...prev, gender: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

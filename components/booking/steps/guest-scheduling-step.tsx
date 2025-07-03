@@ -206,6 +206,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
               onSelect={(date) => handleDateSelect(Array.isArray(date) ? date[0] : (date && 'from' in date ? date.from : date))}
               disabled={isDateDisabled}
               className="rounded-md border"
+              isBookingMode={true}
             />
           </CardContent>
         </Card>
@@ -244,7 +245,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
               <div className="text-center text-muted-foreground py-8">
                 <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>{t("bookings.noAvailableTimes")}</p>
-                {workingHoursNote && (
+                {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
                   <p className="text-sm mt-2">{workingHoursNote}</p>
                 )}
               </div>
@@ -293,8 +294,8 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                   </div>
                 )}
 
-                {/* Working Hours Note */}
-                {workingHoursNote && (
+                {/* Working Hours Note - Filter out evening hours reference */}
+                {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>{workingHoursNote}</AlertDescription>

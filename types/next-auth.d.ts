@@ -9,7 +9,7 @@ declare module "next-auth" {
       roles: string[]
       activeRole: string
       phone?: string
-      gender?: "male" | "female" | "other"
+      gender?: "male" | "female"
       dateOfBirth?: Date
       treatmentPreferences?: ITreatmentPreferences // Add to Session User
       notificationPreferences?: INotificationPreferences // Add to Session User
@@ -21,7 +21,7 @@ declare module "next-auth" {
     roles: string[]
     activeRole: string
     phone?: string
-    gender?: "male" | "female" | "other"
+    gender?: "male" | "female"
     dateOfBirth?: Date
     treatmentPreferences?: ITreatmentPreferences
     notificationPreferences?: INotificationPreferences
@@ -34,7 +34,7 @@ declare module "next-auth/jwt" {
     roles: string[]
     activeRole: string
     phone?: string
-    gender?: "male" | "female" | "other"
+    gender?: "male" | "female"
     dateOfBirth?: Date
     treatmentPreferences?: ITreatmentPreferences // Add to JWT
     notificationPreferences?: INotificationPreferences // Add to JWT

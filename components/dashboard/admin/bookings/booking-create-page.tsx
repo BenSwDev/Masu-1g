@@ -36,7 +36,7 @@ interface BookingFormData {
     email: string
     phone: string
     birthDate?: Date
-    gender?: "male" | "female" | "other"
+    gender?: "male" | "female"
   }
   existingCustomerId?: string
   isBookingForSomeoneElse: boolean
@@ -46,7 +46,7 @@ interface BookingFormData {
     email: string
     phone: string
     birthDate?: Date
-    gender?: "male" | "female" | "other"
+    gender?: "male" | "female"
   }
   
   // Treatment selection

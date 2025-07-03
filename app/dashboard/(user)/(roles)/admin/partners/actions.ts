@@ -129,7 +129,7 @@ export async function createPartner(formData: FormData) {
       email: String(formData.get("email") || "") || undefined,
       phone: String(formData.get("phone") || ""),
       password: String(formData.get("password") || "User123!"),
-      gender: (formData.get("gender") as "male" | "female" | "other") || "male",
+      gender: (formData.get("gender") as "male" | "female") || "male",
       roles: ["partner"]
     }
 
@@ -173,7 +173,7 @@ export async function updatePartner(id: string, formData: FormData) {
       name: String(formData.get("name") || ""),
       email: String(formData.get("email") || "") || undefined,
       phone: String(formData.get("phone") || ""),
-      gender: (formData.get("gender") as "male" | "female" | "other") || "male",
+      gender: (formData.get("gender") as "male" | "female") || "male",
       roles: ["partner"]
     }
 

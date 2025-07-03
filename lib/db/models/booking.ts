@@ -3,9 +3,13 @@ import mongoose, { Schema, type Document, type Model, type Types } from "mongoos
 export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
   | "pending_professional" // ממתינה לשיוך מטפל - שולם אבל לא שויך מטפל
+  | "in_process" // בתהליך - שויך מטפל והתחיל עבודה
   | "confirmed" // מאושר - שויך מטפל
   | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
+  | "cancelled_by_user" // בוטל על ידי המשתמש
+  | "cancelled_by_admin" // בוטל על ידי המנהל
+  | "no_show" // לא הגיע לטיפול
   | "refunded" // הוחזר - בוטל עם החזר
 
 export interface IProfessionalShare {
@@ -255,10 +259,14 @@ const BookingSchema: Schema<IBooking> = new Schema(
       type: String,
       enum: [
         "pending_payment",
+        "pending_professional",
         "in_process",
         "confirmed",
         "completed",
         "cancelled",
+        "cancelled_by_user",
+        "cancelled_by_admin",
+        "no_show",
         "refunded",
       ],
       default: "pending_payment",

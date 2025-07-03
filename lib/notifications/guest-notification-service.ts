@@ -1,12 +1,13 @@
 import { logger } from "@/lib/logs/logger"
 import { emailService } from "./email-service"
 import { smsService } from "./sms-service"
+import type { NotificationLanguage } from "./notification-types"
 
 export interface GuestInfo {
   name: string
   email?: string
   phone?: string
-  language: string
+  language: NotificationLanguage
 }
 
 export interface NotificationData {
@@ -83,26 +84,15 @@ async function sendEmailNotification(
   guestInfo: GuestInfo,
   notificationData: NotificationData
 ): Promise<void> {
-  // Create a simple notification that will work with the existing template system
-  const simpleNotificationData = {
-    type: "booking-confirmation" as const,
-    bookingNumber: notificationData.bookingNumber,
-    treatmentName: notificationData.treatmentName,
-    bookingDateTime: notificationData.bookingDateTime,
-    bookingAddress: notificationData.bookingAddress,
-    recipientName: notificationData.recipientName,
-    bookerName: notificationData.bookerName,
-    isForSomeoneElse: notificationData.isForSomeoneElse,
-    bookingDetailsUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/booking-details/${notificationData.bookingNumber}`
-  }
-
+  // Use the correct notification data type
   await emailService.sendNotification(
     {
+      type: "email" as const,
       value: guestInfo.email!,
       name: guestInfo.name,
       language: guestInfo.language
     },
-    simpleNotificationData
+    notificationData
   )
 }
 
@@ -110,25 +100,13 @@ async function sendSMSNotification(
   guestInfo: GuestInfo,
   notificationData: NotificationData
 ): Promise<void> {
-  // Create a simple notification that will work with the existing template system
-  const simpleNotificationData = {
-    type: "booking-confirmation" as const,
-    bookingNumber: notificationData.bookingNumber,
-    treatmentName: notificationData.treatmentName,
-    bookingDateTime: notificationData.bookingDateTime,
-    bookingAddress: notificationData.bookingAddress,
-    recipientName: notificationData.recipientName,
-    bookerName: notificationData.bookerName,
-    isForSomeoneElse: notificationData.isForSomeoneElse,
-    bookingDetailsUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/booking-details/${notificationData.bookingNumber}`
-  }
-
+  // Use the correct notification data type
   await smsService.sendNotification(
     {
+      type: "phone" as const,
       value: guestInfo.phone!,
-      name: guestInfo.name,
       language: guestInfo.language
     },
-    simpleNotificationData
+    notificationData
   )
 } 

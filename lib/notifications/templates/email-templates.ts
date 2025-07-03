@@ -305,11 +305,12 @@ body {
             ? `${bookerName} заказал для вас процедуру в ${appName}!`
             : `${bookerName} booked a treatment for you at ${appName}!`
 
+        const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
         const treatmentBookingForOtherTextContent = language === "he"
-          ? `שלום ${recipientName},\n\n${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+          ? `שלום ${recipientName},\n\n${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\n${bookingDetailsLink}${emailTextSignature}`
           : language === "ru"
-            ? `Здравствуйте, ${recipientName},\n\n${bookerName} заказал для вас процедуру ${treatmentName} на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
-            : `Hello ${recipientName},\n\n${bookerName} has booked a ${treatmentName} treatment for you on ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+            ? `Здравствуйте, ${recipientName},\n\n${bookerName} заказал для вас процедуру ${treatmentName} на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\n${bookingDetailsLink}${emailTextSignature}`
+            : `Hello ${recipientName},\n\n${bookerName} has booked a ${treatmentName} treatment for you on ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\n${bookingDetailsLink}${emailTextSignature}`
 
         const treatmentBookingForOtherHtmlContent = `
 <h2>${language === "he" ? "הזמנת טיפול חדשה!" : language === "ru" ? "Новый заказ на процедуру!" : "New Treatment Booking!"}</h2>
@@ -335,7 +336,7 @@ body {
 <p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
 
 <p style="text-align: center; margin: 20px 0;">
-  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+  <a href="${bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
 </p>
 
 <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
@@ -353,18 +354,18 @@ body {
               : `Booking for ${data.actualRecipientName} completed successfully!`
 
           const bookerForOtherTextContent = language === "he"
-            ? `שלום ${recipientName},\n\nההזמנה שביצעתה עבור ${data.actualRecipientName} בוצעה ונשלחה לו על כך הודעה בנייד ובמייל.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+            ? `שלום ${recipientName},\n\nתואם טיפול עבור ${data.actualRecipientName} לפי המידע שהוזמן עבורו ונשלחה לו על כך הודעה בנייד ובמייל.\n\nניתן לצפות בהזמנה בקישור הבא:\n${bookingDetailsLink}${emailTextSignature}`
             : language === "ru"
-              ? `Здравствуйте, ${recipientName},\n\nЗаказ, который вы сделали для ${data.actualRecipientName}, выполнен, и ему отправлено уведомление по SMS и электронной почте.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
-              : `Hello ${recipientName},\n\nThe booking you made for ${data.actualRecipientName} has been completed and a notification has been sent to them via SMS and email.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+              ? `Здравствуйте, ${recipientName},\n\nЗаказ для ${data.actualRecipientName} согласован в соответствии с заказанной информацией, и ему отправлено уведомление по SMS и электронной почте.\n\nВы можете просмотреть заказ по ссылке:\n${bookingDetailsLink}${emailTextSignature}`
+              : `Hello ${recipientName},\n\nA treatment has been arranged for ${data.actualRecipientName} according to the information ordered for them and a notification has been sent to them via SMS and email.\n\nYou can view the booking at:\n${bookingDetailsLink}${emailTextSignature}`
 
           const bookerForOtherHtmlContent = `
-<h2>${language === "he" ? "ההזמנה בוצעה בהצלחה!" : language === "ru" ? "Заказ успешно выполнен!" : "Booking Completed Successfully!"}</h2>
+<h2>${language === "he" ? "תואם טיפול!" : language === "ru" ? "Процедура согласована!" : "Treatment Arranged!"}</h2>
 <p>${language === "he" ? `שלום ${recipientName},` : language === "ru" ? `Здравствуйте, ${recipientName},` : `Hello ${recipientName},`}</p>
-<p>${language === "he" ? `ההזמנה שביצעתה עבור ${data.actualRecipientName} בוצעה ונשלחה לו על כך הודעה בנייד ובמייל.` : language === "ru" ? `Заказ, который вы сделали для ${data.actualRecipientName}, выполнен, и ему отправлено уведомление по SMS и электронной почте.` : `The booking you made for ${data.actualRecipientName} has been completed and a notification has been sent to them via SMS and email.`}</p>
+<p>${language === "he" ? `תואם טיפול עבור ${data.actualRecipientName} לפי המידע שהוזמן עבורו ונשלחה לו על כך הודעה בנייד ובמייל.` : language === "ru" ? `Заказ для ${data.actualRecipientName} согласован в соответствии с заказанной информацией, и ему отправлено уведомление по SMS и электронной почте.` : `A treatment has been arranged for ${data.actualRecipientName} according to the information ordered for them and a notification has been sent to them via SMS and email.`}</p>
 
 <p style="text-align: center; margin: 20px 0;">
-  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+  <a href="${bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
 </p>
 
 <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
@@ -380,10 +381,10 @@ body {
               : `Your ${appName} booking has been completed successfully!`
 
           const treatmentBookingTextContent = language === "he"
-            ? `שלום ${recipientName},\n\nההזמנה שלך בוצעה בהצלחה לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+            ? `שלום ${recipientName},\n\nההזמנה שלך בוצעה בהצלחה לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\n${bookingDetailsLink}${emailTextSignature}`
             : language === "ru"
-              ? `Здравствуйте, ${recipientName},\n\nВаш заказ успешно выполнен на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
-              : `Hello ${recipientName},\n\nYour booking has been successfully completed for ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+              ? `Здравствуйте, ${recipientName},\n\nВаш заказ успешно выполнен на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\n${bookingDetailsLink}${emailTextSignature}`
+              : `Hello ${recipientName},\n\nYour booking has been successfully completed for ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\n${bookingDetailsLink}${emailTextSignature}`
 
           const treatmentBookingHtmlContent = `
 <h2>${language === "he" ? "ההזמנה בוצעה בהצלחה!" : language === "ru" ? "Заказ успешно выполнен!" : "Booking Completed Successfully!"}</h2>
@@ -409,7 +410,7 @@ body {
 <p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
 
 <p style="text-align: center; margin: 20px 0;">
-  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+  <a href="${bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
 </p>
 
 <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>

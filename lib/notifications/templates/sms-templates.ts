@@ -204,46 +204,49 @@ function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage)
 
   if (data.isForSomeoneElse) {
     // Message for the recipient when someone else booked for them
+    const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
     let message: string
     switch (language) {
       case "he":
-        message = `שלום ${data.recipientName}, ${data.bookerName} הזמין עבורך טיפול ${data.treatmentName} לתאריך ${bookingDate} בשעה ${bookingTime} ומחכה לשיוך מטפל/ת. בעת האישור הסופי תתקבל הודעת אסמס. תוכלו לצפות בהזמנה בקישור הבא: masu.co.il`
+        message = `שלום ${data.recipientName}, ${data.bookerName} הזמין עבורך טיפול ${data.treatmentName} לתאריך ${bookingDate} בשעה ${bookingTime} ומחכה לשיוך מטפל/ת. בעת האישור הסופי תתקבל הודעת אסמס. תוכלו לצפות בהזמנה בקישור הבא: ${bookingDetailsLink}`
         break
       case "ru":
-        message = `Здравствуйте, ${data.recipientName}, ${data.bookerName} заказал(а) для вас процедуру ${data.treatmentName} на ${bookingDate} в ${bookingTime} и ожидает назначения специалиста. При окончательном подтверждении вы получите SMS-уведомление. Вы можете просмотреть заказ по ссылке: masu.co.il`
+        message = `Здравствуйте, ${data.recipientName}, ${data.bookerName} заказал(а) для вас процедуру ${data.treatmentName} на ${bookingDate} в ${bookingTime} и ожидает назначения специалиста. При окончательном подтверждении вы получите SMS-уведомление. Вы можете просмотреть заказ по ссылке: ${bookingDetailsLink}`
         break
       default: // English
-        message = `Hello ${data.recipientName}, ${data.bookerName} booked ${data.treatmentName} treatment for you on ${bookingDate} at ${bookingTime} and is waiting for therapist assignment. You will receive an SMS notification upon final confirmation. You can view the booking at: masu.co.il`
+        message = `Hello ${data.recipientName}, ${data.bookerName} booked ${data.treatmentName} treatment for you on ${bookingDate} at ${bookingTime} and is waiting for therapist assignment. You will receive an SMS notification upon final confirmation. You can view the booking at: ${bookingDetailsLink}`
     }
     return message + smsSignature
   } else {
     // Check if this is a booker who booked for someone else
     if (data.isBookerForSomeoneElse && data.actualRecipientName) {
       // Message for the booker when they booked for someone else
+      const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
       let message: string
       switch (language) {
         case "he":
-          message = `שלום ${data.recipientName}, ההזמנה שביצעתה עבור ${data.actualRecipientName} בוצעה ונשלחה לו על כך הודעה בנייד ובמייל. תוכלו לצפות בהזמנה בקישור הבא: masu.co.il`
+          message = `שלום ${data.recipientName}, תואם טיפול עבור ${data.actualRecipientName} לפי המידע שהוזמן עבורו ונשלחה לו על כך הודעה בנייד ובמייל. ניתן לצפות בהזמנה בקישור: ${bookingDetailsLink}`
           break
         case "ru":
-          message = `Здравствуйте, ${data.recipientName}, заказ, который вы сделали для ${data.actualRecipientName}, выполнен, и ему отправлено уведомление по SMS и электронной почте. Вы можете просмотреть заказ по ссылке: masu.co.il`
+          message = `Здравствуйте, ${data.recipientName}, заказ для ${data.actualRecipientName} согласован в соответствии с заказанной информацией, и ему отправлено уведомление по SMS и электронной почте. Вы можете просмотреть заказ по ссылке: ${bookingDetailsLink}`
           break
         default: // English
-          message = `Hello ${data.recipientName}, the booking you made for ${data.actualRecipientName} has been completed and a notification has been sent to them via SMS and email. You can view the booking at: masu.co.il`
+          message = `Hello ${data.recipientName}, a treatment has been arranged for ${data.actualRecipientName} according to the information ordered for them and a notification has been sent to them via SMS and email. You can view the booking at: ${bookingDetailsLink}`
       }
       return message + smsSignature
     } else {
       // Message for the booker (booking for themselves)
+      const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
       let message: string
       switch (language) {
         case "he":
-          message = `שלום ${data.recipientName}, ההזמנה שלך בוצעה בהצלחה לתאריך ${bookingDate} בשעה ${bookingTime} ומחכה לשיוך מטפל/ת. בעת האישור הסופי תתקבל הודעת אסמס. תוכלו לצפות בהזמנה בקישור הבא: masu.co.il`
+          message = `שלום ${data.recipientName}, ההזמנה שלך בוצעה בהצלחה לתאריך ${bookingDate} בשעה ${bookingTime} ומחכה לשיוך מטפל/ת. בעת האישור הסופי תתקבל הודעת אסמס. תוכלו לצפות בהזמנה בקישור הבא: ${bookingDetailsLink}`
           break
         case "ru":
-          message = `Здравствуйте, ${data.recipientName}, ваш заказ успешно выполнен на ${bookingDate} в ${bookingTime} и ожидает назначения специалиста. При окончательном подтверждении вы получите SMS-уведомление. Вы можете просмотреть заказ по ссылке: masu.co.il`
+          message = `Здравствуйте, ${data.recipientName}, ваш заказ успешно выполнен на ${bookingDate} в ${bookingTime} и ожидает назначения специалиста. При окончательном подтверждении вы получите SMS-уведомление. Вы можете просмотреть заказ по ссылке: ${bookingDetailsLink}`
           break
         default: // English
-          message = `Hello ${data.recipientName}, your booking has been successfully completed for ${bookingDate} at ${bookingTime} and is waiting for therapist assignment. You will receive an SMS notification upon final confirmation. You can view the booking at: masu.co.il`
+          message = `Hello ${data.recipientName}, your booking has been successfully completed for ${bookingDate} at ${bookingTime} and is waiting for therapist assignment. You will receive an SMS notification upon final confirmation. You can view the booking at: ${bookingDetailsLink}`
       }
       return message + smsSignature
     }

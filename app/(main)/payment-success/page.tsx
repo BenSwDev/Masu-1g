@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { CheckCircle, XCircle, Loader2, Home, Receipt, Calendar } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { LandingHeader } from "@/components/landing/header"
+import { LandingFooter } from "@/components/landing/footer"
+import { SiteFooter } from "@/components/common/site-footer"
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
@@ -87,33 +90,46 @@ export default function PaymentSuccessPage() {
   }
 
   const handleViewBooking = () => {
-    if (bookingId) {
-      // Navigate to the booking details page using the booking ID
+    if (paymentData?.booking?.bookingNumber) {
+      // Navigate to the booking details page using the booking number
+      router.push(`/booking-details/${paymentData.booking.bookingNumber}`)
+    } else if (bookingId) {
+      // Fallback to booking ID if booking number is not available
       router.push(`/booking-details/${bookingId}`)
     }
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
-          <Card className="w-full">
-            <CardContent className="p-8 text-center">
-              <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
-              <h2 className="text-xl font-semibold mb-2">מעבד תוצאות תשלום</h2>
-              <p className="text-muted-foreground">אנא המתן בזמן שאנו מעבדים את התשלום שלך...</p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex flex-col min-h-screen">
+        <LandingHeader />
+        <main className="flex-1">
+          <div className="container mx-auto px-4 py-16">
+            <div className="max-w-2xl mx-auto">
+              <Card className="w-full">
+                <CardContent className="p-8 text-center">
+                  <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">מעבד תוצאות תשלום</h2>
+                  <p className="text-muted-foreground">אנא המתן בזמן שאנו מעבדים את התשלום שלך...</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+        <LandingFooter />
+        <SiteFooter />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-2xl mx-auto">
-        <Card className="w-full">
-          <CardContent className="p-8">
+    <div className="flex flex-col min-h-screen">
+      <LandingHeader />
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto">
+            <Card className="w-full">
+              <CardContent className="p-8">
             {isSuccess ? (
               // הצלחה
               <div className="text-center space-y-6">
@@ -216,9 +232,13 @@ export default function PaymentSuccessPage() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+      <LandingFooter />
+      <SiteFooter />
     </div>
   )
 }

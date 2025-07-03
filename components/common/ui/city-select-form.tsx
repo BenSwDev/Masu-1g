@@ -69,7 +69,7 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
     return (
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger ref={ref} className={className}>
-          <SelectValue placeholder={placeholder || "בחר עיר"} />
+          <SelectValue placeholder={placeholder || t("bookings.addressStep.cityPlaceholder") || "בחר עיר"} />
         </SelectTrigger>
         <SelectContent>
           <div className="p-2">

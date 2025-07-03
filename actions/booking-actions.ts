@@ -2438,7 +2438,9 @@ export async function createGuestBooking(
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
-        status: "pending_payment",
+        status: validatedPayload.priceDetails.finalAmount === 0 || validatedPayload.paymentDetails.paymentStatus === "paid"
+          ? "pending_professional" 
+          : "pending_payment",
         // Calculated fields based on treatment
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
         staticTreatmentPrice,
@@ -2696,10 +2698,35 @@ export async function createGuestBooking(
         // Don't fail the booking if notifications fail
       }
 
+      // Send notifications to professionals if booking is ready for assignment
+      if ((finalBookingObject.status as string) === "pending_professional") {
+        try {
+          const bookingIdStr = String(finalBookingObject._id)
+          logger.info("Sending notifications to suitable professionals", { 
+            bookingId: bookingIdStr
+          })
+          
+          await sendNotificationToSuitableProfessionals(bookingIdStr)
+          
+          logger.info("Professional notifications sent successfully", { 
+            bookingId: bookingIdStr
+          })
+        } catch (professionalNotificationError) {
+          logger.error("Failed to send professional notifications:", {
+            bookingId: String(finalBookingObject._id),
+            error: professionalNotificationError instanceof Error 
+              ? professionalNotificationError.message 
+              : String(professionalNotificationError),
+          })
+          // Don't fail the booking if professional notifications fail
+        }
+      }
+
       logger.info("Guest booking created successfully", {
         bookingId: finalBookingObject._id?.toString() || "unknown",
         bookingNumber: finalBookingObject.bookingNumber,
         guestEmail: guestInfo.email,
+        status: finalBookingObject.status,
       })
 
       return { success: true, booking: finalBookingObject }

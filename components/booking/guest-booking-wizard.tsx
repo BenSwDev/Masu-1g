@@ -828,6 +828,7 @@ export default function UniversalBookingWizard({
     bookingOptions.bookingTime,
     bookingOptions.appliedCouponCode,
     guestInfo.email,
+    guestAddress.city,
     currentStep,
     triggerPriceCalculation,
   ])

@@ -246,7 +246,11 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                 <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>{t("bookings.noAvailableTimes")}</p>
                 {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
-                  <p className="text-sm mt-2">{workingHoursNote}</p>
+                  <p className="text-sm mt-2">
+                    {workingHoursNote.includes('workingHours.') 
+                      ? t(workingHoursNote) || workingHoursNote 
+                      : workingHoursNote}
+                  </p>
                 )}
               </div>
             ) : (
@@ -298,7 +302,11 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                 {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertDescription>{workingHoursNote}</AlertDescription>
+                    <AlertDescription>
+                      {workingHoursNote.includes('workingHours.') 
+                        ? t(workingHoursNote) || workingHoursNote 
+                        : workingHoursNote}
+                    </AlertDescription>
                   </Alert>
                 )}
 

@@ -115,7 +115,7 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
             defaultValue={address?.city} 
             required 
             className="focus:ring-turquoise-500"
-            placeholder={t("addresses.fields.cityPlaceholder") || "בחר עיר"}
+            placeholder={t("common.select")}
           />
         </div>
 

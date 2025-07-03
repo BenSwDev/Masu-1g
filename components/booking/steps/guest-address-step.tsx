@@ -156,7 +156,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                         <CitySelectForm 
                           value={field.value}
                           onValueChange={field.onChange}
-                          placeholder={t("bookings.addressStep.cityPlaceholder") || "בחר עיר"}
+                          placeholder={"בחר עיר"}
                         />
                       </FormControl>
                       <FormMessage />

@@ -250,7 +250,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                     {(() => {
                       // Handle specific translation keys
                       if (workingHoursNote.includes('workingHours.eveningHours')) {
-                        return t('workingHours.eveningHours') || 'שעות ערב'
+                        return 'שעות ערב'
                       }
                       if (workingHoursNote.includes('workingHours.')) {
                         return t(workingHoursNote) || workingHoursNote
@@ -313,7 +313,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                       {(() => {
                         // Handle specific translation keys
                         if (workingHoursNote.includes('workingHours.eveningHours')) {
-                          return t('workingHours.eveningHours') || 'שעות ערב'
+                          return 'שעות ערב'
                         }
                         if (workingHoursNote.includes('workingHours.')) {
                           return t(workingHoursNote) || workingHoursNote

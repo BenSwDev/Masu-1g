@@ -632,6 +632,13 @@ export async function calculateBookingPrice(
       }
     }
 
+    // Set the correct treatmentPriceAfterSubscriptionOrTreatmentVoucher BEFORE using it in calculations
+    if (priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
+      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
+    } else {
+      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
+    }
+
     let subtotalBeforeGeneralReductions =
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher + priceDetails.totalSurchargesAmount
 
@@ -680,12 +687,6 @@ export async function calculateBookingPrice(
 
     priceDetails.finalAmount = Math.max(0, currentTotalDue)
     priceDetails.isFullyCoveredByVoucherOrSubscription = priceDetails.finalAmount === 0
-
-    if (priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
-      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
-    } else {
-      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
-    }
 
     // Calculate professional payment and office commission
     // 1. Base treatment professional payment (המטפל מקבל את החלק שלו תמיד, גם אם הטיפול מכוסה)

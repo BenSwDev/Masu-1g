@@ -7,9 +7,6 @@ export type BookingStatus =
   | "confirmed" // מאושר - שויך מטפל
   | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
-  | "cancelled_by_user" // בוטל על ידי המשתמש
-  | "cancelled_by_admin" // בוטל על ידי המנהל
-  | "no_show" // לא הגיע לטיפול
   | "refunded" // הוחזר - בוטל עם החזר
 
 export interface IProfessionalShare {

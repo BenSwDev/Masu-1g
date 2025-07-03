@@ -217,7 +217,7 @@ export default function AdminBookingsClient() {
               <SelectContent>
                 <SelectItem value="all">{t("common.all")}</SelectItem>
                 <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                <SelectItem value="in_process">בטיפול</SelectItem>
+                <SelectItem value="pending_professional">ממתין לשיוך מטפל</SelectItem>
                 <SelectItem value="confirmed">מאושר</SelectItem>
                 <SelectItem value="completed">הושלם</SelectItem>
                 <SelectItem value="cancelled">בוטל</SelectItem>

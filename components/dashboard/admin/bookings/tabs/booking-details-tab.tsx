@@ -44,25 +44,25 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
   const getStatusText = (status: BookingStatus) => {
     const statusMap = {
       "pending_payment": "ממתין לתשלום",
-      "in_process": "בטיפול", 
+      "pending_professional": "ממתין לשיוך מטפל", 
       "confirmed": "מאושר",
       "completed": "הושלם",
       "cancelled": "בוטל",
       "refunded": "הוחזר"
     }
-    return statusMap[status] || status
+    return statusMap[status as keyof typeof statusMap] || status
   }
 
   const getStatusVariant = (status: BookingStatus) => {
     const variantMap = {
       "pending_payment": "secondary" as const,
-      "in_process": "default" as const,
+      "pending_professional": "default" as const,
       "confirmed": "default" as const, 
       "completed": "default" as const,
       "cancelled": "destructive" as const,
       "refunded": "destructive" as const
     }
-    return variantMap[status] || "secondary" as const
+    return variantMap[status as keyof typeof variantMap] || "secondary" as const
   }
 
   return (
@@ -123,7 +123,7 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                    <SelectItem value="in_process">בטיפול</SelectItem>
+                    <SelectItem value="pending_professional">ממתין לשיוך מטפל</SelectItem>
                     <SelectItem value="confirmed">מאושר</SelectItem>
                     <SelectItem value="completed">הושלם</SelectItem>
                     <SelectItem value="cancelled">בוטל</SelectItem>

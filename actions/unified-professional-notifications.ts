@@ -49,7 +49,7 @@ export async function sendUnifiedProfessionalNotifications(
       return { success: false, error: "Booking not found" }
     }
 
-    if (!["confirmed", "in_process"].includes(booking.status)) {
+    if (!["confirmed", "pending_professional"].includes(booking.status)) {
       return { success: false, error: "Booking is not in correct status for notifications" }
     }
 
@@ -320,7 +320,7 @@ export async function resendProfessionalNotifications(
 
   // Check booking status
   const booking = await Booking.findById(bookingId)
-  if (!booking || !["confirmed", "in_process"].includes(booking.status) || booking.professionalId) {
+  if (!booking || !["confirmed", "pending_professional"].includes(booking.status) || booking.professionalId) {
     return { success: false, error: "Booking is not available for assignment" }
   }
 

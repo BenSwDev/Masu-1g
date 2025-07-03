@@ -121,7 +121,7 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
   const getStatusBadge = (status: BookingStatus) => {
     const statusConfig = {
       "pending_payment": { variant: "secondary" as const, text: "ממתין לתשלום" },
-      "in_process": { variant: "default" as const, text: "בטיפול" },
+      "pending_professional": { variant: "default" as const, text: "ממתין לשיוך מטפל" },
       "confirmed": { variant: "default" as const, text: "מאושר" },
       "completed": { variant: "default" as const, text: "הושלם" },
       "cancelled": { variant: "destructive" as const, text: "בוטל" },

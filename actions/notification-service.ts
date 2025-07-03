@@ -464,7 +464,7 @@ export async function handleProfessionalResponse(
     
     // Check booking availability
     const booking = response.bookingId
-    if (!booking || booking.status !== "in_process" || booking.professionalId) {
+    if (!booking || booking.status !== "pending_professional" || booking.professionalId) {
       return { success: false, error: "Booking is no longer available" }
     }
     

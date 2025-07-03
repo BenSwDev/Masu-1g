@@ -127,9 +127,9 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
     // Conditionally expose client details
     if (
       rawBooking.userId &&
-      (isAssignedToCurrentPro || isAdmin || rawBooking.status === "in_process")
+      (isAssignedToCurrentPro || isAdmin || rawBooking.status === "pending_professional")
     ) {
-      // For in_process, any professional viewing it can see client details to decide.
+      // For pending_professional, any professional viewing it can see client details to decide.
       // Or, if already assigned to them, or if admin is viewing.
       bookingForPro.userId = {
         _id: rawBooking.userId._id as Types.ObjectId,

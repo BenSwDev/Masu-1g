@@ -93,7 +93,7 @@ export default function ComprehensiveBookingEditModal({
   const getStatusBadgeColor = (status: string) => {
     const statusColors = {
       pending_payment: "bg-yellow-100 text-yellow-800",
-      in_process: "bg-blue-100 text-blue-800",
+      pending_professional: "bg-orange-100 text-orange-800",
       confirmed: "bg-green-100 text-green-800",
       completed: "bg-gray-100 text-gray-800",
       cancelled: "bg-red-100 text-red-800",
@@ -256,7 +256,7 @@ export default function ComprehensiveBookingEditModal({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                        <SelectItem value="in_process">בטיפול</SelectItem>
+                        <SelectItem value="pending_professional">ממתין לשיוך מטפל</SelectItem>
                         <SelectItem value="confirmed">מאושר</SelectItem>
                         <SelectItem value="completed">הושלם</SelectItem>
                         <SelectItem value="cancelled">בוטל</SelectItem>

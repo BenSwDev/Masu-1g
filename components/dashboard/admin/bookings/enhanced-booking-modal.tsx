@@ -88,7 +88,7 @@ export default function EnhancedBookingModal({
   const getStatusColor = (status: string) => {
     const colors = {
       pending_payment: "bg-yellow-500",
-      in_process: "bg-blue-500", 
+      pending_professional: "bg-orange-500", 
       confirmed: "bg-green-500",
       completed: "bg-gray-500",
       cancelled: "bg-red-500",
@@ -100,7 +100,7 @@ export default function EnhancedBookingModal({
   const getStatusIcon = (status: string) => {
     const icons = {
       pending_payment: Clock,
-      in_process: Activity,
+      pending_professional: Activity,
       confirmed: CheckCircle,
       completed: BadgeCheck,
       cancelled: XCircle,
@@ -397,7 +397,7 @@ export default function EnhancedBookingModal({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                        <SelectItem value="in_process">בטיפול</SelectItem>
+                        <SelectItem value="pending_professional">ממתין לשיוך מטפל</SelectItem>
                         <SelectItem value="confirmed">מאושר</SelectItem>
                         <SelectItem value="completed">הושלם</SelectItem>
                         <SelectItem value="cancelled">בוטל</SelectItem>

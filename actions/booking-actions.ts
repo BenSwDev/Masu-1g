@@ -1150,7 +1150,7 @@ export async function getUserBookings(
     if (status && status !== "all") {
       switch (status) {
         case "upcoming":
-          query.status = { $in: ["in_process", "confirmed"] }
+          query.status = { $in: ["pending_professional", "confirmed"] }
           query.bookingDateTime = { $gte: new Date() }
           break
         case "past":

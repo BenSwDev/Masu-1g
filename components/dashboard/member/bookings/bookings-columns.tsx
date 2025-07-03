@@ -166,7 +166,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   const [showNotesModal, setShowNotesModal] = useState(false)
 
   const canCancel = useMemo(() => {
-    const cancelableStatuses = ["in_process", "confirmed"]
+    const cancelableStatuses = ["pending_professional", "confirmed"]
     const bookingDate = new Date(booking.bookingDateTime)
     const now = new Date()
     const hoursUntilBooking = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -289,10 +289,10 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
 
 // Status component - clean and minimal with customer display logic
 const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
-  // Customer display logic: show "confirmed" for both "confirmed" and "in_process"
+  // Customer display logic: show "confirmed" for both "confirmed" and "pending_professional"
   const getCustomerDisplayStatus = (actualStatus: string) => {
-    if (actualStatus === "in_process") {
-      return "confirmed" // Customer sees "confirmed" instead of "in_process"
+    if (actualStatus === "pending_professional") {
+      return "confirmed" // Customer sees "confirmed" instead of "pending_professional"
     }
     return actualStatus
   }

@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     // Build query for potential bookings
     const potentialBookingsQuery: any = {
       professionalId: { $exists: false }, // Not assigned to any professional
-      status: { $in: ["in_process", "confirmed"] }, // Only active bookings
+      status: { $in: ["pending_professional", "confirmed"] }, // Only active bookings
     }
 
     // Get all unassigned bookings

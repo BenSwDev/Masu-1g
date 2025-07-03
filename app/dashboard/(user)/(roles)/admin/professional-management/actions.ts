@@ -893,7 +893,7 @@ export async function deleteProfessional(id: string): Promise<DeleteProfessional
     // Check if professional has any active bookings
     const activeBookings = await Booking.countDocuments({
       professionalId: new Types.ObjectId(id),
-      status: { $in: ["confirmed", "in_process"] as IBooking["status"][] }
+      status: { $in: ["confirmed", "pending_professional"] as IBooking["status"][] }
     })
 
     if (activeBookings > 0) {

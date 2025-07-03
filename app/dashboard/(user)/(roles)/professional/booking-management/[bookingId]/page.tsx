@@ -189,7 +189,7 @@ export default function ProfessionalBookingManagementPage() {
   const clientEmail = booking.userId?.email || t("common.notAvailable")
 
   const renderActionButtons = () => {
-    if (booking.status === "in_process") {
+    if (booking.status === "pending_professional") {
       return (
         <Button onClick={handleAcceptBooking} disabled={actionLoading} className="w-full">
           <CheckCircle2 className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.acceptBooking")}
@@ -283,7 +283,7 @@ export default function ProfessionalBookingManagementPage() {
             </div>
           )}
 
-          {booking.status === "in_process" && !isAssignedToCurrentPro && (
+          {booking.status === "pending_professional" && !isAssignedToCurrentPro && (
             <Alert>
               <Hourglass className="h-4 w-4" />
               <AlertTitle>{t("professionalBookingManagement.status.pendingAssignment.title")}</AlertTitle>

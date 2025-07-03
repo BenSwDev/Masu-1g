@@ -158,8 +158,8 @@ const AdminBookingActions = ({
   const canAssignProfessional = !booking.professionalId && !["completed", "cancelled", "refunded"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
   const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
-  const canSendToProfessionals = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
-  const canViewResponses = ["confirmed", "in_process"].includes(booking.status)
+  const canSendToProfessionals = !booking.professionalId && ["confirmed", "pending_professional"].includes(booking.status)
+  const canViewResponses = ["confirmed", "pending_professional"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.preventDefault()

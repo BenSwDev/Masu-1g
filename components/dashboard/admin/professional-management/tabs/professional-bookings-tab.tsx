@@ -274,7 +274,7 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending_payment: { variant: "secondary" as const, text: "ממתין לתשלום", color: "bg-yellow-100 text-yellow-800" },
-      in_process: { variant: "default" as const, text: "בטיפול", color: "bg-blue-100 text-blue-800" },
+      pending_professional: { variant: "default" as const, text: "ממתין לשיוך מטפל", color: "bg-orange-100 text-orange-800" },
       confirmed: { variant: "default" as const, text: "מאושר", color: "bg-green-100 text-green-800" },
       completed: { variant: "default" as const, text: "הושלם", color: "bg-green-100 text-green-800" },
       cancelled: { variant: "destructive" as const, text: "בוטל", color: "bg-red-100 text-red-800" },

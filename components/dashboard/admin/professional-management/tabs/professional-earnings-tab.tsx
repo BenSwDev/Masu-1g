@@ -17,7 +17,7 @@ interface Booking {
   treatmentName: string
   customerName: string
   customerPhone: string
-  status: "confirmed" | "completed" | "cancelled" | "in_process" | "pending_payment"
+  status: "confirmed" | "completed" | "cancelled" | "pending_professional" | "pending_payment"
   totalAmount: number
   professionalAmount: number
   scheduledDate: Date
@@ -92,7 +92,7 @@ export default function ProfessionalEarningsTab({
       confirmed: { variant: "default" as const, text: "מאושר" },
       completed: { variant: "default" as const, text: "הושלם" },
       cancelled: { variant: "destructive" as const, text: "בוטל" },
-      in_process: { variant: "secondary" as const, text: "בביצוע" },
+      pending_professional: { variant: "secondary" as const, text: "ממתין לשיוך מטפל" },
       pending_payment: { variant: "outline" as const, text: "ממתין לתשלום" }
     }
 
@@ -270,7 +270,7 @@ export default function ProfessionalEarningsTab({
                   <SelectItem value="confirmed">מאושר</SelectItem>
                   <SelectItem value="completed">הושלם</SelectItem>
                   <SelectItem value="cancelled">בוטל</SelectItem>
-                  <SelectItem value="in_process">בביצוע</SelectItem>
+                  <SelectItem value="pending_professional">ממתין לשיוך מטפל</SelectItem>
                   <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
                 </SelectContent>
               </Select>

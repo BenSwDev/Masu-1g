@@ -2169,6 +2169,8 @@ export async function getAvailableProfessionals(): Promise<{ success: boolean; p
         phone: p.userId.phone,
         gender: p.userId.gender,
         profileId: p._id.toString(),
+        city: p.workAreas?.[0]?.cityName || "לא צוין",
+        distanceKm: null, // Will be calculated when needed for specific booking
         workAreas: p.workAreas,
         treatments: p.treatments
       }))
@@ -3481,9 +3483,42 @@ export async function findSuitableProfessionals(
       durationId: durationId || 'any'
     })
     
-    // Return formatted results
+    // Return formatted results with city and distance info
     const formattedProfessionals = professionals.map(prof => {
       const user = prof.userId as any
+      
+      // Find the work area that matches the booking city
+      const matchingWorkArea = prof.workAreas?.find(area => 
+        area.cityName === cityName || area.coveredCities?.includes(cityName)
+      )
+      
+      // Calculate distance if coordinates are available
+      let distanceKm = null
+      if (matchingWorkArea && 'coordinates' in matchingWorkArea && matchingWorkArea.coordinates && 
+          booking.bookingAddressSnapshot && 'coordinates' in booking.bookingAddressSnapshot && 
+          booking.bookingAddressSnapshot.coordinates) {
+        const workAreaCoords = matchingWorkArea.coordinates as any
+        const bookingCoords = booking.bookingAddressSnapshot.coordinates as any
+        
+        if (workAreaCoords.lat && workAreaCoords.lng && bookingCoords.lat && bookingCoords.lng) {
+          const lat1 = workAreaCoords.lat
+          const lon1 = workAreaCoords.lng
+          const lat2 = bookingCoords.lat
+          const lon2 = bookingCoords.lng
+          
+          // Haversine formula for distance calculation
+          const R = 6371 // Earth's radius in km
+          const dLat = (lat2 - lat1) * Math.PI / 180
+          const dLon = (lon2 - lon1) * Math.PI / 180
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2)
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+          distanceKm = Math.round(R * c)
+        }
+      }
+      
       return {
         _id: user._id.toString(),
         name: user.name,
@@ -3491,6 +3526,8 @@ export async function findSuitableProfessionals(
         phone: user.phone,
         gender: user.gender,
         profileId: prof._id.toString(),
+        city: matchingWorkArea?.cityName || cityName,
+        distanceKm: distanceKm,
         workAreas: prof.workAreas,
         treatments: prof.treatments
       }
@@ -3529,13 +3566,15 @@ export async function getSuitableProfessionalsForBooking(
 
     return { 
       success: true, 
-      professionals: booking.suitableProfessionals.map(prof => ({
+      professionals: booking.suitableProfessionals.map((prof: any) => ({
         _id: prof.professionalId.toString(),
         name: prof.name,
         email: prof.email,
         phone: prof.phone,
         gender: prof.gender,
         profileId: prof.profileId.toString(),
+        city: (prof as any).city || "לא צוין",
+        distanceKm: (prof as any).distanceKm || null,
         calculatedAt: prof.calculatedAt
       }))
     }

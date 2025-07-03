@@ -243,7 +243,10 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("treatmentId")
-      .populate("professionalId")
+      .populate({
+        path: "professionalId",
+        select: "name email phone gender"
+      })
       .populate("userId")
       .populate("priceDetails.appliedCouponId")
       .populate("priceDetails.appliedGiftVoucherId")
@@ -252,6 +255,60 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
       .lean()
 
     console.log(`Retrieved ${bookings.length} bookings after pagination`)
+    
+    // Enhance professional data with profile information
+    const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+    
+    for (const booking of bookings) {
+      if (booking.professionalId && booking.professionalId._id) {
+        try {
+          const professionalProfile = await ProfessionalProfile.findOne({
+            userId: booking.professionalId._id,
+            status: 'active'
+          }).lean()
+          
+          if (professionalProfile && professionalProfile.workAreas && professionalProfile.workAreas.length > 0) {
+            // Find matching work area for this booking's city
+            const bookingCity = booking.bookingAddressSnapshot?.city
+            const matchingWorkArea = professionalProfile.workAreas.find(area => 
+              area.cityName === bookingCity || area.coveredCities?.includes(bookingCity)
+            )
+            
+            // Add city and distance info to professional
+            (booking.professionalId as any).city = matchingWorkArea?.cityName || professionalProfile.workAreas[0].cityName || "לא צוין"
+            
+            // Calculate distance if coordinates are available
+            if (matchingWorkArea && 'coordinates' in matchingWorkArea && matchingWorkArea.coordinates && 
+                booking.bookingAddressSnapshot && 'coordinates' in booking.bookingAddressSnapshot && 
+                booking.bookingAddressSnapshot.coordinates) {
+              const workAreaCoords = matchingWorkArea.coordinates as any
+              const bookingCoords = booking.bookingAddressSnapshot.coordinates as any
+              
+              if (workAreaCoords.lat && workAreaCoords.lng && bookingCoords.lat && bookingCoords.lng) {
+                const lat1 = workAreaCoords.lat
+                const lon1 = workAreaCoords.lng
+                const lat2 = bookingCoords.lat
+                const lon2 = bookingCoords.lng
+                
+                // Haversine formula for distance calculation
+                const R = 6371 // Earth's radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180
+                const dLon = (lon2 - lon1) * Math.PI / 180
+                const a = 
+                  Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                  Math.sin(dLon/2) * Math.sin(dLon/2)
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+                const distanceKm = Math.round(R * c);
+                (booking.professionalId as any).distanceKm = distanceKm
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error enhancing professional data:", error)
+        }
+      }
+    }
     
     // Log first booking details for debugging
     if (bookings.length > 0) {

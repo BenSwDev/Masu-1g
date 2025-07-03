@@ -99,6 +99,32 @@ const formatCreatedAtSafe = (date: string | Date | null | undefined): string => 
   }
 }
 
+// Add function for booking date and time
+const BookingDateTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  if (!booking?.bookingDateTime) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  try {
+    const bookingDate = new Date(booking.bookingDateTime)
+    return (
+      <div className="space-y-1">
+        <div className="font-medium text-sm">
+          {format(bookingDate, "dd/MM/yyyy")}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {format(bookingDate, "HH:mm")}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {format(bookingDate, "EEEE", { locale: he })}
+        </div>
+      </div>
+    )
+  } catch {
+    return <div className="text-sm text-muted-foreground">תאריך לא תקין</div>
+  }
+}
+
 
 
 // Admin Actions Component
@@ -463,6 +489,13 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
         <div className="space-y-2">
           <div className="space-y-1">
             <div className="font-medium text-sm">{professional.name || t("common.unknown")}</div>
+            <div className="text-xs text-muted-foreground">
+              {professional.gender === "male" ? "זכר" : professional.gender === "female" ? "נקבה" : "-"}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              📍 {professional.city || "לא צוין"}
+              {professional.distanceKm && <span className="ml-2">🚗 {professional.distanceKm} ק"מ</span>}
+            </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" />
               {formatPhoneForDisplay(professional.phone || "")}
@@ -526,10 +559,11 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                         {isLoading ? "טוען מטפלים..." : "לא נמצאו מטפלים זמינים"}
                       </div>
                     ) : (
-                      professionalsToShow?.map((prof: any) => (
-                        <SelectItem key={prof._id} value={prof._id}>
+                                          professionalsToShow?.map((prof: any) => (
+                      <SelectItem key={prof._id} value={prof._id}>
+                        <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
-                            <span>{prof.name}</span>
+                            <span className="font-medium">{prof.name}</span>
                             <span className="text-xs text-muted-foreground">
                               ({prof.gender === "male" ? t("common.male") : t("common.female")})
                             </span>
@@ -539,8 +573,14 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                               </Badge>
                             )}
                           </div>
-                        </SelectItem>
-                      ))
+                          <div className="text-xs text-muted-foreground flex items-center gap-3">
+                            <span>📍 {prof.city || "לא צוין"}</span>
+                            {prof.distanceKm && <span>🚗 {prof.distanceKm} ק"מ</span>}
+                            <span>📞 {formatPhoneForDisplay(prof.phone || "")}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))
                     )}
                   </SelectContent>
                 </Select>
@@ -641,16 +681,23 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                   ) : (
                     professionalsToShow?.map((prof: any) => (
                       <SelectItem key={prof._id} value={prof._id}>
-                        <div className="flex items-center gap-2">
-                          <span>{prof.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({prof.gender === "male" ? t("common.male") : t("common.female")})
-                          </span>
-                          {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t("adminBookings.suitable")}
-                            </Badge>
-                          )}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{prof.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({prof.gender === "male" ? t("common.male") : t("common.female")})
+                            </span>
+                            {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t("adminBookings.suitable")}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-3">
+                            <span>📍 {prof.city || "לא צוין"}</span>
+                            {prof.distanceKm && <span>🚗 {prof.distanceKm} ק"מ</span>}
+                            <span>📞 {formatPhoneForDisplay(prof.phone || "")}</span>
+                          </div>
                         </div>
                       </SelectItem>
                     ))
@@ -1097,25 +1144,40 @@ export const getAdminBookingColumns = (
     header: t("adminBookings.columns.addressDetails"),
     cell: ({ row }) => <AddressDetailsInfo booking={row.original} t={t} />,
   },
-  // 5. Treatment with Category and Duration
+  // 5. Booking Date and Time
+  {
+    accessorKey: "bookingDateTime",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-auto p-0 font-semibold hover:bg-transparent"
+      >
+        תאריך ושעת הטיפול
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <BookingDateTimeInfo booking={row.original} t={t} />,
+  },
+  // 6. Treatment with Category and Duration
   {
     accessorKey: "treatmentId",
     header: t("adminBookings.columns.treatment"),
     cell: ({ row }) => <TreatmentInfo booking={row.original} t={t} />,
   },
-  // 6. Recipient with Age
+  // 7. Recipient with Age
   {
     accessorKey: "recipientInfo",
     header: t("adminBookings.columns.recipient"),
     cell: ({ row }) => <RecipientInfo booking={row.original} t={t} />,
   },
-  // 7. Professional
+  // 8. Professional
   {
     accessorKey: "professionalId",
     header: t("adminBookings.columns.professional"),
     cell: ({ row }) => <ProfessionalInfo booking={row.original} t={t} />,
   },
-  // 8. Price Details
+  // 9. Price Details
   {
     accessorKey: "priceDetails.finalAmount",
     header: ({ column }) => (
@@ -1130,19 +1192,19 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => <PriceDetailsInfo booking={row.original} t={t} />,
   },
-  // 9. NEW: Redemption Details (מימוש)
+  // 10. NEW: Redemption Details (מימוש)
   {
     accessorKey: "redemption",
     header: t("adminBookings.columns.redemption"),
     cell: ({ row }) => <RedemptionInfo booking={row.original} t={t} />,
   },
-  // 10. NEW: Financial Summary (סיכום כספי)
+  // 11. NEW: Financial Summary (סיכום כספי)
   {
     accessorKey: "financialSummary",
     header: t("adminBookings.columns.financialSummary"),
     cell: ({ row }) => <FinancialSummaryInfo booking={row.original} t={t} />,
   },
-  // 11. Actions
+  // 12. Actions
   {
     id: "actions",
     header: t("common.actions"),

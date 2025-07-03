@@ -57,7 +57,7 @@ export function GuestSummaryStep({
   userSubscription,
 }: GuestSummaryStepProps) {
   const { t, language, dir } = useTranslation()
-
+  
   const isRedeeming = Boolean(voucher || userSubscription)
 
   const getSubscriptionName = () => {

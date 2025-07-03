@@ -98,7 +98,7 @@ export function GuestPaymentStep({
   isRedeeming = false,
   customFailureHandler,
 }: GuestPaymentStepProps) {
-  const { t, dir } = useTranslation();
+  const { t, dir } = useTranslation()
   const {
     showPaymentModal,
     paymentStatus,

@@ -759,8 +759,7 @@ export default function UniversalBookingWizard({
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
-      !bookingOptions.bookingTime ||
-      !guestInfo.email
+      !bookingOptions.bookingTime
     ) {
       setCalculatedPrice(null)
       return
@@ -816,7 +815,7 @@ export default function UniversalBookingWizard({
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, guestInfo.email, guestUserId, toast, initialData.activeTreatments, t])
+  }, [bookingOptions, guestInfo.email, guestUserId, toast, initialData.activeTreatments, t, currentStep])
 
   useEffect(() => {
     if (currentStep >= 4) {

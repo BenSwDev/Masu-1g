@@ -12,16 +12,16 @@ import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface BookingCreateConfirmationStepProps {
   formData: any
-  onUpdate: (data: any) => void
-  onCreateBooking: () => void
+  calculatedPrice: any
+  onConfirm: () => void
   onPrev: () => void
   isLoading: boolean
 }
 
 export default function BookingCreateConfirmationStep({
   formData,
-  onUpdate,
-  onCreateBooking,
+  calculatedPrice,
+  onConfirm,
   onPrev,
   isLoading
 }: BookingCreateConfirmationStepProps) {
@@ -328,7 +328,7 @@ export default function BookingCreateConfirmationStep({
           חזור
         </Button>
         <Button 
-          onClick={onCreateBooking} 
+          onClick={onConfirm} 
           disabled={isLoading}
           size="lg"
           className="bg-green-600 hover:bg-green-700"

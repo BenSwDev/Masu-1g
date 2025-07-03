@@ -35,6 +35,7 @@ export interface IUser extends Document {
   notificationPreferences?: INotificationPreferences // New field
   originalGuestEmail?: string // Store original email for guest users
   originalGuestPhone?: string // Store original phone for guest users
+  isActive?: boolean // Add isActive property
   createdAt: Date
   updatedAt: Date
 }
@@ -123,6 +124,10 @@ const UserSchema: Schema = new Schema(
     },
     originalGuestPhone: {
       type: String,
+      required: false,
+    },
+    isActive: {
+      type: Boolean,
       required: false,
     },
   },

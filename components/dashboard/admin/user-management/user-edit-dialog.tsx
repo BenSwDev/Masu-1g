@@ -80,7 +80,7 @@ const updateUserSchema = z.object({
   dateOfBirth: z.string().optional(),
   roles: z.array(z.enum(["admin", "professional", "member", "partner"]))
     .min(1, "יש לבחור לפחות תפקיד אחד"),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean()
 }).refine((data) => {
   if (data.dateOfBirth) {
     const birthDate = new Date(data.dateOfBirth)

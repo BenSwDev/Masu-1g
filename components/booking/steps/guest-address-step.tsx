@@ -225,7 +225,18 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                       <FormItem>
                         <FormLabel>{t("bookings.addressStep.floor") || "קומה"}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר קומה" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              {Array.from({ length: 99 }, (_, i) => i + 1).map((floor) => (
+                                <SelectItem key={floor} value={floor.toString()}>
+                                  {floor}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -326,7 +337,18 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                       <FormItem>
                         <FormLabel>{t("bookings.addressStep.floor") || "קומה"}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר קומה" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              {Array.from({ length: 99 }, (_, i) => i + 1).map((floor) => (
+                                <SelectItem key={floor} value={floor.toString()}>
+                                  {floor}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

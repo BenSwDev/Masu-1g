@@ -15,8 +15,10 @@ interface BookingCreatePaymentStepProps {
   formData: any
   onUpdate: (data: any) => void
   paymentMethods: any[]
-  coupons: any[]
-  giftVouchers: any[]
+  activeCoupons: any[]
+  activeGiftVouchers: any[]
+  calculatedPrice: any
+  onCalculatePrice: (price: any) => void
   onNext: () => void
   onPrev: () => void
 }
@@ -25,8 +27,10 @@ export default function BookingCreatePaymentStep({
   formData,
   onUpdate,
   paymentMethods,
-  coupons,
-  giftVouchers,
+  activeCoupons,
+  activeGiftVouchers,
+  calculatedPrice,
+  onCalculatePrice,
   onNext,
   onPrev
 }: BookingCreatePaymentStepProps) {

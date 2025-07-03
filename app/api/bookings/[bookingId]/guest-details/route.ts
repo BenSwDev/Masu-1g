@@ -21,11 +21,25 @@ export async function GET(
 
     await dbConnect()
 
-    // Get booking with populated data
-    const booking = await Booking.findById(bookingId)
-      .populate('treatmentId', 'name')
-      .populate('professionalId', 'name phone')
-      .lean()
+    // Get booking by booking number (6-digit number) or by ID (ObjectId)
+    let booking
+    
+    // Check if bookingId is a valid ObjectId (24 characters hex) or a booking number
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(bookingId)
+    
+    if (isObjectId) {
+      // Search by _id
+      booking = await Booking.findById(bookingId)
+        .populate('treatmentId', 'name')
+        .populate('professionalId', 'name phone')
+        .lean()
+    } else {
+      // Search by booking number
+      booking = await Booking.findOne({ bookingNumber: bookingId })
+        .populate('treatmentId', 'name')
+        .populate('professionalId', 'name phone')
+        .lean()
+    }
 
     if (!booking) {
       return NextResponse.json(

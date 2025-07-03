@@ -2635,7 +2635,7 @@ export async function createGuestBooking(
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
-          const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
+          const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
           
           // Safely get notification preferences with fallbacks
           const isBookingForSomeoneElse = Boolean(validatedPayload.isBookingForSomeoneElse)
@@ -2650,8 +2650,8 @@ export async function createGuestBooking(
           const notificationLanguage = validatedPayload.notificationLanguage || "he"
           
           // Prepare booking data for the booker (guest)
-          const bookerBookingData: NotificationData = {
-            type: "treatment-booking-success",
+          const bookerBookingData = {
+            type: "treatment-booking-success" as const,
             recipientName: bookerName, // Always the booker's name for their own notification
             bookerName: undefined, // No booker name needed when notifying the booker themselves
             treatmentName: treatment.name,
@@ -2677,8 +2677,8 @@ export async function createGuestBooking(
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
             // Prepare booking data for the recipient
-            const recipientBookingData: NotificationData = {
-              type: "treatment-booking-success",
+            const recipientBookingData = {
+              type: "treatment-booking-success" as const,
               recipientName: validatedPayload.recipientName!,
               bookerName: bookerName,
               treatmentName: treatment.name,

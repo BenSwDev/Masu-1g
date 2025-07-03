@@ -135,7 +135,7 @@ export class CardcomService {
 
     try {
       // URL אחיד לתוצאות תשלום
-      const resultUrl = params.resultUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/payment/result`
+      const resultUrl = params.resultUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`
       
       const payload: CreatePaymentRequest = {
         TerminalNumber: this.config.terminalNumber,

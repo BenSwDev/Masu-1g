@@ -859,7 +859,9 @@ export async function createBooking(
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
-        status: "pending_payment", // Will be updated to "in_process" after successful payment
+        status: validatedPayload.priceDetails.finalAmount === 0 || validatedPayload.paymentDetails.paymentStatus === "paid"
+          ? "in_process" 
+          : "pending_payment", // Will be updated to "in_process" after successful payment
         // Required fields with defaults for backward compatibility
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
         staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
@@ -2442,7 +2444,7 @@ export async function createGuestBooking(
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
         status: validatedPayload.priceDetails.finalAmount === 0 || validatedPayload.paymentDetails.paymentStatus === "paid"
-          ? "pending_professional" 
+          ? "in_process" 
           : "pending_payment",
         // Calculated fields based on treatment
         treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference

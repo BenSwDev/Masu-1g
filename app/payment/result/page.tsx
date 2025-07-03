@@ -24,19 +24,58 @@ export default function PaymentResultPage() {
   const isFailure = status === "error" || complete === "0" || reason
 
   useEffect(() => {
-    // סימולציה של טעינת נתונים (אם נדרש)
-    const timer = setTimeout(() => {
-      setPaymentData({
-        paymentId,
-        bookingId,
-        status: isSuccess ? "success" : "failed",
-        reason: reason || undefined
-      })
-      setIsLoading(false)
-    }, 2000)
+    const updateBookingStatus = async () => {
+      if (bookingId && (isSuccess || isFailure)) {
+        try {
+          const response = await fetch(`/api/bookings/${bookingId}/payment-status`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              paymentStatus: isSuccess ? 'success' : 'failed',
+              transactionId: paymentId
+            })
+          })
 
+          const result = await response.json()
+          
+          if (!result.success) {
+            console.error('Failed to update booking status:', result.error)
+          }
+
+          setPaymentData({
+            paymentId,
+            bookingId,
+            status: isSuccess ? "success" : "failed",
+            reason: reason || undefined,
+            bookingUpdated: result.success
+          })
+        } catch (error) {
+          console.error('Error updating booking status:', error)
+          setPaymentData({
+            paymentId,
+            bookingId,
+            status: isSuccess ? "success" : "failed",
+            reason: reason || undefined,
+            bookingUpdated: false
+          })
+        }
+      } else {
+        setPaymentData({
+          paymentId,
+          bookingId,
+          status: isSuccess ? "success" : "failed",
+          reason: reason || undefined
+        })
+      }
+      setIsLoading(false)
+    }
+
+    // Add a small delay to ensure the payment process is complete
+    const timer = setTimeout(updateBookingStatus, 1000)
     return () => clearTimeout(timer)
-  }, [paymentId, bookingId, isSuccess, reason])
+  }, [paymentId, bookingId, isSuccess, isFailure, reason])
 
   const handleGoHome = () => {
     router.push("/")

@@ -245,11 +245,18 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
               <div className="text-center text-muted-foreground py-8">
                 <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>{t("bookings.noAvailableTimes")}</p>
-                {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
+                {workingHoursNote && (
                   <p className="text-sm mt-2">
-                    {workingHoursNote.includes('workingHours.') 
-                      ? t(workingHoursNote) || workingHoursNote 
-                      : workingHoursNote}
+                    {(() => {
+                      // Handle specific translation keys
+                      if (workingHoursNote.includes('workingHours.eveningHours')) {
+                        return t('workingHours.eveningHours') || 'שעות ערב'
+                      }
+                      if (workingHoursNote.includes('workingHours.')) {
+                        return t(workingHoursNote) || workingHoursNote
+                      }
+                      return workingHoursNote
+                    })()}
                   </p>
                 )}
               </div>
@@ -298,14 +305,21 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                   </div>
                 )}
 
-                {/* Working Hours Note - Filter out evening hours reference */}
-                {workingHoursNote && !workingHoursNote.includes('eveningHours') && (
+                {/* Working Hours Note - Process and display properly */}
+                {workingHoursNote && (
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      {workingHoursNote.includes('workingHours.') 
-                        ? t(workingHoursNote) || workingHoursNote 
-                        : workingHoursNote}
+                      {(() => {
+                        // Handle specific translation keys
+                        if (workingHoursNote.includes('workingHours.eveningHours')) {
+                          return t('workingHours.eveningHours') || 'שעות ערב'
+                        }
+                        if (workingHoursNote.includes('workingHours.')) {
+                          return t(workingHoursNote) || workingHoursNote
+                        }
+                        return workingHoursNote
+                      })()}
                     </AlertDescription>
                   </Alert>
                 )}

@@ -334,6 +334,7 @@ function Calendar({
               const today = new Date()
               setCurrentYear(today.getFullYear())
               setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1))
+              handleDateClick(today)
             }}
             className="text-xs h-7"
           >
@@ -345,9 +346,11 @@ function Calendar({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1))
+                  const tomorrow = new Date()
+                  tomorrow.setDate(tomorrow.getDate() + 1)
                   setCurrentYear(tomorrow.getFullYear())
-                  setCurrentMonth(tomorrow)
+                  setCurrentMonth(new Date(tomorrow.getFullYear(), tomorrow.getMonth(), 1))
+                  handleDateClick(tomorrow)
                 }}
                 className="text-xs h-7"
               >
@@ -357,9 +360,11 @@ function Calendar({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7))
+                  const nextWeek = new Date()
+                  nextWeek.setDate(nextWeek.getDate() + 7)
                   setCurrentYear(nextWeek.getFullYear())
-                  setCurrentMonth(nextWeek)
+                  setCurrentMonth(new Date(nextWeek.getFullYear(), nextWeek.getMonth(), 1))
+                  handleDateClick(nextWeek)
                 }}
                 className="text-xs h-7"
               >

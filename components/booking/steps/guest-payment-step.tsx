@@ -403,42 +403,64 @@ export function GuestPaymentStep({
             <div className="space-y-4">
               <h4 className="font-medium flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                התראות עבור המזמין ({guestInfo.firstName} {guestInfo.lastName})
+                איך תרצה לקבל את פרטי ההזמנה והעדכונים?
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="text-sm font-medium">אמצעי התראה:</label>
-                  <Select
-                    value={bookerNotificationMethod}
-                    onValueChange={(value: "email" | "sms" | "both") =>
-                      setBookerNotificationMethod(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          אימייל בלבד
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="sms">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" />
-                          SMS בלבד
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="both">
-                        <div className="flex items-center gap-2">
-                          <Bell className="h-4 w-4" />
-                          אימייל + SMS
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <Checkbox
+                        id="booker-email"
+                        checked={bookerNotificationMethod === "email" || bookerNotificationMethod === "both"}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            if (bookerNotificationMethod === "sms") {
+                              setBookerNotificationMethod("both")
+                            } else {
+                              setBookerNotificationMethod("email")
+                            }
+                          } else {
+                            if (bookerNotificationMethod === "both") {
+                              setBookerNotificationMethod("sms")
+                            } else {
+                              setBookerNotificationMethod("both") // Default to both if unchecking the only option
+                            }
+                          }
+                        }}
+                      />
+                      <label htmlFor="booker-email" className="text-sm flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        אימייל
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <Checkbox
+                        id="booker-sms"
+                        checked={bookerNotificationMethod === "sms" || bookerNotificationMethod === "both"}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            if (bookerNotificationMethod === "email") {
+                              setBookerNotificationMethod("both")
+                            } else {
+                              setBookerNotificationMethod("sms")
+                            }
+                          } else {
+                            if (bookerNotificationMethod === "both") {
+                              setBookerNotificationMethod("email")
+                            } else {
+                              setBookerNotificationMethod("both") // Default to both if unchecking the only option
+                            }
+                          }
+                        }}
+                      />
+                      <label htmlFor="booker-sms" className="text-sm flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        SMS
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -487,38 +509,60 @@ export function GuestPaymentStep({
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="text-sm font-medium">אמצעי התראה:</label>
-                    <Select
-                      value={recipientNotificationMethod}
-                      onValueChange={(value: "email" | "sms" | "both") =>
-                        setRecipientNotificationMethod(value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            אימייל בלבד
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="sms">
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4" />
-                            SMS בלבד
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="both">
-                          <div className="flex items-center gap-2">
-                            <Bell className="h-4 w-4" />
-                            אימייל + SMS
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                          id="recipient-email"
+                          checked={recipientNotificationMethod === "email" || recipientNotificationMethod === "both"}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              if (recipientNotificationMethod === "sms") {
+                                setRecipientNotificationMethod("both")
+                              } else {
+                                setRecipientNotificationMethod("email")
+                              }
+                            } else {
+                              if (recipientNotificationMethod === "both") {
+                                setRecipientNotificationMethod("sms")
+                              } else {
+                                setRecipientNotificationMethod("both") // Default to both if unchecking the only option
+                              }
+                            }
+                          }}
+                        />
+                        <label htmlFor="recipient-email" className="text-sm flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          אימייל
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                          id="recipient-sms"
+                          checked={recipientNotificationMethod === "sms" || recipientNotificationMethod === "both"}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              if (recipientNotificationMethod === "email") {
+                                setRecipientNotificationMethod("both")
+                              } else {
+                                setRecipientNotificationMethod("sms")
+                              }
+                            } else {
+                              if (recipientNotificationMethod === "both") {
+                                setRecipientNotificationMethod("email")
+                              } else {
+                                setRecipientNotificationMethod("both") // Default to both if unchecking the only option
+                              }
+                            }
+                          }}
+                        />
+                        <label htmlFor="recipient-sms" className="text-sm flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          SMS
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

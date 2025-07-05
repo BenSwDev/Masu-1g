@@ -158,7 +158,9 @@ export function GuestLayout({ children }: GuestLayoutProps) {
       {/* Footer */}
       <footer className="flex-shrink-0 border-t bg-white">
         <div className="container mx-auto px-4 py-4">
-          <div className="text-center text-sm text-gray-600">{getFooterText()}</div>
+          <div className="text-center text-sm text-gray-600">
+            {getFooterText()} • <Link href="/wiki" className="underline">Wiki</Link>
+          </div>
         </div>
       </footer>
     </div>

@@ -23,24 +23,17 @@ function ProfessionalCreateLoadingSkeleton() {
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-48" />
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-20" />
-        </div>
+        <Skeleton className="h-10 w-24" />
       </div>
       
-      {/* Form Skeleton */}
+      {/* Content Skeleton */}
       <Card>
         <CardHeader>
           <Skeleton className="h-6 w-32" />
         </CardHeader>
         <CardContent className="space-y-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ))}
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-10 w-32" />
         </CardContent>
       </Card>
     </div>

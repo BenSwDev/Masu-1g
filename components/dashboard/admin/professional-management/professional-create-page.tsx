@@ -3,24 +3,20 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { ArrowLeft, UserPlus, Save } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
-import ProfessionalProfileTab from "./tabs/professional-profile-tab"  // ← שינוי הייבוא
+import { ArrowLeft, UserPlus } from "lucide-react"
+import ProfessionalEditModal from "./professional-edit-modal"
 import type { Professional } from "@/lib/types/professional"
 import type { IUser } from "@/lib/db/models/user"
 
 export function ProfessionalCreatePage() {
   const { t, dir } = useTranslation()
   const router = useRouter()
-  const { toast } = useToast()
-  
-  const [isCreating, setIsCreating] = useState(false)
+  const [showModal, setShowModal] = useState(true)
 
-  // יצירת אובייקט מטפל ריק ליצירת חדש
-  const staticDate = new Date('2024-01-01') // Use static date for new professionals
+  // יצירת אובייקט מטפל ריק עם ערכים סטטיים
+  const staticDate = new Date('2024-01-01T00:00:00.000Z')
   
   const newProfessional: Professional = {
     _id: "new",
@@ -32,11 +28,17 @@ export function ProfessionalCreatePage() {
       gender: "male",
       roles: ["professional"],
       activeRole: "professional",
+      isActive: true,
       createdAt: staticDate,
       updatedAt: staticDate
     } as unknown as IUser,
     status: "pending_admin_approval",
     isActive: true,
+    specialization: "",
+    experience: "",
+    certifications: [],
+    bio: "",
+    profileImage: "",
     treatments: [],
     workAreas: [],
     totalEarnings: 0,
@@ -55,17 +57,17 @@ export function ProfessionalCreatePage() {
     router.push("/dashboard/admin/professional-management")
   }
 
-  const handleCreated = (createdProfessional: Professional) => {
-    toast({
-      title: "הצלחה",
-      description: "המטפל נוצר בהצלחה"
-    })
-    // חזרה לטבלת המטפלים
+  const handleClose = () => {
+    setShowModal(false)
     router.push("/dashboard/admin/professional-management")
   }
 
+  if (!showModal) {
+    return null
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -89,27 +91,31 @@ export function ProfessionalCreatePage() {
             </p>
           </div>
         </div>
-        
-        <Badge variant="secondary" className="flex items-center gap-1">
-          ממתין לאישור
-        </Badge>
       </div>
 
       {/* Main Content */}
       <Card>
         <CardHeader>
-          <CardTitle>פרטים בסיסיים</CardTitle>
+          <CardTitle>פרטי המטפל החדש</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProfessionalProfileTab  // ← שינוי הרכיב
-            professional={newProfessional}
-            onUpdate={() => {}} // לא נדרש עדכון במצב יצירה
-            loading={isCreating}
-            isCreatingNew={true}
-            onCreated={handleCreated}
-          />
+          <p className="text-muted-foreground mb-4">
+            לחץ על הכפתור למטה כדי לפתוח את טופס יצירת המטפל החדש
+          </p>
+          <Button onClick={() => setShowModal(true)} className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />
+            פתח טופס יצירה
+          </Button>
         </CardContent>
       </Card>
+
+      {/* Modal for creating new professional */}
+      <ProfessionalEditModal
+        professional={newProfessional}
+        open={showModal}
+        onClose={handleClose}
+        isCreatingNew={true}
+      />
     </div>
   )
 } 

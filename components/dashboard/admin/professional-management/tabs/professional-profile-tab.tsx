@@ -25,8 +25,6 @@ export default function ProfessionalProfileTab({
   isCreatingNew = false,
   onCreated
 }: ProfessionalProfileTabProps) {
-  console.log('ProfessionalProfileTab rendered for professional:', professional._id)
-  
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -50,8 +48,6 @@ export default function ProfessionalProfileTab({
 
   // Sync state with props when professional changes
   useEffect(() => {
-    console.log('ProfessionalProfileTab syncing state for professional:', professional._id)
-    
     setUserDetails({
       name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
       email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",

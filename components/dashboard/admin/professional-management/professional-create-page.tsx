@@ -20,6 +20,8 @@ export function ProfessionalCreatePage() {
   const [isCreating, setIsCreating] = useState(false)
 
   // יצירת אובייקט מטפל ריק ליצירת חדש
+  const staticDate = new Date('2024-01-01') // Use static date for new professionals
+  
   const newProfessional: Professional = {
     _id: "new",
     userId: {
@@ -30,8 +32,8 @@ export function ProfessionalCreatePage() {
       gender: "male",
       roles: ["professional"],
       activeRole: "professional",
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: staticDate,
+      updatedAt: staticDate
     } as unknown as IUser,
     status: "pending_admin_approval",
     isActive: true,
@@ -41,12 +43,12 @@ export function ProfessionalCreatePage() {
     pendingPayments: 0,
     adminNotes: "",
     rejectionReason: "",
-    appliedAt: new Date(),
+    appliedAt: staticDate,
     approvedAt: undefined,
     rejectedAt: undefined,
-    lastActiveAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
+    lastActiveAt: staticDate,
+    createdAt: staticDate,
+    updatedAt: staticDate
   }
 
   const handleBack = () => {

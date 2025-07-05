@@ -187,9 +187,9 @@ export default async function WikiPage({ params }: { params: Params }) {
       return (
         <>
           <MobileSidebar sidebarStructure={sidebarStructure} />
-          <div className="flex">
+          <div className="lg:flex">
             {/* Sidebar */}
-            <div className="hidden lg:block w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen">
+            <div className="hidden lg:block w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <Link href="/wiki" className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -234,7 +234,7 @@ export default async function WikiPage({ params }: { params: Params }) {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 p-8">
+            <div className="flex-1 p-8 min-h-screen">
               {/* Breadcrumbs */}
               <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-8" dir="rtl">
                 <Link href="/wiki" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -310,9 +310,9 @@ export default async function WikiPage({ params }: { params: Params }) {
     return (
       <>
         <MobileSidebar sidebarStructure={sidebarStructure} />
-        <div className="flex">
+        <div className="lg:flex">
           {/* Sidebar */}
-          <div className="hidden lg:block w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen">
+          <div className="hidden lg:block w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <Link href="/wiki" className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -359,7 +359,7 @@ export default async function WikiPage({ params }: { params: Params }) {
           {/* Main Content */}
           <div className="flex-1 lg:flex">
             {/* Article Content */}
-            <div className="flex-1 p-8">
+            <div className="flex-1 p-8 min-h-screen">
               {/* Breadcrumbs */}
               <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-8" dir="rtl">
                 <Link href="/wiki" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -485,7 +485,7 @@ export default async function WikiPage({ params }: { params: Params }) {
             </div>
 
             {/* Table of Contents - Simplified */}
-            <div className="hidden xl:block w-64 p-8">
+            <div className="hidden xl:block w-64 p-8 lg:sticky lg:top-0">
               <div className="sticky top-8">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">

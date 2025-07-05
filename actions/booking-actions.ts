@@ -1783,23 +1783,23 @@ export async function getBookingById(bookingId: string): Promise<{
     if (isObjectId) {
       // Search by _id
       booking = await Booking.findById(bookingId)
-        .populate<{ treatmentId: ITreatment | null }>({
-          path: "treatmentId",
-          select: "name durations defaultDurationMinutes pricingType fixedPrice isActive",
-        })
-        .populate<{ addressId: IAddress | null }>({
-          path: "addressId",
-          select: "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType",
-        })
-        .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
-          path: "professionalId",
-          select: "name email phone",
-        })
-        .populate<{ userId: Pick<IUser, "_id" | "name" | "email" | "phone"> | null }>({
-          path: "userId",
-          select: "name email phone",
-        })
-        .lean()
+      .populate<{ treatmentId: ITreatment | null }>({
+        path: "treatmentId",
+        select: "name durations defaultDurationMinutes pricingType fixedPrice isActive",
+      })
+      .populate<{ addressId: IAddress | null }>({
+        path: "addressId",
+        select: "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType",
+      })
+      .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
+        path: "professionalId",
+        select: "name email phone",
+      })
+      .populate<{ userId: Pick<IUser, "_id" | "name" | "email" | "phone"> | null }>({
+        path: "userId",
+        select: "name email phone",
+      })
+      .lean()
     } else {
       // Search by booking number
       booking = await Booking.findOne({ bookingNumber: bookingId })
@@ -3274,10 +3274,10 @@ export async function updateBookingStatusAfterPayment(
         booking = await Booking.findOne({ bookingNumber: bookingId }).session(mongooseDbSession)
       }
       
-      if (!booking) {
-        bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
+    if (!booking) {
+      bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
         throw new Error("Booking not found")
-      }
+    }
 
     if (paymentStatus === "success") {
         // Payment successful - update status to paid
@@ -3449,8 +3449,8 @@ export async function findSuitableProfessionals(
     if (isObjectId) {
       // Search by _id
       booking = await Booking.findById(bookingId)
-        .populate('treatmentId')
-        .populate('selectedDurationId')
+      .populate('treatmentId')
+      .populate('selectedDurationId')
     } else {
       // Search by booking number
       booking = await Booking.findOne({ bookingNumber: bookingId })

@@ -307,7 +307,7 @@ export class CardcomService {
       case "LowProfile":
         return {
           ...baseResponse,
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true`,
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true`,
           LowProfileCode: "TEST_" + Math.random().toString(36).substr(2, 9),
         }
 

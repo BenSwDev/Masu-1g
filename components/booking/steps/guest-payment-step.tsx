@@ -420,7 +420,7 @@ export function GuestPaymentStep({
                               setBookerNotificationMethod("both")
                             } else {
                               setBookerNotificationMethod("email")
-                            }
+                    }
                           } else {
                             if (bookerNotificationMethod === "both") {
                               setBookerNotificationMethod("sms")
@@ -431,10 +431,10 @@ export function GuestPaymentStep({
                         }}
                       />
                       <label htmlFor="booker-email" className="text-sm flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
+                          <Mail className="h-4 w-4" />
                         אימייל
                       </label>
-                    </div>
+                        </div>
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <Checkbox
                         id="booker-sms"
@@ -456,11 +456,11 @@ export function GuestPaymentStep({
                         }}
                       />
                       <label htmlFor="booker-sms" className="text-sm flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
+                          <MessageSquare className="h-4 w-4" />
                         SMS
                       </label>
-                    </div>
-                  </div>
+                        </div>
+                        </div>
                 </div>
 
                 <div className="space-y-2">
@@ -522,7 +522,7 @@ export function GuestPaymentStep({
                                 setRecipientNotificationMethod("both")
                               } else {
                                 setRecipientNotificationMethod("email")
-                              }
+                      }
                             } else {
                               if (recipientNotificationMethod === "both") {
                                 setRecipientNotificationMethod("sms")
@@ -533,10 +533,10 @@ export function GuestPaymentStep({
                           }}
                         />
                         <label htmlFor="recipient-email" className="text-sm flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
+                            <Mail className="h-4 w-4" />
                           אימייל
                         </label>
-                      </div>
+                          </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <Checkbox
                           id="recipient-sms"
@@ -558,11 +558,11 @@ export function GuestPaymentStep({
                           }}
                         />
                         <label htmlFor="recipient-sms" className="text-sm flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" />
+                            <MessageSquare className="h-4 w-4" />
                           SMS
                         </label>
-                      </div>
-                    </div>
+                          </div>
+                          </div>
                   </div>
 
                   <div className="space-y-2">

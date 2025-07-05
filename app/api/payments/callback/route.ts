@@ -150,28 +150,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // הפניה לעמוד תוצאות החדש
+    // הפניה לעמוד תוצאות אחיד
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const reason = searchParams.get("reason") || (isSuccess ? undefined : "payment_failed")
     
-    // Get booking number if available
-    let bookingNumber = null
-    if (payment.booking_id) {
-      try {
-        const booking = await Booking.findById(payment.booking_id)
-        if (booking?.bookingNumber) {
-          bookingNumber = booking.bookingNumber
-        }
-      } catch (error) {
-        logger.error("Failed to get booking number", {
-          paymentId: finalPaymentId,
-          bookingId: payment.booking_id,
-          error: error instanceof Error ? error.message : String(error)
-        })
-      }
-    }
-    
-    const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${payment.booking_id}${bookingNumber ? `&bookingNumber=${bookingNumber}` : ''}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
+    const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${payment.booking_id}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
     
     return NextResponse.redirect(resultUrl)
 

@@ -142,6 +142,13 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (params.id === "new") {
+    return {
+      title: "יצירת מטפל חדש | מנהל",
+      description: "יצירת מטפל חדש במערכת",
+    }
+  }
+  
   try {
     const result = await getProfessionalById(params.id)
     if (result.success && result.professional) {
@@ -151,7 +158,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       }
     }
   } catch (error) {
-    console.error("Error generating metadata:", error)
+    // Silent error for metadata generation
   }
   
   return {
@@ -201,6 +208,53 @@ function ProfessionalEditLoadingSkeleton() {
 }
 
 async function ProfessionalEditPageContent({ id }: { id: string }) {
+  if (id === "new") {
+    // יצירת מטפל חדש עם נתונים סטטיים
+    const staticDate = new Date('2024-01-01T00:00:00.000Z')
+    
+    const newProfessional: Professional = {
+      _id: "new",
+      userId: {
+        _id: "new",
+        name: "",
+        email: "",
+        phone: "",
+        gender: "male",
+        roles: ["professional"],
+        activeRole: "professional",
+        isActive: true,
+        createdAt: staticDate,
+        updatedAt: staticDate
+      } as unknown as IUser,
+      status: "pending_admin_approval",
+      isActive: true,
+      specialization: "",
+      experience: "",
+      certifications: [],
+      bio: "",
+      profileImage: "",
+      treatments: [],
+      workAreas: [],
+      totalEarnings: 0,
+      pendingPayments: 0,
+      adminNotes: "",
+      rejectionReason: "",
+      appliedAt: staticDate,
+      approvedAt: undefined,
+      rejectedAt: undefined,
+      lastActiveAt: staticDate,
+      createdAt: staticDate,
+      updatedAt: staticDate
+    }
+
+    return (
+      <ProfessionalEditPage 
+        professional={newProfessional}
+        isCreatingNew={true}
+      />
+    )
+  }
+
   try {
     const result = await getProfessionalById(id)
 
@@ -224,7 +278,6 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
       />
     )
   } catch (error) {
-    console.error("Error loading professional:", error)
     throw error
   }
 }
@@ -236,9 +289,8 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
     redirect("/dashboard")
   }
 
-  if (!params.id || params.id === "new") {
-    // Handle new professional creation
-    redirect("/dashboard/admin/professional-management/new")
+  if (!params.id) {
+    redirect("/dashboard/admin/professional-management")
   }
 
   return (

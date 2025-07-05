@@ -22,9 +22,10 @@ import type { Professional } from "@/lib/types/professional"
 
 interface ProfessionalEditPageProps {
   professional: Professional
+  isCreatingNew?: boolean
 }
 
-export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps) {
+export function ProfessionalEditPage({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
@@ -121,13 +122,15 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
           
           <div>
             <h1 className="text-2xl font-bold">
-              עריכת מטפל - {typeof updatedProfessional.userId === 'object' ? updatedProfessional.userId.name : 'טוען...'}
+              {isCreatingNew ? "יצירת מטפל חדש" : `עריכת מטפל - ${typeof updatedProfessional.userId === 'object' ? updatedProfessional.userId.name : 'טוען...'}`}
             </h1>
             <div className="flex items-center gap-3 mt-1">
               {getStatusBadge(updatedProfessional.status)}
-              <span className="text-sm text-muted-foreground">
-                הצטרף ב-{formatDate(updatedProfessional.appliedAt)}
-              </span>
+              {!isCreatingNew && (
+                <span className="text-sm text-muted-foreground">
+                  הצטרף ב-{formatDate(updatedProfessional.appliedAt)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -196,7 +199,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                   loading={false}
-                  isCreatingNew={false}
+                  isCreatingNew={isCreatingNew}
                   onCreated={() => {}}
                 />
               </TabsContent>

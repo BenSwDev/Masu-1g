@@ -58,17 +58,22 @@ interface I18nProviderProps {
 }
 
 export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderProps) => {
-  // Load language from localStorage if available, otherwise use defaultLanguage
-  const getInitialLanguage = (): Language => {
+  // Initialize with default language to prevent hydration mismatch
+  const [language, setLanguageState] = useState<Language>(defaultLanguage)
+  const [dir, setDir] = useState<"rtl" | "ltr">(getDirection(defaultLanguage))
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Load language from localStorage only after hydration
+  useEffect(() => {
+    setIsHydrated(true)
+    
     if (typeof window !== "undefined") {
       const stored = window.localStorage.getItem("masu_language")
-      if (stored === "he" || stored === "en" || stored === "ru") return stored
+      if (stored === "he" || stored === "en" || stored === "ru") {
+        setLanguageState(stored)
+      }
     }
-    return defaultLanguage
-  }
-
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage)
-  const [dir, setDir] = useState<"rtl" | "ltr">(getDirection(getInitialLanguage()))
+  }, [])
 
   // When language changes, save to localStorage
   const setLanguage = (lang: Language) => {

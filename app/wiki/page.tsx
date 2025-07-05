@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { Search, BookOpen, Users, Settings, FileText, TrendingUp, Database, Shield, ChevronDown, ChevronRight } from 'lucide-react'
 import WikiSearch from '@/components/wiki/wiki-search'
-import CollapsibleCategory from '@/components/wiki/collapsible-category'
+import CollapsibleCategory from '../../components/wiki/collapsible-category'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,7 +127,7 @@ export default async function WikiRoot() {
   const totalDocs = categories.reduce((sum, cat) => sum + cat.totalDocs, 0)
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <>
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -163,6 +163,6 @@ export default async function WikiRoot() {
           ))}
         </div>
       </div>
-    </div>
+    </>
   )
 }

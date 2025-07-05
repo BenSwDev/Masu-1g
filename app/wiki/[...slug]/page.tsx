@@ -185,7 +185,7 @@ export default async function WikiPage({ params }: { params: Params }) {
       const items = await fs.readdir(targetPath, { withFileTypes: true })
       
       return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <>
           <MobileSidebar sidebarStructure={sidebarStructure} />
           <div className="flex">
             {/* Sidebar */}
@@ -295,7 +295,7 @@ export default async function WikiPage({ params }: { params: Params }) {
               </div>
             </div>
           </div>
-        </div>
+        </>
       )
     }
 
@@ -308,7 +308,7 @@ export default async function WikiPage({ params }: { params: Params }) {
     }
 
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <>
         <MobileSidebar sidebarStructure={sidebarStructure} />
         <div className="flex">
           {/* Sidebar */}
@@ -523,7 +523,7 @@ export default async function WikiPage({ params }: { params: Params }) {
             <Share2 className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </>
     )
   } catch (err) {
     console.error(err)

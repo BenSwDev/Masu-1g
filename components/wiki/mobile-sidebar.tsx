@@ -31,18 +31,7 @@ export default function MobileSidebar({ sidebarStructure, className = '' }: Mobi
     setIsOpen(false)
   }, [pathname])
 
-  // Prevent scroll when sidebar is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+  // Prevent scroll when sidebar is open - removed to allow page scrolling
 
   const getCategoryIcon = (categoryName: string) => {
     const icons = {

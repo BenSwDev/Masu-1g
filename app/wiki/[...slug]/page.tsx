@@ -18,10 +18,10 @@ import {
   ArrowLeft,
   Hash,
   Shield,
-  Clock
+  Clock,
+  Share2
 } from 'lucide-react'
 import MobileSidebar from '@/components/wiki/mobile-sidebar'
-import KeyboardShortcuts from '@/components/wiki/keyboard-shortcuts'
 import ReadingProgress from '@/components/wiki/reading-progress'
 
 export const dynamic = 'force-dynamic'
@@ -295,8 +295,6 @@ export default async function WikiPage({ params }: { params: Params }) {
               </div>
             </div>
           </div>
-          
-          <KeyboardShortcuts />
         </div>
       )
     }
@@ -504,7 +502,27 @@ export default async function WikiPage({ params }: { params: Params }) {
         </div>
         
         <ReadingProgress title={metadata.title} readTime={metadata.readTime} />
-        <KeyboardShortcuts />
+        
+        {/* Share Button */}
+        <div className="fixed bottom-6 left-6 z-50">
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: metadata.title,
+                  text: metadata.description,
+                  url: window.location.href
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+              }
+            }}
+            className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+            title="שתף דף זה"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     )
   } catch (err) {

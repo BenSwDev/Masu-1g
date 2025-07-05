@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronUp, BookOpen, Clock, Star, Share2 } from 'lucide-react'
+import { ChevronUp, BookOpen, Clock, Share2 } from 'lucide-react'
 
 interface ReadingProgressProps {
   title: string
@@ -110,18 +110,6 @@ export default function ReadingProgress({ title, readTime, className = '' }: Rea
               title="שתף מסמך"
             >
               <Share2 className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
-            </button>
-
-            {/* Bookmark Button */}
-            <button
-              onClick={() => {
-                // Add to bookmarks logic here
-                console.log('Bookmark clicked')
-              }}
-              className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
-              title="הוסף לסימניות"
-            >
-              <Star className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-yellow-500 dark:group-hover:text-yellow-400" />
             </button>
 
             {/* Scroll to Top Button */}

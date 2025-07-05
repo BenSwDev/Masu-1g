@@ -2,12 +2,22 @@ import fs from 'fs/promises'
 import path from 'path'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Search, BookOpen, Users, Settings, FileText, TrendingUp, Database, Shield, ChevronDown } from 'lucide-react'
+import { Search, BookOpen, Users, Settings, FileText, TrendingUp, Database, Shield, ChevronDown, ChevronRight } from 'lucide-react'
 import WikiSearch from '@/components/wiki/wiki-search'
-import KeyboardShortcuts from '@/components/wiki/keyboard-shortcuts'
 import CollapsibleCategory from '@/components/wiki/collapsible-category'
 
 export const dynamic = 'force-dynamic'
+
+interface SubcategoryData {
+  name: string
+  path: string
+  docs: Array<{
+    name: string
+    path: string
+    description: string
+    type: 'user-doc' | 'developer-doc' | 'technical-doc'
+  }>
+}
 
 interface CategoryData {
   name: string
@@ -15,13 +25,8 @@ interface CategoryData {
   description: string
   icon: React.ReactNode
   color: string
-  itemsCount: number
-  items: Array<{
-    name: string
-    path: string
-    description: string
-    type: 'user-doc' | 'developer-doc' | 'technical-doc'
-  }>
+  subcategories: SubcategoryData[]
+  totalDocs: number
 }
 
 async function getWikiStructure(): Promise<CategoryData[]> {
@@ -35,24 +40,36 @@ async function getWikiStructure(): Promise<CategoryData[]> {
       const categoryPath = path.join(docsDir, category.name)
       const subcategories = await fs.readdir(categoryPath, { withFileTypes: true })
       
-      const items = []
+      const subcategoryData: SubcategoryData[] = []
+      let totalDocs = 0
+      
       for (const subcat of subcategories) {
         if (subcat.isDirectory()) {
           const subcatPath = path.join(categoryPath, subcat.name)
           const files = await fs.readdir(subcatPath)
           
+          const docs = []
           for (const file of files) {
             if (file.endsWith('.md')) {
               const type = file.replace('.md', '') as 'user-doc' | 'developer-doc' | 'technical-doc'
               const description = getDocDescription(type)
               
-              items.push({
-                name: subcat.name,
+              docs.push({
+                name: file.replace('.md', ''),
                 path: `${category.name}/${subcat.name}/${file}`,
                 description,
                 type
               })
+              totalDocs++
             }
+          }
+          
+          if (docs.length > 0) {
+            subcategoryData.push({
+              name: subcat.name,
+              path: `${category.name}/${subcat.name}`,
+              docs
+            })
           }
         }
       }
@@ -65,8 +82,8 @@ async function getWikiStructure(): Promise<CategoryData[]> {
         description,
         icon,
         color,
-        itemsCount: items.length,
-        items
+        subcategories: subcategoryData,
+        totalDocs
       })
     }
   }
@@ -107,7 +124,7 @@ function getDocDescription(type: string) {
 
 export default async function WikiRoot() {
   const categories = await getWikiStructure()
-  const totalDocs = categories.reduce((sum, cat) => sum + cat.itemsCount, 0)
+  const totalDocs = categories.reduce((sum, cat) => sum + cat.totalDocs, 0)
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -119,7 +136,7 @@ export default async function WikiRoot() {
               <BookOpen className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  מרכז הידע MASU
+                  מרכز הידע MASU
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {totalDocs} מסמכים ב-{categories.length} קטגוריות
@@ -146,9 +163,6 @@ export default async function WikiRoot() {
           ))}
         </div>
       </div>
-
-      {/* Keyboard Shortcuts */}
-      <KeyboardShortcuts />
     </div>
   )
 }

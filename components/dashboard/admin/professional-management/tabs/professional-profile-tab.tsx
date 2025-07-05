@@ -124,7 +124,7 @@ export default function ProfessionalProfileTab({
           isActive: result.professional.isActive,
           adminNotes: result.professional.adminNotes,
           rejectionReason: result.professional.rejectionReason,
-          updatedAt: result.professional.updatedAt ? new Date(result.professional.updatedAt) : new Date()
+          updatedAt: result.professional.updatedAt ? new Date(result.professional.updatedAt) : professional.updatedAt || new Date('2024-01-01')
         }
         
         // Update userId if it exists in the result
@@ -136,8 +136,8 @@ export default function ProfessionalProfileTab({
             phone: result.professional.userId.phone || (typeof professional.userId === 'object' ? professional.userId.phone : ''),
             gender: (result.professional.userId.gender as "male" | "female") || (typeof professional.userId === 'object' ? professional.userId.gender : 'male'),
             dateOfBirth: result.professional.userId.dateOfBirth ? new Date(result.professional.userId.dateOfBirth) : (typeof professional.userId === 'object' ? professional.userId.dateOfBirth : undefined),
-            createdAt: typeof professional.userId === 'object' ? professional.userId.createdAt : new Date(),
-            updatedAt: result.professional.userId.updatedAt ? new Date(result.professional.userId.updatedAt) : new Date(),
+            createdAt: typeof professional.userId === 'object' ? professional.userId.createdAt : new Date('2024-01-01'),
+            updatedAt: result.professional.userId.updatedAt ? new Date(result.professional.userId.updatedAt) : (typeof professional.userId === 'object' ? professional.userId.updatedAt : new Date('2024-01-01')),
             roles: typeof professional.userId === 'object' ? professional.userId.roles : ['member'],
             activeRole: typeof professional.userId === 'object' ? professional.userId.activeRole : 'member',
             isActive: typeof professional.userId === 'object' ? professional.userId.isActive : true,

@@ -25,10 +25,6 @@ interface ProfessionalEditPageProps {
 }
 
 export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps) {
-  console.log('ProfessionalEditPage rendered with professional:', professional._id, 'treatments count:', professional.treatments?.length)
-  console.log('Professional object keys:', Object.keys(professional))
-  console.log('Professional treatments:', professional.treatments)
-  
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
@@ -40,12 +36,10 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
 
   // Update state when professional prop changes
   useEffect(() => {
-    console.log('useEffect triggered - professional._id changed:', professional._id)
     setUpdatedProfessional(professional)
   }, [professional._id])
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
-    console.log('handleUpdate called with:', Object.keys(updatedData))
     setUpdatedProfessional(prev => ({
       ...prev,
       ...updatedData

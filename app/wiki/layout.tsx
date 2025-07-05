@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import WikiScrollFix from '@/components/wiki/wiki-scroll-fix'
 
 export const metadata: Metadata = {
   title: 'מרכז הידע MASU',
@@ -11,8 +12,11 @@ export default function WikiLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="wiki-layout bg-gray-50 dark:bg-gray-900">
-      {children}
-    </div>
+    <>
+      <WikiScrollFix />
+      <div className="wiki-layout bg-gray-50 dark:bg-gray-900">
+        {children}
+      </div>
+    </>
   )
 } 

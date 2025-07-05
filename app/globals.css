@@ -191,6 +191,39 @@
     }
   }
   
+  /* Wiki-specific styles to override global restrictions */
+  .wiki-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  html:has(.wiki-layout),
+  body:has(.wiki-layout) {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  /* Alternative for browsers that don't support :has() */
+  body.wiki-active {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  html.wiki-active {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
   /* Prevent zoom on mobile inputs */
   @media screen and (max-width: 768px) {
     input[type="text"],

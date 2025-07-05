@@ -14,6 +14,11 @@ export default async function WikiPage({ params }: { params: Params }) {
   const slug = params.slug ?? []
   const docsDir = path.join(process.cwd(), 'user-docs')
   const targetPath = path.join(docsDir, ...slug)
+  const relative = path.relative(docsDir, targetPath)
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    console.warn('Invalid wiki path traversal attempt:', slug.join('/'))
+    notFound()
+  }
 
   try {
     const stat = await fs.stat(targetPath)

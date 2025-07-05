@@ -10,8 +10,8 @@ import { Card, CardContent } from "@/components/common/ui/card"
 import { AlertTriangle, ArrowLeft, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText, Save, Calendar } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
-import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
-import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
+import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab"
+import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab"
 import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
 import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
 import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
@@ -208,14 +208,14 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
               </TabsContent>
 
               <TabsContent value="treatments" className="m-0">
-                <ProfessionalTreatmentsTabSimple
+                <ProfessionalTreatmentsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="workAreas" className="m-0">
-                <ProfessionalWorkAreasTabSimple
+                <ProfessionalWorkAreasTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />

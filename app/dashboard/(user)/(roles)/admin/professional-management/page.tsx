@@ -2,9 +2,7 @@ import { Suspense } from "react"
 import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
-import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { ProfessionalManagement, ProfessionalManagementLoading } from "@/components/dashboard/admin/professional-management/ProfessionalManagement"
 import { getProfessionals } from "./actions"
 
 // Force dynamic rendering to prevent build-time database connections
@@ -16,77 +14,7 @@ export const metadata: Metadata = {
   description: "ניהול מטפלים במערכת",
 }
 
-function ProfessionalsLoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      {/* Statistics Cards Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-8 w-16" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      {/* Filters Skeleton */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <Skeleton className="h-10 flex-1" />
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Table Skeleton */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="border rounded-lg">
-            <div className="p-4 border-b">
-              <div className="flex gap-4">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-28" />
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-            </div>
-            
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 border-b last:border-b-0">
-                <div className="flex gap-4 items-center">
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+
 
 async function ProfessionalsPageContent() {
   try {
@@ -143,7 +71,7 @@ export default async function ProfessionalsPage() {
         </div>
       </div>
 
-      <Suspense fallback={<ProfessionalsLoadingSkeleton />}>
+      <Suspense fallback={<ProfessionalManagementLoading />}>
         <ProfessionalsPageContent />
       </Suspense>
     </div>

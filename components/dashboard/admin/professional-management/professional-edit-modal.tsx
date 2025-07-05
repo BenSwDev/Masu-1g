@@ -8,8 +8,8 @@ import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { AlertTriangle, X, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText } from "lucide-react"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
-import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
-import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
+import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab"
+import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab"
 import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
 import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
 import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
@@ -169,18 +169,18 @@ export default function ProfessionalEditModal({
               </TabsContent>
 
               <TabsContent value="treatments" className="h-full overflow-y-auto data-[state=active]:block m-0">
-                <ProfessionalTreatmentsTabNew
+                <ProfessionalTreatmentsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
-                  disabled={isCreatingNew}
+                  loading={false}
                 />
               </TabsContent>
 
               <TabsContent value="workAreas" className="h-full overflow-y-auto data-[state=active]:block m-0">
-                <ProfessionalWorkAreasTabSimple
+                <ProfessionalWorkAreasTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
-                  disabled={isCreatingNew}
+                  loading={false}
                 />
               </TabsContent>
 

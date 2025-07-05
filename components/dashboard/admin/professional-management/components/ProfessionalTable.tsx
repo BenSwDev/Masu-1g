@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { Pagination } from "@/components/common/ui/pagination"
+import { CustomPagination } from "@/components/common/ui/pagination"
 import { 
   Eye, 
   Edit, 
@@ -44,13 +44,15 @@ interface ProfessionalTableProps {
 const StatusBadge = memo(({ status }: { status: string }) => {
   const config = getStatusBadgeConfig(status as any)
   
-  const StatusIcon = {
+  const iconMap = {
     active: CheckCircle,
     pending_admin_approval: Clock,
     pending_user_action: AlertTriangle,
     rejected: XCircle,
     suspended: XCircle
-  }[status as any] || Clock
+  }
+  
+  const StatusIcon = iconMap[status as keyof typeof iconMap] || Clock
 
   return (
     <Badge variant={config.variant} className={`${config.color} flex items-center gap-1`}>
@@ -362,11 +364,10 @@ export const ProfessionalTable = memo(({
               מציג {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} - {Math.min(pagination.page * pagination.limit, pagination.total)} מתוך {pagination.total} מטפלים
             </div>
             
-            <Pagination
+            <CustomPagination
               currentPage={pagination.page}
               totalPages={pagination.pages}
               onPageChange={onPageChange}
-              showFirstLast={true}
             />
           </div>
         )}

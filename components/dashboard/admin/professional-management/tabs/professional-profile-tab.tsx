@@ -13,6 +13,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
 import { PhoneInput } from "@/components/common/phone-input"
 
 interface ProfessionalProfileTabProps extends ProfessionalTabProps {}
@@ -133,7 +134,7 @@ export default function ProfessionalProfileTab({
         // Update userId if it exists in the result
         if (result.professional.userId && typeof result.professional.userId === 'object') {
           transformedProfessional.userId = {
-            id: result.professional.userId._id?.toString() || (typeof professional.userId === 'object' ? professional.userId._id : ''),
+            _id: result.professional.userId._id?.toString() || (typeof professional.userId === 'object' ? professional.userId._id : ''),
             name: result.professional.userId.name || (typeof professional.userId === 'object' ? professional.userId.name : ''),
             email: result.professional.userId.email || (typeof professional.userId === 'object' ? professional.userId.email : ''),
             phone: result.professional.userId.phone || (typeof professional.userId === 'object' ? professional.userId.phone : ''),
@@ -141,11 +142,12 @@ export default function ProfessionalProfileTab({
             dateOfBirth: result.professional.userId.dateOfBirth ? new Date(result.professional.userId.dateOfBirth) : (typeof professional.userId === 'object' ? professional.userId.dateOfBirth : undefined),
             createdAt: typeof professional.userId === 'object' ? professional.userId.createdAt : new Date(),
             updatedAt: result.professional.userId.updatedAt ? new Date(result.professional.userId.updatedAt) : new Date(),
-            role: typeof professional.userId === 'object' ? professional.userId.roles : 'member',
+            roles: typeof professional.userId === 'object' ? professional.userId.roles : ['member'],
+            activeRole: typeof professional.userId === 'object' ? professional.userId.activeRole : 'member',
             isActive: typeof professional.userId === 'object' ? professional.userId.isActive : true,
-            preferences: typeof professional.userId === 'object' ? professional.userId.preferences : {} as any,
-            addresses: typeof professional.userId === 'object' ? professional.userId.addresses : [] as any[]
-          }
+            treatmentPreferences: typeof professional.userId === 'object' ? professional.userId.treatmentPreferences : undefined,
+            notificationPreferences: typeof professional.userId === 'object' ? professional.userId.notificationPreferences : undefined
+          } as IUser
         }
         
         onUpdate(transformedProfessional)

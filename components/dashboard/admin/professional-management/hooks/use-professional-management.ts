@@ -103,7 +103,20 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
       })
 
       if (result.success && result.data) {
-        setProfessionals(result.data.professionals)
+        // Transform the database types to Professional interface with proper type conversion
+        const transformedProfessionals = result.data.professionals.map(professional => {
+          const prof = professional as any
+          return {
+            ...prof,
+            _id: prof._id.toString(),
+            userId: typeof prof.userId === 'object' ? {
+              ...prof.userId,
+              _id: prof.userId._id.toString()
+            } : prof.userId
+          }
+        }) as Professional[]
+        
+        setProfessionals(transformedProfessionals)
         setStats(result.data.stats)
         setPagination({
           page: result.data.pagination.page,

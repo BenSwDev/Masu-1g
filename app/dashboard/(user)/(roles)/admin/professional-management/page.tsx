@@ -29,9 +29,22 @@ async function ProfessionalsPageContent() {
       throw new Error(initialData.error || "Failed to load professionals")
     }
 
+    // Transform database types to Professional interface
+    const transformedProfessionals = initialData.data?.professionals.map(professional => {
+      const prof = professional as any
+      return {
+        ...prof,
+        _id: prof._id.toString(),
+        userId: typeof prof.userId === 'object' ? {
+          ...prof.userId,
+          _id: prof.userId._id.toString()
+        } : prof.userId
+      }
+    }) || []
+
     return (
       <ProfessionalManagement 
-        initialProfessionals={initialData.data?.professionals || []}
+        initialProfessionals={transformedProfessionals}
         totalPages={initialData.data?.pagination.pages || 1}
         currentPage={initialData.data?.pagination.page || 1}
         initialSearch=""

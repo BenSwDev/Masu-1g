@@ -1,0 +1,17 @@
+// סמן תרגומים שנכשלו באדום
+highlightFailedTranslations()
+
+// סמן טקסטים קשיחים בצהוב  
+highlightHardcodedTexts()
+
+// הסר סימון
+clearTranslationHighlight()
+
+// העתק keys שנכשלו
+copy(window.masuTranslationAnalysis.failedKeysJson)
+
+// העתק הצעות לkeys חדשים
+copy(window.masuTranslationAnalysis.suggestedKeysJson)
+
+// הפעל את פונקציית המערכת
+window.getMissingTranslations()

@@ -1,0 +1,282 @@
+// סקריפט לניתוח תרגומים חסרים - מותאם למערכת i18n של מאסו
+(function() {
+    console.log('🔍 מתחיל ניתוח תרגומים חסרים במערכת מאסו...');
+    
+    const missingTranslations = [];
+    const foundTranslations = [];
+    const hardcodedTexts = [];
+    
+    // בדוק אם יש גישה לפונקציית getMissingTranslations
+    if (typeof window.getMissingTranslations === 'function') {
+        console.log('📋 מפעיל פונקציית getMissingTranslations...');
+        window.getMissingTranslations();
+    }
+    
+    // מצא את כל הטקסטים הקשיחים בעמוד
+    function findHardcodedTexts() {
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        const textNodes = [];
+        let node;
+        
+        while (node = walker.nextNode()) {
+            const text = node.textContent.trim();
+            if (text && text.length > 1) {
+                textNodes.push({
+                    text: text,
+                    element: node.parentElement
+                });
+            }
+        }
+        
+        return textNodes;
+    }
+    
+    // בדוק אם טקסט הוא עברית
+    function isHebrew(text) {
+        const hebrewRegex = /[\u0590-\u05FF]/;
+        return hebrewRegex.test(text);
+    }
+    
+    // בדוק אם טקסט הוא אנגלית משמעותית
+    function isEnglishText(text) {
+        const englishRegex = /^[a-zA-Z\s\-_.,!?:()]+$/;
+        return englishRegex.test(text) && text.length > 2;
+    }
+    
+    // בדוק אם האלמנט הוא כפתור או תווית
+    function isInteractiveElement(element) {
+        const tagName = element.tagName.toLowerCase();
+        const interactiveTags = ['button', 'a', 'label', 'span', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'td', 'th'];
+        return interactiveTags.includes(tagName);
+    }
+    
+    // בדוק אם טקסט נראה כמו key של תרגום
+    function looksLikeTranslationKey(text) {
+        // מחפש דפוסים כמו: "common.save", "admin.treatments.title"
+        return /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(text);
+    }
+    
+    // בדוק אם הטקסט נראה כמו תרגום שנכשל
+    function isFailedTranslation(text) {
+        return looksLikeTranslationKey(text);
+    }
+    
+    // בדוק אם האלמנט מכיל React component attributes
+    function hasReactAttributes(element) {
+        const attributes = element.attributes;
+        for (let i = 0; i < attributes.length; i++) {
+            const attr = attributes[i];
+            if (attr.name.startsWith('data-react') || 
+                attr.name.startsWith('data-testid') ||
+                element.closest('[data-react-root]')) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // יצירת XPath לאלמנט
+    function getXPath(element) {
+        if (element.id) return `//*[@id="${element.id}"]`;
+        if (element === document.body) return '/html/body';
+        
+        let ix = 0;
+        const siblings = element.parentNode.childNodes;
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling === element) {
+                return getXPath(element.parentNode) + '/' + element.tagName.toLowerCase() + '[' + (ix + 1) + ']';
+            }
+            if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+                ix++;
+            }
+        }
+    }
+    
+    // נתח את כל הטקסטים
+    const textNodes = findHardcodedTexts();
+    
+    textNodes.forEach(({ text, element }) => {
+        // דלג על טקסטים לא רלוונטיים
+        if (text.length < 2 || 
+            /^\d+$/.test(text) || // מספרים בלבד
+            /^[^\w\u0590-\u05FF]+$/.test(text) || // סימנים בלבד
+            text.includes('©') || 
+            text.includes('®') ||
+            text.includes('₪') ||
+            element.tagName === 'SCRIPT' ||
+            element.tagName === 'STYLE' ||
+            element.tagName === 'NOSCRIPT') {
+            return;
+        }
+        
+        const isHeb = isHebrew(text);
+        const isEng = isEnglishText(text);
+        const isInteractive = isInteractiveElement(element);
+        const isFailedTrans = isFailedTranslation(text);
+        const hasReact = hasReactAttributes(element);
+        
+        if (isFailedTrans) {
+            // זה נראה כמו key של תרגום שנכשל
+            missingTranslations.push({
+                text: text,
+                element: element.tagName,
+                className: element.className,
+                id: element.id,
+                type: 'Failed Translation Key',
+                language: 'Key',
+                xpath: getXPath(element),
+                priority: 'HIGH'
+            });
+        } else if ((isHeb || isEng) && isInteractive) {
+            // זה נראה כמו טקסט קשיח שצריך תרגום
+            hardcodedTexts.push({
+                text: text,
+                element: element.tagName,
+                className: element.className,
+                id: element.id,
+                type: 'Hardcoded Text',
+                language: isHeb ? 'Hebrew' : 'English',
+                xpath: getXPath(element),
+                priority: hasReact ? 'HIGH' : 'MEDIUM'
+            });
+        }
+    });
+    
+    // בדוק את localStorage עבור missing keys
+    let storedMissingKeys = [];
+    try {
+        const language = localStorage.getItem('masu_language') || 'he';
+        console.log(`🌐 שפה נוכחית: ${language}`);
+        
+        // נסה לגשת למערכת התרגומים
+        if (window.getMissingTranslations) {
+            console.log('📝 מפעיל getMissingTranslations...');
+            window.getMissingTranslations();
+        }
+    } catch (e) {
+        console.log('⚠️ לא ניתן לגשת ל-localStorage או למערכת התרגומים');
+    }
+    
+    // בדוק עבור React DevTools
+    const reactVersion = window.React ? window.React.version : 'Not found';
+    console.log(`⚛️ React version: ${reactVersion}`);
+    
+    // הצג תוצאות
+    console.log('\n📊 תוצאות הניתוח:');
+    console.log('==================');
+    
+    if (missingTranslations.length > 0) {
+        console.log(`\n🔴 נמצאו ${missingTranslations.length} תרגומים שנכשלו (keys שמוצגים במקום התרגום):`);
+        console.table(missingTranslations);
+        
+        const failedKeys = missingTranslations.map(item => `"${item.text}": ""`).join(',\n');
+        console.log('\n📋 Keys שנכשלו - להוספה לקובץ תרגומים:');
+        console.log('===========================================');
+        console.log(`{\n${failedKeys}\n}`);
+    }
+    
+    if (hardcodedTexts.length > 0) {
+        console.log(`\n🟡 נמצאו ${hardcodedTexts.length} טקסטים קשיחים שצריכים תרגום:`);
+        console.table(hardcodedTexts);
+        
+        // יצירת הצעות לkeys
+        const suggestedKeys = hardcodedTexts.map(item => {
+            const cleanText = item.text.replace(/[^\w\u0590-\u05FF\s]/g, '').trim();
+            const keyName = cleanText.toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^\w\u0590-\u05FF_]/g, '')
+                .substring(0, 50);
+            
+            return `"${keyName}": "${item.text}"`;
+        }).join(',\n');
+        
+        console.log('\n📋 הצעות לkeys חדשים:');
+        console.log('========================');
+        console.log(`{\n${suggestedKeys}\n}`);
+    }
+    
+    if (missingTranslations.length === 0 && hardcodedTexts.length === 0) {
+        console.log('\n✅ לא נמצאו בעיות תרגום!');
+    }
+    
+    // שמירה בזיכרון
+    window.masuTranslationAnalysis = {
+        failed: missingTranslations,
+        hardcoded: hardcodedTexts,
+        failedKeysJson: missingTranslations.length > 0 ? 
+            `{\n${missingTranslations.map(item => `"${item.text}": ""`).join(',\n')}\n}` : '{}',
+        suggestedKeysJson: hardcodedTexts.length > 0 ? 
+            `{\n${hardcodedTexts.map(item => {
+                const cleanText = item.text.replace(/[^\w\u0590-\u05FF\s]/g, '').trim();
+                const keyName = cleanText.toLowerCase()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^\w\u0590-\u05FF_]/g, '')
+                    .substring(0, 50);
+                return `"${keyName}": "${item.text}"`;
+            }).join(',\n')}\n}` : '{}'
+    };
+    
+    // פונקציות עזר
+    window.highlightFailedTranslations = function() {
+        missingTranslations.forEach(item => {
+            try {
+                const element = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (element) {
+                    element.style.backgroundColor = 'red';
+                    element.style.color = 'white';
+                    element.style.border = '2px solid darkred';
+                    element.title = `תרגום נכשל: ${item.text}`;
+                }
+            } catch (e) {
+                console.log('לא ניתן לסמן את האלמנט:', item.text);
+            }
+        });
+        console.log('🔴 תרגומים שנכשלו סומנו באדום');
+    };
+    
+    window.highlightHardcodedTexts = function() {
+        hardcodedTexts.forEach(item => {
+            try {
+                const element = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (element) {
+                    element.style.backgroundColor = 'yellow';
+                    element.style.border = '2px solid orange';
+                    element.title = `טקסט קשיח: ${item.text}`;
+                }
+            } catch (e) {
+                console.log('לא ניתן לסמן את האלמנט:', item.text);
+            }
+        });
+        console.log('🟡 טקסטים קשיחים סומנו בצהוב');
+    };
+    
+    window.clearTranslationHighlight = function() {
+        const highlighted = document.querySelectorAll('[style*="background-color: red"], [style*="background-color: yellow"]');
+        highlighted.forEach(el => {
+            el.style.backgroundColor = '';
+            el.style.color = '';
+            el.style.border = '';
+            el.title = '';
+        });
+        console.log('🧹 הסימון הוסר');
+    };
+    
+    console.log('\n🛠️ פונקציות עזר זמינות:');
+    console.log('- highlightFailedTranslations() - סמן תרגומים שנכשלו באדום');
+    console.log('- highlightHardcodedTexts() - סמן טקסטים קשיחים בצהוב');
+    console.log('- clearTranslationHighlight() - הסר סימון');
+    console.log('- copy(window.masuTranslationAnalysis.failedKeysJson) - העתק keys שנכשלו');
+    console.log('- copy(window.masuTranslationAnalysis.suggestedKeysJson) - העתק הצעות לkeys');
+    console.log('- window.getMissingTranslations() - הפעל את פונקציית המערכת');
+    
+    return window.masuTranslationAnalysis;
+})();
+
+

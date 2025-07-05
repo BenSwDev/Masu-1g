@@ -1215,6 +1215,7 @@
         "featureComingSoon": "תכונה זו תהיה זמינה בקרוב!",
         "female": "נקבה",
         "filter": "סינון",
+        "filters": "מסננים",
         "forbidden": "אין לך הרשאה לבצע פעולה זו על הזמנה זו.",
         "goBack": "חזור",
         "hour": "שעה",
@@ -1298,6 +1299,7 @@
         "to": "עד",
         "toggleColumns": "החלף עמודות",
         "total": "סה\"כ",
+        "filters": "מסננים",
         "totalPrice": "מחיר כולל",
         "unauthorized": "גישה לא מורשית.",
         "unexpectedError": "אירעה שגיאה לא צפויה",
@@ -1564,7 +1566,14 @@
           "amount": "סכום",
           "voucherType": "סוג שובר"
         },
-        "noOwner": "אין בעלים",
+        "noOwner": "ללא בעלים",
+        "manage": "ניהול שוברי מתנה",
+        "totalVouchers": "סה\"כ שוברים",
+        "activeVouchers": "שוברים פעילים",
+        "usedVouchers": "שוברים בשימוש",
+        "revenue": "הכנסות",
+        "totalRevenue": "סה\"כ הכנסות",
+        "used": "בשימוש",
         "filterByStatus": "סנן לפי סטטוס",
         "isGiftBadge": "מתנה",
         "myVouchers": {
@@ -1665,7 +1674,8 @@
           "treatmentVoucher": "שובר טיפול",
           "guestInfo": "מידע רוכש",
           "gift": "מתנה",
-          "giftInfo": "פרטי מתנה"
+          "giftInfo": "פרטי מתנה",
+          "guestInfo": "פרטי אורח"
         },
         "redeem": {
           "applyVoucher": "החל שובר",
@@ -1685,7 +1695,7 @@
           "active": "פעיל",
           "cancelled": "בוטל",
           "expired": "פג תוקף",
-          "fully_used": "נוצל במלואו",
+          "fully_used": "מנוצל במלואו",
           "partially_used": "נוצל חלקית",
           "pending_payment": "ממתין לתשלום",
           "pending_send": "ממתין לשליחה",
@@ -1749,7 +1759,7 @@
           "deleteSuccess": "שובר נמחק בהצלחה",
           "deleteError": "שגיאה במחיקת שובר"
         },
-        "noOwner": "אין בעלים"
+        "noOwner": "ללא בעלים"
       },
       "hasPrivateParking": "חניה פרטית",
       "hotelName": "שם מלון",

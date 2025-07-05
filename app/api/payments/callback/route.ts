@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     if (!paymentId && !returnValue) {
       logger.error("Payment callback missing identifiers")
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=error&complete=0&reason=missing_identifiers`)
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=error&complete=0&reason=missing_identifiers`)
     }
 
     // חיפוש התשלום
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     
     if (!payment) {
       logger.error("Payment not found", { paymentId: finalPaymentId })
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=error&complete=0&reason=payment_not_found`)
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=error&complete=0&reason=payment_not_found`)
     }
 
     const isSuccess = status === "success" && complete === "1"
@@ -150,11 +150,28 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // הפניה לעמוד תוצאות אחיד
+    // הפניה לעמוד תוצאות החדש
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const reason = searchParams.get("reason") || (isSuccess ? undefined : "payment_failed")
     
-    const resultUrl = `${baseUrl}/payment/result?paymentId=${finalPaymentId}&bookingId=${payment.booking_id}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
+    // Get booking number if available
+    let bookingNumber = null
+    if (payment.booking_id) {
+      try {
+        const booking = await Booking.findById(payment.booking_id)
+        if (booking?.bookingNumber) {
+          bookingNumber = booking.bookingNumber
+        }
+      } catch (error) {
+        logger.error("Failed to get booking number", {
+          paymentId: finalPaymentId,
+          bookingId: payment.booking_id,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
+    }
+    
+    const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${payment.booking_id}${bookingNumber ? `&bookingNumber=${bookingNumber}` : ''}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
     
     return NextResponse.redirect(resultUrl)
 
@@ -165,7 +182,7 @@ export async function GET(request: NextRequest) {
     })
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    return NextResponse.redirect(`${baseUrl}/payment/result?status=error&complete=0&reason=internal_error`)
+    return NextResponse.redirect(`${baseUrl}/payment-success?status=error&complete=0&reason=internal_error`)
   }
 }
 
@@ -194,6 +211,6 @@ export async function POST(request: NextRequest) {
     })
     
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    return NextResponse.redirect(`${baseUrl}/payment/result?status=error&complete=0&reason=callback_error`)
+    return NextResponse.redirect(`${baseUrl}/payment-success?status=error&complete=0&reason=callback_error`)
   }
 } 

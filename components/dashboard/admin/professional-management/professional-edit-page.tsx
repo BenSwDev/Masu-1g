@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useEffect, useMemo, memo } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -26,7 +26,7 @@ interface ProfessionalEditPageProps {
   isCreatingNew?: boolean
 }
 
-export function ProfessionalEditPage({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
+function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
@@ -38,23 +38,44 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
 
   // Update state when professional prop changes (only when professional ID changes)
   useEffect(() => {
-    setUpdatedProfessional(professional)
-    setHasUnsavedChanges(false)
-  }, [professional._id])
+    // Prevent infinite loops by checking if the professional actually changed
+    if (professional._id !== updatedProfessional._id) {
+      setUpdatedProfessional(professional)
+      setHasUnsavedChanges(false)
+    }
+  }, [professional._id, updatedProfessional._id])
 
   // Stable reference for callbacks to prevent unnecessary re-renders
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
-    setUpdatedProfessional(prev => ({
-      ...prev,
-      ...updatedData
-    }))
+    // Prevent empty updates that could cause infinite loops
+    if (!updatedData || Object.keys(updatedData).length === 0) {
+      return
+    }
+    
+    setUpdatedProfessional(prev => {
+      // Check if the update actually changes anything
+      let hasChanges = false
+      for (const key in updatedData) {
+        if (prev[key as keyof Professional] !== updatedData[key as keyof Professional]) {
+          hasChanges = true
+          break
+        }
+      }
+      
+      // Only update if there are actual changes
+      if (hasChanges) {
+        return { ...prev, ...updatedData }
+      }
+      return prev
+    })
+    
     setHasUnsavedChanges(true)
   }, [])
 
-  // Create a stable professional object that only changes when the professional ID changes
+  // Create a throttled version to prevent rapid updates
   const stableProfessional = useMemo(() => {
     return updatedProfessional
-  }, [updatedProfessional._id])
+  }, [updatedProfessional._id, updatedProfessional.status])
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -259,4 +280,15 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
       </Card>
     </div>
   )
-} 
+}
+
+// Custom comparison function to prevent unnecessary re-renders
+const arePropsEqual = (prevProps: ProfessionalEditPageProps, nextProps: ProfessionalEditPageProps) => {
+  // Only re-render if the professional ID or creation state changes
+  return (
+    prevProps.professional._id === nextProps.professional._id &&
+    prevProps.isCreatingNew === nextProps.isCreatingNew
+  )
+}
+
+export const ProfessionalEditPage = memo(ProfessionalEditPageComponent, arePropsEqual) 

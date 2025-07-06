@@ -16,7 +16,7 @@
   - `deleteProfessional`
 - רכיבי לקוח במיקום `components/dashboard/admin/professional-management/`:
   - `professional-management.tsx` – מציג כרטיסי סטטיסטיקה, מסננים, טבלת מטפלים ופאגינציה.
-  - `professional-create-page.tsx` – טופס יצירת מטפל חדש.
+  - `createEmptyProfessional` action – יוצר מטפל חדש עם נתונים בסיסיים במאגר הנתונים.
   - `professional-edit-page.tsx` – מסך עריכה הכולל לשוניות שונות.
   - `professional-edit-modal.tsx` ו־`professional-profile-dialog.tsx` – חלונות קופצים לעריכה ולצפייה בפרופיל.
   - `professional-edit-error-boundary.tsx` – ניהול שגיאות בעמוד העריכה.

@@ -42,7 +42,7 @@ interface ProfessionalFiltersProps {
   onStatusFilterChange: (status: ProfessionalStatus | "all") => void
   onSortChange: (sortBy: string, sortOrder: "asc" | "desc") => void
   onRefresh: () => void
-  onCreateNew: () => void
+  onCreateNew: () => Promise<void>
   
   // Additional props
   className?: string

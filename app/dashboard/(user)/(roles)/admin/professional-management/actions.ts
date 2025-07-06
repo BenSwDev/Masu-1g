@@ -373,6 +373,100 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
   }
 }
 
+export async function createEmptyProfessional(): Promise<CreateProfessionalResult> {
+  try {
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
+    await dbConnect()
+
+    // Generate a unique identifier for the new professional
+    const timestamp = Date.now()
+    const randomSuffix = Math.random().toString(36).substring(2, 8)
+    
+    const userData = {
+      name: `מטפל חדש ${timestamp}`,
+      email: `new_professional_${timestamp}_${randomSuffix}@temp.local`,
+      phone: `050${timestamp.toString().slice(-7)}`,
+      gender: "male" as const,
+      birthDate: undefined
+    }
+
+    // Create user with transaction
+    const session = await User.startSession()
+    
+    try {
+      let createdUser: any
+      let createdProfessional: any
+
+      await session.withTransaction(async () => {
+        // Create user
+        const hashedPassword = await hash("123456", 12) // Default password
+        const user = await User.create([{
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          gender: userData.gender,
+          dateOfBirth: userData.birthDate ? new Date(userData.birthDate) : undefined,
+          password: hashedPassword,
+          roles: ["professional"],
+          activeRole: "professional",
+          isEmailVerified: false,
+          isPhoneVerified: false
+        }], { session })
+
+        createdUser = user[0]
+
+        // Create professional profile
+        const professional = await ProfessionalProfile.create([{
+          userId: createdUser._id,
+          status: "pending_admin_approval" as ProfessionalStatus,
+          isActive: true,
+          treatments: [],
+          workAreas: [],
+          totalEarnings: 0,
+          pendingPayments: 0,
+          financialTransactions: [],
+          appliedAt: new Date()
+        }], { session })
+
+        createdProfessional = professional[0]
+      })
+
+      // Fetch the created professional with populated user data
+      const fullProfessional = await ProfessionalProfile.findById(createdProfessional._id)
+        .populate("userId", "name email phone gender dateOfBirth roles")
+        .lean()
+
+      if (!fullProfessional) {
+        throw new Error("שגיאה ביצירת המטפל")
+      }
+
+      // Revalidate the professional management page
+      revalidatePath("/dashboard/admin/professional-management")
+
+      return { 
+        success: true, 
+        professional: fullProfessional as unknown as ProfessionalWithUser 
+      }
+    } finally {
+      await session.endSession()
+    }
+  } catch (error) {
+    console.error("Error creating empty professional:", error)
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה ליצור מטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה ביצירת המטפל" 
+    }
+  }
+}
+
 export async function updateProfessionalStatus(
   id: string,
   status: ProfessionalStatus,

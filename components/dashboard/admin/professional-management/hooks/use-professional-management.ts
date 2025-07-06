@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/common/ui/use-toast"
-import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import { getProfessionals, createEmptyProfessional } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalStats, PaginationInfo } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
@@ -37,7 +37,7 @@ export interface ProfessionalManagementState {
   loadPage: (page: number) => Promise<void>
   updateProfessional: (id: string, updates: Partial<Professional>) => void
   navigateToEdit: (id: string) => void
-  navigateToCreate: () => void
+  navigateToCreate: () => Promise<void>
 }
 
 export function useProfessionalManagement(options: UseProfessionalManagementOptions = {}): ProfessionalManagementState {
@@ -182,9 +182,35 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     router.push(`/dashboard/admin/professional-management/${id}`)
   }, [router])
 
-  const navigateToCreate = useCallback(() => {
-    router.push("/dashboard/admin/professional-management/new")
-  }, [router])
+  const navigateToCreate = useCallback(async () => {
+    try {
+      // Show loading state
+      setLoading(true)
+      
+      // Create empty professional in database
+      const result = await createEmptyProfessional()
+      
+      if (result.success && result.professional) {
+        // Navigate to edit page with the real professional ID
+        router.push(`/dashboard/admin/professional-management/${result.professional._id}`)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה ביצירת המטפל"
+        })
+      }
+    } catch (error) {
+      console.error("Error creating professional:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה ביצירת המטפל"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [router, toast])
 
   return {
     professionals,

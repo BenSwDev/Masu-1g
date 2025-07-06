@@ -238,6 +238,11 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
     redirect("/dashboard/admin/professional-management")
   }
 
+  // Redirect old "new" route to the main page
+  if (params.id === "new") {
+    redirect("/dashboard/admin/professional-management")
+  }
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <Suspense fallback={<ProfessionalEditLoadingSkeleton />}>

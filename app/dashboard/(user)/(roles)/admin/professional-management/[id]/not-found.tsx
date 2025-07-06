@@ -35,13 +35,11 @@ export default function ProfessionalNotFound() {
                 חזור לרשימת המטפלים
               </Button>
             </Link>
-            
-            <Link href="/dashboard/admin/professional-management/new">
-              <Button variant="outline">
-                צור מטפל חדש
-              </Button>
-            </Link>
           </div>
+          
+          <p className="text-sm text-muted-foreground mt-4">
+            ניתן ליצור מטפל חדש מתוך דף הרשימה הראשי
+          </p>
         </CardContent>
       </Card>
     </div>

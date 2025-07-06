@@ -1,3 +1,35 @@
+# מסמך טכני - ניהול מטפלים
+
+## סקירה כללית
+מערכת ניהול מטפלים מאפשרת לאדמינים לנהל פרופילי מטפלים, לעדכן פרטיהם, לקבוע את סטטוס האישור שלהם ולעקוב אחר ביצועיהם.
+
+## ארכיטקטורה
+
+### קומפוננטות ראשיות
+- **ProfessionalManagement** - רכיב ראשי לניהול הרשימה
+- **ProfessionalEditPage** - רכיב עריכת מטפל בודד עם טאבים
+- **ProfessionalFilters** - רכיב סינון ופעולות כלליות
+- **Hooks**: `use-professional-management` - לוגיקת מצב וטעינה
+
+### פתרון בעיית React Error #185
+**הבעיה**: לולאת עדכון אינסופית בין `ProfessionalEditPage` והטאבים שלה.
+
+**הגורם**: הטאבים קיבלו `updatedProfessional` כ-prop, עדכנו אותו דרך `onUpdate`, מה שגרם לטאבים להתרנדר מחדש ולחזור על התהליך.
+
+**הפתרון**: 
+1. **Memoization**: הוספת `useMemo` לנתוני המטפל עם dependency רק על שדות קריטיים
+2. **Controlled Re-renders**: השימוש ב-`memoizedProfessional` במקום `updatedProfessional` בטאבים
+3. **Stable Dependencies**: וידוא ש-useEffect מסתמך רק על `professional._id`
+
+```typescript
+// Memoize the professional data to prevent unnecessary re-renders
+const memoizedProfessional = useMemo(() => updatedProfessional, [
+  updatedProfessional._id, 
+  updatedProfessional.status, 
+  updatedProfessional.isActive
+])
+```
+
 # תהליך ניהול המטפלים
 
 המערכת מאפשרת לצוות המנהלים לנהל את מאגר המטפלים במערכת.

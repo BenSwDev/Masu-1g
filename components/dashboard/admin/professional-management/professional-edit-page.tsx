@@ -39,6 +39,7 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
   // Update state when professional prop changes (only when professional ID changes)
   useEffect(() => {
     setUpdatedProfessional(professional)
+    setHasUnsavedChanges(false)
   }, [professional._id])
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
@@ -48,6 +49,9 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
     }))
     setHasUnsavedChanges(true)
   }, [])
+
+  // Memoize the professional data to prevent unnecessary re-renders
+  const memoizedProfessional = useMemo(() => updatedProfessional, [updatedProfessional._id, updatedProfessional.status, updatedProfessional.isActive])
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -190,7 +194,7 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
             <div className="min-h-[600px]">
               <TabsContent value="profile" className="m-0" key="content-profile">
                 <ProfessionalProfileTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                   loading={false}
                   isCreatingNew={isCreatingNew}
@@ -200,49 +204,49 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
 
               <TabsContent value="treatments" className="m-0" key="content-treatments">
                 <ProfessionalTreatmentsTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="workAreas" className="m-0" key="content-workAreas">
                 <ProfessionalWorkAreasTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="bookings" className="m-0" key="content-bookings">
                 <ProfessionalBookingsTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="bankDetails" className="m-0" key="content-bankDetails">
                 <ProfessionalBankDetailsTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="documents" className="m-0" key="content-documents">
                 <ProfessionalDocumentsTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="financial" className="m-0" key="content-financial">
                 <ProfessionalFinancialTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
               <TabsContent value="contract" className="m-0" key="content-contract">
                 <ProfessionalContractTab
-                  professional={updatedProfessional}
+                  professional={memoizedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>

@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Skeleton } from "@/components/common/ui/skeleton"
+import { formatNumberSafe } from "../utils/professional-utils"
 import { Badge } from "@/components/common/ui/badge"
 import { 
   Users, 
@@ -131,7 +132,7 @@ export function ProfessionalStats({
                 </div>
                 <div>
                   <div className={`text-2xl font-bold ${stat.color}`}>
-                    {stat.value.toLocaleString()}
+                    {formatNumberSafe(stat.value)}
                   </div>
                   {stat.badge && (
                     <div className="text-xs text-muted-foreground mt-1">

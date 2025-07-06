@@ -305,3 +305,42 @@ export function getProfessionalDisplayData(professional: Professional) {
     isLoading: isProfessionalDataLoading(professional)
   }
 } 
+
+// פורמט תאריך קבוע למניעת hydration mismatch
+export const formatDateSafe = (date?: Date | string): string => {
+  if (!date) return "-"
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    // פורמט קבוע DD/MM/YYYY
+    const day = dateObj.getDate().toString().padStart(2, '0')
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+    const year = dateObj.getFullYear()
+    return `${day}/${month}/${year}`
+  } catch {
+    return "-"
+  }
+}
+
+// פורמט תאריך מפורט קבוע למניעת hydration mismatch
+export const formatDateTimeSafe = (date?: Date | string): string => {
+  if (!date) return "-"
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    // פורמט קבוע DD/MM/YYYY HH:MM
+    const day = dateObj.getDate().toString().padStart(2, '0')
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+    const year = dateObj.getFullYear()
+    const hours = dateObj.getHours().toString().padStart(2, '0')
+    const minutes = dateObj.getMinutes().toString().padStart(2, '0')
+    return `${day}/${month}/${year} ${hours}:${minutes}`
+  } catch {
+    return "-"
+  }
+}
+
+// פורמט מספר קבוע למניעת hydration mismatch
+export const formatNumberSafe = (num: number): string => {
+  if (typeof num !== 'number' || isNaN(num)) return "0"
+  // פורמט קבוע עם פסיקים כמפריד אלפים
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+} 

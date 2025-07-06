@@ -9,6 +9,7 @@ import { Button } from "@/components/common/ui/button"
 import { Card, CardContent } from "@/components/common/ui/card"
 import { AlertTriangle, ArrowLeft, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText, Save, Calendar } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
+import { formatDateSafe } from "./utils/professional-utils"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
 import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab"
 import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab"
@@ -95,15 +96,8 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
     )
   }
 
-  const formatDate = (date?: Date | string) => {
-    if (!date) return "-"
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleDateString("he-IL")
-    } catch {
-      return "-"
-    }
-  }
+  // השתמש בפונקציה הבטוחה מהutils
+  // const formatDate מיובא מהutils כ formatDateSafe
 
   return (
     <div className="space-y-6">
@@ -128,7 +122,7 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
               {getStatusBadge(updatedProfessional.status)}
               {!isCreatingNew && (
                 <span className="text-sm text-muted-foreground">
-                  הצטרף ב-{formatDate(updatedProfessional.appliedAt)}
+                  הצטרף ב-{formatDateSafe(updatedProfessional.appliedAt)}
                 </span>
               )}
             </div>

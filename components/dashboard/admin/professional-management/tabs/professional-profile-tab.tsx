@@ -15,6 +15,7 @@ import type { Professional, ProfessionalTabProps } from "@/lib/types/professiona
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 import { PhoneInput } from "@/components/common/phone-input"
+import { formatDateSafe } from "../utils/professional-utils"
 
 interface ProfessionalProfileTabProps extends ProfessionalTabProps {}
 
@@ -202,15 +203,7 @@ export default function ProfessionalProfileTab({
     }
   }
 
-  const formatDate = (date?: Date | string) => {
-    if (!date) return "-"
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleDateString("he-IL")
-    } catch {
-      return "-"
-    }
-  }
+  // השתמש בפונקציה הבטוחה מהutils
 
   return (
     <div className="p-6 space-y-6">
@@ -394,18 +387,18 @@ export default function ProfessionalProfileTab({
             <div className="space-y-2">
               <div>
                 <span className="font-medium">תאריך הצטרפות:</span>
-                <div className="text-muted-foreground">{formatDate(professional.appliedAt)}</div>
+                <div className="text-muted-foreground">{formatDateSafe(professional.appliedAt)}</div>
               </div>
               {professional.approvedAt && (
                 <div>
                   <span className="font-medium">תאריך אישור:</span>
-                  <div className="text-muted-foreground">{formatDate(professional.approvedAt)}</div>
+                                      <div className="text-muted-foreground">{formatDateSafe(professional.approvedAt)}</div>
                 </div>
               )}
               {professional.rejectedAt && (
                 <div>
                   <span className="font-medium">תאריך דחייה:</span>
-                  <div className="text-muted-foreground">{formatDate(professional.rejectedAt)}</div>
+                                      <div className="text-muted-foreground">{formatDateSafe(professional.rejectedAt)}</div>
                 </div>
               )}
             </div>
@@ -418,11 +411,11 @@ export default function ProfessionalProfileTab({
               </div>
               <div>
                 <span className="font-medium">פעילות אחרונה:</span>
-                <div className="text-muted-foreground">{formatDate(professional.lastActiveAt)}</div>
+                <div className="text-muted-foreground">{formatDateSafe(professional.lastActiveAt)}</div>
               </div>
               <div>
                 <span className="font-medium">עודכן לאחרונה:</span>
-                <div className="text-muted-foreground">{formatDate(professional.updatedAt)}</div>
+                <div className="text-muted-foreground">{formatDateSafe(professional.updatedAt)}</div>
               </div>
             </div>
           </div>

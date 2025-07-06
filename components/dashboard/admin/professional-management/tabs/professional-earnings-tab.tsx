@@ -385,7 +385,7 @@ export default function ProfessionalEarningsTab({
           <CardContent>
             <div className="space-y-4">
               {stats.monthlyEarnings.map((month, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={`month-${month.month}-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="font-medium">{month.month}</div>
                   <div className="text-lg font-bold text-green-600">
                     {formatCurrency(month.amount)}

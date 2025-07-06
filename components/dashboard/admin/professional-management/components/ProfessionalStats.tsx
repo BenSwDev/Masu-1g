@@ -88,7 +88,7 @@ export function ProfessionalStats({
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`} dir={dir}>
         {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="border-0 shadow-sm">
+          <Card key={`stats-skeleton-${index}`} className="border-0 shadow-sm">
             <CardHeader className="pb-3">
               <Skeleton className="h-4 w-24" />
             </CardHeader>
@@ -111,7 +111,7 @@ export function ProfessionalStats({
         
         return (
           <Card 
-            key={index} 
+            key={`stat-${stat.title.replace(/\s+/g, '-')}`} 
             className={`border-0 shadow-sm hover:shadow-md transition-shadow duration-200 ${stat.bgColor} ${stat.borderColor} border`}
           >
             <CardHeader className="pb-3">
@@ -213,7 +213,7 @@ export function DetailedProfessionalStats({
         <CardContent>
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="flex items-center justify-between">
+              <div key={`detailed-skeleton-${index}`} className="flex items-center justify-between">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-4 w-8" />
               </div>

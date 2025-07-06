@@ -156,7 +156,7 @@ export function ProfessionalManagementLoading() {
         <div className="lg:col-span-2">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="p-6 border rounded-lg space-y-3">
+              <div key={`stats-loading-${index}`} className="p-6 border rounded-lg space-y-3">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-8 w-8 rounded-full" />
@@ -171,7 +171,7 @@ export function ProfessionalManagementLoading() {
             <Skeleton className="h-5 w-32" />
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex items-center justify-between">
+                <div key={`detailed-stats-loading-${index}`} className="flex items-center justify-between">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-4 w-8" />
                 </div>
@@ -202,13 +202,13 @@ export function ProfessionalManagementLoading() {
         <div className="p-4 border-b">
           <div className="grid grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-4 w-20" />
+              <Skeleton key={`table-header-${index}`} className="h-4 w-20" />
             ))}
           </div>
         </div>
         <div className="space-y-0">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="p-4 border-b last:border-b-0">
+            <div key={`table-row-loading-${index}`} className="p-4 border-b last:border-b-0">
               <div className="grid grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-32" />

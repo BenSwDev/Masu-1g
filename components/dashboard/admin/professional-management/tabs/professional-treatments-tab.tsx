@@ -43,7 +43,7 @@ export default function ProfessionalTreatmentsTab({
           <div className="space-y-3">
             {treatments.map((treatment, index) => (
               <div
-                key={index}
+                key={treatment.treatmentId || `treatment-${index}`}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
               >
                 <div>

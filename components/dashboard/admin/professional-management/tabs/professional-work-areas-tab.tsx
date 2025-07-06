@@ -43,7 +43,7 @@ export default function ProfessionalWorkAreasTab({
           <div className="space-y-3">
             {workAreas.map((area, index) => (
               <div
-                key={index}
+                key={area.cityId || `area-${index}`}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
               >
                 <div>

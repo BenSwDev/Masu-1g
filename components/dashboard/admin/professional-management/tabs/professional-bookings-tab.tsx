@@ -52,32 +52,22 @@ export default function ProfessionalBookingsTab({
     try {
       setLoading(true)
       
-      console.log("Fetching bookings for professional:", professional._id)
-      
       // Fetch assigned bookings
       const assignedResponse = await fetch(`/api/admin/bookings?professional=${professional._id}`)
-      console.log("Assigned bookings response status:", assignedResponse.status)
-      
       const assignedData = await assignedResponse.json()
-      console.log("Assigned bookings data:", assignedData)
       
       // Fetch potential bookings (unassigned bookings that match professional criteria)
       const potentialResponse = await fetch(`/api/admin/bookings/potential?professionalId=${professional._id}`)
-      console.log("Potential bookings response status:", potentialResponse.status)
-      
       const potentialData = await potentialResponse.json()
-      console.log("Potential bookings data:", potentialData)
       
       if (assignedData.success) {
         setAssignedBookings(assignedData.bookings || [])
-        console.log(`Set ${assignedData.bookings?.length || 0} assigned bookings`)
       } else {
         console.error("Failed to fetch assigned bookings:", assignedData.error)
       }
       
       if (potentialData.success) {
         setPotentialBookings(potentialData.bookings || [])
-        console.log(`Set ${potentialData.bookings?.length || 0} potential bookings`)
       } else {
         console.error("Failed to fetch potential bookings:", potentialData.error)
       }

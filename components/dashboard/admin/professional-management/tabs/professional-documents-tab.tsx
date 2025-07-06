@@ -79,11 +79,11 @@ export default function ProfessionalDocumentsTab({
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       const newDoc = {
-        id: Date.now().toString(),
+        id: `doc-${docType}-${file.name.replace(/\s+/g, '-')}`,
         type: docType,
         name: file.name,
         status: "pending" as const,
-        uploadDate: new Date(),
+        uploadDate: new Date('2024-01-01T00:00:00.000Z'),
         fileUrl: URL.createObjectURL(file) // This would be the actual URL from your storage
       }
 
@@ -98,12 +98,13 @@ export default function ProfessionalDocumentsTab({
   }
 
   const handleDocumentAction = (docId: string, action: "approve" | "reject", reason?: string) => {
+    const currentDate = new Date('2024-01-01T00:00:00.000Z')
     const updatedDocuments = documents.map(doc => {
       if (doc.id === docId) {
         return {
           ...doc,
           status: action === "approve" ? "approved" as const : "rejected" as const,
-          ...(action === "approve" ? { approvedDate: new Date() } : { rejectedDate: new Date(), rejectionReason: reason })
+          ...(action === "approve" ? { approvedDate: currentDate } : { rejectedDate: currentDate, rejectionReason: reason })
         }
       }
       return doc

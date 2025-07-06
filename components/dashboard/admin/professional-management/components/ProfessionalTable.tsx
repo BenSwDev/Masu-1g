@@ -207,7 +207,7 @@ ProfessionalRow.displayName = "ProfessionalRow"
 const TableSkeleton = memo(() => (
   <div className="space-y-2">
     {Array.from({ length: 5 }).map((_, index) => (
-      <div key={index} className="grid grid-cols-6 gap-4 p-4 border rounded-lg">
+      <div key={`table-skeleton-${index}`} className="grid grid-cols-6 gap-4 p-4 border rounded-lg">
         <div className="space-y-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-16" />

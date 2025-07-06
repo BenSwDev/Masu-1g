@@ -26,13 +26,7 @@ function ProfessionalProfileTab({
   isCreatingNew = false,
   onCreated
 }: ProfessionalProfileTabProps) {
-  console.log('🔥 TRACE: ProfessionalProfileTab RENDER', {
-    professionalId: professional._id,
-    loading,
-    isCreatingNew,
-    onUpdateChanged: onUpdate.toString().slice(0, 50),
-    timestamp: new Date().toISOString()
-  })
+  console.log('🔥 TRACE: ProfessionalProfileTab RENDER', professional._id)
 
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -64,12 +58,9 @@ function ProfessionalProfileTab({
 
   // Sync state with props when professional changes
   useEffect(() => {
-    console.log('🔥 TRACE: ProfessionalProfileTab useEffect triggered', {
-      professionalId: professional._id,
-      timestamp: new Date().toISOString()
-    })
+    console.log('🔥 TRACE: ProfessionalProfileTab useEffect triggered', professional._id)
 
-    setUserDetails({
+    const newUserDetails = {
       name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
       email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
       phone: typeof professional.userId === 'object' ? professional.userId.phone || "" : "",
@@ -82,7 +73,11 @@ function ProfessionalProfileTab({
             return ""
           }
         })() : ""
-    })
+    }
+
+    console.log('🔥 TRACE: Setting initial phone value:', newUserDetails.phone)
+    
+    setUserDetails(newUserDetails)
     
     setProfessionalDetails({
       status: professional.status,
@@ -97,12 +92,21 @@ function ProfessionalProfileTab({
 
   const handleUserDetailChange = useCallback((field: keyof typeof userDetails, value: string) => {
     console.log('🔥 TRACE: handleUserDetailChange', field, value.slice(0, 20))
-    setUserDetails(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    
+    // Prevent unnecessary updates if value is the same
+    setUserDetails(prev => {
+      if (prev[field] === value) {
+        console.log('🔥 TRACE: handleUserDetailChange - SAME VALUE, skipping update')
+        return prev
+      }
+      console.log('🔥 TRACE: handleUserDetailChange - UPDATING', field, `${prev[field]} -> ${value}`)
+      return {
+        ...prev,
+        [field]: value
+      }
+    })
     setHasChanges(true)
-  }, [])
+  }, [userDetails])
 
   const handleProfessionalDetailChange = useCallback((field: keyof typeof professionalDetails, value: any) => {
     console.log('🔥 TRACE: handleProfessionalDetailChange', field, value)

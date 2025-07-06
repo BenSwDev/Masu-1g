@@ -27,12 +27,7 @@ interface ProfessionalEditPageProps {
 }
 
 function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
-  console.log('🔥 TRACE: ProfessionalEditPage RENDER START', {
-    professionalId: professional._id,
-    isCreatingNew,
-    timestamp: new Date().toISOString(),
-    stack: new Error().stack?.split('\n').slice(1, 4)
-  })
+  console.log('🔥 TRACE: ProfessionalEditPage RENDER START', professional._id)
 
   const { t, dir } = useTranslation()
   const router = useRouter()

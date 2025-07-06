@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
@@ -31,15 +31,18 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
   const router = useRouter()
   const { toast } = useToast()
   
+  // Memoize the professional object to prevent unnecessary re-renders
+  const memoizedProfessional = useMemo(() => professional, [professional._id])
+  
   const [activeTab, setActiveTab] = useState("profile")
-  const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
+  const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(memoizedProfessional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Update state when professional prop changes
+  // Update state when professional prop changes (only when professional ID changes)
   useEffect(() => {
-    setUpdatedProfessional(professional)
-  }, [professional._id])
+    setUpdatedProfessional(memoizedProfessional)
+  }, [memoizedProfessional])
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({

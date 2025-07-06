@@ -81,13 +81,6 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // Load data when filters change
-  useEffect(() => {
-    if (debouncedSearchTerm !== initialSearch || statusFilter !== "all" || sortBy !== "createdAt" || sortOrder !== "desc") {
-      loadData()
-    }
-  }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder])
-
   const loadData = useCallback(async (page: number = 1) => {
     setLoading(true)
     setError(null)
@@ -143,7 +136,14 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, pagination.limit, toast])
+  }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, toast])
+
+  // Load data when filters change
+  useEffect(() => {
+    if (debouncedSearchTerm !== initialSearch || statusFilter !== "all" || sortBy !== "createdAt" || sortOrder !== "desc") {
+      loadData()
+    }
+  }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, loadData, initialSearch])
 
   const refreshData = useCallback(async () => {
     setRefreshing(true)

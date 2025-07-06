@@ -81,7 +81,7 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  const loadData = useCallback(async (page: number = 1, limit: number = 10) => {
+  const loadData = useCallback(async (page: number = 1, limit: number = 10, search?: string, status?: ProfessionalStatus | "all", sortField?: string, sortDirection?: "asc" | "desc") => {
     setLoading(true)
     setError(null)
 
@@ -89,10 +89,10 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
       const result = await getProfessionals({
         page,
         limit,
-        search: debouncedSearchTerm,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        sortBy,
-        sortOrder
+        search: search ?? debouncedSearchTerm,
+        status: (status ?? statusFilter) === "all" ? undefined : (status ?? statusFilter) as ProfessionalStatus,
+        sortBy: sortField ?? sortBy,
+        sortOrder: sortDirection ?? sortOrder
       })
 
       if (result.success && result.data) {
@@ -136,19 +136,19 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, toast])
+  }, [toast])
 
   // Load data when filters change
   useEffect(() => {
     if (debouncedSearchTerm !== initialSearch || statusFilter !== "all" || sortBy !== "createdAt" || sortOrder !== "desc") {
-      loadData(1, 10)
+      loadData(1, 10, debouncedSearchTerm, statusFilter, sortBy, sortOrder)
     }
   }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, loadData, initialSearch])
 
   const refreshData = useCallback(async () => {
     setRefreshing(true)
     try {
-      await loadData(pagination.page, pagination.limit)
+      await loadData(pagination.page, pagination.limit, debouncedSearchTerm, statusFilter, sortBy, sortOrder)
       toast({
         title: "הצלחה",
         description: "הנתונים רוענו בהצלחה"
@@ -162,11 +162,11 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     } finally {
       setRefreshing(false)
     }
-  }, [loadData, pagination.page, pagination.limit, toast])
+  }, [loadData, pagination.page, pagination.limit, toast, debouncedSearchTerm, statusFilter, sortBy, sortOrder])
 
   const loadPage = useCallback(async (page: number) => {
-    await loadData(page, pagination.limit)
-  }, [loadData, pagination.limit])
+    await loadData(page, pagination.limit, debouncedSearchTerm, statusFilter, sortBy, sortOrder)
+  }, [loadData, pagination.limit, debouncedSearchTerm, statusFilter, sortBy, sortOrder])
 
   const updateProfessional = useCallback((id: string, updates: Partial<Professional>) => {
     setProfessionals(prev => 

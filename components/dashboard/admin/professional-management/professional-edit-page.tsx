@@ -31,18 +31,15 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
   const router = useRouter()
   const { toast } = useToast()
   
-  // Memoize the professional object to prevent unnecessary re-renders
-  const memoizedProfessional = useMemo(() => professional, [professional._id])
-  
   const [activeTab, setActiveTab] = useState("profile")
-  const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(memoizedProfessional)
+  const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   // Update state when professional prop changes (only when professional ID changes)
   useEffect(() => {
-    setUpdatedProfessional(memoizedProfessional)
-  }, [memoizedProfessional])
+    setUpdatedProfessional(professional)
+  }, [professional._id])
 
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({

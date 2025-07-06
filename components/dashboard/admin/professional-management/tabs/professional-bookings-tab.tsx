@@ -284,11 +284,10 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
   const formatDate = (date: string | Date) => {
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleDateString("he-IL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-      })
+      const day = dateObj.getDate().toString().padStart(2, '0')
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+      const year = dateObj.getFullYear()
+      return `${day}/${month}/${year}`
     } catch {
       return "-"
     }
@@ -297,10 +296,9 @@ function BookingCard({ booking, type, onAssign, onUnassign, assigningBooking, un
   const formatTime = (date: string | Date) => {
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleTimeString("he-IL", {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
+      const hours = dateObj.getHours().toString().padStart(2, '0')
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0')
+      return `${hours}:${minutes}`
     } catch {
       return "-"
     }

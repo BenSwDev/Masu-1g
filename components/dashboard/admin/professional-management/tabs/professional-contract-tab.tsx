@@ -118,7 +118,13 @@ export default function ProfessionalContractTab({
             )}
             <p>
               <span className="font-medium">תאריך הצטרפות:</span>{" "}
-              {new Date(professional.appliedAt).toLocaleDateString("he-IL")}
+              {(() => {
+                const dateObj = new Date(professional.appliedAt)
+                const day = dateObj.getDate().toString().padStart(2, '0')
+                const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+                const year = dateObj.getFullYear()
+                return `${day}/${month}/${year}`
+              })()}
             </p>
             <p>
               <span className="font-medium">סטטוס:</span>{" "}

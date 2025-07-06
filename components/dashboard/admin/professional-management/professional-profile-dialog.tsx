@@ -181,11 +181,10 @@ export function ProfessionalProfileDialog({
     if (!date) return "-"
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleDateString("he-IL", {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+      const day = dateObj.getDate().toString().padStart(2, '0')
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+      const year = dateObj.getFullYear()
+      return `${day}/${month}/${year}`
     } catch {
       return "-"
     }
@@ -289,12 +288,12 @@ export function ProfessionalProfileDialog({
                 </div>
                 
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">₪{profile.totalEarnings.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-purple-600">₪{profile.totalEarnings.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</div>
                   <div className="text-sm text-muted-foreground">סה"כ הכנסות</div>
                 </div>
                 
                 <div className="text-center p-3 border rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">₪{profile.pendingPayments.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-orange-600">₪{profile.pendingPayments.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</div>
                   <div className="text-sm text-muted-foreground">תשלומים ממתינים</div>
                 </div>
               </div>

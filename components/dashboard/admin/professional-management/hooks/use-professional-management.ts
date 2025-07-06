@@ -81,14 +81,14 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  const loadData = useCallback(async (page: number = 1) => {
+  const loadData = useCallback(async (page: number = 1, limit: number = 10) => {
     setLoading(true)
     setError(null)
 
     try {
       const result = await getProfessionals({
         page,
-        limit: pagination.limit,
+        limit,
         search: debouncedSearchTerm,
         status: statusFilter === "all" ? undefined : statusFilter,
         sortBy,
@@ -141,14 +141,14 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
   // Load data when filters change
   useEffect(() => {
     if (debouncedSearchTerm !== initialSearch || statusFilter !== "all" || sortBy !== "createdAt" || sortOrder !== "desc") {
-      loadData()
+      loadData(1, 10)
     }
   }, [debouncedSearchTerm, statusFilter, sortBy, sortOrder, loadData, initialSearch])
 
   const refreshData = useCallback(async () => {
     setRefreshing(true)
     try {
-      await loadData(pagination.page)
+      await loadData(pagination.page, pagination.limit)
       toast({
         title: "הצלחה",
         description: "הנתונים רוענו בהצלחה"
@@ -162,11 +162,11 @@ export function useProfessionalManagement(options: UseProfessionalManagementOpti
     } finally {
       setRefreshing(false)
     }
-  }, [loadData, pagination.page, toast])
+  }, [loadData, pagination.page, pagination.limit, toast])
 
   const loadPage = useCallback(async (page: number) => {
-    await loadData(page)
-  }, [loadData])
+    await loadData(page, pagination.limit)
+  }, [loadData, pagination.limit])
 
   const updateProfessional = useCallback((id: string, updates: Partial<Professional>) => {
     setProfessionals(prev => 

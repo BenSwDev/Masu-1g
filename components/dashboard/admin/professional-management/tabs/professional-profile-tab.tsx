@@ -26,6 +26,14 @@ function ProfessionalProfileTab({
   isCreatingNew = false,
   onCreated
 }: ProfessionalProfileTabProps) {
+  console.log('🔥 TRACE: ProfessionalProfileTab RENDER', {
+    professionalId: professional._id,
+    loading,
+    isCreatingNew,
+    timestamp: new Date().toISOString(),
+    stack: new Error().stack?.split('\n').slice(1, 3)
+  })
+
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -56,6 +64,12 @@ function ProfessionalProfileTab({
 
   // Sync state with props when professional changes
   useEffect(() => {
+    console.log('🔥 TRACE: ProfessionalProfileTab useEffect triggered', {
+      professionalId: professional._id,
+      timestamp: new Date().toISOString(),
+      stack: new Error().stack?.split('\n').slice(1, 3)
+    })
+
     setUserDetails({
       name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
       email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
@@ -99,6 +113,13 @@ function ProfessionalProfileTab({
   }
 
   const handleSave = async () => {
+    console.log('🔥 TRACE: ProfessionalProfileTab handleSave called', {
+      professionalId: professional._id,
+      hasChanges,
+      timestamp: new Date().toISOString(),
+      stack: new Error().stack?.split('\n').slice(1, 3)
+    })
+
     setSaving(true)
     
     try {
@@ -161,6 +182,11 @@ function ProfessionalProfileTab({
           } as IUser
         }
         
+        console.log('🔥 TRACE: About to call onUpdate with transformed professional', {
+          professionalId: professional._id,
+          transformedProfessional: Object.keys(transformedProfessional),
+          timestamp: new Date().toISOString()
+        })
         onUpdate(transformedProfessional)
       }
       setHasChanges(false)

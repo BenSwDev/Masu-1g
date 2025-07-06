@@ -13,6 +13,12 @@ function ProfessionalTreatmentsTab({
   onUpdate,
   loading = false
 }: ProfessionalTabProps) {
+  console.log('🔥 TRACE: ProfessionalTreatmentsTab RENDER', {
+    professionalId: professional._id,
+    loading,
+    timestamp: new Date().toISOString()
+  })
+
   const { t, dir } = useTranslation()
   const [saving, setSaving] = useState(false)
 

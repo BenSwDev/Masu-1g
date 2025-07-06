@@ -27,6 +27,13 @@ interface ProfessionalEditPageProps {
 }
 
 function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
+  console.log('🔥 TRACE: ProfessionalEditPage RENDER START', {
+    professionalId: professional._id,
+    isCreatingNew,
+    timestamp: new Date().toISOString(),
+    stack: new Error().stack?.split('\n').slice(1, 4)
+  })
+
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
@@ -36,10 +43,29 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
+  console.log('🔥 TRACE: After state initialization', {
+    professionalId: professional._id,
+    updatedProfessionalId: updatedProfessional._id,
+    timestamp: new Date().toISOString()
+  })
+
   // Update state when professional prop changes (only when professional ID changes)
   useEffect(() => {
+    console.log('🔥 TRACE: useEffect triggered', {
+      professionalId: professional._id,
+      updatedProfessionalId: updatedProfessional._id,
+      willUpdate: professional._id !== updatedProfessional._id,
+      timestamp: new Date().toISOString(),
+      stack: new Error().stack?.split('\n').slice(1, 5)
+    })
+
     // Prevent infinite loops by checking if the professional actually changed
     if (professional._id !== updatedProfessional._id) {
+      console.log('🔥 TRACE: UPDATING updatedProfessional state!', {
+        from: updatedProfessional._id,
+        to: professional._id,
+        timestamp: new Date().toISOString()
+      })
       setUpdatedProfessional(professional)
       setHasUnsavedChanges(false)
     }
@@ -47,25 +73,51 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
 
   // Stable reference for callbacks to prevent unnecessary re-renders
   const handleUpdate = useCallback((updatedData: Partial<Professional>) => {
+    console.log('🔥 TRACE: handleUpdate called', {
+      updatedData: Object.keys(updatedData || {}),
+      updatedDataSample: updatedData ? Object.entries(updatedData).slice(0, 3) : 'empty',
+      timestamp: new Date().toISOString(),
+      stack: new Error().stack?.split('\n').slice(1, 5)
+    })
+
     // Prevent empty updates that could cause infinite loops
     if (!updatedData || Object.keys(updatedData).length === 0) {
+      console.log('🔥 TRACE: handleUpdate REJECTED - empty data')
       return
     }
     
     setUpdatedProfessional(prev => {
+      console.log('🔥 TRACE: setUpdatedProfessional setter function called', {
+        prevId: prev._id,
+        timestamp: new Date().toISOString()
+      })
+
       // Check if the update actually changes anything
       let hasChanges = false
+      const changedFields: string[] = []
       for (const key in updatedData) {
         if (prev[key as keyof Professional] !== updatedData[key as keyof Professional]) {
           hasChanges = true
-          break
+          changedFields.push(key)
         }
       }
       
+      console.log('🔥 TRACE: Change detection result', {
+        hasChanges,
+        changedFields,
+        timestamp: new Date().toISOString()
+      })
+      
       // Only update if there are actual changes
       if (hasChanges) {
+        console.log('🔥 TRACE: APPLYING STATE CHANGE!', {
+          changedFields,
+          timestamp: new Date().toISOString()
+        })
         return { ...prev, ...updatedData }
       }
+      
+      console.log('🔥 TRACE: NO CHANGE - returning prev state')
       return prev
     })
     
@@ -74,10 +126,21 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
 
   // Create a throttled version to prevent rapid updates
   const stableProfessional = useMemo(() => {
+    console.log('🔥 TRACE: stableProfessional useMemo recalculating', {
+      updatedProfessionalId: updatedProfessional._id,
+      status: updatedProfessional.status,
+      timestamp: new Date().toISOString(),
+      stack: new Error().stack?.split('\n').slice(1, 5)
+    })
     return updatedProfessional
   }, [updatedProfessional._id, updatedProfessional.status])
 
   const handleBack = () => {
+    console.log('🔥 TRACE: handleBack called', {
+      hasUnsavedChanges,
+      timestamp: new Date().toISOString()
+    })
+
     if (hasUnsavedChanges) {
       const confirmLeave = window.confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?")
       if (!confirmLeave) return
@@ -126,6 +189,14 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
 
   // השתמש בפונקציה הבטוחה מהutils
   // const formatDate מיובא מהutils כ formatDateSafe
+
+  console.log('🔥 TRACE: About to render ProfessionalEditPage', {
+    professionalId: professional._id,
+    updatedProfessionalId: updatedProfessional._id,
+    stableProfessionalId: stableProfessional._id,
+    propsEqual: professional._id === stableProfessional._id,
+    timestamp: new Date().toISOString()
+  })
 
   return (
     <div className="space-y-6">
@@ -179,7 +250,15 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
       {/* Main Content */}
       <Card>
         <CardContent className="p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => {
+            console.log('🔥 TRACE: Tab changed', {
+              from: activeTab,
+              to: value,
+              professionalId: professional._id,
+              timestamp: new Date().toISOString()
+            })
+            setActiveTab(value)
+          }} dir={dir} className="w-full">
             <TabsList className="grid w-full grid-cols-8 mb-6">
               <TabsTrigger value="profile" className="flex items-center gap-2" key="tab-profile">
                 <User className="w-4 h-4" />

@@ -20,6 +20,11 @@ function ProfessionalBankDetailsTab({
   professional,
   onUpdate
 }: ProfessionalBankDetailsTabProps) {
+  console.log('🔥 TRACE: ProfessionalBankDetailsTab RENDER', {
+    professionalId: professional._id,
+    timestamp: new Date().toISOString()
+  })
+
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -40,6 +45,12 @@ function ProfessionalBankDetailsTab({
   }
 
   const handleSave = async () => {
+    console.log('🔥 TRACE: ProfessionalBankDetailsTab handleSave called', {
+      professionalId: professional._id,
+      hasChanges,
+      timestamp: new Date().toISOString()
+    })
+
     // Basic validation
     if (!bankDetails.bankName.trim() || !bankDetails.branchNumber.trim() || !bankDetails.accountNumber.trim()) {
       toast({
@@ -56,6 +67,11 @@ function ProfessionalBankDetailsTab({
       const result = await updateProfessionalBankDetails(professional._id, bankDetails)
       
       if (result.success) {
+        console.log('🔥 TRACE: ProfessionalBankDetailsTab calling onUpdate', {
+          professionalId: professional._id,
+          bankDetails,
+          timestamp: new Date().toISOString()
+        })
         onUpdate({ bankDetails })
         setHasChanges(false)
         

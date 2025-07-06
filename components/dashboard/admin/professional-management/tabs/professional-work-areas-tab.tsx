@@ -13,6 +13,12 @@ function ProfessionalWorkAreasTab({
   onUpdate,
   loading = false
 }: ProfessionalTabProps) {
+  console.log('🔥 TRACE: ProfessionalWorkAreasTab RENDER', {
+    professionalId: professional._id,
+    loading,
+    timestamp: new Date().toISOString()
+  })
+
   const { t, dir } = useTranslation()
   const [saving, setSaving] = useState(false)
 

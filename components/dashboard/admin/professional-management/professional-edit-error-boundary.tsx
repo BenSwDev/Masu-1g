@@ -15,12 +15,14 @@ export class ProfessionalEditErrorBoundary extends Component<
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.error('ProfessionalEditErrorBoundary caught error:', error)
     return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ProfessionalEditErrorBoundary error details:', error, errorInfo)
+    // Log error without console.error during render
+    setTimeout(() => {
+      console.error('ProfessionalEditErrorBoundary error details:', error, errorInfo)
+    }, 0)
   }
 
   render() {

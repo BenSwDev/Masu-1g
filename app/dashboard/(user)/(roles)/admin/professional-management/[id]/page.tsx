@@ -49,8 +49,7 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
           professionalPrice,
           treatmentName: t.treatmentName || ''
         }
-      } catch (error) {
-        console.error('Error mapping treatment:', error, t)
+              } catch (error) {
         return {
           treatmentId: '',
           durationId: undefined,
@@ -73,7 +72,6 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
           coveredCities: w.coveredCities || []
         }
       } catch (error) {
-        console.error('Error mapping work area:', error, w)
         return {
           cityId: '',
           cityName: '',
@@ -110,7 +108,6 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
       : rawProfessional.updatedAt
   }
   } catch (error) {
-    console.error('Error transforming professional data:', error, rawProfessional)
     // Return a safe default object
     return {
       _id: rawProfessional._id?.toString() || '',
@@ -190,13 +187,13 @@ function ProfessionalEditLoadingSkeleton() {
         <CardHeader>
           <div className="flex gap-2">
             {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-24" />
+              <Skeleton key={`tab-skeleton-${i}`} className="h-10 w-24" />
             ))}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="space-y-2">
+            <div key={`content-skeleton-${i}`} className="space-y-2">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-10 w-full" />
             </div>

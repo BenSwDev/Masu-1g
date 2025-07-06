@@ -159,42 +159,42 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="w-full">
             <TabsList className="grid w-full grid-cols-8 mb-6">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
+              <TabsTrigger value="profile" className="flex items-center gap-2" key="tab-profile">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">פרופיל</span>
               </TabsTrigger>
-              <TabsTrigger value="treatments" className="flex items-center gap-2">
+              <TabsTrigger value="treatments" className="flex items-center gap-2" key="tab-treatments">
                 <Stethoscope className="w-4 h-4" />
                 <span className="hidden sm:inline">טיפולים</span>
               </TabsTrigger>
-              <TabsTrigger value="workAreas" className="flex items-center gap-2">
+              <TabsTrigger value="workAreas" className="flex items-center gap-2" key="tab-workAreas">
                 <MapPin className="w-4 h-4" />
                 <span className="hidden sm:inline">איזורי פעילות</span>
               </TabsTrigger>
-              <TabsTrigger value="bookings" className="flex items-center gap-2">
+              <TabsTrigger value="bookings" className="flex items-center gap-2" key="tab-bookings">
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">הזמנות</span>
               </TabsTrigger>
-              <TabsTrigger value="bankDetails" className="flex items-center gap-2">
+              <TabsTrigger value="bankDetails" className="flex items-center gap-2" key="tab-bankDetails">
                 <CreditCard className="w-4 h-4" />
                 <span className="hidden sm:inline">חשבון בנק</span>
               </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-2">
+              <TabsTrigger value="documents" className="flex items-center gap-2" key="tab-documents">
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">מסמכים</span>
               </TabsTrigger>
-              <TabsTrigger value="financial" className="flex items-center gap-2">
+              <TabsTrigger value="financial" className="flex items-center gap-2" key="tab-financial">
                 <DollarSign className="w-4 h-4" />
                 <span className="hidden sm:inline">כספים</span>
               </TabsTrigger>
-              <TabsTrigger value="contract" className="flex items-center gap-2">
+              <TabsTrigger value="contract" className="flex items-center gap-2" key="tab-contract">
                 <ScrollText className="w-4 h-4" />
                 <span className="hidden sm:inline">הסכמים</span>
               </TabsTrigger>
             </TabsList>
 
             <div className="min-h-[600px]">
-              <TabsContent value="profile" className="m-0">
+              <TabsContent value="profile" className="m-0" key="content-profile">
                 <ProfessionalProfileTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -204,49 +204,49 @@ export function ProfessionalEditPage({ professional, isCreatingNew = false }: Pr
                 />
               </TabsContent>
 
-              <TabsContent value="treatments" className="m-0">
+              <TabsContent value="treatments" className="m-0" key="content-treatments">
                 <ProfessionalTreatmentsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="workAreas" className="m-0">
+              <TabsContent value="workAreas" className="m-0" key="content-workAreas">
                 <ProfessionalWorkAreasTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="bookings" className="m-0">
+              <TabsContent value="bookings" className="m-0" key="content-bookings">
                 <ProfessionalBookingsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="bankDetails" className="m-0">
+              <TabsContent value="bankDetails" className="m-0" key="content-bankDetails">
                 <ProfessionalBankDetailsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="documents" className="m-0">
+              <TabsContent value="documents" className="m-0" key="content-documents">
                 <ProfessionalDocumentsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="financial" className="m-0">
+              <TabsContent value="financial" className="m-0" key="content-financial">
                 <ProfessionalFinancialTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
               </TabsContent>
 
-              <TabsContent value="contract" className="m-0">
+              <TabsContent value="contract" className="m-0" key="content-contract">
                 <ProfessionalContractTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}

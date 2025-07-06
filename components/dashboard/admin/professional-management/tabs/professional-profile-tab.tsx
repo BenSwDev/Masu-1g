@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, memo } from "react"
+import { useState, useEffect, memo, useCallback } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -30,8 +30,8 @@ function ProfessionalProfileTab({
     professionalId: professional._id,
     loading,
     isCreatingNew,
-    timestamp: new Date().toISOString(),
-    stack: new Error().stack?.split('\n').slice(1, 3)
+    onUpdateChanged: onUpdate.toString().slice(0, 50),
+    timestamp: new Date().toISOString()
   })
 
   const { t, dir } = useTranslation()
@@ -66,8 +66,7 @@ function ProfessionalProfileTab({
   useEffect(() => {
     console.log('🔥 TRACE: ProfessionalProfileTab useEffect triggered', {
       professionalId: professional._id,
-      timestamp: new Date().toISOString(),
-      stack: new Error().stack?.split('\n').slice(1, 3)
+      timestamp: new Date().toISOString()
     })
 
     setUserDetails({
@@ -96,28 +95,29 @@ function ProfessionalProfileTab({
     setHasChanges(false)
   }, [professional._id]) // Only sync when professional ID changes
 
-  const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
+  const handleUserDetailChange = useCallback((field: keyof typeof userDetails, value: string) => {
+    console.log('🔥 TRACE: handleUserDetailChange', field, value.slice(0, 20))
     setUserDetails(prev => ({
       ...prev,
       [field]: value
     }))
     setHasChanges(true)
-  }
+  }, [])
 
-  const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
+  const handleProfessionalDetailChange = useCallback((field: keyof typeof professionalDetails, value: any) => {
+    console.log('🔥 TRACE: handleProfessionalDetailChange', field, value)
     setProfessionalDetails(prev => ({
       ...prev,
       [field]: value
     }))
     setHasChanges(true)
-  }
+  }, [])
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     console.log('🔥 TRACE: ProfessionalProfileTab handleSave called', {
       professionalId: professional._id,
       hasChanges,
-      timestamp: new Date().toISOString(),
-      stack: new Error().stack?.split('\n').slice(1, 3)
+      timestamp: new Date().toISOString()
     })
 
     setSaving(true)
@@ -205,7 +205,7 @@ function ProfessionalProfileTab({
     } finally {
       setSaving(false)
     }
-  }
+  }, [professional._id, hasChanges, userDetails, professionalDetails, onUpdate])
 
   const getStatusColor = (status: ProfessionalStatus) => {
     switch (status) {
@@ -451,4 +451,25 @@ function ProfessionalProfileTab({
   )
 }
 
-export default memo(ProfessionalProfileTab) 
+// Custom memo comparison function
+const arePropsEqual = (prevProps: ProfessionalProfileTabProps, nextProps: ProfessionalProfileTabProps) => {
+  const isEqual = (
+    prevProps.professional._id === nextProps.professional._id &&
+    prevProps.loading === nextProps.loading &&
+    prevProps.isCreatingNew === nextProps.isCreatingNew
+  )
+  
+  if (!isEqual) {
+    console.log('🔥 TRACE: ProfessionalProfileTab memo - props changed', {
+      prevId: prevProps.professional._id,
+      nextId: nextProps.professional._id,
+      loadingChanged: prevProps.loading !== nextProps.loading,
+      creatingNewChanged: prevProps.isCreatingNew !== nextProps.isCreatingNew,
+      timestamp: new Date().toISOString()
+    })
+  }
+  
+  return isEqual
+}
+
+export default memo(ProfessionalProfileTab, arePropsEqual) 

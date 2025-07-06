@@ -21,7 +21,7 @@ export class ProfessionalEditErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error without console.error during render
     setTimeout(() => {
-      console.error('ProfessionalEditErrorBoundary error details:', error, errorInfo)
+    console.error('ProfessionalEditErrorBoundary error details:', error, errorInfo)
     }, 0)
   }
 

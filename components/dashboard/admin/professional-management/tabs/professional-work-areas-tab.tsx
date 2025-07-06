@@ -87,4 +87,20 @@ function ProfessionalWorkAreasTab({
   )
 }
 
-export default memo(ProfessionalWorkAreasTab) 
+// Custom memo comparison function
+const arePropsEqual = (prevProps: ProfessionalTabProps, nextProps: ProfessionalTabProps) => {
+  // Only re-render if the professional ID changes
+  const isEqual = prevProps.professional._id === nextProps.professional._id
+  
+  if (!isEqual) {
+    console.log('🔥 TRACE: ProfessionalWorkAreasTab memo - props changed', {
+      prevId: prevProps.professional._id,
+      nextId: nextProps.professional._id,
+      timestamp: new Date().toISOString()
+    })
+  }
+  
+  return isEqual
+}
+
+export default memo(ProfessionalWorkAreasTab, arePropsEqual) 

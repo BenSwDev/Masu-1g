@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
@@ -32,7 +32,7 @@ interface ProfessionalMatchInfoProps {
   professional: Professional
 }
 
-export default function ProfessionalBookingsTab({ 
+function ProfessionalBookingsTab({ 
   professional, 
   onUpdate 
 }: ProfessionalBookingsTabProps) {
@@ -567,4 +567,6 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
       </div>
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalBookingsTab) 

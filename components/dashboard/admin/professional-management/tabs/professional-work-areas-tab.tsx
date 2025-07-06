@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
@@ -8,7 +8,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { MapPin, Plus, Edit, Trash2 } from "lucide-react"
 import type { ProfessionalTabProps } from "@/lib/types/professional"
 
-export default function ProfessionalWorkAreasTab({
+function ProfessionalWorkAreasTab({
   professional,
   onUpdate,
   loading = false
@@ -79,4 +79,6 @@ export default function ProfessionalWorkAreasTab({
       </CardContent>
     </Card>
   )
-} 
+}
+
+export default memo(ProfessionalWorkAreasTab) 

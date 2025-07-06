@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -19,7 +19,7 @@ const requiredDocuments = [
   { type: "diploma", name: "תעודת הכשרה/דיפלומה", required: true }
 ]
 
-export default function ProfessionalDocumentsTab({
+function ProfessionalDocumentsTab({
   professional,
   onUpdate
 }: ProfessionalDocumentsTabProps) {
@@ -337,4 +337,6 @@ export default function ProfessionalDocumentsTab({
       </Card>
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalDocumentsTab) 

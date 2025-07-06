@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -19,7 +19,7 @@ import { formatDateSafe } from "../utils/professional-utils"
 
 interface ProfessionalProfileTabProps extends ProfessionalTabProps {}
 
-export default function ProfessionalProfileTab({
+function ProfessionalProfileTab({
   professional,
   onUpdate,
   loading,
@@ -423,4 +423,6 @@ export default function ProfessionalProfileTab({
       </Card>
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalProfileTab) 

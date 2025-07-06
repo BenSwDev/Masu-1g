@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
@@ -11,7 +12,7 @@ interface ProfessionalFinancialTabProps {
   onUpdate: (professional: Partial<Professional>) => void
 }
 
-export default function ProfessionalFinancialTab({
+function ProfessionalFinancialTab({
   professional,
   onUpdate
 }: ProfessionalFinancialTabProps) {
@@ -168,4 +169,6 @@ export default function ProfessionalFinancialTab({
       </Card>
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalFinancialTab) 

@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -12,7 +13,7 @@ interface ProfessionalContractTabProps {
   onUpdate: (professional: Partial<Professional>) => void
 }
 
-export default function ProfessionalContractTab({
+function ProfessionalContractTab({
   professional,
   onUpdate
 }: ProfessionalContractTabProps) {
@@ -145,4 +146,6 @@ export default function ProfessionalContractTab({
       </Card>
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalContractTab) 

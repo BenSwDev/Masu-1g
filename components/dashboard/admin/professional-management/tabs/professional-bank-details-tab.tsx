@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -16,7 +16,7 @@ interface ProfessionalBankDetailsTabProps {
   onUpdate: (professional: Partial<Professional>) => void
 }
 
-export default function ProfessionalBankDetailsTab({
+function ProfessionalBankDetailsTab({
   professional,
   onUpdate
 }: ProfessionalBankDetailsTabProps) {
@@ -201,4 +201,6 @@ export default function ProfessionalBankDetailsTab({
       )}
     </div>
   )
-} 
+}
+
+export default memo(ProfessionalBankDetailsTab) 

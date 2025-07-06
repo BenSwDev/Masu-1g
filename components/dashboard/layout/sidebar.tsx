@@ -200,6 +200,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
   const { t, dir, language } = useTranslation()
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const { data: session, update: updateSession } = useSession() // Added updateSession
   const router = useRouter()
 
@@ -241,11 +242,21 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
   }, [session?.user, session?.user?.treatmentPreferences, session?.user?.notificationPreferences])
 
   useEffect(() => {
+    setIsMounted(true)
+  }, [])
+  
+  useEffect(() => {
+    if (!isMounted) return
+    
+    // רק לאחר שהקומפוננט נטען לחלוטין בצד הclient
+    if (typeof window === 'undefined') return
+    
     const handleResize = () => setIsCollapsed(window.innerWidth < 768)
-    handleResize()
+    handleResize() // עכשיו זה בטוח לקרוא
+    
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [])
+  }, [isMounted])
 
   const getUserInitials = (name: string | null | undefined, email: string | null | undefined) => {
     if (name)

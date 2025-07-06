@@ -11,6 +11,9 @@ export type ProfessionalStatus =
 // Distance radius options
 export type DistanceRadius = "20km" | "40km" | "60km" | "80km" | "unlimited"
 
+// Gender preference for professional
+export type GenderPreference = "no_preference" | "male_only" | "female_only"
+
 // Treatment pricing interface
 export interface ITreatmentPricing {
   treatmentId: mongoose.Types.ObjectId
@@ -70,6 +73,7 @@ export interface IProfessionalProfile extends Document {
   certifications?: string[]
   bio?: string
   profileImage?: string
+  genderPreference?: GenderPreference
   
   // Treatments and pricing
   treatments: ITreatmentPricing[]
@@ -111,7 +115,7 @@ export interface IProfessionalProfileModel extends mongoose.Model<IProfessionalP
   findSuitableForBooking(
     treatmentId: string, 
     cityName: string, 
-    genderPreference?: string,
+    patientGender?: string,
     durationId?: string
   ): mongoose.Query<IProfessionalProfile[], IProfessionalProfile>
   getStatistics(): Promise<{
@@ -214,6 +218,11 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   certifications: [{ type: String, trim: true }],
   bio: { type: String, trim: true },
   profileImage: { type: String, trim: true },
+  genderPreference: { 
+    type: String, 
+    enum: ["no_preference", "male_only", "female_only"], 
+    default: "no_preference" 
+  },
   
   // Treatments and pricing
   treatments: [TreatmentPricingSchema],
@@ -362,7 +371,7 @@ ProfessionalProfileSchema.methods.coversCity = function(cityName: string) {
 ProfessionalProfileSchema.statics.findSuitableForBooking = function(
   treatmentId: string, 
   cityName: string, 
-  genderPreference?: string,
+  patientGender?: string,
   durationId?: string
 ) {
   // Build comprehensive query with ALL required criteria
@@ -379,6 +388,18 @@ ProfessionalProfileSchema.statics.findSuitableForBooking = function(
     { 'workAreas.cityName': cityName },
     { 'workAreas.coveredCities': cityName }
   ]
+  
+  // Add gender preference filtering
+  if (patientGender) {
+    query.$and = query.$and || []
+    query.$and.push({
+      $or: [
+        { genderPreference: "no_preference" },
+        { genderPreference: { $exists: false } }, // For backwards compatibility
+        { genderPreference: patientGender === "male" ? "male_only" : "female_only" }
+      ]
+    })
+  }
   
   // Build query with proper population
   let professionalQuery = this.find(query)

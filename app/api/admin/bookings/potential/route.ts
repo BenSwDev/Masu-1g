@@ -73,11 +73,26 @@ export async function GET(request: NextRequest) {
 
     // Filter bookings that match professional criteria
     const potentialBookings = unassignedBookings.filter(booking => {
-      // Check gender preference
+      // Check gender preference from booking side
       if (booking.therapistGenderPreference && booking.therapistGenderPreference !== "any") {
         if (professionalUser.gender !== booking.therapistGenderPreference) {
           console.log(`Booking ${booking.bookingNumber}: Gender mismatch - needs ${booking.therapistGenderPreference}, professional is ${professionalUser.gender}`)
           return false
+        }
+      }
+
+      // Check professional's gender preference
+      if (professionalProfile.genderPreference && professionalProfile.genderPreference !== "no_preference") {
+        const patientGender = booking.userId?.gender
+        if (patientGender) {
+          const professionalWantsMale = professionalProfile.genderPreference === "male_only"
+          const professionalWantsFemale = professionalProfile.genderPreference === "female_only"
+          
+          if ((professionalWantsMale && patientGender !== "male") || 
+              (professionalWantsFemale && patientGender !== "female")) {
+            console.log(`Booking ${booking.bookingNumber}: Professional gender preference mismatch - professional wants ${professionalProfile.genderPreference}, patient is ${patientGender}`)
+            return false
+          }
         }
       }
 

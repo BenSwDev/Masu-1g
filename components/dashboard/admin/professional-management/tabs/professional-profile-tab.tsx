@@ -50,7 +50,8 @@ function ProfessionalProfileTab({
     status: professional.status,
     isActive: professional.isActive,
     adminNotes: professional.adminNotes || "",
-    rejectionReason: professional.rejectionReason || ""
+    rejectionReason: professional.rejectionReason || "",
+    genderPreference: professional.genderPreference || "no_preference"
   })
   
   const [saving, setSaving] = useState(false)
@@ -83,7 +84,8 @@ function ProfessionalProfileTab({
       status: professional.status,
       isActive: professional.isActive,
       adminNotes: professional.adminNotes || "",
-      rejectionReason: professional.rejectionReason || ""
+      rejectionReason: professional.rejectionReason || "",
+      genderPreference: professional.genderPreference || "no_preference"
     })
     
     // Reset changes flag when syncing with new data
@@ -332,6 +334,31 @@ function ProfessionalProfileTab({
                 dir={dir}
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle>העדפות מטפל</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="genderPreference">העדפת מין מטופל</Label>
+            <Select 
+              value={professionalDetails.genderPreference || "no_preference"} 
+              onValueChange={(value: "no_preference" | "male_only" | "female_only") => handleProfessionalDetailChange("genderPreference", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no_preference">אין העדפה</SelectItem>
+                <SelectItem value="male_only">רק גברים</SelectItem>
+                <SelectItem value="female_only">רק נשים</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

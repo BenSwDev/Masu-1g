@@ -6,7 +6,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { Separator } from "@/components/common/ui/separator"
-import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, UserCheck, UserX, CheckCircle, XCircle, AlertCircle, DollarSign } from "lucide-react"
+import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, UserCheck, UserX, CheckCircle, XCircle, AlertCircle, DollarSign, RefreshCw, Send } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { Professional } from "@/lib/types/professional"
@@ -154,6 +154,55 @@ function ProfessionalBookingsTab({
     }
   }
 
+  const handleSendNotifications = async () => {
+    if (potentialBookings.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "אין הזמנות",
+        description: "אין הזמנות פוטנציאליות לשליחת התראות"
+      })
+      return
+    }
+
+    try {
+      // Send notifications to professional about all potential bookings
+      const professionalId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
+      
+      for (const booking of potentialBookings) {
+        const response = await fetch(`/api/admin/bookings/${booking._id}/notify-professionals`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            professionals: [{
+              professionalId: professionalId,
+              email: true,
+              sms: true
+            }]
+          })
+        })
+        
+        const data = await response.json()
+        if (!data.success) {
+          console.error(`Failed to send notification for booking ${booking._id}:`, data.error)
+        }
+      }
+      
+      toast({
+        title: "הצלחה",
+        description: `התראות נשלחו למטפל עבור ${potentialBookings.length} הזמנות`
+      })
+    } catch (error) {
+      console.error("Error sending notifications:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "אירעה שגיאה בשליחת התראות"
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -226,10 +275,35 @@ function ProfessionalBookingsTab({
         <TabsContent value="potential" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserX className="w-5 h-5" />
-                הזמנות פוטנציאליות
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <UserX className="w-5 h-5" />
+                  הזמנות פוטנציאליות
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchBookings}
+                    disabled={loading}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    רענן
+                  </Button>
+                  {potentialBookings.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSendNotifications()}
+                      className="flex items-center gap-1"
+                    >
+                      <Send className="w-4 h-4" />
+                      שלח התראות
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {potentialBookings.length === 0 ? (

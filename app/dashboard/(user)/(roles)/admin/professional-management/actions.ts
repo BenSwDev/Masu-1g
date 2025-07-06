@@ -739,6 +739,7 @@ export async function updateProfessionalBasicInfo(
     isActive?: boolean
     adminNotes?: string
     rejectionReason?: string
+    genderPreference?: "no_preference" | "male_only" | "female_only"
   }
 ): Promise<UpdateProfessionalResult> {
   try {
@@ -836,6 +837,9 @@ export async function updateProfessionalBasicInfo(
           }
           if (professionalDetails.rejectionReason !== undefined && professionalDetails.status !== "rejected") {
             professionalUpdateData.rejectionReason = professionalDetails.rejectionReason
+          }
+          if (professionalDetails.genderPreference !== undefined) {
+            professionalUpdateData.genderPreference = professionalDetails.genderPreference
           }
           
           await ProfessionalProfile.findByIdAndUpdate(id, professionalUpdateData, { session })

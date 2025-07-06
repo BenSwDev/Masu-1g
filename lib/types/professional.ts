@@ -14,6 +14,7 @@ export interface Professional {
   certifications?: string[]
   bio?: string
   profileImage?: string
+  genderPreference?: "no_preference" | "male_only" | "female_only"
   
   // Treatments and pricing
   treatments: Array<{

@@ -13,11 +13,24 @@ import { getAllBookings } from "@/actions/booking-actions"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Search, RefreshCw, Filter, X, Plus } from "lucide-react"
+import { Search, RefreshCw, Filter, X, Plus, Users, MessageSquare, AlertTriangle, BarChart3 } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/common/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Separator } from "@/components/common/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/common/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
+import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
+import { 
+  getBookingStatistics, 
+  findSuitableProfessionals,
+  notifyAllSuitableProfessionals,
+  assignProfessionalToBooking,
+  updateBookingStatus,
+  sendReviewReminder,
+  sendResponseReminder
+} from "@/actions/booking-management-actions"
 
 /**
  * Admin Bookings Client Component
@@ -40,6 +53,13 @@ export default function AdminBookingsClient() {
   const [selectedBooking, setSelectedBooking] = useState<PopulatedBooking | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [showStatistics, setShowStatistics] = useState(false)
+  const [showProfessionalResponses, setShowProfessionalResponses] = useState(false)
+  const [statsTimeRange, setStatsTimeRange] = useState<"today" | "week" | "month">("today")
+  
+  // Advanced features state
+  const [isProcessingAction, setIsProcessingAction] = useState(false)
+  const [actionMessage, setActionMessage] = useState("")
 
   // Debounce search term for real-time searching
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -48,6 +68,25 @@ export default function AdminBookingsClient() {
   useEffect(() => {
     setCurrentPage(1)
   }, [debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter])
+
+  // Statistics query
+  const {
+    data: statisticsData,
+    isLoading: isLoadingStats,
+    refetch: refetchStats,
+  } = useQuery({
+    queryKey: ["bookingStatistics", statsTimeRange],
+    queryFn: async () => {
+      const result = await getBookingStatistics(statsTimeRange)
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch statistics")
+      }
+      return result.data
+    },
+    enabled: showStatistics,
+    refetchOnWindowFocus: false,
+    staleTime: 60000, // 1 minute
+  })
 
   const {
     data,
@@ -115,6 +154,107 @@ export default function AdminBookingsClient() {
     window.location.href = "/dashboard/admin/bookings/new"
   }
 
+  // Advanced booking management functions
+  const handleFindProfessionals = async (booking: PopulatedBooking) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await findSuitableProfessionals(booking._id)
+      if (result.success && result.data) {
+        setActionMessage(`נמצאו ${result.data.length} מטפלים מתאימים`)
+        // Show professional selection modal or update state
+      } else {
+        setActionMessage(`שגיאה: ${result.error}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בחיפוש מטפלים")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  const handleNotifyAllProfessionals = async (booking: PopulatedBooking) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await notifyAllSuitableProfessionals(booking._id)
+      if (result.success) {
+        setActionMessage(result.message || "הודעות נשלחו בהצלחה")
+        refetch() // Refresh bookings list
+      } else {
+        setActionMessage(`שגיאה: ${result.error}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בשליחת הודעות")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  const handleAssignProfessional = async (bookingId: string, professionalId: string, force: boolean = false) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await assignProfessionalToBooking(bookingId, professionalId, force)
+      if (result.success) {
+        setActionMessage(result.message || "מטפל שויך בהצלחה")
+        refetch()
+      } else {
+        setActionMessage(`שגיאה: ${result.error}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בשיוך מטפל")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  const handleUpdateStatus = async (bookingId: string, status: string, notes?: string) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await updateBookingStatus(bookingId, status, notes)
+      if (result.success) {
+        setActionMessage(result.message || "סטטוס עודכן בהצלחה")
+        refetch()
+      } else {
+        setActionMessage(`שגיאה: ${result.error}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בעדכון סטטוס")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  const handleSendReviewReminder = async (bookingId: string) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await sendReviewReminder(bookingId)
+      if (result.success) {
+        setActionMessage(result.message || "תזכורת נשלחה בהצלחה")
+      } else {
+        setActionMessage(`שגיאה: ${result.error}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בשליחת תזכורת")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  const handleSendResponseReminder = async (bookingId: string) => {
+    setIsProcessingAction(true)
+    try {
+      const result = await sendResponseReminder(bookingId, "")
+      if (result.success) {
+        setActionMessage(result.message || "תזכורות נשלחו בהצלחה")
+      } else {
+        setActionMessage(`שגיאה: ${result.message}`)
+      }
+    } catch (error) {
+      setActionMessage("שגיאה בשליחת תזכורות")
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
   const columns = useMemo(() => getAdminBookingColumns(t, language, handleViewBooking), [t, language, handleViewBooking])
 
   const handleRefresh = () => {
@@ -177,22 +317,125 @@ export default function AdminBookingsClient() {
 
   return (
     <div className="w-full max-w-full overflow-hidden" dir={dir}>
-      {/* Header with Create Button */}
+      {/* Header with Action Buttons */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
           <p className="text-muted-foreground">
             ניהול כל ההזמנות במערכת - סה"כ {totalBookings} הזמנות
           </p>
+          {actionMessage && (
+            <div className="mt-2">
+              <Badge variant="secondary" className="text-sm">
+                {actionMessage}
+              </Badge>
+            </div>
+          )}
         </div>
-        <Button 
-          onClick={handleCreateNewBooking}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          הזמנה חדשה
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setShowStatistics(!showStatistics)}
+            className="flex items-center gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            סטטיסטיקות
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setShowProfessionalResponses(!showProfessionalResponses)}
+            className="flex items-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            תגובות מטפלים
+          </Button>
+          <Button 
+            onClick={handleCreateNewBooking}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            הזמנה חדשה
+          </Button>
+        </div>
       </div>
+
+      {/* Statistics Panel */}
+      {showStatistics && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  סטטיסטיקות הזמנות
+                </CardTitle>
+                <CardDescription>
+                  נתונים עדכניים על ביצועי המערכת
+                </CardDescription>
+              </div>
+              <Select value={statsTimeRange} onValueChange={(value) => setStatsTimeRange(value as any)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">היום</SelectItem>
+                  <SelectItem value="week">השבוע</SelectItem>
+                  <SelectItem value="month">החודש</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingStats ? (
+              <div className="text-center py-4">
+                <p>טוען נתונים...</p>
+              </div>
+            ) : statisticsData ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">{statisticsData.total}</p>
+                  <p className="text-sm text-blue-800">סה"כ הזמנות</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    {statisticsData.responseRates.professionalAcceptanceRate.toFixed(1)}%
+                  </p>
+                  <p className="text-sm text-green-800">שיעור קבלה</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {statisticsData.responseRates.completionRate.toFixed(1)}%
+                  </p>
+                  <p className="text-sm text-purple-800">שיעור השלמה</p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <p className="text-2xl font-bold text-orange-600">
+                    ₪{statisticsData.revenue.completed.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-orange-800">הכנסות</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">לא ניתן לטעון נתונים</p>
+                <Button onClick={() => refetchStats()} variant="outline" size="sm" className="mt-2">
+                  נסה שוב
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Professional Responses Dialog */}
+      {showProfessionalResponses && selectedBooking && (
+        <ProfessionalResponsesDialog
+          bookingId={selectedBooking._id}
+          open={showProfessionalResponses}
+          onOpenChange={setShowProfessionalResponses}
+          bookingStatus={selectedBooking.status}
+        />
+      )}
 
       {/* Search and Filters */}
       <div className="mb-6 space-y-4">

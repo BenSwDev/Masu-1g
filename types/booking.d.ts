@@ -83,6 +83,9 @@ export interface PopulatedPriceDetails
         treatmentId: Pick<ITreatment, "_id" | "name" | "pricingType" | "defaultDurationMinutes" | "durations">
       })
     | null
+  // Add missing fields
+  baseAmount?: number
+  additionalFees?: number
 }
 
 export interface PopulatedPaymentDetails extends Omit<IPaymentDetails, "paymentMethodId"> {
@@ -103,7 +106,23 @@ export interface PopulatedBooking
   userId?: Types.ObjectId | null
   treatmentId?: PopulatedBookingTreatment | null
   selectedDurationId?: Types.ObjectId // Add this back to interface
-  // addressId is the original DB ref, bookingAddressSnapshot is used for display details
+  
+  // תאריכי מחזור חיים מתקדמים
+  professionalArrivedAt?: Date // תאריך שהמטפל הגיע/יצא לטיפול
+  treatmentCompletedAt?: Date // תאריך שהטיפול הושלם
+  reviewRequestSentAt?: Date // תאריך שנשלחה בקשת חוות דעת
+  reviewCompletedAt?: Date // תאריך שהלקוח השלים חוות דעת
+  noResponseFromProfessionalsAt?: Date // תאריך שקבענו שאין מטפלים זמינים
+  
+  // Missing fields for booking lifecycle
+  paymentCompletedAt?: Date // תאריך שהתשלום הושלם
+  professionalSearchStartedAt?: Date // תאריך שהתחיל חיפוש מטפל
+  professionalAssignedAt?: Date // תאריך שהמטפל שויך
+  confirmedAt?: Date // תאריך שההזמנה אושרה
+  cancelledAt?: Date // תאריך שההזמנה בוטלה
+  estimatedArrivalTime?: Date // זמן הגעה משוער
+  
+  // Address and professional details
   addressId?: Pick<
     IAddress,
     | "_id"
@@ -119,9 +138,22 @@ export interface PopulatedBooking
     | "otherDetails"
     | "additionalNotes"
   > | null
-  professionalId?: Pick<IUser, "_id" | "name"> | null
+  professionalId?: Pick<IUser, "_id" | "name" | "phone"> | null
   priceDetails: PopulatedPriceDetails
   paymentDetails: PopulatedPaymentDetails
+  
+  // Payment and pricing details
+  paymentMethod?: string // Add payment method field
+  specialRequests?: string // Add special requests field
+  
+  // Review fields
+  clientReview?: {
+    rating: number
+    comment?: string
+    createdAt: Date
+  }
+  
+  // Professional matching
   suitableProfessionals?: Array<{
     professionalId: Types.ObjectId
     name: string
@@ -131,6 +163,7 @@ export interface PopulatedBooking
     profileId: Types.ObjectId
     calculatedAt: Date
   }>
+  
   // ➕ שדות חדשים מהמודל - הוספה מלאה
   step?: number
   treatmentCategory?: Types.ObjectId

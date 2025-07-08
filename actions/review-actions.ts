@@ -42,7 +42,7 @@ export async function createReview(data: CreateReviewData): Promise<{ success: b
       return { success: false, error: "Can only review completed treatments" }
     }
 
-    if (booking.userId.toString() !== session.user.id) {
+    if (!booking.userId || booking.userId.toString() !== session.user.id) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -463,7 +463,7 @@ export async function sendReviewReminder(
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXTAUTH_URL ||
       ""
-    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
+    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${(booking._id as any).toString()}`
 
     const recipients: NotificationRecipient[] = []
 

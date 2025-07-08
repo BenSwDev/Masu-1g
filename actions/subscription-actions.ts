@@ -12,7 +12,7 @@ import { logger } from "@/lib/logs/logger"
  */
 export async function getSubscriptions(): Promise<{
   success: boolean
-  subscriptions?: ISubscription[]
+  subscriptions?: any[]
   error?: string
 }> {
   try {
@@ -27,10 +27,10 @@ export async function getSubscriptions(): Promise<{
 
     const serializedSubscriptions = subscriptions.map((sub) => ({
       ...sub,
-      _id: sub._id.toString(),
+      _id: (sub._id as any).toString(),
       treatmentId: sub.treatmentId ? {
         ...sub.treatmentId,
-        _id: sub.treatmentId._id.toString(),
+        _id: (sub.treatmentId._id as any).toString(),
       } : null,
     }))
 
@@ -46,7 +46,7 @@ export async function getSubscriptions(): Promise<{
  */
 export async function getSubscriptionById(id: string): Promise<{
   success: boolean
-  subscription?: ISubscription
+  subscription?: any
   error?: string
 }> {
   try {
@@ -65,10 +65,10 @@ export async function getSubscriptionById(id: string): Promise<{
 
     const serializedSubscription = {
       ...subscription,
-      _id: subscription._id.toString(),
+      _id: (subscription._id as any).toString(),
       treatmentId: subscription.treatmentId ? {
         ...subscription.treatmentId,
-        _id: subscription.treatmentId._id.toString(),
+        _id: (subscription.treatmentId._id as any).toString(),
       } : null,
     }
 
@@ -111,7 +111,7 @@ export async function createSubscription(data: {
       success: true, 
       subscription: {
         ...subscription.toObject(),
-        _id: subscription._id.toString(),
+        _id: (subscription._id as any).toString(),
       }
     }
   } catch (error) {
@@ -159,7 +159,7 @@ export async function updateSubscription(id: string, data: Partial<{
       success: true, 
       subscription: {
         ...subscription.toObject(),
-        _id: subscription._id.toString(),
+        _id: (subscription._id as any).toString(),
       }
     }
   } catch (error) {
@@ -218,13 +218,13 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
 
     const serializedSubscriptions = subscriptions.map((sub: any) => ({
       ...sub,
-      _id: sub._id.toString(),
+      _id: (sub._id as any).toString(),
       treatmentId: sub.treatmentId ? {
         ...sub.treatmentId,
-        _id: sub.treatmentId._id.toString(),
+        _id: (sub.treatmentId._id as any).toString(),
         durations: sub.treatmentId.durations?.map((duration: any) => ({
           ...duration,
-          _id: duration._id.toString(),
+          _id: (duration._id as any).toString(),
         })) || [],
       } : null,
     }))

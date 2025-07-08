@@ -4,7 +4,7 @@ import mongoose, { type Types } from "mongoose"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import Booking, { type IBooking } from "@/lib/db/models/booking"
+import Booking, { type IBooking, type BookingStatus } from "@/lib/db/models/booking"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { IUser } from "@/lib/db/models/user"
 import type { IAddress } from "@/lib/db/models/address"
@@ -32,7 +32,7 @@ export interface BookingDetailsForProfessional
     _id: Types.ObjectId
     name?: string
   } | null
-  status: string // Ensure status is always a string
+  status: BookingStatus // Use proper BookingStatus type
 }
 
 export async function getBookingByIdForProfessional(bookingId: string): Promise<{
@@ -87,7 +87,7 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
     const bookingForPro: BookingDetailsForProfessional = {
       ...rawBooking,
       _id: rawBooking._id as Types.ObjectId,
-      status: rawBooking.status, // Ensure status is string
+      status: rawBooking.status, // Use proper BookingStatus type
       treatmentId: null,
       userId: null, // Initialize, will be populated conditionally
       professionalId: rawBooking.professionalId

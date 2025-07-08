@@ -48,6 +48,16 @@ export interface ReviewReminderNotificationData extends BaseNotificationData {
   reviewLink: string
 }
 
+export interface ReviewRequestNotificationData extends BaseNotificationData {
+  type: "review_request"
+  customerName: string
+  treatmentName: string
+  professionalName: string
+  reviewUrl: string
+  bookingId: string
+  bookingNumber: string
+}
+
 export interface ProfessionalBookingNotificationData extends BaseNotificationData {
   type: "professional-booking-notification" | "BOOKING_ASSIGNED_PROFESSIONAL"
   treatmentName: string
@@ -70,6 +80,7 @@ export type NotificationData =
   | TreatmentBookingSuccessNotificationData
   | PurchaseSuccessNotificationData
   | ReviewReminderNotificationData
+  | ReviewRequestNotificationData
   | ProfessionalBookingNotificationData
 
 // Notification result interface

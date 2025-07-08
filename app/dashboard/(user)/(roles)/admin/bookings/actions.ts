@@ -899,4 +899,53 @@ export async function createNewBooking(bookingData: {
       error: error instanceof Error ? error.message : "Failed to create booking"
     }
   }
-} 
+}
+
+export interface SendReviewRequestResult {
+  success: boolean
+  error?: string
+  message?: string
+}
+
+/**
+ * Sends a review request to the customer for a completed booking
+ * @param bookingId The booking ID
+ * @returns SendReviewRequestResult
+ */
+export async function sendReviewRequest(bookingId: string): Promise<SendReviewRequestResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/admin/bookings/${bookingId}/send-review-request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': `next-auth.session-token=${session.sessionToken}; next-auth.csrf-token=${session.csrfToken}`,
+      },
+    })
+
+    const data = await response.json()
+    
+    if (data.success) {
+      revalidatePath("/dashboard/admin/bookings")
+      return {
+        success: true,
+        message: data.message || "בקשה לחוות דעת נשלחה בהצלחה"
+      }
+    } else {
+      return {
+        success: false,
+        error: data.error || "שגיאה בשליחת בקשה לחוות דעת"
+      }
+    }
+  } catch (error) {
+    logger.error("Error sending review request:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בשליחת בקשה לחוות דעת"
+    }
+  }
+}

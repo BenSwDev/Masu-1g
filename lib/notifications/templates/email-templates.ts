@@ -10,6 +10,7 @@ export interface EmailNotificationData {
   | "professional-on-way"
   | "purchase-success"
   | "review-reminder"
+  | "review_request"
   userName?: string
   email?: string
   resetLink?: string
@@ -19,6 +20,13 @@ export interface EmailNotificationData {
   expiresIn?: number
   message?: string // For purchase-success
   reviewLink?: string // For review-reminder
+  // Review request fields
+  customerName?: string
+  treatmentName?: string
+  professionalName?: string
+  reviewUrl?: string
+  bookingId?: string
+  bookingNumber?: string
   // Treatment booking fields
   recipientName?: string
   bookerName?: string
@@ -626,6 +634,49 @@ body {
       html = wrapHtml(htmlContent, subject)
       break
     }
+
+    case "review_request":
+      subject = language === "he" ? "איך היה הטיפול? נשמח לחוות דעתך" : language === "ru" ? "Как прошла процедура? Мы будем рады услышать ваш отзыв" : "How was your treatment? We'd love your feedback"
+      const reviewRequestTextContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nתודה שבחרת ב-${appName}!\n\nנשמח אם תשתף אותנו בחוות דעתך על הטיפול ${data.treatmentName} שקיבלת מ-${data.professionalName}.\n\nלמילוי חוות הדעת: ${data.reviewUrl}\n\nמספר הזמנה: ${data.bookingNumber}\n\nחוות הדעת שלך חשובה לנו ומסייעת לנו לשפר את השירות.`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nСпасибо, что выбрали ${appName}!\n\nМы будем рады услышать ваш отзыв о процедуре ${data.treatmentName}, которую вы получили от ${data.professionalName}.\n\nОставить отзыв: ${data.reviewUrl}\n\nНомер заказа: ${data.bookingNumber}\n\nВаш отзыв важен для нас и помогает улучшить наш сервис.`
+            : `Hello ${data.customerName},\n\nThank you for choosing ${appName}!\n\nWe'd love to hear your feedback about the ${data.treatmentName} treatment you received from ${data.professionalName}.\n\nLeave a review: ${data.reviewUrl}\n\nBooking number: ${data.bookingNumber}\n\nYour feedback is important to us and helps us improve our service.`) +
+        emailTextSignature
+      const reviewRequestHtmlContent = `
+        <h2>${language === "he" ? "איך היה הטיפול?" : language === "ru" ? "Как прошла процедура?" : "How was your treatment?"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? `תודה שבחרת ב-${appName}!` : language === "ru" ? `Спасибо, что выбрали ${appName}!` : `Thank you for choosing ${appName}!`}</p>
+        <p>${language === "he" ? `נשמח אם תשתף אותנו בחוות דעתך על הטיפול ${data.treatmentName} שקיבלת מ-${data.professionalName}.` : language === "ru" ? `Мы будем рады услышать ваш отзыв о процедуре ${data.treatmentName}, которую вы получили от ${data.professionalName}.` : `We'd love to hear your feedback about the ${data.treatmentName} treatment you received from ${data.professionalName}.`}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי הטיפול" : language === "ru" ? "Детали процедуры" : "Treatment Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מטפל:" : language === "ru" ? "Специалист:" : "Therapist:"}</span>
+            <span class="value">${data.professionalName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+        </div>
+
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${data.reviewUrl}" class="button">${language === "he" ? "כתיבת חוות דעת" : language === "ru" ? "Оставить отзыв" : "Leave a Review"}</a>
+        </p>
+        
+        <p style="text-align: center; color: #666; font-size: 14px;">${language === "he" ? "חוות הדעת שלך חשובה לנו ומסייעת לנו לשפר את השירות" : language === "ru" ? "Ваш отзыв важен для нас и помогает улучшить наш сервис" : "Your feedback is important to us and helps us improve our service"}</p>
+        
+        <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+      `
+      text = reviewRequestTextContent
+      html = wrapHtml(reviewRequestHtmlContent, subject)
+      break
 
     default:
       subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"

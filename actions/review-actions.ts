@@ -434,10 +434,11 @@ export async function sendReviewReminder(
 
     const { sms = true, email = true } = options
 
-    const booking = await Booking.findById(bookingId).populate(
-      "userId",
-      "name email phone notificationPreferences",
-    )
+    // Get booking with populated data including treatment and professional
+    const booking = await Booking.findById(bookingId)
+      .populate("userId", "name email phone notificationPreferences")
+      .populate("treatmentId", "name")
+      .populate("professionalId", "name")
 
     if (!booking) {
       return { success: false, error: "Booking not found" }
@@ -452,33 +453,52 @@ export async function sendReviewReminder(
       return { success: false, error: "Review already exists" }
     }
 
-    if (booking.reviewReminderSentAt) {
-      return { success: false, error: "Reminder already sent" }
+    const customer = booking.userId as any
+    const treatment = booking.treatmentId as any
+    const professional = booking.professionalId as any
+
+    if (!customer || !treatment || !professional) {
+      return { success: false, error: "Missing required booking data" }
     }
 
-    const lang =
-      (booking.userId as any)?.notificationPreferences?.language || "he"
-    const recipientName = booking.recipientName || (booking.userId as any)?.name || ""
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXTAUTH_URL ||
-      ""
-    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${(booking._id as any).toString()}`
+    const lang = customer?.notificationPreferences?.language || "he"
+    const customerName = booking.recipientName || customer?.name || ""
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
+    const reviewUrl = `${baseUrl}/review/booking/${bookingId}`
 
     const recipients: NotificationRecipient[] = []
 
     if (email) {
       if (booking.recipientEmail) {
-        recipients.push({ type: "email", value: booking.recipientEmail, name: recipientName, language: lang as any })
-      } else if ((booking.userId as any)?.email) {
-        recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
+        recipients.push({ 
+          type: "email", 
+          value: booking.recipientEmail, 
+          name: customerName, 
+          language: lang as any 
+        })
+      } else if (customer?.email) {
+        recipients.push({ 
+          type: "email", 
+          value: customer.email, 
+          name: customer.name, 
+          language: lang as any 
+        })
       }
     }
+    
     if (sms) {
       if (booking.recipientPhone) {
-        recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })
-      } else if ((booking.userId as any)?.phone) {
-        recipients.push({ type: "phone", value: (booking.userId as any).phone, language: lang as any })
+        recipients.push({ 
+          type: "phone", 
+          value: booking.recipientPhone, 
+          language: lang as any 
+        })
+      } else if (customer?.phone) {
+        recipients.push({ 
+          type: "phone", 
+          value: customer.phone, 
+          language: lang as any 
+        })
       }
     }
 
@@ -487,10 +507,14 @@ export async function sendReviewReminder(
     }
 
     const data: NotificationData = {
-      type: "review-reminder",
-      recipientName,
-      reviewLink,
-    }
+      type: "review_request",
+      customerName,
+      treatmentName: treatment.name,
+      professionalName: professional.name,
+      reviewUrl,
+      bookingId,
+      bookingNumber: booking.bookingNumber || `#${bookingId.slice(-8)}`
+    } as any
 
     await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
 

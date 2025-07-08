@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Label } from "@/components/common/ui/label"
 import { Textarea } from "@/components/common/ui/textarea"
+import { useToast } from "@/components/common/ui/use-toast"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { 
@@ -19,9 +20,13 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
-  Flag
+  Flag,
+  Send,
+  Loader2
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
+import type { PopulatedReview } from "@/types/review"
+import { sendReviewReminder } from "@/actions/review-actions"
 
 interface BookingReviewTabProps {
   booking: PopulatedBooking
@@ -30,7 +35,110 @@ interface BookingReviewTabProps {
 
 export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTabProps) {
   const { t } = useTranslation()
-  const [adminNotes, setAdminNotes] = useState("")
+  const { toast } = useToast()
+  const [review, setReview] = useState<PopulatedReview | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [sendingRequest, setSendingRequest] = useState(false)
+  const [professionalResponse, setProfessionalResponse] = useState("")
+  const [savingResponse, setSavingResponse] = useState(false)
+
+  useEffect(() => {
+    fetchReview()
+  }, [booking._id])
+
+  const fetchReview = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/reviews/booking/${booking._id}`)
+      const data = await response.json()
+      
+      if (data.success && data.booking.existingReview) {
+        setReview(data.booking.existingReview)
+        setProfessionalResponse(data.booking.existingReview.professionalResponse || "")
+      } else {
+        setReview(null)
+      }
+    } catch (error) {
+      console.error("Error fetching review:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בטעינת חוות הדעת"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSendReviewRequest = async () => {
+    try {
+      setSendingRequest(true)
+      const result = await sendReviewReminder(booking._id, { sms: true, email: true })
+      
+      if (result.success) {
+        toast({
+          title: "נשלח בהצלחה!",
+          description: "בקשה לחוות דעת נשלחה ללקוח"
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בשליחת בקשה לחוות דעת"
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בשליחת בקשה לחוות דעת"
+      })
+    } finally {
+      setSendingRequest(false)
+    }
+  }
+
+  const handleSaveProfessionalResponse = async () => {
+    if (!review || !professionalResponse.trim()) return
+
+    try {
+      setSavingResponse(true)
+      // This would need to be implemented in review-actions.ts
+      const response = await fetch(`/api/reviews/${review._id}/response`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          professionalResponse: professionalResponse.trim()
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        toast({
+          title: "נשמר בהצלחה!",
+          description: "תגובת המטפל נשמרה"
+        })
+        await fetchReview() // Refresh review data
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: data.error || "שגיאה בשמירת התגובה"
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בשמירת התגובה"
+      })
+    } finally {
+      setSavingResponse(false)
+    }
+  }
 
   const formatDate = (date?: Date | string) => {
     if (!date) return "לא צוין"
@@ -48,19 +156,23 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
     ))
   }
 
-  const getReviewStatusBadge = (status: string) => {
-    switch (status) {
-      case "approved":
-        return <Badge variant="default" className="bg-green-100 text-green-800">מאושר</Badge>
-      case "pending":
-        return <Badge variant="secondary">ממתין לאישור</Badge>
-      case "rejected":
-        return <Badge variant="destructive">נדחה</Badge>
-      case "flagged":
-        return <Badge variant="outline" className="bg-red-100 text-red-800">מדווח</Badge>
-      default:
-        return <Badge variant="secondary">לא ידוע</Badge>
+  const getRatingText = (rating: number) => {
+    switch (rating) {
+      case 1: return "גרוע"
+      case 2: return "לא טוב"
+      case 3: return "בסדר"
+      case 4: return "טוב"
+      case 5: return "מעולה"
+      default: return ""
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -70,33 +182,33 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            סטטוס ביקורות
+            סטטוס חוות דעת
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <Label className="text-sm font-medium text-blue-800">ביקורת לקוח</Label>
+              <Label className="text-sm font-medium text-blue-800">חוות דעת לקוח</Label>
               <p className="text-lg font-semibold mt-1">
-                {booking.customerReview ? "קיימת" : "לא קיימת"}
+                {review ? "קיימת" : "לא קיימת"}
               </p>
             </div>
 
             <div className="text-center p-4 bg-green-50 rounded-lg">
-              <Label className="text-sm font-medium text-green-800">ביקורת מטפל</Label>
+              <Label className="text-sm font-medium text-green-800">תגובת מטפל</Label>
               <p className="text-lg font-semibold mt-1">
-                {booking.professionalReview ? "קיימת" : "לא קיימת"}
+                {review?.professionalResponse ? "קיימת" : "לא קיימת"}
               </p>
             </div>
 
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <Label className="text-sm font-medium text-purple-800">דירוג כללי</Label>
               <div className="flex justify-center mt-1">
-                {booking.customerReview?.rating ? (
+                {review?.rating ? (
                   <div className="flex items-center gap-1">
-                    {renderStars(booking.customerReview.rating)}
+                    {renderStars(review.rating)}
                     <span className="text-sm font-semibold ml-1">
-                      ({booking.customerReview.rating}/5)
+                      ({review.rating}/5)
                     </span>
                   </div>
                 ) : (
@@ -105,16 +217,52 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
               </div>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4 border-t">
+            {booking.status === 'completed' && !review && (
+              <Button 
+                onClick={handleSendReviewRequest}
+                disabled={sendingRequest}
+                size="sm"
+              >
+                {sendingRequest ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    שולח...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    שלח בקשה לחוות דעת
+                  </>
+                )}
+              </Button>
+            )}
+
+            {booking.status !== 'completed' && (
+              <div className="text-sm text-muted-foreground">
+                ניתן לשלוח בקשה לחוות דעת רק עבור הזמנות שהושלמו
+              </div>
+            )}
+
+            {review && (
+              <Badge variant="outline" className="bg-green-100 text-green-800">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                חוות דעת התקבלה
+              </Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Customer Review */}
-      {booking.customerReview && (
+      {review && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
-              ביקורת הלקוח
+              חוות דעת הלקוח
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -124,237 +272,188 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">דירוג</Label>
                   <div className="flex items-center gap-2">
-                    {renderStars(booking.customerReview.rating)}
+                    {renderStars(review.rating)}
                     <span className="text-lg font-semibold">
-                      {booking.customerReview.rating}/5
+                      {review.rating}/5
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      ({getRatingText(review.rating)})
                     </span>
                   </div>
                 </div>
-                {getReviewStatusBadge(booking.customerReview.status || "pending")}
+                <Badge variant="default" className="bg-green-100 text-green-800">
+                  פעיל
+                </Badge>
               </div>
 
               {/* Review Text */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">טקסט הביקורת</Label>
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                  <p className="text-sm whitespace-pre-wrap">
-                    {booking.customerReview.comment || "לא נכתבה ביקורת טקסטואלית"}
-                  </p>
+              {review.comment && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">תוכן חוות הדעת</Label>
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <p className="text-sm whitespace-pre-wrap">
+                      {review.comment}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Review Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">תאריך ביקורת</Label>
-                  <p>{formatDate(booking.customerReview.createdAt)}</p>
+                  <Label className="text-xs text-muted-foreground">תאריך חוות דעת</Label>
+                  <p>{formatDate(review.createdAt)}</p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">שם הלקוח</Label>
-                  <p>{booking.customerReview.reviewerName || "אנונימי"}</p>
+                  <p>{booking.recipientName || booking.userId?.name || "לא צוין"}</p>
                 </div>
-              </div>
-
-              {/* Admin Actions */}
-              <div className="flex gap-2 pt-4 border-t">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="text-green-600 border-green-600 hover:bg-green-50"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  אשר ביקורת
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="text-red-600 border-red-600 hover:bg-red-50"
-                >
-                  <Flag className="w-4 h-4 mr-2" />
-                  סמן כבעייתי
-                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Professional Review */}
-      {booking.professionalReview && (
+      {/* Professional Response */}
+      {review && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5" />
-              ביקורת המטפל
+              תגובת המטפל
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-4">
-              {/* Rating */}
-              <div className="flex items-center justify-between">
+            {review.professionalResponse ? (
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">דירוג הלקוח</Label>
-                  <div className="flex items-center gap-2">
-                    {renderStars(booking.professionalReview.customerRating)}
-                    <span className="text-lg font-semibold">
-                      {booking.professionalReview.customerRating}/5
-                    </span>
+                  <Label className="text-sm font-medium">תגובה קיימת</Label>
+                  <div className="p-4 bg-blue-50 rounded-lg border">
+                    <p className="text-sm whitespace-pre-wrap">
+                      {review.professionalResponse}
+                    </p>
                   </div>
                 </div>
-                {getReviewStatusBadge(booking.professionalReview.status || "pending")}
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">עריכת תגובה</Label>
+                  <Textarea
+                    value={professionalResponse}
+                    onChange={(e) => setProfessionalResponse(e.target.value)}
+                    placeholder="כתוב תגובה חדשה או ערוך את הקיימת..."
+                    rows={4}
+                    maxLength={1000}
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      {professionalResponse.length}/1000 תווים
+                    </p>
+                    <Button 
+                      onClick={handleSaveProfessionalResponse}
+                      disabled={savingResponse || !professionalResponse.trim() || professionalResponse === review.professionalResponse}
+                      size="sm"
+                    >
+                      {savingResponse ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          שומר...
+                        </>
+                      ) : (
+                        "שמור תגובה"
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
-
-              {/* Review Text */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">הערות המטפל</Label>
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                  <p className="text-sm whitespace-pre-wrap">
-                    {booking.professionalReview.comment || "לא נכתבו הערות"}
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center p-6 bg-gray-50 rounded-lg border-2 border-dashed">
+                  <MessageSquare className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    המטפל עדיין לא הגיב לחוות הדעת
                   </p>
                 </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">הוסף תגובה מטעם המטפל</Label>
+                  <Textarea
+                    value={professionalResponse}
+                    onChange={(e) => setProfessionalResponse(e.target.value)}
+                    placeholder="כתוב תגובה מטעם המטפל..."
+                    rows={4}
+                    maxLength={1000}
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      {professionalResponse.length}/1000 תווים
+                    </p>
+                    <Button 
+                      onClick={handleSaveProfessionalResponse}
+                      disabled={savingResponse || !professionalResponse.trim()}
+                      size="sm"
+                    >
+                      {savingResponse ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          שומר...
+                        </>
+                      ) : (
+                        "שמור תגובה"
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-              {/* Professional Experience */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">איכות החוויה</Label>
-                <div className="flex items-center gap-2">
-                  {booking.professionalReview.experienceRating === "positive" && (
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span className="text-sm">חיובית</span>
-                    </div>
-                  )}
-                  {booking.professionalReview.experienceRating === "negative" && (
-                    <div className="flex items-center gap-1 text-red-600">
-                      <ThumbsDown className="w-4 h-4" />
-                      <span className="text-sm">שלילית</span>
-                    </div>
-                  )}
-                  {booking.professionalReview.experienceRating === "neutral" && (
-                    <span className="text-sm text-gray-600">נייטרלית</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Review Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">תאריך ביקורת</Label>
-                  <p>{formatDate(booking.professionalReview.createdAt)}</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">שם המטפל</Label>
-                  <p>
-                    {typeof booking.professionalId === 'object' 
-                      ? booking.professionalId?.name 
-                      : "לא זמין"}
-                  </p>
-                </div>
-              </div>
+      {/* No Review State */}
+      {!review && booking.status === 'completed' && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center p-8 bg-gray-50 rounded-lg border-2 border-dashed">
+              <MessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">אין חוות דעת עדיין</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                הטיפול הושלם אך הלקוח עדיין לא השאיר חוות דעת
+              </p>
+              <Button 
+                onClick={handleSendReviewRequest}
+                disabled={sendingRequest}
+                variant="outline"
+              >
+                {sendingRequest ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    שולח...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    שלח תזכורת לחוות דעת
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* No Reviews */}
-      {!booking.customerReview && !booking.professionalReview && (
+      {!review && booking.status !== 'completed' && (
         <Card>
-          <CardContent className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">אין ביקורות עדיין</h3>
-            <p className="text-sm text-gray-500">
-              ביקורות יופיעו כאן לאחר השלמת הטיפול
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Admin Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" />
-            הערות מנהל
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">הערות פנימיות</Label>
-            <Textarea
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="הוסף הערות פנימיות על ההזמנה, הביקורות או נושאים אחרים..."
-              rows={4}
-              className="resize-none"
-            />
-          </div>
-          <Button onClick={() => {/* Save admin notes */}}>
-            שמור הערות
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Review Statistics */}
-      {(booking.customerReview || booking.professionalReview) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              סטטיסטיקות ביקורות
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {booking.customerReview && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת לקוח</Label>
-                  <p className="text-sm">
-                    {booking.endTime && booking.customerReview.createdAt ? (
-                      `${Math.round(
-                        (new Date(booking.customerReview.createdAt).getTime() - 
-                         new Date(booking.endTime).getTime()) / (1000 * 60 * 60 * 24)
-                      )} ימים`
-                    ) : (
-                      "לא זמין"
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {booking.professionalReview && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">זמן מסיום טיפול לביקורת מטפל</Label>
-                  <p className="text-sm">
-                    {booking.endTime && booking.professionalReview.createdAt ? (
-                      `${Math.round(
-                        (new Date(booking.professionalReview.createdAt).getTime() - 
-                         new Date(booking.endTime).getTime()) / (1000 * 60 * 60 * 24)
-                      )} ימים`
-                    ) : (
-                      "לא זמין"
-                    )}
-                  </p>
-                </div>
-              )}
+          <CardContent className="pt-6">
+            <div className="text-center p-8 bg-gray-50 rounded-lg border-2 border-dashed">
+              <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">הטיפול עדיין לא הושלם</h3>
+              <p className="text-sm text-muted-foreground">
+                חוות דעת תהיה זמינה לאחר השלמת הטיפול
+              </p>
             </div>
           </CardContent>
         </Card>
       )}
-
-      {/* Guidelines */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="text-blue-800 text-sm">הנחיות לניהול ביקורות</CardTitle>
-        </CardHeader>
-        <CardContent className="text-blue-700 text-sm">
-          <ul className="space-y-1 list-disc list-inside">
-            <li>בדוק ביקורות חדשות באופן קבוע ואשר אותן במהירות</li>
-            <li>סמן ביקורות בעייתיות או לא הולמות לבדיקה נוספת</li>
-            <li>השתמש בהערות המנהל לתיעוד בעיות או החלטות</li>
-            <li>עקוב אחר זמני תגובה של לקוחות ומטפלים</li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   )
 } 

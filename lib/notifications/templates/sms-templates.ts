@@ -45,6 +45,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "review-reminder":
       return getReviewReminderSmsTemplate(data, language)
 
+    case "review_request":
+      return getReviewRequestSmsTemplate(data, language)
+
     case "professional-booking-notification":
       return getProfessionalBookingNotificationSmsTemplate(data, language)
 
@@ -265,6 +268,42 @@ function getReviewReminderSmsTemplate(data: any, language: SMSLanguage): string 
       break
     default:
       message = `Hi ${data.recipientName}, we'd love to hear your feedback about your treatment: ${reviewLink}`
+  }
+  return message + smsSignature
+}
+
+function getReviewRequestSmsTemplate(data: any, language: SMSLanguage): string {
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🌟 שלום ${data.customerName}! 
+
+איך היה הטיפול ${data.treatmentName} עם ${data.professionalName}? 
+
+נשמח לחוות דעתך: ${data.reviewUrl}
+
+הזמנה #${data.bookingNumber}
+תודה שבחרת במאסו! 🙏`
+      break
+    case "ru":
+      message = `🌟 Здравствуйте, ${data.customerName}! 
+
+Как прошла процедура ${data.treatmentName} с ${data.professionalName}? 
+
+Будем рады вашему отзыву: ${data.reviewUrl}
+
+Заказ #${data.bookingNumber}
+Спасибо, что выбрали Masu! 🙏`
+      break
+    default: // English
+      message = `🌟 Hello ${data.customerName}! 
+
+How was your ${data.treatmentName} treatment with ${data.professionalName}? 
+
+We'd love your feedback: ${data.reviewUrl}
+
+Booking #${data.bookingNumber}
+Thank you for choosing Masu! 🙏`
   }
   return message + smsSignature
 }

@@ -168,10 +168,7 @@ const AdminBookingActions = ({
   }
 
   const handleSendReviewReminder = () => {
-    toast({
-      title: t("adminBookings.actions.reviewReminderSent"),
-      description: t("adminBookings.actions.reviewReminderDescription"),
-    })
+    setShowSendReviewModal(true)
   }
 
   const handleSendToAllSuitableProfessionals = async () => {

@@ -71,16 +71,15 @@ export async function GET(
       )
     }
 
-    // Check if this professional can still respond
-    // They can respond if:
-    // 1. Their response is still pending
-    // 2. The booking doesn't have a professional assigned OR it's assigned to them
+    // Check if this professional can still respond or interact with the booking
+    // They can respond/interact if:
+    // 1. Their response is still pending (for accept/decline actions)
+    // 2. OR their response is accepted AND the booking is assigned to them (for status updates)
     // 3. The booking is in an appropriate status
     const canRespond = (
-      response.status === "pending" &&
-      (!booking.professionalId || booking.professionalId.toString() === professional._id.toString()) &&
-      ["pending_professional", "confirmed", "on_way", "in_treatment"].includes(booking.status)
-    )
+      (response.status === "pending" && (!booking.professionalId || booking.professionalId.toString() === professional._id.toString())) ||
+      (response.status === "accepted" && booking.professionalId && booking.professionalId.toString() === professional._id.toString())
+    ) && ["pending_professional", "confirmed", "on_way", "in_treatment"].includes(booking.status)
 
     const responseData = {
       _id: response._id,

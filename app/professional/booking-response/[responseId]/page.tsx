@@ -197,13 +197,28 @@ export default function ProfessionalResponsePage() {
 
     const { status, bookingCurrentStatus, canRespond } = responseData
 
-    // אם לא ניתן להגיב (כנראה כי מישהו אחר כבר לקח את ההזמנה)
+    // אם לא ניתן להגיב - נבדוק למה
     if (!canRespond) {
+      let alertMessage = "ההזמנה כבר נתפסה על ידי מטפל אחר או שהסטטוס השתנה"
+      
+      // אם המטפל דחה את ההזמנה
+      if (status === "declined") {
+        alertMessage = "דחית את ההזמנה הזו"
+      }
+      // אם התגובה פגה
+      else if (status === "expired") {
+        alertMessage = "פג תוקף התגובה - ההזמנה נתפסה על ידי מטפל אחר"
+      }
+      // אם הטיפול הסתיים
+      else if (["completed", "cancelled"].includes(bookingCurrentStatus)) {
+        alertMessage = "הטיפול הסתיים או בוטל"
+      }
+      
       return (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            ההזמנה כבר נתפסה על ידי מטפל אחר או שהסטטוס השתנה
+            {alertMessage}
           </AlertDescription>
         </Alert>
       )

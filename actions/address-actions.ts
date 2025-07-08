@@ -143,7 +143,14 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
       userId: new mongoose.Types.ObjectId(session.user.id),
       country: "ישראל", // Default country from schema is fine, but can be explicit
       fullAddress: fullAddress, // Add the constructed fullAddress
-    }
+      // Ensure apartmentDetails.floor is not undefined
+      ...(validatedData.addressType === 'apartment' && validatedData.apartmentDetails && {
+        apartmentDetails: {
+          ...validatedData.apartmentDetails,
+          floor: validatedData.apartmentDetails.floor ?? 0 // Default to 0 if undefined
+        }
+      })
+    } as any
 
     const address = await AddressQueries.createAddress(addressDataWithUserAndFullAddress)
 
@@ -173,7 +180,14 @@ export async function updateAddress(id: string, data: z.infer<typeof addressSche
     const addressDataWithFullAddress = {
       ...validatedData,
       fullAddress: fullAddress, // Add the constructed fullAddress
-    }
+      // Ensure apartmentDetails.floor is not undefined
+      ...(validatedData.addressType === 'apartment' && validatedData.apartmentDetails && {
+        apartmentDetails: {
+          ...validatedData.apartmentDetails,
+          floor: validatedData.apartmentDetails.floor ?? 0 // Default to 0 if undefined
+        }
+      })
+    } as any
 
     const address = await AddressQueries.updateAddress(id, session.user.id, addressDataWithFullAddress)
 

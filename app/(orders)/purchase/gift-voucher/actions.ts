@@ -1,6 +1,5 @@
 "use server"
 
-import type { ITreatment } from "@/lib/db/models/treatment"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"

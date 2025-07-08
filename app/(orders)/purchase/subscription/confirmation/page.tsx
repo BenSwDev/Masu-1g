@@ -2,11 +2,8 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
 import { GuestLayout } from "@/components/layout/guest-layout"
-import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
 import dbConnect from "@/lib/db/mongoose"
 import UserSubscription from "@/lib/db/models/user-subscription"
-import Subscription from "@/lib/db/models/subscription"
-import Treatment from "@/lib/db/models/treatment"
 
 interface SearchParams {
   subscriptionId?: string

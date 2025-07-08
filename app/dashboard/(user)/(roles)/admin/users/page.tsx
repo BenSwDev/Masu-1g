@@ -11,7 +11,7 @@ import { Users, UserCheck, UserX, Shield, Briefcase, User, Crown, Activity, Cale
 export const dynamic = 'force-dynamic'
 
 interface UsersPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string
     role?: string
     gender?: string
@@ -22,7 +22,7 @@ interface UsersPageProps {
     limit?: string
     sortBy?: string
     sortOrder?: string
-  }
+  }>
 }
 
 // Loading component for stats
@@ -186,17 +186,18 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     }
 
     // Parse search params
+    const params = await searchParams
     const filters: UserFilters = {
-      search: searchParams.search || "",
-      role: searchParams.role || "all",
-      gender: searchParams.gender || "all",
-      emailVerified: searchParams.emailVerified ? searchParams.emailVerified === "true" : undefined,
-      phoneVerified: searchParams.phoneVerified ? searchParams.phoneVerified === "true" : undefined,
-      isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
-      page: searchParams.page ? parseInt(searchParams.page) : 1,
-      limit: searchParams.limit ? parseInt(searchParams.limit) : 20,
-      sortBy: searchParams.sortBy || "createdAt",
-      sortOrder: (searchParams.sortOrder as "asc" | "desc") || "desc"
+      search: params.search || "",
+      role: params.role || "all",
+      gender: params.gender || "all",
+      emailVerified: params.emailVerified ? params.emailVerified === "true" : undefined,
+      phoneVerified: params.phoneVerified ? params.phoneVerified === "true" : undefined,
+      isActive: params.isActive ? params.isActive === "true" : undefined,
+      page: params.page ? parseInt(params.page) : 1,
+      limit: params.limit ? parseInt(params.limit) : 20,
+      sortBy: params.sortBy || "createdAt",
+      sortOrder: (params.sortOrder as "asc" | "desc") || "desc"
     }
 
     // Get users data

@@ -4,7 +4,7 @@ import { unassignProfessionalFromBooking } from "@/actions/booking-actions"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     // Require admin session
@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { bookingId } = params
+    const { bookingId } = await params
 
     if (!bookingId) {
       return NextResponse.json({ error: "Booking ID is required" }, { status: 400 })

@@ -25,13 +25,13 @@ export const metadata = {
 
 // Define a type for searchParams for clarity
 interface AdminCouponsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string
     limit?: string
     code?: string
     isActive?: string
     partnerId?: string
-  }
+  }>
 }
 
 // Improve the page's responsiveness
@@ -41,12 +41,13 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
     redirect("/dashboard")
   }
 
-  const page = Number(searchParams.page) || 1
-  const limit = Number(searchParams.limit) || 10
+  const params = await searchParams
+  const page = Number(params.page) || 1
+  const limit = Number(params.limit) || 10
   const filters = {
-    code: searchParams.code,
-    isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
-    partnerId: searchParams.partnerId,
+    code: params.code,
+    isActive: params.isActive ? params.isActive === "true" : undefined,
+    partnerId: params.partnerId,
   }
 
   // Fetch initial data on the server

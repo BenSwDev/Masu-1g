@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
+import React, { useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 
 interface AuthRedirectProps {
   children: React.ReactNode

@@ -1,8 +1,7 @@
 "use client"
 
 import { SessionProvider } from "next-auth/react"
-import type { ReactNode } from "react"
-import { useEffect } from "react"
+import { useEffect, type ReactNode } from "react"
 import { getCacheItem, CACHE_KEYS } from "@/lib/cache/client-cache"
 
 interface AuthProviderProps {

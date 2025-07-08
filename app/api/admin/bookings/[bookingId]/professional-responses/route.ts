@@ -3,10 +3,10 @@ import { getProfessionalResponses } from "@/actions/notification-service"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
-    const { bookingId } = params
+    const { bookingId } = await params
 
     if (!bookingId) {
       return NextResponse.json(

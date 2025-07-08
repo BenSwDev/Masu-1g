@@ -138,9 +138,10 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
-    const result = await getProfessionalById(params.id)
+    const { id } = await params
+    const result = await getProfessionalById(id)
     if (result.success && result.professional) {
       return {
         title: `עריכת מטפל - ${result.professional.userId.name} | מנהל`,
@@ -227,19 +228,21 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
   }
 }
 
-export default async function ProfessionalEditPageRoute({ params }: { params: { id: string } }) {
+export default async function ProfessionalEditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireUserSession()
   
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 
-  if (!params.id) {
+  const { id } = await params
+
+  if (!id) {
     redirect("/dashboard/admin/professional-management")
   }
 
   // Redirect old "new" route to the main page
-  if (params.id === "new") {
+  if (id === "new") {
     redirect("/dashboard/admin/professional-management")
   }
 
@@ -247,7 +250,7 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
     <div className="container mx-auto py-6 space-y-6">
       <Suspense fallback={<ProfessionalEditLoadingSkeleton />}>
         <ProfessionalEditErrorBoundary>
-          <ProfessionalEditPageContent id={params.id} />
+          <ProfessionalEditPageContent id={id} />
         </ProfessionalEditErrorBoundary>
       </Suspense>
     </div>

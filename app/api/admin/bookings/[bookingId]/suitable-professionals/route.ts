@@ -5,7 +5,7 @@ import { getSuitableProfessionalsForBooking } from "@/actions/booking-actions"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export async function GET(
       )
     }
 
-    const { bookingId } = params
+    const { bookingId } = await params
     if (!bookingId) {
       return NextResponse.json(
         { success: false, error: "Booking ID is required" },

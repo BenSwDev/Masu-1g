@@ -14,7 +14,7 @@ export const metadata = {
 }
 
 interface AdminCitiesPageProps {
-  searchParams: { page?: string; search?: string }
+  searchParams: Promise<{ page?: string; search?: string }>
 }
 
 export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageProps) {
@@ -23,8 +23,9 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
     redirect("/dashboard")
   }
 
-  const page = Number.parseInt(searchParams.page || "1")
-  const search = searchParams.search || ""
+  const params = await searchParams
+  const page = Number.parseInt(params.page || "1")
+  const search = params.search || ""
   const result = await getCities(page, 10, search)
 
   return (

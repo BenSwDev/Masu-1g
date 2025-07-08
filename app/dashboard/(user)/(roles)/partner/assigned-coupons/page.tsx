@@ -12,20 +12,21 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 interface PartnerAssignedCouponsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string
     limit?: string
     code?: string
     isActive?: string
-  }
+  }>
 }
 
 export default async function PartnerAssignedCouponsPage({ searchParams }: PartnerAssignedCouponsPageProps) {
-  const page = Number(searchParams.page) || 1
-  const limit = Number(searchParams.limit) || 10
+  const params = await searchParams
+  const page = Number(params.page) || 1
+  const limit = Number(params.limit) || 10
   const filters = {
-    code: searchParams.code,
-    isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
+    code: params.code,
+    isActive: params.isActive ? params.isActive === "true" : undefined,
   }
 
   // Fetch initial data on the server

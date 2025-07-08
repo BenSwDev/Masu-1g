@@ -7,10 +7,12 @@ import { logger } from "@/lib/logs/logger"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
+  let bookingId: string | undefined
   try {
-    const { bookingId } = params
+    const resolvedParams = await params
+    bookingId = resolvedParams.bookingId
 
     if (!bookingId) {
       return NextResponse.json(
@@ -95,7 +97,7 @@ export async function GET(
 
   } catch (error) {
     logger.error("Error retrieving guest booking details:", {
-      bookingId: params.bookingId,
+      bookingId: bookingId,
       error: error instanceof Error ? error.message : String(error)
     })
 

@@ -3,10 +3,10 @@ import { handleProfessionalResponse } from "@/actions/notification-service"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { responseId: string } }
+  { params }: { params: Promise<{ responseId: string }> }
 ) {
   try {
-    const { responseId } = params
+    const { responseId } = await params
     const { action, responseMethod } = await request.json()
 
     if (!responseId) {

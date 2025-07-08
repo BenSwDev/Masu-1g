@@ -2,24 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Separator } from "@/components/common/ui/separator"
 import { Progress } from "@/components/common/ui/progress"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Package, Clock, Star, CreditCard, CheckCircle, User, Mail, Phone } from "lucide-react"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { getActiveSubscriptionsForPurchase, getTreatments, type SerializedSubscription, type SerializedTreatment } from "./actions"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
-import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase, initiateGuestSubscriptionPurchase, confirmGuestSubscriptionPurchase } from "@/actions/user-subscription-actions"
+import { saveAbandonedSubscriptionPurchase, initiateGuestSubscriptionPurchase, confirmGuestSubscriptionPurchase } from "@/actions/user-subscription-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
-import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
 
 interface Props {
   subscriptions?: SerializedSubscription[]
@@ -51,7 +45,6 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
 
 export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
   const router = useRouter()
-  const { t, language, dir } = useTranslation()
   const { toast } = useToast()
 
   // Data state
@@ -69,7 +62,6 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [showPaymentSection, setShowPaymentSection] = useState(false)
   const [pendingSubscriptionId, setPendingSubscriptionId] = useState<string | null>(null)
 
   // Load data on mount if not provided via props
@@ -104,7 +96,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     }
 
     loadData()
-  }, [propSubscriptions, propTreatments])
+  }, [propSubscriptions, propTreatments, toast])
 
   // Save abandoned purchase
   useEffect(() => {
@@ -149,14 +141,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     surchargesProfessionalPayment: 0,
   }
 
-  // Group treatments by category
-  const treatmentsByCategory = treatments.reduce((acc, treatment) => {
-    if (!acc[treatment.category]) {
-      acc[treatment.category] = []
-    }
-    acc[treatment.category].push(treatment)
-    return acc
-  }, {} as Record<string, ITreatment[]>)
+
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
@@ -274,7 +259,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
 
   if (dataLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8" dir={dir} lang={language}>
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">טוען נתונים...</p>
@@ -303,7 +288,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   }
 
   const renderStep1 = () => (
-    <div className="max-w-2xl mx-auto space-y-6" dir={dir} lang={language}>
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">רכישת מנוי</h2>
         <p className="text-gray-600">בחר מנוי וטיפול במחיר מיוחד</p>

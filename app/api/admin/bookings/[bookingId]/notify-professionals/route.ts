@@ -11,7 +11,7 @@ import { sendManualProfessionalNotifications } from "@/actions/unified-professio
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
     // Check admin authorization
@@ -23,7 +23,7 @@ export async function POST(
       )
     }
 
-    const { bookingId } = params
+    const { bookingId } = await params
     if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
       return NextResponse.json(
         { success: false, error: "Invalid booking ID" },

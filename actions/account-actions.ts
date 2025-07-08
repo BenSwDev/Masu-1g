@@ -84,17 +84,17 @@ export async function requestEmailChange(newEmail: string, language: Notificatio
     }
 
     // Send OTP to new email
-    const otpResult = await sendOTP(newEmail, "email", language)
+    const otpResult = await sendOTP(newEmail, language)
 
     if (!otpResult.success) {
-      return { success: false, message: otpResult.message }
+      return { success: false, message: otpResult.error }
     }
 
     return {
       success: true,
       message: "otpSent",
       obscuredIdentifier: otpResult.obscuredIdentifier,
-      expiryMinutes: otpResult.expiryMinutes,
+      expiryMinutes: 10, // Fixed value since the function sets 10 minutes expiry
     }
   } catch (error) {
     console.error("Request email change error:", error)
@@ -110,10 +110,10 @@ export async function confirmEmailChange(newEmail: string, otpCode: string) {
     }
 
     // Verify OTP
-    const verifyResult = await verifyOTP(newEmail, "email", otpCode)
+    const verifyResult = await verifyOTP(newEmail, otpCode)
 
     if (!verifyResult.success) {
-      return { success: false, message: verifyResult.message }
+      return { success: false, message: verifyResult.error }
     }
 
     await dbConnect()
@@ -165,17 +165,17 @@ export async function requestPhoneChange(newPhone: string, language: Notificatio
     }
 
     // Send OTP to new phone
-    const otpResult = await sendOTP(newPhone, "phone", language)
+    const otpResult = await sendOTP(newPhone, language)
 
     if (!otpResult.success) {
-      return { success: false, message: otpResult.message }
+      return { success: false, message: otpResult.error }
     }
 
     return {
       success: true,
       message: "otpSent",
       obscuredIdentifier: otpResult.obscuredIdentifier,
-      expiryMinutes: otpResult.expiryMinutes,
+      expiryMinutes: 10, // Fixed value since the function sets 10 minutes expiry
     }
   } catch (error) {
     console.error("Request phone change error:", error)
@@ -191,10 +191,10 @@ export async function confirmPhoneChange(newPhone: string, otpCode: string) {
     }
 
     // Verify OTP
-    const verifyResult = await verifyOTP(newPhone, "phone", otpCode)
+    const verifyResult = await verifyOTP(newPhone, otpCode)
 
     if (!verifyResult.success) {
-      return { success: false, message: verifyResult.message }
+      return { success: false, message: verifyResult.error }
     }
 
     await dbConnect()

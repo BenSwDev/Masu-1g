@@ -79,7 +79,7 @@ export default function BookingDetailsPage() {
         } else {
           setError(result.error || "לא ניתן לטעון את פרטי ההזמנה")
         }
-      } catch (err) {
+      } catch {
         setError("אירעה שגיאה בטעינת פרטי ההזמנה")
       } finally {
         setIsLoading(false)

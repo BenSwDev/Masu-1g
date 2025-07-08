@@ -103,7 +103,7 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
     const savedCoupons = await Coupon.insertMany(coupons)
     
     // Update batch with coupon IDs
-    newBatch.couponIds = savedCoupons.map(coupon => coupon._id)
+    newBatch.couponIds = savedCoupons.map(coupon => coupon._id as any)
     await newBatch.save()
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
@@ -114,8 +114,8 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
       couponsCreated: savedCoupons.length
     }
   } catch (_error: any) {
-    console.error("Error creating partner coupon batch:", error)
-    return { success: false, error: error.message || "Failed to create partner coupon batch" }
+    console.error("Error creating partner coupon batch:", _error)
+    return { success: false, error: _error.message || "Failed to create partner coupon batch" }
   }
 }
 
@@ -170,8 +170,8 @@ export async function updatePartnerCouponBatch(payload: UpdatePartnerCouponBatch
       batch: JSON.parse(JSON.stringify(updatedBatch)) 
     }
   } catch (_error: any) {
-    console.error("Error updating partner coupon batch:", error)
-    return { success: false, error: error.message || "Failed to update partner coupon batch" }
+    console.error("Error updating partner coupon batch:", _error)
+    return { success: false, error: _error.message || "Failed to update partner coupon batch" }
   }
 }
 
@@ -197,8 +197,8 @@ export async function deletePartnerCouponBatch(batchId: string) {
     revalidatePath("/dashboard/admin/partner-coupon-batches")
     return { success: true, message: "Partner coupon batch deleted successfully" }
   } catch (_error: any) {
-    console.error("Error deleting partner coupon batch:", error)
-    return { success: false, error: error.message || "Failed to delete partner coupon batch" }
+    console.error("Error deleting partner coupon batch:", _error)
+    return { success: false, error: _error.message || "Failed to delete partner coupon batch" }
   }
 }
 
@@ -339,8 +339,8 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
       updatedCount: validCouponIds.length
     }
   } catch (_error: any) {
-    console.error("Error updating coupons in batch:", error)
-    return { success: false, error: error.message || "Failed to update coupons" }
+    console.error("Error updating coupons in batch:", _error)
+    return { success: false, error: _error.message || "Failed to update coupons" }
   }
 }
 

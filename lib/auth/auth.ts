@@ -4,9 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/db/mongodb"
 import dbConnect from "@/lib/db/mongoose"
-import User from "@/lib/db/models/user"
+import User, { type ITreatmentPreferences, type INotificationPreferences } from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
-import type { ITreatmentPreferences, INotificationPreferences } from "@/lib/db/models/user" // Import preference types
 
 // Add interface for our custom user type
 interface CustomUser {

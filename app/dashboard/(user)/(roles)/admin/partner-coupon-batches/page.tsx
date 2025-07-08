@@ -14,14 +14,14 @@ export const metadata = {
 }
 
 interface AdminPartnerCouponBatchesPageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string
     limit?: string
     name?: string
     isActive?: string
     partnerId?: string
     effectiveStatus?: string
-  }
+  }>
 }
 
 export default async function AdminPartnerCouponBatchesPage({ searchParams }: AdminPartnerCouponBatchesPageProps) {
@@ -30,13 +30,14 @@ export default async function AdminPartnerCouponBatchesPage({ searchParams }: Ad
     redirect("/dashboard")
   }
 
-  const page = Number(searchParams.page) || 1
-  const limit = Number(searchParams.limit) || 10
+  const params = await searchParams
+  const page = Number(params.page) || 1
+  const limit = Number(params.limit) || 10
   const filters = {
-    name: searchParams.name,
-    isActive: searchParams.isActive ? searchParams.isActive === "true" : undefined,
-    partnerId: searchParams.partnerId,
-    effectiveStatus: searchParams.effectiveStatus,
+    name: params.name,
+    isActive: params.isActive ? params.isActive === "true" : undefined,
+    partnerId: params.partnerId,
+    effectiveStatus: params.effectiveStatus,
   }
 
   // Fetch initial data on the server

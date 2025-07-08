@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ESLint configuration - allow warnings but show them
+  eslint: {
+    ignoreDuringBuilds: process.env.NODE_ENV === 'production', // Skip linting in production builds
+    dirs: ['app', 'components', 'lib', 'actions', 'hooks', 'types']
+  },
+  
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,

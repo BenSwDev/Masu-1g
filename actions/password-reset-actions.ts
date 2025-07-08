@@ -146,13 +146,12 @@ export async function verifyResetToken(token: string): Promise<{
     console.log("Token found in database:", {
       token: tokenData.token,
       userId: tokenData.userId.toString(),
-      expiryDate: tokenData.expiryDate,
-      used: tokenData.used,
+      expiryDate: tokenData.expiresAt,
     })
 
     // Check if token has expired
     const now = new Date()
-    if (now > tokenData.expiryDate) {
+    if (now > tokenData.expiresAt) {
       // TODO: Remove debug log
 
       await PasswordResetToken.deleteOne({ _id: tokenData._id })
@@ -163,16 +162,7 @@ export async function verifyResetToken(token: string): Promise<{
       }
     }
 
-    // Check if token was already used
-    if (tokenData.used) {
-      // TODO: Remove debug log
-
-      return {
-        success: false,
-        message: "Reset token has already been used",
-        error: "TOKEN_USED",
-      }
-    }
+    // Token existence already validates it hasn't been used (deleted after use)
 
     // Verify user still exists
     const user = await User.findById(tokenData.userId)
@@ -267,8 +257,8 @@ export async function resetPasswordWithToken(
     // TODO: Remove debug log
 
 
-    // Mark token as used
-    await PasswordResetToken.findOneAndUpdate({ token }, { used: true })
+    // Delete token after successful use
+    await PasswordResetToken.findOneAndDelete({ token })
 
     // TODO: Remove debug log
 
@@ -295,7 +285,7 @@ export async function cleanupExpiredTokens(): Promise<void> {
     await dbConnect()
     const now = new Date()
     const result = await PasswordResetToken.deleteMany({
-      expiryDate: { $lt: now },
+      expiresAt: { $lt: now },
     })
     // TODO: Remove debug log
 
@@ -342,7 +332,7 @@ export async function sendPasswordResetOTP(
     }
 
     // Send OTP for password reset
-    const otpResult = await sendOTP(phone, "phone", language)
+    const otpResult = await sendOTP(phone, language)
 
     if (!otpResult.success) {
       return {
@@ -356,7 +346,7 @@ export async function sendPasswordResetOTP(
       success: true,
       message: "If an account with this phone exists, you will receive an OTP",
       obscuredIdentifier: otpResult.obscuredIdentifier,
-      expiryMinutes: otpResult.expiryMinutes,
+      expiryMinutes: 10, // Fixed value since the function sets 10 minutes expiry
     }
   } catch (error) {
     console.error("Error sending password reset OTP:", error)
@@ -382,11 +372,11 @@ export async function resetPasswordWithOTP(
 }> {
   try {
     // Verify OTP first
-    const otpVerification = await verifyOTP(phone, "phone", otpCode)
+    const otpVerification = await verifyOTP(phone, otpCode)
     if (!otpVerification.success) {
       return {
         success: false,
-        message: otpVerification.message,
+        message: otpVerification.error || "OTP verification failed",
         error: "OTP_VERIFICATION_FAILED",
       }
     }

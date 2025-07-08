@@ -6,8 +6,9 @@ import { Button } from "@/components/common/ui/button"
 
 export const dynamic = 'force-dynamic'
 
-export default async function TreatmentPage({ params }: { params: { category: string; id: string } }) {
-  const result = await getTreatmentById(params.id)
+export default async function TreatmentPage({ params }: { params: Promise<{ category: string; id: string }> }) {
+  const { category, id } = await params
+  const result = await getTreatmentById(id)
   if (!result.success || !result.treatment) {
     return <div className="p-4">Treatment not found</div>
   }
@@ -35,7 +36,7 @@ export default async function TreatmentPage({ params }: { params: { category: st
         )}
         <div className="text-center">
           <Button asChild size="lg" className="mt-4">
-            <Link href={`/bookings/treatment?category=${params.category}&treatmentId=${t._id}`}>Book Now</Link>
+            <Link href={`/bookings/treatment?category=${category}&treatmentId=${t._id}`}>Book Now</Link>
           </Button>
         </div>
       </Card>

@@ -4,13 +4,12 @@ import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import Booking from "@/lib/db/models/booking"
 import ProfessionalProfile from "@/lib/db/models/professional-profile"
-import User from "@/lib/db/models/user"
 import { Types } from "mongoose"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     bookingId: string
-  }
+  }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -25,7 +24,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await dbConnect()
 
-    const { bookingId } = params
+    const { bookingId } = await params
     const { professionalId } = await request.json()
 
     if (!professionalId) {

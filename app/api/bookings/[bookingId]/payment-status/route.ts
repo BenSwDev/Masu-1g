@@ -4,10 +4,12 @@ import { logger } from "@/lib/logs/logger"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
+  let bookingId: string | undefined
   try {
-    const { bookingId } = params
+    const resolvedParams = await params
+    bookingId = resolvedParams.bookingId
     const body = await request.json()
     const { paymentStatus, transactionId } = body
 
@@ -69,7 +71,7 @@ export async function POST(
   } catch (error) {
     logger.error("Error in payment status API:", {
       error: error instanceof Error ? error.message : String(error),
-      bookingId: params.bookingId
+      bookingId: bookingId
     })
     
     // Handle specific timeout errors

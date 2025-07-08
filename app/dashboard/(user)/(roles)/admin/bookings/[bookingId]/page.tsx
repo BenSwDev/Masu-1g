@@ -71,17 +71,19 @@ async function BookingPageContent({ bookingId }: { bookingId: string }) {
   }
 }
 
-export default async function BookingPage({ params }: { params: { bookingId: string } }) {
+export default async function BookingPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const session = await requireUserSession()
   
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 
+  const { bookingId } = await params
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <Suspense fallback={<BookingLoadingSkeleton />}>
-        <BookingPageContent bookingId={params.bookingId} />
+        <BookingPageContent bookingId={bookingId} />
       </Suspense>
     </div>
   )

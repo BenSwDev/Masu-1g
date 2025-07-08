@@ -2,11 +2,12 @@ import { MasuLogo } from "@/components/common/masu-logo"
 import { ResetPasswordForm } from "@/components/auth/reset-password/reset-password-form"
 
 interface ResetPasswordPageProps {
-  searchParams: { token?: string }
+  searchParams: Promise<{ token?: string }>
 }
 
-export default function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
-  const token = searchParams.token
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+  const params = await searchParams
+  const token = params.token
 
   if (!token) {
     return (

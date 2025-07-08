@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     responseId: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     action?: "accept" | "decline"
-  }
+  }>
 }
 
 async function ResponseHandler({ responseId, action }: { responseId: string; action?: "accept" | "decline" }) {
@@ -114,9 +114,9 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
   }
 }
 
-export default function ProfessionalResponsePage({ params, searchParams }: PageProps) {
-  const { responseId } = params
-  const { action } = searchParams
+export default async function ProfessionalResponsePage({ params, searchParams }: PageProps) {
+  const { responseId } = await params
+  const { action } = await searchParams
 
   if (!responseId) {
     notFound()

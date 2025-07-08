@@ -1,7 +1,5 @@
 "use server"
 
-import type { ISubscription } from "@/lib/db/models/subscription"
-import type { ITreatment } from "@/lib/db/models/treatment"
 import Subscription from "@/lib/db/models/subscription"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"

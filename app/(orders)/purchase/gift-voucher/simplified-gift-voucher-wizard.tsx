@@ -6,9 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input" 
 import { Label } from "@/components/common/ui/label"
 import { Progress } from "@/components/common/ui/progress"
-import { Badge } from "@/components/common/ui/badge"
 import { useToast } from "@/components/common/ui/use-toast"
-import { DollarSign, Gift, User, CreditCard } from "lucide-react"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
@@ -64,9 +62,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
   const { toast } = useToast()
   
   // Convert treatments to serialized format
-  const [treatments, setTreatments] = useState<SerializedTreatment[]>(
-    propTreatments ? propTreatments.map(treatmentToSerialized) : []
-  )
+  const treatments = propTreatments ? propTreatments.map(treatmentToSerialized) : []
   
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [voucherType, setVoucherType] = useState<"monetary" | "treatment">("monetary")

@@ -165,8 +165,9 @@ function getCategoryIcon(categoryName: string) {
   return icons[categoryName as keyof typeof icons] || <BookOpen className="w-4 h-4" />
 }
 
-export default async function WikiPage({ params }: { params: Params }) {
-  const slug = params.slug ?? []
+export default async function WikiPage({ params }: { params: Promise<Params> }) {
+  const resolvedParams = await params
+  const slug = resolvedParams.slug ?? []
   const docsDir = path.join(process.cwd(), 'user-docs')
   const targetPath = path.join(docsDir, ...slug)
   const relative = path.relative(docsDir, targetPath)

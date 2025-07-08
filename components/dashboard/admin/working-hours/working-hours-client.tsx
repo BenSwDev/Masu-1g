@@ -51,8 +51,7 @@ import {
   deleteSpecialDate,
   deleteSpecialDateEvent,
 } from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
-import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent } from "@/lib/db/models/working-hours"
-import { ISpecialDate } from "@/lib/db/models/working-hours"
+import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent, ISpecialDate } from "@/lib/db/models/working-hours"
 
 const priceAdditionSchema = z
   .object({

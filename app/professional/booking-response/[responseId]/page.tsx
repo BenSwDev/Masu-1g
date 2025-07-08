@@ -277,7 +277,7 @@ export default function ProfessionalResponsePage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">מעצו - התגובה להזמנה</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2"> Masu - הזמנה פנויה לשיוך</h1>
           <p className="text-gray-600">שלום {responseData.professionalName}</p>
         </div>
 
@@ -337,14 +337,6 @@ export default function ProfessionalResponsePage() {
             </div>
 
             <Separator />
-
-            <div className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="font-medium">מחיר</p>
-                <p className="text-gray-600">₪{responseData.booking.price}</p>
-              </div>
-            </div>
 
             {responseData.booking.notes && (
               <>

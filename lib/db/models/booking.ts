@@ -4,6 +4,8 @@ export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
   | "pending_professional" // ממתינה לשיוך מטפל - שולם אבל לא שויך מטפל
   | "confirmed" // מאושר - שויך מטפל
+  | "on_way" // בדרך - מטפל בדרך לטיפול
+  | "in_treatment" // בטיפול - מטפל התחיל טיפול
   | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
   | "refunded" // הוחזר - בוטל עם החזר
@@ -257,6 +259,8 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "pending_payment",
         "pending_professional",
         "confirmed",
+        "on_way",
+        "in_treatment",
         "completed",
         "cancelled",
         "refunded",

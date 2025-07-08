@@ -6,9 +6,10 @@ export interface EmailNotificationData {
     | "adminPasswordReset"
     | "otp"
     | "treatment-booking-success"
-    | "professional-booking-notification"
-    | "purchase-success"
-    | "review-reminder"
+      | "professional-booking-notification"
+  | "professional-on-way"
+  | "purchase-success"
+  | "review-reminder"
   userName?: string
   email?: string
   resetLink?: string
@@ -31,6 +32,8 @@ export interface EmailNotificationData {
   // Professional booking notification fields
   responseLink?: string
   price?: number
+  // Professional on-way notification fields
+  professionalName?: string
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -585,6 +588,39 @@ body {
         <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
         <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.`}</p>
         <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "professional-on-way": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "המטפל שלך בדרך!" : language === "ru" ? "Ваш специалист в пути!" : "Your therapist is on the way!"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום,\n\nהמטפל ${data.professionalName} בדרך לטיפול ${data.treatmentName} שנקבע ל-${formattedDate} בשעה ${formattedTime}.\n\nמספר הזמנה: ${data.bookingNumber}\n\nהמטפל יגיע בקרוב!`
+          : language === "ru"
+            ? `Здравствуйте,\n\nСпециалист ${data.professionalName} в пути к процедуре ${data.treatmentName}, запланированной на ${formattedDate} в ${formattedTime}.\n\nНомер заказа: ${data.bookingNumber}\n\nСпециалист скоро прибудет!`
+            : `Hello,\n\nYour therapist ${data.professionalName} is on the way to your ${data.treatmentName} treatment scheduled for ${formattedDate} at ${formattedTime}.\n\nBooking number: ${data.bookingNumber}\n\nThe therapist will arrive soon!`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "המטפל שלך בדרך!" : language === "ru" ? "Ваш специалист в пути!" : "Your therapist is on the way!"}</h2>
+        <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
+        <p>${language === "he" ? `המטפל ${data.professionalName} בדרך לטיפול ${data.treatmentName} שנקבע ל-${formattedDate} בשעה ${formattedTime}.` : language === "ru" ? `Специалист ${data.professionalName} в пути к процедуре ${data.treatmentName}, запланированной на ${formattedDate} в ${formattedTime}.` : `Your therapist ${data.professionalName} is on the way to your ${data.treatmentName} treatment scheduled for ${formattedDate} at ${formattedTime}.`}</p>
+        <p><strong>${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking number:"}</strong> ${data.bookingNumber}</p>
+        <p>${language === "he" ? "המטפל יגיע בקרוב!" : language === "ru" ? "Специалист скоро прибудет!" : "The therapist will arrive soon!"}</p>
       `
       text = textContent
       html = wrapHtml(htmlContent, subject)

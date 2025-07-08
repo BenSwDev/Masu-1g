@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import Booking from "@/lib/db/models/booking"
 import ProfessionalProfile from "@/lib/db/models/professional-profile"
+import User from "@/lib/db/models/user"
 import { Types } from "mongoose"
 
 export async function GET(request: NextRequest) {

@@ -174,6 +174,41 @@ const AdminBookingActions = ({
     })
   }
 
+  const handleSendToAllSuitableProfessionals = async () => {
+    try {
+      toast({
+        title: "שולח התראות...",
+        description: "מוצא מטפלים מתאימים ושולח התראות"
+      })
+
+      const response = await fetch(`/api/admin/bookings/${booking._id}/send-to-all-suitable`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast({
+          title: "הצלחה!",
+          description: `התראות נשלחו ל-${result.sentCount} מטפלים מתאימים`
+        })
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        throw new Error(result.error || "שגיאה בשליחת התראות")
+      }
+    } catch (error) {
+      console.error("Error sending to all suitable professionals:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בשליחת התראות למטפלים"
+      })
+    }
+  }
+
   return (
     <div className="flex items-center space-x-1">
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -214,13 +249,22 @@ const AdminBookingActions = ({
           </DropdownMenuItem>
 
           {canSendToProfessionals && (
-            <DropdownMenuItem
-              onClick={() => setShowNotificationModal(true)}
-              className="cursor-pointer"
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              <span>שלח התראות למטפלים</span>
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem
+                onClick={() => setShowNotificationModal(true)}
+                className="cursor-pointer"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>שלח התראות למטפלים</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleSendToAllSuitableProfessionals}
+                className="cursor-pointer text-blue-600"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>שלח לכל המטפלים המתאימים</span>
+              </DropdownMenuItem>
+            </>
           )}
 
           {canViewResponses && (

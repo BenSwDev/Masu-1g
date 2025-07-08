@@ -322,7 +322,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
       professional: [
-        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
         { titleKey: "location", icon: MapPin, hrefSuffix: "location" },
         { titleKey: "bankAccount", icon: CreditCard, hrefSuffix: "bank-account" },

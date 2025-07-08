@@ -276,10 +276,10 @@ function ProfessionalBookingsTab({
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <UserX className="w-5 h-5" />
-                  הזמנות פוטנציאליות
-                </CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <UserX className="w-5 h-5" />
+                הזמנות פוטנציאליות
+              </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -641,6 +641,6 @@ function ProfessionalMatchInfo({ booking, professional }: ProfessionalMatchInfoP
       </div>
     </div>
   )
-}
+} 
 
 export default memo(ProfessionalBookingsTab) 

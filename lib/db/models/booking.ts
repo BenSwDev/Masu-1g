@@ -4,11 +4,7 @@ export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
   | "pending_professional" // ממתינה לשיוך מטפל - שולם אבל לא שויך מטפל
   | "confirmed" // מאושר - שויך מטפל
-  | "on_way" // בדרך - המטפל יצא לטיפול
-  | "completed" // הושלם - הטיפול הושלם
-  | "pending_review" // ממתין לחוות דעת - נשלחה בקשה לחוות דעת
-  | "reviewed" // נסקר - הלקוח השאיר חוות דעת
-  | "no_professionals_available" // אין מטפלים זמינים - כל המטפלים דחו
+  | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
   | "refunded" // הוחזר - בוטל עם החזר
 
@@ -126,13 +122,6 @@ export interface IBooking extends Document {
   createdAt: Date
   updatedAt: Date
   reviewReminderSentAt?: Date
-  
-  // תאריכי מחזור חיים מתקדמים
-  professionalArrivedAt?: Date // תאריך שהמטפל הגיע/יצא לטיפול
-  treatmentCompletedAt?: Date // תאריך שהטיפול הושלם
-  reviewRequestSentAt?: Date // תאריך שנשלחה בקשת חוות דעת
-  reviewCompletedAt?: Date // תאריך שהלקוח השלים חוות דעת
-  noResponseFromProfessionalsAt?: Date // תאריך שקבענו שאין מטפלים זמינים
   suitableProfessionals?: Array<{
     professionalId: Types.ObjectId
     name: string
@@ -157,12 +146,6 @@ export interface IBooking extends Document {
   consents: IBookingConsents
   enhancedPaymentDetails?: IEnhancedPaymentDetails
   review?: IBookingReview
-
-  // Review management fields
-  reviewReminderRequestedAt?: Date
-  firstReminderSentAt?: Date
-  secondReminderSentAt?: Date
-  finalReminderSentAt?: Date
 }
 
 const ProfessionalShareSchema = new Schema<IProfessionalShare>({
@@ -274,11 +257,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "pending_payment",
         "pending_professional",
         "confirmed",
-        "on_way",
         "completed",
-        "pending_review",
-        "reviewed",
-        "no_professionals_available",
         "cancelled",
         "refunded",
       ],
@@ -310,14 +289,6 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientGender: { type: String, enum: ["male", "female"] },
     isBookingForSomeoneElse: { type: Boolean, default: false },
     reviewReminderSentAt: { type: Date },
-    
-    // תאריכי מחזור חיים מתקדמים
-    professionalArrivedAt: { type: Date },
-    treatmentCompletedAt: { type: Date },
-    reviewRequestSentAt: { type: Date },
-    reviewCompletedAt: { type: Date },
-    noResponseFromProfessionalsAt: { type: Date },
-    
     formState: {
       currentStep: { type: Number },
       guestInfo: { type: Schema.Types.Mixed },
@@ -353,12 +324,6 @@ const BookingSchema: Schema<IBooking> = new Schema(
     consents: { type: BookingConsentsSchema },
     enhancedPaymentDetails: { type: EnhancedPaymentDetailsSchema },
     review: { type: BookingReviewSchema },
-
-    // Review management fields
-    reviewReminderRequestedAt: { type: Date },
-    firstReminderSentAt: { type: Date },
-    secondReminderSentAt: { type: Date },
-    finalReminderSentAt: { type: Date },
   },
   { timestamps: true },
 )

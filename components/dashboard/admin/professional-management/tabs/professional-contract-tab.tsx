@@ -146,6 +146,6 @@ function ProfessionalContractTab({
       </Card>
     </div>
   )
-}
+} 
 
 export default memo(ProfessionalContractTab) 

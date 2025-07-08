@@ -28,7 +28,7 @@ interface ProfessionalEditPageProps {
 
 function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: ProfessionalEditPageProps) {
   console.log('🔥 TRACE: ProfessionalEditPage RENDER START', professional._id)
-
+  
   const { t, dir } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
@@ -61,7 +61,7 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
         to: professional._id,
         timestamp: new Date().toISOString()
       })
-      setUpdatedProfessional(professional)
+    setUpdatedProfessional(professional)
       setHasUnsavedChanges(false)
     }
   }, [professional._id, updatedProfessional._id])
@@ -215,9 +215,9 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
             <div className="flex items-center gap-3 mt-1">
               {getStatusBadge(updatedProfessional.status)}
               {!isCreatingNew && (
-                <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                   הצטרף ב-{formatDateSafe(updatedProfessional.appliedAt)}
-                </span>
+              </span>
               )}
             </div>
           </div>
@@ -354,7 +354,7 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
       </Card>
     </div>
   )
-}
+} 
 
 // Custom comparison function to prevent unnecessary re-renders
 const arePropsEqual = (prevProps: ProfessionalEditPageProps, nextProps: ProfessionalEditPageProps) => {

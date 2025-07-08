@@ -217,7 +217,7 @@ function ProfessionalBankDetailsTab({
       )}
     </div>
   )
-}
+} 
 
 // Custom memo comparison function
 const arePropsEqual = (prevProps: ProfessionalBankDetailsTabProps, nextProps: ProfessionalBankDetailsTabProps) => {

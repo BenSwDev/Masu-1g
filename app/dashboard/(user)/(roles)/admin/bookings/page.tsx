@@ -3,15 +3,6 @@ import { redirect } from "next/navigation";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card";
 import { AlertTriangle } from "lucide-react";
-import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
-import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary";
-import dynamic from "next/dynamic";
-
-// Dynamic import for the heavy admin client component
-const AdminBookingsClient = dynamic(() => import("@/components/dashboard/admin/bookings/admin-bookings-client"), {
-  loading: () => <BookingsTableSkeleton />,
-  ssr: false
-});
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'
@@ -20,6 +11,10 @@ export const metadata = {
   title: "ניהול הזמנות",
   description: "צפייה וניהול כל ההזמנות במערכת"
 }
+
+import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client";
+import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
+import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary";
 
 function BookingsErrorFallback() {
   return (
@@ -53,6 +48,7 @@ function BookingsContent() {
       <AdminBookingsClient />
     </BookingsErrorBoundary>
   );
+  
 }
 
 export default async function AdminBookingsPage() {

@@ -337,6 +337,6 @@ function ProfessionalDocumentsTab({
       </Card>
     </div>
   )
-}
+} 
 
 export default memo(ProfessionalDocumentsTab) 

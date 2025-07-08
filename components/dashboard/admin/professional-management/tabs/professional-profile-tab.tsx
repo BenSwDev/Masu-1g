@@ -27,7 +27,7 @@ function ProfessionalProfileTab({
   onCreated
 }: ProfessionalProfileTabProps) {
   console.log('🔥 TRACE: ProfessionalProfileTab RENDER', professional._id)
-
+  
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -60,7 +60,7 @@ function ProfessionalProfileTab({
   // Sync state with props when professional changes
   useEffect(() => {
     console.log('🔥 TRACE: ProfessionalProfileTab useEffect triggered', professional._id)
-
+    
     const newUserDetails = {
       name: typeof professional.userId === 'object' ? professional.userId.name || "" : "",
       email: typeof professional.userId === 'object' ? professional.userId.email || "" : "",
@@ -103,8 +103,8 @@ function ProfessionalProfileTab({
       }
       console.log('🔥 TRACE: handleUserDetailChange - UPDATING', field, `${prev[field]} -> ${value}`)
       return {
-        ...prev,
-        [field]: value
+      ...prev,
+      [field]: value
       }
     })
     setHasChanges(true)
@@ -480,7 +480,7 @@ function ProfessionalProfileTab({
       </Card>
     </div>
   )
-}
+} 
 
 // Custom memo comparison function
 const arePropsEqual = (prevProps: ProfessionalProfileTabProps, nextProps: ProfessionalProfileTabProps) => {

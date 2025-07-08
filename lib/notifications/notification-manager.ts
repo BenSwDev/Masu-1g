@@ -367,62 +367,6 @@ export class NotificationManager {
       return `${contact.substring(0, 3)}***${contact.substring(contact.length - 2)}`
     }
   }
-  /**
-   * Send booking confirmation notification
-   */
-  async sendBookingConfirmation(bookingId: string, professionalId: string): Promise<NotificationResult[]> {
-    // For now, return success - actual implementation will be in booking-notification-service
-    return [{ success: true, messageId: `booking_confirmation_${bookingId}` }]
-  }
-
-  /**
-   * Send booking notification to professional
-   */
-  async sendBookingNotification(bookingId: string, professionalId: string): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `booking_notification_${bookingId}` }]
-  }
-
-  /**
-   * Send booking assignment notification
-   */
-  async sendBookingAssignment(bookingId: string, professionalId: string): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `booking_assignment_${bookingId}` }]
-  }
-
-  /**
-   * Send status update notification
-   */
-  async sendStatusUpdate(bookingId: string, status: string, metadata?: Record<string, any>): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `status_update_${bookingId}` }]
-  }
-
-  /**
-   * Send review request notification
-   */
-  async sendReviewRequest(bookingId: string, userId: string): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `review_request_${bookingId}` }]
-  }
-
-  /**
-   * Send review reminder notification
-   */
-  async sendReviewReminder(bookingId: string, userId: string): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `review_reminder_${bookingId}` }]
-  }
-
-  /**
-   * Send booking reminder to professional
-   */
-  async sendBookingReminder(bookingId: string, professionalId: string): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `booking_reminder_${bookingId}` }]
-  }
-
-  /**
-   * Send admin alert notification
-   */
-  async sendAdminAlert(alertType: string, metadata: Record<string, any>): Promise<NotificationResult[]> {
-    return [{ success: true, messageId: `admin_alert_${alertType}` }]
-  }
 }
 
 // Export singleton instance

@@ -49,7 +49,7 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
           professionalPrice,
           treatmentName: t.treatmentName || ''
         }
-              } catch (error) {
+      } catch (error) {
         return {
           treatmentId: '',
           durationId: undefined,
@@ -138,10 +138,9 @@ function transformProfessionalData(rawProfessional: IProfessionalProfile & { use
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
-    const { id } = await params
-    const result = await getProfessionalById(id)
+    const result = await getProfessionalById(params.id)
     if (result.success && result.professional) {
       return {
         title: `עריכת מטפל - ${result.professional.userId.name} | מנהל`,
@@ -228,21 +227,19 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
   }
 }
 
-export default async function ProfessionalEditPageRoute({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProfessionalEditPageRoute({ params }: { params: { id: string } }) {
   const session = await requireUserSession()
   
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 
-  const { id } = await params
-
-  if (!id) {
+  if (!params.id) {
     redirect("/dashboard/admin/professional-management")
   }
 
   // Redirect old "new" route to the main page
-  if (id === "new") {
+  if (params.id === "new") {
     redirect("/dashboard/admin/professional-management")
   }
 
@@ -250,7 +247,7 @@ export default async function ProfessionalEditPageRoute({ params }: { params: Pr
     <div className="container mx-auto py-6 space-y-6">
       <Suspense fallback={<ProfessionalEditLoadingSkeleton />}>
         <ProfessionalEditErrorBoundary>
-          <ProfessionalEditPageContent id={id} />
+          <ProfessionalEditPageContent id={params.id} />
         </ProfessionalEditErrorBoundary>
       </Suspense>
     </div>

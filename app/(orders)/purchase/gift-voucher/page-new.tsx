@@ -1,19 +1,9 @@
-import { getTreatmentsForSelection, type SerializedTreatment } from "./actions"
+import { getTreatmentsForSelection } from "./actions"
+import type { SerializedTreatment } from "./actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
+import SimplifiedGiftVoucherWizard from "./simplified-gift-voucher-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
-import { Suspense } from "react"
-import dynamic from "next/dynamic"
-
-// Dynamic import for the heavy wizard component
-const SimplifiedGiftVoucherWizard = dynamic(() => import("./simplified-gift-voucher-wizard"), {
-  loading: () => (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>
-  ),
-  ssr: false
-})
 
 // Force dynamic rendering for database access
 export const dynamic = 'force-dynamic'
@@ -54,13 +44,7 @@ export default async function GuestBookGiftVoucherPageNew() {
 
   return (
     <GuestLayout>
-      <Suspense fallback={
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      }>
-        <SimplifiedGiftVoucherWizard treatments={treatments} />
-      </Suspense>
+      <SimplifiedGiftVoucherWizard treatments={treatments} />
     </GuestLayout>
   )
 } 

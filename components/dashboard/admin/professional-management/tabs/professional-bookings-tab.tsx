@@ -46,18 +46,21 @@ function ProfessionalBookingsTab({
   // Fetch bookings
   useEffect(() => {
     fetchBookings()
-  }, [professional._id])
+  }, [professional._id, professional.userId])
 
   const fetchBookings = async () => {
     try {
       setLoading(true)
       
-      // Fetch assigned bookings
-      const assignedResponse = await fetch(`/api/admin/bookings?professional=${professional._id}`)
+      // Get the correct user ID from the professional object
+      const userId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
+      
+      // Fetch assigned bookings (using userId for professionalId field in bookings)
+      const assignedResponse = await fetch(`/api/admin/bookings?professional=${userId}`)
       const assignedData = await assignedResponse.json()
       
       // Fetch potential bookings (unassigned bookings that match professional criteria)
-      const potentialResponse = await fetch(`/api/admin/bookings/potential?professionalId=${professional._id}`)
+      const potentialResponse = await fetch(`/api/admin/bookings/potential?professionalId=${userId}`)
       const potentialData = await potentialResponse.json()
       
       if (assignedData.success) {
@@ -87,13 +90,16 @@ function ProfessionalBookingsTab({
     try {
       setAssigningBooking(bookingId)
       
+      // Get the correct user ID from the professional object
+      const userId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
+      
       const response = await fetch(`/api/admin/bookings/${bookingId}/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          professionalId: professional._id
+          professionalId: userId
         })
       })
       
@@ -166,7 +172,7 @@ function ProfessionalBookingsTab({
 
     try {
       // Send notifications to professional about all potential bookings
-      const professionalId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
+      const userId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
       
       for (const booking of potentialBookings) {
         const response = await fetch(`/api/admin/bookings/${booking._id}/notify-professionals`, {
@@ -176,7 +182,7 @@ function ProfessionalBookingsTab({
           },
           body: JSON.stringify({
             professionals: [{
-              professionalId: professionalId,
+              professionalId: userId,
               email: true,
               sms: true
             }]

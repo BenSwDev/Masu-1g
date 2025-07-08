@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get professional profile
+    // Get professional profile (professionalId is now userId)
     const professionalProfile = await ProfessionalProfile.findOne({
       userId: new Types.ObjectId(professionalId)
     }).populate("userId")

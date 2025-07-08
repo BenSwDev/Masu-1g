@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
+import { verifyProfessionalToken } from "@/lib/auth/jwt-auth"
 
 /**
  * POST /api/professional/response/[responseId]/decline
@@ -20,6 +21,15 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: "מזהה תגובה לא תקין" },
         { status: 400 }
+      )
+    }
+
+    // Verify JWT token
+    const tokenData = verifyProfessionalToken(request)
+    if (!tokenData || tokenData.responseId !== responseId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
       )
     }
 

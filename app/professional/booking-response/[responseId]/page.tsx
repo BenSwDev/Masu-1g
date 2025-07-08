@@ -7,7 +7,9 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Separator } from "@/components/common/ui/separator"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Loader2, CheckCircle, XCircle, Clock, MapPin, Calendar, User, Phone, AlertCircle } from "lucide-react"
+import { Input } from "@/components/common/ui/input"
+import { Label } from "@/components/common/ui/label"
+import { Loader2, CheckCircle, XCircle, Clock, MapPin, Calendar, User, Phone, AlertCircle, Shield } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -22,7 +24,6 @@ interface BookingDetails {
     streetNumber?: string
   }
   status: string
-  price: number
   notes?: string
 }
 
@@ -33,6 +34,7 @@ interface ResponseData {
   professionalName: string
   canRespond: boolean
   bookingCurrentStatus: string
+  professionalPhone: string
 }
 
 type ActionType = "accept" | "decline" | "on_way" | "start_treatment" | "complete_treatment"
@@ -47,23 +49,83 @@ export default function ProfessionalResponsePage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  // Authentication states
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [verificationLoading, setVerificationLoading] = useState(false)
+  const [verificationError, setVerificationError] = useState<string | null>(null)
+
   useEffect(() => {
     if (responseId) {
-      fetchResponseData()
+      // Check if already authenticated
+      const token = localStorage.getItem(`professional_token_${responseId}`)
+      if (token) {
+        setIsAuthenticated(true)
+        fetchResponseData()
+      } else {
+        setLoading(false)
+      }
     }
   }, [responseId])
+
+  const verifyPhone = async () => {
+    if (!phoneNumber.trim()) {
+      setVerificationError("נא להכניס מספר טלפון")
+      return
+    }
+
+    setVerificationLoading(true)
+    setVerificationError(null)
+
+    try {
+      const response = await fetch(`/api/professional/response/${responseId}/verify-phone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber: phoneNumber.trim() })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Store token for future visits
+        localStorage.setItem(`professional_token_${responseId}`, data.token)
+        setIsAuthenticated(true)
+        await fetchResponseData()
+      } else {
+        setVerificationError(data.error || "שגיאה באימות הטלפון")
+      }
+    } catch (err) {
+      setVerificationError("שגיאה בחיבור לשרת")
+    } finally {
+      setVerificationLoading(false)
+    }
+  }
 
   const fetchResponseData = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/professional/response/${responseId}`)
+      const token = localStorage.getItem(`professional_token_${responseId}`)
+      const response = await fetch(`/api/professional/response/${responseId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
       const data = await response.json()
       
       if (data.success) {
         setResponseData(data.data)
       } else {
+        if (data.error === "Unauthorized") {
+          // Remove invalid token
+          localStorage.removeItem(`professional_token_${responseId}`)
+          setIsAuthenticated(false)
+        }
         setError(data.error || "שגיאה בטעינת הנתונים")
       }
     } catch (err) {
@@ -81,9 +143,11 @@ export default function ProfessionalResponsePage() {
     setSuccess(null)
 
     try {
+      const token = localStorage.getItem(`professional_token_${responseId}`)
       const response = await fetch(`/api/professional/response/${responseId}/${action}`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         }
       })
@@ -94,6 +158,10 @@ export default function ProfessionalResponsePage() {
         setSuccess(data.message)
         await fetchResponseData() // Refresh data
       } else {
+        if (data.error === "Unauthorized") {
+          localStorage.removeItem(`professional_token_${responseId}`)
+          setIsAuthenticated(false)
+        }
         setError(data.error || "שגיאה בביצוע הפעולה")
       }
     } catch (err) {
@@ -227,6 +295,71 @@ export default function ProfessionalResponsePage() {
     return null
   }
 
+  // Phone verification screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-md mx-auto px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Masu - אימות זהות</h1>
+            <p className="text-gray-600">לביטחון שלך ושל הלקוח</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                אימות מספר טלפון
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-gray-600">
+                נא להכניס את מספר הטלפון שלך כדי לוודא שאת/ה המטפל/ת שההתראה נשלחה אליו/ה
+              </div>
+
+              {verificationError && (
+                <Alert className="bg-red-50 border-red-200">
+                  <XCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">{verificationError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">מספר טלפון</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="050-123-4567"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && verifyPhone()}
+                  className="text-right"
+                />
+              </div>
+
+              <Button 
+                onClick={verifyPhone}
+                disabled={verificationLoading}
+                className="w-full"
+              >
+                {verificationLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Shield className="h-4 w-4 mr-2" />
+                )}
+                אמת זהות
+              </Button>
+
+              <div className="text-xs text-gray-500 text-center">
+                המספר חייב להיות זהה למספר שרשום במערכת
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -277,7 +410,7 @@ export default function ProfessionalResponsePage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2"> Masu - הזמנה פנויה לשיוך</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Masu - הזמנה פנויה לשיוך</h1>
           <p className="text-gray-600">שלום {responseData.professionalName}</p>
         </div>
 
@@ -340,11 +473,11 @@ export default function ProfessionalResponsePage() {
 
             {responseData.booking.notes && (
               <>
-                <Separator />
                 <div>
                   <p className="font-medium mb-2">הערות</p>
                   <p className="text-gray-600 bg-gray-50 p-3 rounded">{responseData.booking.notes}</p>
                 </div>
+                <Separator />
               </>
             )}
           </CardContent>

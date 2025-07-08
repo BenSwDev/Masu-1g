@@ -63,6 +63,10 @@ export async function POST(
       )
     }
 
+    // Get request options
+    const requestBody = await request.json()
+    const { sms = true, email = true } = requestBody
+
     // Send review request
     try {
       const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
@@ -91,50 +95,33 @@ export async function POST(
         bookingNumber: booking.bookingNumber || `#${bookingId.slice(-8)}`
       }
 
-      // Prepare notification recipients
+      // Prepare notification recipients based on admin selection
       const recipients = []
-      
-      // Add email if customer has email and email notifications enabled
-      if (customer.email && customer.notificationPreferences?.methods?.includes('email')) {
+      const lang = customer.notificationPreferences?.language || "he"
+      const customerName = booking.recipientName || customer.name
+
+      // Add email if requested and customer has email
+      if (email && (booking.recipientEmail || customer.email)) {
         recipients.push({
           type: "email" as const,
-          value: customer.email,
-          name: customer.name,
-          language: customer.notificationPreferences?.language || "he"
+          value: booking.recipientEmail || customer.email,
+          name: customerName,
+          language: lang
         })
       }
       
-      // Add SMS if customer has phone and SMS notifications enabled
-      if (customer.phone && customer.notificationPreferences?.methods?.includes('sms')) {
+      // Add SMS if requested and customer has phone
+      if (sms && (booking.recipientPhone || customer.phone)) {
         recipients.push({
           type: "phone" as const,
-          value: customer.phone,
-          language: customer.notificationPreferences?.language || "he"
+          value: booking.recipientPhone || customer.phone,
+          language: lang
         })
-      }
-
-      // If no notification preferences, send to both email and phone by default
-      if (!recipients.length) {
-        if (customer.email) {
-          recipients.push({
-            type: "email" as const,
-            value: customer.email,
-            name: customer.name,
-            language: "he"
-          })
-        }
-        if (customer.phone) {
-          recipients.push({
-            type: "phone" as const,
-            value: customer.phone,
-            language: "he"
-          })
-        }
       }
 
       if (recipients.length === 0) {
         return NextResponse.json(
-          { success: false, error: "לא נמצאו אמצעי יצירת קשר עם הלקוח" },
+          { success: false, error: "לא נבחרו אמצעי יצירת קשר או שאין פרטי קשר זמינים" },
           { status: 400 }
         )
       }
@@ -145,12 +132,15 @@ export async function POST(
         bookingId,
         adminUserId: session.userId,
         customerName: customer.name,
-        recipientCount: recipients.length
+        recipientCount: recipients.length,
+        sentVia: recipients.map(r => r.type).join(", ")
       })
+
+      const sentVia = recipients.map(r => r.type === "email" ? "אימייל" : "SMS").join(" ו-")
 
       return NextResponse.json({
         success: true,
-        message: "בקשה לחוות דעת נשלחה בהצלחה ללקוח"
+        message: `בקשה לחוות דעת נשלחה בהצלחה ללקוח דרך ${sentVia}`
       })
 
     } catch (notificationError) {

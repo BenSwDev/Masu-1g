@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/common/ui/checkbox"
 import { Label } from "@/components/common/ui/label"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
-import { sendReviewReminder } from "@/actions/review-actions"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface SendReviewDialogProps {
@@ -27,7 +26,19 @@ export default function SendReviewDialog({ booking, open, onOpenChange, onSent }
 
     setSending(true)
     try {
-      const result = await sendReviewReminder(booking._id.toString(), { sms: sendSms, email: sendEmail })
+      const response = await fetch(`/api/admin/bookings/${booking._id}/send-review-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sms: sendSms,
+          email: sendEmail
+        })
+      })
+
+      const result = await response.json()
+      
       if (result.success) {
         toast.success("נשלחה בקשת חוות דעת")
         onSent()
@@ -36,6 +47,7 @@ export default function SendReviewDialog({ booking, open, onOpenChange, onSent }
         toast.error(result.error || "שגיאה בשליחת הבקשה")
       }
     } catch (err) {
+      console.error("Error sending review request:", err)
       toast.error("שגיאה בשליחת הבקשה")
     } finally {
       setSending(false)

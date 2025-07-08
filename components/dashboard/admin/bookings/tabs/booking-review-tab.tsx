@@ -26,7 +26,6 @@ import {
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 import type { PopulatedReview } from "@/types/review"
-import { sendReviewReminder } from "@/actions/review-actions"
 
 interface BookingReviewTabProps {
   booking: PopulatedBooking
@@ -73,7 +72,18 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
   const handleSendReviewRequest = async () => {
     try {
       setSendingRequest(true)
-      const result = await sendReviewReminder(booking._id, { sms: true, email: true })
+      const response = await fetch(`/api/admin/bookings/${booking._id}/send-review-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sms: true,
+          email: true
+        })
+      })
+
+      const result = await response.json()
       
       if (result.success) {
         toast({
@@ -88,6 +98,7 @@ export default function BookingReviewTab({ booking, onUpdate }: BookingReviewTab
         })
       }
     } catch (error) {
+      console.error("Error sending review request:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",

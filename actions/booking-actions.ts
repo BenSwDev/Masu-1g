@@ -790,8 +790,22 @@ export async function createBooking(
       }
       
       bookingAddressSnapshot = {
-        ...addressDetails,
-        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails)
+        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails),
+        city: addressDetails.city || "",
+        street: addressDetails.street || "",
+        streetNumber: addressDetails.streetNumber || "",
+        addressType: (addressDetails as any).addressType || "apartment",
+        apartment: (addressDetails as any).apartment,
+        entrance: (addressDetails as any).entrance,
+        floor: (addressDetails as any).floor,
+        notes: (addressDetails as any).notes,
+        doorName: (addressDetails as any).doorName,
+        buildingName: (addressDetails as any).buildingName,
+        hotelName: (addressDetails as any).hotelName,
+        roomNumber: (addressDetails as any).roomNumber,
+        instructions: (addressDetails as any).instructions,
+        otherInstructions: (addressDetails as any).otherInstructions,
+        hasPrivateParking: (addressDetails as any).hasPrivateParking,
       }
     } else if (validatedPayload.selectedAddressId) {
       const selectedAddressDoc = (await Address.findById(validatedPayload.selectedAddressId).lean()) as IAddress | null
@@ -811,6 +825,7 @@ export async function createBooking(
         city: selectedAddressDoc.city,
         street: selectedAddressDoc.street,
         streetNumber: selectedAddressDoc.streetNumber,
+        addressType: selectedAddressDoc.addressType,
         apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
         entrance:
           selectedAddressDoc.addressType === "apartment"
@@ -836,6 +851,8 @@ export async function createBooking(
         hotelName: selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.hotelName : undefined,
         roomNumber:
           selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.roomNumber : undefined,
+        instructions:
+          selectedAddressDoc.addressType === "other" ? selectedAddressDoc.otherDetails?.instructions : undefined,
         otherInstructions:
           selectedAddressDoc.addressType === "other" ? selectedAddressDoc.otherDetails?.instructions : undefined,
         hasPrivateParking: selectedAddressDoc.hasPrivateParking,
@@ -2414,8 +2431,22 @@ export async function createGuestBooking(
       }
       
       bookingAddressSnapshot = {
-        ...addressDetails,
-        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails)
+        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails),
+        city: addressDetails.city || "",
+        street: addressDetails.street || "",
+        streetNumber: addressDetails.streetNumber || "",
+        addressType: (addressDetails as any).addressType || "apartment",
+        apartment: (addressDetails as any).apartment,
+        entrance: (addressDetails as any).entrance,
+        floor: (addressDetails as any).floor,
+        notes: (addressDetails as any).notes,
+        doorName: (addressDetails as any).doorName,
+        buildingName: (addressDetails as any).buildingName,
+        hotelName: (addressDetails as any).hotelName,
+        roomNumber: (addressDetails as any).roomNumber,
+        instructions: (addressDetails as any).instructions,
+        otherInstructions: (addressDetails as any).otherInstructions,
+        hasPrivateParking: (addressDetails as any).hasPrivateParking,
       }
     } else {
       logger.warn("No address provided for guest booking")

@@ -960,7 +960,7 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
   )
 }
 
-// Fix AddressDetailsInfo to properly handle parking information
+// Enhanced AddressDetailsInfo to display address type and relevant fields
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   // First try bookingAddressSnapshot, then addressId, then customAddressDetails
   const address = booking.bookingAddressSnapshot || booking.customAddressDetails || (booking as any).addressId
@@ -972,9 +972,32 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   // Handle different address structure formats
   const streetNumber = address.streetNumber || address.houseNumber
   const hasParking = address.hasPrivateParking
+  const addressType = address.addressType || "apartment" // Default fallback
+
+  // Get address type display name and icon
+  const getAddressTypeInfo = (type: string) => {
+    switch (type) {
+      case "apartment": return { name: "דירה", icon: "🏠", color: "bg-blue-100 text-blue-800" }
+      case "house": return { name: "בית פרטי", icon: "🏡", color: "bg-green-100 text-green-800" }
+      case "office": return { name: "משרד", icon: "🏢", color: "bg-purple-100 text-purple-800" }
+      case "hotel": return { name: "מלון/צימר", icon: "🏨", color: "bg-pink-100 text-pink-800" }
+      case "other": return { name: "אחר", icon: "📍", color: "bg-gray-100 text-gray-800" }
+      default: return { name: "דירה", icon: "🏠", color: "bg-blue-100 text-blue-800" }
+    }
+  }
+
+  const typeInfo = getAddressTypeInfo(addressType)
 
   return (
-    <div className="space-y-1 max-w-[200px]">
+    <div className="space-y-1 max-w-[220px]">
+      {/* Address Type Badge */}
+      <div className="flex items-center gap-1 mb-1">
+        <span className={`text-xs px-2 py-1 rounded font-medium ${typeInfo.color}`}>
+          {typeInfo.icon} {typeInfo.name}
+        </span>
+      </div>
+
+      {/* Main Address */}
       <div className="font-medium text-sm">
         {address.fullAddress || 
          (address.street && streetNumber 
@@ -983,55 +1006,89 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
          )
         }
       </div>
+
+      {/* Type-specific fields */}
+      {addressType === "apartment" && (
+        <div className="space-y-1">
+          {address.floor && (
+            <div className="text-xs text-muted-foreground">
+              קומה: {address.floor}
+            </div>
+          )}
+          {address.apartment && (
+            <div className="text-xs text-muted-foreground">
+              דירה: {address.apartment}
+            </div>
+          )}
+          {address.entrance && (
+            <div className="text-xs text-muted-foreground">
+              כניסה: {address.entrance}
+            </div>
+          )}
+        </div>
+      )}
+
+      {addressType === "house" && (
+        <div className="space-y-1">
+          {address.doorName && (
+            <div className="text-xs text-muted-foreground bg-green-50 px-2 py-1 rounded">
+              שם על הדלת: {address.doorName}
+            </div>
+          )}
+          {address.entrance && (
+            <div className="text-xs text-muted-foreground">
+              כניסה: {address.entrance}
+            </div>
+          )}
+        </div>
+      )}
+
+      {addressType === "office" && (
+        <div className="space-y-1">
+          {address.buildingName && (
+            <div className="text-xs text-muted-foreground bg-purple-50 px-2 py-1 rounded">
+              בניין: {address.buildingName}
+            </div>
+          )}
+          {address.floor && (
+            <div className="text-xs text-muted-foreground">
+              קומה: {address.floor}
+            </div>
+          )}
+          {address.entrance && (
+            <div className="text-xs text-muted-foreground">
+              כניסה: {address.entrance}
+            </div>
+          )}
+        </div>
+      )}
+
+      {addressType === "hotel" && (
+        <div className="space-y-1">
+          {address.hotelName && (
+            <div className="text-xs text-muted-foreground bg-pink-50 px-2 py-1 rounded">
+              מלון: {address.hotelName}
+            </div>
+          )}
+          {address.roomNumber && (
+            <div className="text-xs text-muted-foreground bg-yellow-50 px-2 py-1 rounded">
+              חדר: {address.roomNumber}
+            </div>
+          )}
+        </div>
+      )}
+
+      {addressType === "other" && (
+        <div className="space-y-1">
+          {(address.instructions || address.otherInstructions) && (
+            <div className="text-xs text-muted-foreground bg-gray-50 px-2 py-1 rounded">
+              הוראות: {address.instructions || address.otherInstructions}
+            </div>
+          )}
+        </div>
+      )}
       
-      {address.floor && (
-        <div className="text-xs text-muted-foreground">
-          {t("adminBookings.floor")}: {address.floor}
-        </div>
-      )}
-      
-      {address.apartment && (
-        <div className="text-xs text-muted-foreground">
-          {t("adminBookings.apartment")}: {address.apartment}
-        </div>
-      )}
-
-      {address.entrance && (
-        <div className="text-xs text-muted-foreground">
-          {t("adminBookings.entrance")}: {address.entrance}
-        </div>
-      )}
-
-      {address.doorName && (
-        <div className="text-xs text-muted-foreground bg-purple-50 px-2 py-1 rounded">
-          {t("adminBookings.doorName")}: {address.doorName}
-        </div>
-      )}
-
-      {address.buildingName && (
-        <div className="text-xs text-muted-foreground bg-indigo-50 px-2 py-1 rounded">
-          {t("adminBookings.buildingName")}: {address.buildingName}
-        </div>
-      )}
-
-      {address.hotelName && (
-        <div className="text-xs text-muted-foreground bg-pink-50 px-2 py-1 rounded">
-          {t("adminBookings.hotelName")}: {address.hotelName}
-        </div>
-      )}
-
-      {address.roomNumber && (
-        <div className="text-xs text-muted-foreground bg-yellow-50 px-2 py-1 rounded">
-          {t("adminBookings.roomNumber")}: {address.roomNumber}
-        </div>
-      )}
-
-      {address.otherInstructions && (
-        <div className="text-xs text-muted-foreground bg-gray-50 px-2 py-1 rounded">
-          {t("adminBookings.otherInstructions")}: {address.otherInstructions}
-        </div>
-      )}
-      
+      {/* Parking */}
       {hasParking !== undefined && (
         <div className="flex items-center gap-1">
           <span className={`text-xs px-2 py-1 rounded ${
@@ -1039,17 +1096,15 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
               ? "text-green-700 bg-green-100" 
               : "text-red-700 bg-red-100"
           }`}>
-            {hasParking 
-              ? t("adminBookings.hasParking") 
-              : t("adminBookings.noParking")
-            }
+            {hasParking ? "🅿️ יש חניה" : "🚫 אין חניה"}
           </span>
         </div>
       )}
       
+      {/* General Notes */}
       {(address.additionalNotes || address.notes) && (
         <div className="text-xs text-muted-foreground bg-orange-50 px-2 py-1 rounded">
-          {address.additionalNotes || address.notes}
+          💬 {address.additionalNotes || address.notes}
         </div>
       )}
     </div>

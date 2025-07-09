@@ -70,7 +70,24 @@ export async function POST(request: NextRequest) {
               validatedPayload.customAddressDetails as any
             )
           }
-          bookingAddressSnapshot = validatedPayload.customAddressDetails
+          bookingAddressSnapshot = {
+            fullAddress: validatedPayload.customAddressDetails.fullAddress || constructFullAddressHelper(validatedPayload.customAddressDetails),
+            city: validatedPayload.customAddressDetails.city || "",
+            street: validatedPayload.customAddressDetails.street || "",
+            streetNumber: validatedPayload.customAddressDetails.streetNumber || "",
+            addressType: (validatedPayload.customAddressDetails as any).addressType || "apartment",
+            apartment: (validatedPayload.customAddressDetails as any).apartment,
+            entrance: (validatedPayload.customAddressDetails as any).entrance,
+            floor: (validatedPayload.customAddressDetails as any).floor,
+            notes: (validatedPayload.customAddressDetails as any).notes,
+            doorName: (validatedPayload.customAddressDetails as any).doorName,
+            buildingName: (validatedPayload.customAddressDetails as any).buildingName,
+            hotelName: (validatedPayload.customAddressDetails as any).hotelName,
+            roomNumber: (validatedPayload.customAddressDetails as any).roomNumber,
+            instructions: (validatedPayload.customAddressDetails as any).instructions,
+            otherInstructions: (validatedPayload.customAddressDetails as any).otherInstructions,
+            hasPrivateParking: (validatedPayload.customAddressDetails as any).hasPrivateParking,
+          }
         } else if (validatedPayload.selectedAddressId) {
           const selectedAddressDoc = await Address.findById(validatedPayload.selectedAddressId).lean()
           
@@ -83,6 +100,7 @@ export async function POST(request: NextRequest) {
             city: selectedAddressDoc.city,
             street: selectedAddressDoc.street,
             streetNumber: selectedAddressDoc.streetNumber,
+            addressType: selectedAddressDoc.addressType,
             apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
             entrance: selectedAddressDoc.addressType === "apartment" 
               ? selectedAddressDoc.apartmentDetails?.entrance
@@ -97,6 +115,9 @@ export async function POST(request: NextRequest) {
                 ? selectedAddressDoc.officeDetails?.floor?.toString()
                 : undefined,
             notes: selectedAddressDoc.additionalNotes,
+            instructions: selectedAddressDoc.addressType === "other" 
+              ? selectedAddressDoc.otherDetails?.instructions 
+              : undefined,
             hasPrivateParking: selectedAddressDoc.hasPrivateParking,
           }
         }

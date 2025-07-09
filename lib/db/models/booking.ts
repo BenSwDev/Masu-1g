@@ -47,14 +47,16 @@ export interface IBookingAddressSnapshot {
   city: string // Note: Must be from active cities in database only
   street: string
   streetNumber?: string
+  addressType: "apartment" | "house" | "office" | "hotel" | "other"
   apartment?: string
   entrance?: string
   floor?: string
   notes?: string
-  doorName?: string
-  buildingName?: string
-  hotelName?: string
-  roomNumber?: string
+  doorName?: string // for house
+  buildingName?: string // for office
+  hotelName?: string // for hotel
+  roomNumber?: string // for hotel
+  instructions?: string // for other
   otherInstructions?: string
   hasPrivateParking?: boolean
 }
@@ -224,14 +226,16 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     city: { type: String, required: true }, // Note: Must be from active cities in database only
     street: { type: String, required: true },
     streetNumber: { type: String },
+    addressType: { type: String, enum: ["apartment", "house", "office", "hotel", "other"], required: true },
     apartment: { type: String },
     entrance: { type: String },
     floor: { type: String },
     notes: { type: String },
-    doorName: { type: String },
-    buildingName: { type: String },
-    hotelName: { type: String },
-    roomNumber: { type: String },
+    doorName: { type: String }, // for house
+    buildingName: { type: String }, // for office
+    hotelName: { type: String }, // for hotel
+    roomNumber: { type: String }, // for hotel
+    instructions: { type: String }, // for other
     otherInstructions: { type: String },
     hasPrivateParking: { type: Boolean },
   },

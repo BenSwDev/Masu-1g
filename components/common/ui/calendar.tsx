@@ -354,22 +354,22 @@ function Calendar({
                 }}
                 className="text-xs h-7"
               >
-                {t("common.tomorrow")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
+                מחר
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
                   const nextWeek = new Date()
                   nextWeek.setDate(nextWeek.getDate() + 7)
                   setCurrentYear(nextWeek.getFullYear())
                   setCurrentMonth(new Date(nextWeek.getFullYear(), nextWeek.getMonth(), 1))
                   handleDateClick(nextWeek)
-            }}
-            className="text-xs h-7"
-          >
-                {t("common.nextWeek")}
-          </Button>
+                }}
+                className="text-xs h-7"
+              >
+                השבוע הבא
+              </Button>
             </>
           )}
         </div>

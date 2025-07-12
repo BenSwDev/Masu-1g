@@ -665,141 +665,164 @@ export function GuestTreatmentSelectionStep({
                 if (!treatmentId) return null // Skip treatments without valid ID
                 
                 return (
-                  <Label
-                    key={treatmentId}
-                    htmlFor={treatmentId}
-                    className={`group flex cursor-pointer items-start p-4 border-2 rounded-xl transition-all duration-200 ${
-                      dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
-                    } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
-                      isSelected 
-                        ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" 
-                        : "border-muted hover:border-primary/50 hover:bg-muted/30"
-                    }`}
-                  >
-                    <RadioGroupItem 
-                      value={treatmentId} 
-                      id={treatmentId}
-                      disabled={isLocked}
-                      className={`mt-1 ${dir === "rtl" ? "ml-4" : "mr-4"}`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h2 className="text-xl font-bold text-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
-                            {treatment.name}
-                          </h2>
-                          <TreatmentDescription description={treatment.description || ""} />
-                          {treatment.pricingType === "duration_based" && (
-                            <Badge variant="secondary" className="mt-2 text-xs">
-                              {t("treatments.durationBased")}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {showPrice && treatment.pricingType === "fixed" && (
-                          <div className="text-right shrink-0">
-                            <div className="text-2xl font-bold text-primary">
-                              {formatPrice(treatment.fixedPrice || 0)}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {t("treatments.fixedPrice")}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Label>
-                )
-              })}
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Duration Selection */}
-      {selectedTreatment?.pricingType === "duration_based" && availableDurations.length > 0 && (
-        <Card className="border-2 border-muted">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-              <Clock className="h-5 w-5" />
-              {t("treatments.selectDuration")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {availableDurations.length === 1 ? (
-              // Show locked duration - not selectable
-              <div className="p-4 border-2 border-dashed border-muted rounded-xl bg-muted/20">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 w-4 bg-primary rounded-full"></div>
-                    <div>
-                      <h4 className="font-semibold text-foreground">
-                        {formatDurationString(availableDurations[0].minutes || 0)}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {t("treatments.durationLockedBySubscription")}
-                      </p>
-                    </div>
-                  </div>
-                  {showPrice && (
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-primary">
-                        {formatPrice(availableDurations[0].price || 0)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              // Show selectable durations
-              <RadioGroup
-                value={bookingOptions.selectedDurationId || ""}
-                onValueChange={handleDurationSelect}
-                className="space-y-3"
-              >
-                {availableDurations.map((duration: any) => {
-                  const durationId = (duration._id || duration.id)?.toString()
-                  
-                  if (!durationId) return null // Skip durations without valid ID
-                  
-                  return (
+                  <div key={treatmentId} className="space-y-3">
                     <Label
-                      key={durationId}
-                      htmlFor={durationId}
-                      className={`group flex cursor-pointer items-center p-4 border-2 rounded-xl transition-all duration-200 ${
+                      htmlFor={treatmentId}
+                      className={`group flex cursor-pointer items-start p-4 border-2 rounded-xl transition-all duration-200 ${
                         dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
-                      } ${
-                        bookingOptions.selectedDurationId === durationId
-                          ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm"
+                      } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
+                        isSelected 
+                          ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" 
                           : "border-muted hover:border-primary/50 hover:bg-muted/30"
                       }`}
                     >
                       <RadioGroupItem 
-                        value={durationId} 
-                        id={durationId}
-                        className={`${dir === "rtl" ? "ml-4" : "mr-4"}`}
+                        value={treatmentId} 
+                        id={treatmentId}
+                        disabled={isLocked}
+                        className={`mt-1 ${dir === "rtl" ? "ml-4" : "mr-4"}`}
                       />
-                      <div className="flex-1 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <Clock className="h-4 w-4 text-primary" />
-                          <div>
-                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {formatDurationString(duration.minutes || 0)}
-                            </h4>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h2 className="text-xl font-bold text-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
+                              {treatment.name}
+                            </h2>
+                            <TreatmentDescription description={treatment.description || ""} />
+                            {treatment.pricingType === "duration_based" && (
+                              <Badge variant="secondary" className="mt-2 text-xs">
+                                {t("treatments.durationBased")}
+                              </Badge>
+                            )}
                           </div>
-                        </div>
-                        {showPrice && (
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-primary">
-                              {formatPrice(duration.price || 0)}
+                          
+                          {showPrice && treatment.pricingType === "fixed" && (
+                            <div className="text-right shrink-0">
+                              <div className="text-2xl font-bold text-primary">
+                                {formatPrice(treatment.fixedPrice || 0)}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {t("treatments.fixedPrice")}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </Label>
-                  )
-                })}
-              </RadioGroup>
+                    
+                    {/* Duration Selection - Show only for selected treatment */}
+                    {isSelected && treatment.pricingType === "duration_based" && availableDurations.length > 0 && (
+                      <div className="ml-6 mr-2 mt-4 mb-2 animate-in slide-in-from-top-2 duration-300">
+                        <div className="border-l-4 border-primary pl-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Clock className="h-4 w-4 text-primary" />
+                            <h3 className="font-semibold text-foreground">
+                              {t("treatments.selectDuration")}
+                            </h3>
+                          </div>
+                          
+                          {availableDurations.length === 1 ? (
+                            // Show locked duration - not selectable
+                            <div className="p-3 border border-dashed border-muted rounded-lg bg-muted/20">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-3 w-3 bg-primary rounded-full"></div>
+                                  <div>
+                                    <h4 className="font-medium text-foreground">
+                                      {formatDurationString(availableDurations[0].minutes || 0)}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground">
+                                      {t("treatments.durationLockedBySubscription")}
+                                    </p>
+                                  </div>
+                                </div>
+                                {showPrice && (
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-primary">
+                                      {formatPrice(availableDurations[0].price || 0)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            // Show selectable durations
+                            <RadioGroup
+                              value={bookingOptions.selectedDurationId || ""}
+                              onValueChange={handleDurationSelect}
+                              className="space-y-2"
+                            >
+                              {availableDurations.map((duration: any) => {
+                                const durationId = (duration._id || duration.id)?.toString()
+                                
+                                if (!durationId) return null // Skip durations without valid ID
+                                
+                                return (
+                                  <Label
+                                    key={durationId}
+                                    htmlFor={durationId}
+                                    className={`group flex cursor-pointer items-center p-3 border rounded-lg transition-all duration-200 ${
+                                      dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
+                                    } ${
+                                      bookingOptions.selectedDurationId === durationId
+                                        ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm"
+                                        : "border-muted hover:border-primary/50 hover:bg-muted/30"
+                                    }`}
+                                  >
+                                    <RadioGroupItem 
+                                      value={durationId} 
+                                      id={durationId}
+                                      className={`${dir === "rtl" ? "ml-3" : "mr-3"}`}
+                                    />
+                                    <div className="flex-1 flex justify-between items-center">
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="h-3 w-3 text-primary" />
+                                        <div>
+                                          <h4 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                            {formatDurationString(duration.minutes || 0)}
+                                          </h4>
+                                        </div>
+                                      </div>
+                                      {showPrice && (
+                                        <div className="text-right">
+                                          <div className="text-lg font-bold text-primary">
+                                            {formatPrice(duration.price || 0)}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </Label>
+                                )
+                              })}
+                            </RadioGroup>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </RadioGroup>
+            
+            {/* Change Treatment Button - Show only when duration is selected */}
+            {bookingOptions.selectedTreatmentId && bookingOptions.selectedDurationId && (
+              <div className="mt-6 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBookingOptions(prev => ({
+                      ...prev,
+                      selectedTreatmentId: "",
+                      selectedDurationId: ""
+                    }))
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t("treatments.changeTreatment")}
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

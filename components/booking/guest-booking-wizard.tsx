@@ -286,15 +286,26 @@ export default function UniversalBookingWizard({
       return ["firstName", "lastName", "email", "phone"] as const
     }
     
-    // Logged in user locks (ONLY if no redemption)
+    // 👤 Always lock logged-in user fields (even for regular bookings)
     if (currentUser) {
       const baseFields = ["firstName", "lastName"] as const
-      const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
-      const fieldsWithEmail = currentUser.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+      const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
+      const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
       return fieldsWithEmail
     }
     
     return [] as const
+  })
+
+  // 📝 NEW: Track whether to show the blue notification (only for voucher/subscription redemption)
+  const [showLockedFieldsNotification, setShowLockedFieldsNotification] = useState(() => {
+    // Show notification only for voucher/subscription redemption, not for coupons or regular bookings
+    if (redemptionData) {
+      return redemptionData.type === "treatment_voucher" || 
+             redemptionData.type === "monetary_voucher" || 
+             redemptionData.type === "subscription"
+    }
+    return Boolean(voucher || userSubscription)
   })
   
   // Update locked fields when redemption data changes
@@ -348,19 +359,29 @@ export default function UniversalBookingWizard({
         return ["firstName", "lastName", "email", "phone"] as const
       }
       
-      // 👤 PRIORITY 2: Logged in user locks (ONLY if no redemption)
+      // 👤 Always lock logged-in user fields (even for regular bookings)
       if (currentUser) {
         const baseFields = ["firstName", "lastName"] as const
-        const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
-        const fieldsWithEmail = currentUser.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+        const fieldsWithPhone = currentUser?.phone ? [...baseFields, "phone"] as const : baseFields
+        const fieldsWithEmail = currentUser?.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
         return fieldsWithEmail
       }
       
-      // 👥 PRIORITY 3: No locks for guests (all fields editable)
       return [] as const
     }
     
+    const calculateShowNotification = (): boolean => {
+      // Show notification only for voucher/subscription redemption, not for coupons or regular bookings
+      if (redemptionData) {
+        return redemptionData.type === "treatment_voucher" || 
+               redemptionData.type === "monetary_voucher" || 
+               redemptionData.type === "subscription"
+      }
+      return Boolean(voucher || userSubscription)
+    }
+    
     setLockedFields(calculateLockedFields())
+    setShowLockedFieldsNotification(calculateShowNotification())
   }, [voucher, userSubscription, currentUser, redemptionData])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
@@ -803,8 +824,17 @@ export default function UniversalBookingWizard({
     }
     
     if (result.success && result.priceDetails) {
+      console.log("💰 Price calculation successful:", {
+        basePrice: result.priceDetails.basePrice,
+        surcharges: result.priceDetails.surcharges,
+        totalSurchargesAmount: result.priceDetails.totalSurchargesAmount,
+        finalAmount: result.priceDetails.finalAmount,
+        bookingTime: bookingOptions.bookingTime,
+        bookingDate: bookingOptions.bookingDate
+      })
       setCalculatedPrice(result.priceDetails)
     } else {
+      console.error("❌ Price calculation failed:", result.error, result.issues)
       toast({
         variant: "destructive",
         title: t(result.error || "bookings.errors.calculatePriceFailedTitle") || result.error || "Error calculating price",
@@ -818,7 +848,8 @@ export default function UniversalBookingWizard({
   }, [bookingOptions, guestInfo.email, guestUserId, toast, initialData.activeTreatments, t, currentStep])
 
   useEffect(() => {
-    if (currentStep >= 4) {
+    // Trigger price calculation starting from step 2 (after treatment selection)
+    if (currentStep >= 2) {
       triggerPriceCalculation()
     }
   }, [
@@ -1078,6 +1109,7 @@ export default function UniversalBookingWizard({
           city: guestAddress.city || "",
           street: guestAddress.street || "",
           streetNumber: guestAddress.houseNumber || "",
+          addressType: guestAddress.addressType || "apartment", // ✅ Add missing addressType
           apartment: guestAddress.apartmentNumber || undefined,
           entrance: guestAddress.entrance,
           floor: guestAddress.floor,
@@ -1332,6 +1364,7 @@ export default function UniversalBookingWizard({
           city: guestAddress.city || "",
           street: guestAddress.street || "",
           streetNumber: guestAddress.houseNumber || "",
+          addressType: guestAddress.addressType || "apartment", // ✅ Add missing addressType
           apartment: guestAddress.apartmentNumber || undefined,
           entrance: guestAddress.entrance,
           floor: guestAddress.floor,
@@ -1522,6 +1555,7 @@ export default function UniversalBookingWizard({
             onPrev={prevStep}
             lockedFields={lockedFields as any}
             hideBookingForSomeoneElse={hideBookingForSomeoneElse}
+            showLockedFieldsNotification={showLockedFieldsNotification}
           />
         )
       case 4:

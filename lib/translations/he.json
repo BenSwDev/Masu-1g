@@ -2739,6 +2739,7 @@
         "selectTreatmentPlaceholder": "בחר טיפול...",
         "treatmentLockedBySource": "הטיפול נקבע על ידי המנוי או השובר",
         "selectTreatmentDescription": "בחר את הטיפול המתאים לצרכים שלך",
+        "changeTreatment": "שנה טיפול",
         "statusUpdateError": "שגיאה בעדכון סטטוס הטיפול",
         "title": "ניהול טיפולים",
         "unknownTreatment": "טיפול לא ידוע",

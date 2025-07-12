@@ -53,6 +53,7 @@ interface GuestInfoStepProps {
   showGiftOptions?: boolean
   lockedFields?: (keyof GuestInfo)[]
   hideBookingForSomeoneElse?: boolean
+  showLockedFieldsNotification?: boolean
 }
 
 export function GuestInfoStep({
@@ -65,12 +66,14 @@ export function GuestInfoStep({
   showGiftOptions = false,
   lockedFields = [],
   hideBookingForSomeoneElse = false,
+  showLockedFieldsNotification = false,
 }: GuestInfoStepProps) {
   const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
     guestInfo.isBookingForSomeoneElse ?? defaultBookingForSomeoneElse
   )
   const [showNotesField, setShowNotesField] = useState(!!guestInfo.notes)
+  const [showBirthDateField, setShowBirthDateField] = useState(!!guestInfo.birthDate)
 
   // Helper function to check if date is at least 16 years old
   const isAtLeast16YearsOld = (date: Date) => {
@@ -283,7 +286,7 @@ export function GuestInfoStep({
       </div>
 
       {/* Show locked fields notification */}
-      {lockedFields.length > 0 && (
+      {showLockedFieldsNotification && lockedFields.length > 0 && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -429,54 +432,75 @@ export function GuestInfoStep({
                 )}
               />
 
-              {/* Only show birth date and gender for booker if NOT booking for someone else */}
+              {/* Only show gender for booker if NOT booking for someone else */}
               {!isBookingForSomeoneElse && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="birthDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                          <CalendarIcon className="h-4 w-4" />
-                          {t("guestInfo.birthDate")}
-                        </FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
-                                ) : (
-                                  <span>בחר תאריך לידה</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={isDateDisabled}
-                                initialFocus
-                                captionLayout="dropdown-buttons"
-                                fromYear={1900}
-                                toYear={new Date().getFullYear() - 16}
-                              />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
+                <div className="space-y-4">
+                  {/* Birth date checkbox and field */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-birth-date"
+                        checked={showBirthDateField}
+                        onCheckedChange={(checked) => {
+                          setShowBirthDateField(!!checked)
+                          if (!checked) {
+                            form.setValue("birthDate", undefined)
+                          }
+                        }}
+                      />
+                      <label htmlFor="show-birth-date" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        הוסף תאריך לידה
+                      </label>
+                    </div>
+                    
+                    {showBirthDateField && (
+                      <FormField
+                        control={form.control}
+                        name="birthDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                              <CalendarIcon className="h-4 w-4" />
+                              {t("guestInfo.birthDate")}
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                    ) : (
+                                      <span>בחר תאריך לידה</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={isDateDisabled}
+                                    initialFocus
+                                    captionLayout="dropdown-buttons"
+                                    fromYear={1900}
+                                    toYear={new Date().getFullYear() - 16}
+                                  />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
-                  />
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -670,7 +694,7 @@ export function GuestInfoStep({
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={isDateDisabled || lockedFields.includes("recipientBirthDate")}
+                                disabled={(date) => isDateDisabled(date) || lockedFields.includes("recipientBirthDate")}
                                 initialFocus
                                 captionLayout="dropdown-buttons"
                                 fromYear={1900}

@@ -303,15 +303,15 @@ export function GuestPaymentStep({
                     <div className="text-sm font-medium text-orange-700">
                       תוספות מחיר:
                     </div>
-                    {calculatedPrice.surcharges.map((surcharge, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between text-orange-600 text-sm pr-4"
-                      >
-                        <span>• {surcharge.description || "תוספת מחיר"}:</span>
-                        <span>+{formatPrice(surcharge.amount)}</span>
-                      </div>
-                    ))}
+                                          {calculatedPrice.surcharges.map((surcharge, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between text-orange-600 text-sm pr-4"
+                        >
+                          <span>• {surcharge.description === "workingHours.eveningHours" ? "שעות ערב" : surcharge.description || "תוספת מחיר"}:</span>
+                          <span>+{formatPrice(surcharge.amount)}</span>
+                        </div>
+                      ))}
                     <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
                       <span>סה"כ תוספות:</span>
                       <span>

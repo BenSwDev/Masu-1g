@@ -220,7 +220,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
             </CardTitle>
             <CardDescription>
               {bookingOptions.bookingDate 
-                ? t("bookings.availableTimesFor") + ' ' + formatDateString(new Date(bookingOptions.bookingDate as string))
+                ? `זמנים פנויים עבור ${formatDateString(new Date(bookingOptions.bookingDate as string))}`
                 : t("bookings.selectDateFirst")
               }
             </CardDescription>
@@ -330,7 +330,11 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                     <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
                       <span>תוספת מחיר:</span>
-                      <span className="font-bold">{priceCalculation.surchargeReason || "תוספת זמן מיוחד"}</span>
+                      <span className="font-bold">
+                        {priceCalculation.surchargeReason === "workingHours.eveningHours" 
+                          ? "שעות ערב" 
+                          : priceCalculation.surchargeReason || "תוספת זמן מיוחד"}
+                      </span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">

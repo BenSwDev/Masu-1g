@@ -605,21 +605,31 @@ export function GuestTreatmentSelectionStep({
 
       {/* Category Selection */}
       {showCategorySelection && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("treatments.selectCategory")}</CardTitle>
-            <CardDescription>{t("treatments.selectCategoryDescription")}</CardDescription>
+        <Card className="border-2 border-muted">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">
+              {t("treatments.selectCategory")}
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              {t("treatments.selectCategoryDescription")}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {treatmentCategories.map((category) => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   onClick={() => setSelectedCategory(category)}
-                  className="h-auto py-3"
+                  className={`h-auto py-4 px-4 transition-all duration-200 ${
+                    selectedCategory === category 
+                      ? "ring-2 ring-primary shadow-sm" 
+                      : "hover:border-primary/50"
+                  }`}
                 >
-                  {t(`treatments.categories.${category}`)}
+                  <span className="font-medium text-sm">
+                    {t(`treatments.categories.${category}`)}
+                  </span>
                 </Button>
               ))}
             </div>
@@ -629,21 +639,23 @@ export function GuestTreatmentSelectionStep({
 
       {/* Treatment Selection */}
       {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("treatments.selectTreatment")}</CardTitle>
-            <CardDescription>
+        <Card className="border-2 border-muted">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">
+              {t("treatments.selectTreatment")}
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               {isTreatmentLockedBySource 
                 ? t("treatments.treatmentLockedBySource")
                 : t("treatments.selectTreatmentDescription")
               }
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <RadioGroup
               value={bookingOptions.selectedTreatmentId || ""}
               onValueChange={handleTreatmentSelect}
-              className="space-y-4"
+              className="space-y-3"
             >
               {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
                 const treatmentId = (treatment._id || treatment.id)?.toString()
@@ -656,30 +668,43 @@ export function GuestTreatmentSelectionStep({
                   <Label
                     key={treatmentId}
                     htmlFor={treatmentId}
-                    className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${
+                    className={`group flex cursor-pointer items-start p-4 border-2 rounded-xl transition-all duration-200 ${
                       dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
                     } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
-                      isSelected ? "ring-2 ring-primary border-primary" : ""
+                      isSelected 
+                        ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" 
+                        : "border-muted hover:border-primary/50 hover:bg-muted/30"
                     }`}
                   >
                     <RadioGroupItem 
                       value={treatmentId} 
                       id={treatmentId}
                       disabled={isLocked}
+                      className={`mt-1 ${dir === "rtl" ? "ml-4" : "mr-4"}`}
                     />
-                    <div className="flex-1 flex justify-between items-center">
-                                              <div>
-                          <h4 className="font-medium">{treatment.name}</h4>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-xl font-bold text-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
+                            {treatment.name}
+                          </h2>
                           <TreatmentDescription description={treatment.description || ""} />
+                          {treatment.pricingType === "duration_based" && (
+                            <Badge variant="secondary" className="mt-2 text-xs">
+                              {t("treatments.durationBased")}
+                            </Badge>
+                          )}
                         </div>
-                      <div className="text-right">
+                        
                         {showPrice && treatment.pricingType === "fixed" && (
-                          <div className="text-lg font-semibold text-primary">
-                            {formatPrice(treatment.fixedPrice || 0)}
+                          <div className="text-right shrink-0">
+                            <div className="text-2xl font-bold text-primary">
+                              {formatPrice(treatment.fixedPrice || 0)}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {t("treatments.fixedPrice")}
+                            </div>
                           </div>
-                        )}
-                        {treatment.pricingType === "duration_based" && (
-                          <Badge variant="secondary">{t("treatments.durationBased")}</Badge>
                         )}
                       </div>
                     </div>
@@ -693,33 +718,34 @@ export function GuestTreatmentSelectionStep({
 
       {/* Duration Selection */}
       {selectedTreatment?.pricingType === "duration_based" && availableDurations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 border-muted">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
               <Clock className="h-5 w-5" />
-              {availableDurations.length === 1 ? "משך הטיפול" : t("treatments.selectDuration")}
+              {t("treatments.selectDuration")}
             </CardTitle>
-            <CardDescription>
-              {availableDurations.length === 1 
-                ? "משך הטיפול נקבע לפי המנוי/שובר שנבחר" 
-                : t("treatments.selectDurationDescription")
-              }
-            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {availableDurations.length === 1 ? (
               // Show locked duration - not selectable
-              <div className="p-4 border rounded-lg bg-muted/20">
+              <div className="p-4 border-2 border-dashed border-muted rounded-xl bg-muted/20">
                 <div className="flex justify-between items-center">
-                  <div>
-                                         <h4 className="font-medium">{formatDurationString(availableDurations[0].minutes || 0)}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDurationString(availableDurations[0].minutes || 0)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-4 bg-primary rounded-full"></div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">
+                        {formatDurationString(availableDurations[0].minutes || 0)}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {t("treatments.durationLockedBySubscription")}
+                      </p>
+                    </div>
                   </div>
                   {showPrice && (
-                    <div className="text-lg font-semibold text-primary">
-                      {formatPrice(availableDurations[0].price || 0)}
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-primary">
+                        {formatPrice(availableDurations[0].price || 0)}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -729,7 +755,7 @@ export function GuestTreatmentSelectionStep({
               <RadioGroup
                 value={bookingOptions.selectedDurationId || ""}
                 onValueChange={handleDurationSelect}
-                className="space-y-4"
+                className="space-y-3"
               >
                 {availableDurations.map((duration: any) => {
                   const durationId = (duration._id || duration.id)?.toString()
@@ -740,23 +766,37 @@ export function GuestTreatmentSelectionStep({
                     <Label
                       key={durationId}
                       htmlFor={durationId}
-                      className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                      className={`group flex cursor-pointer items-center p-4 border-2 rounded-xl transition-all duration-200 ${
+                        dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
+                      } ${
+                        bookingOptions.selectedDurationId === durationId
+                          ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm"
+                          : "border-muted hover:border-primary/50 hover:bg-muted/30"
+                      }`}
                     >
-                      <RadioGroupItem value={durationId} id={durationId} />
-                    <div className="flex-1 flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{duration.name || formatDurationString(duration.minutes || 0)}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDurationString(duration.minutes || 0)}
-                        </p>
-                      </div>
-                      {showPrice && (
-                        <div className="text-lg font-semibold text-primary">
-                          {formatPrice(duration.price || 0)}
+                      <RadioGroupItem 
+                        value={durationId} 
+                        id={durationId}
+                        className={`${dir === "rtl" ? "ml-4" : "mr-4"}`}
+                      />
+                      <div className="flex-1 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <Clock className="h-4 w-4 text-primary" />
+                          <div>
+                            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {formatDurationString(duration.minutes || 0)}
+                            </h4>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </Label>
+                        {showPrice && (
+                          <div className="text-right">
+                            <div className="text-xl font-bold text-primary">
+                              {formatPrice(duration.price || 0)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Label>
                   )
                 })}
               </RadioGroup>
@@ -767,26 +807,34 @@ export function GuestTreatmentSelectionStep({
 
       {/* Therapist Gender Preference - Only show if treatment allows it */}
       {selectedTreatment?.allowTherapistGenderSelection && !hideGenderPreference && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 border-muted">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
               <Users className="h-5 w-5" />
               {t("bookings.therapistGenderPreference")}
             </CardTitle>
-            <CardDescription>{t("bookings.therapistGenderPreferenceDescription")}</CardDescription>
+            <CardDescription className="text-sm text-muted-foreground">
+              {t("bookings.therapistGenderPreferenceDescription")}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <Select
               value={bookingOptions.therapistGenderPreference || "any"}
               onValueChange={handleGenderPreferenceChange}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder={t("bookings.selectGenderPreference")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">{t("bookings.genderPreference.any")}</SelectItem>
-                <SelectItem value="male">{t("bookings.genderPreference.male")}</SelectItem>
-                <SelectItem value="female">{t("bookings.genderPreference.female")}</SelectItem>
+                <SelectItem value="any" className="text-base py-3">
+                  {t("bookings.genderPreference.any")}
+                </SelectItem>
+                <SelectItem value="male" className="text-base py-3">
+                  {t("bookings.genderPreference.male")}
+                </SelectItem>
+                <SelectItem value="female" className="text-base py-3">
+                  {t("bookings.genderPreference.female")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </CardContent>
@@ -794,11 +842,11 @@ export function GuestTreatmentSelectionStep({
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrev}>
+      <div className={`flex justify-between gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+        <Button variant="outline" onClick={onPrev} className="px-6">
           {t("common.back")}
         </Button>
-        <Button onClick={onNext} disabled={!canProceed}>
+        <Button onClick={onNext} disabled={!canProceed} className="px-6">
           {t("common.continue")}
         </Button>
       </div>

@@ -97,6 +97,7 @@ export const SchedulingDetailsSchema = z
         city: z.string().min(1, "City is required"),
         street: z.string().min(1, "Street is required"),
         streetNumber: z.string().optional(),
+        addressType: z.enum(["apartment", "house", "office", "hotel", "other"]).default("apartment"), // ✅ Fix: Add required addressType
         apartment: z.string().optional(),
         entrance: z.string().optional(),
         floor: z.string().optional(),
@@ -219,6 +220,7 @@ const BaseBookingWizardSchema = z.object({
       city: z.string().min(1, "City is required"),
       street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
+      addressType: z.enum(["apartment", "house", "office", "hotel", "other"]).default("apartment"), // ✅ Fix: Add required addressType
       apartment: z.string().optional(),
       entrance: z.string().optional(),
       floor: z.string().optional(),
@@ -320,6 +322,7 @@ export const CreateBookingPayloadSchema = z.object({
       city: z.string().min(1, "City is required"),
       street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
+      addressType: z.enum(["apartment", "house", "office", "hotel", "other"]).default("apartment"), // ✅ Fix: Add required addressType
       apartment: z.string().optional(),
       entrance: z.string().optional(),
       floor: z.string().optional(),
@@ -397,6 +400,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
       city: z.string().min(1, "City is required"),
       street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
+      addressType: z.enum(["apartment", "house", "office", "hotel", "other"]).default("apartment"), // ✅ Fix: Add required addressType
       apartment: z.string().optional(),
       entrance: z.string().optional(),
       floor: z.string().optional(),

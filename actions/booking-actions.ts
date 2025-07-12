@@ -3024,6 +3024,39 @@ export async function saveAbandonedBooking(
         }
       }
 
+      // ✅ Fix: Handle address update for existing abandoned booking
+      if (formData.guestAddress) {
+        const addressParts = [
+          formData.guestAddress.street?.trim(),
+          formData.guestAddress.houseNumber?.trim(),
+          formData.guestAddress.city?.trim()
+        ].filter(Boolean)
+        
+        updateData.bookingAddressSnapshot = {
+          fullAddress: addressParts.length > 0 ? addressParts.join(" ") : "כתובת לא זמינה",
+          city: formData.guestAddress.city?.trim() || "לא צוין",
+          street: formData.guestAddress.street?.trim() || "לא צוין",
+          streetNumber: formData.guestAddress.houseNumber?.trim() || "",
+          addressType: formData.guestAddress.addressType || "apartment", // ✅ Fix: Add missing addressType
+          apartment: formData.guestAddress.apartmentNumber?.trim(),
+          entrance: formData.guestAddress.entrance?.trim(),
+          floor: formData.guestAddress.floor?.trim(),
+          notes: formData.guestAddress.notes?.trim(),
+          doorName: formData.guestAddress.doorName?.trim(),
+          buildingName: formData.guestAddress.buildingName?.trim(),
+          hotelName: formData.guestAddress.hotelName?.trim(),
+          roomNumber: formData.guestAddress.roomNumber?.trim(),
+          otherInstructions: formData.guestAddress.instructions?.trim(),
+          hasPrivateParking: Boolean(formData.guestAddress.parking),
+        }
+      } else if (existingAbandoned.bookingAddressSnapshot && !existingAbandoned.bookingAddressSnapshot.addressType) {
+        // ✅ Fix: Ensure existing bookingAddressSnapshot has addressType
+        updateData.bookingAddressSnapshot = {
+          ...existingAbandoned.bookingAddressSnapshot,
+          addressType: "apartment"
+        }
+      }
+
       // Update the existing booking
       Object.assign(existingAbandoned, updateData)
       await existingAbandoned.save()
@@ -3154,6 +3187,7 @@ export async function saveAbandonedBooking(
         city: formData.guestAddress.city?.trim() || "לא צוין",
         street: formData.guestAddress.street?.trim() || "לא צוין",
         streetNumber: formData.guestAddress.houseNumber?.trim() || "",
+        addressType: formData.guestAddress.addressType || "apartment", // ✅ Fix: Add missing addressType
         apartment: formData.guestAddress.apartmentNumber?.trim(),
         entrance: formData.guestAddress.entrance?.trim(),
         floor: formData.guestAddress.floor?.trim(),
@@ -3171,6 +3205,7 @@ export async function saveAbandonedBooking(
         fullAddress: "כתובת לא זמינה",
         city: "לא צוין",
         street: "לא צוין",
+        addressType: "apartment", // ✅ Fix: Add missing addressType for default address
       }
     }
 

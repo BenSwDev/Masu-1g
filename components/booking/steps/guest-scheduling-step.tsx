@@ -131,7 +131,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     return timeSlots.find(slot => slot.time === bookingOptions.bookingTime) || null
   }, [bookingOptions.bookingTime, timeSlots])
 
-  // Calculate base price and surcharge
+  // Calculate base price and surcharge - simplified to show current selection only
   const priceCalculation = useMemo(() => {
     const basePrice = selectedTreatment?.pricingType === "fixed"
       ? selectedTreatment.fixedPrice || 0

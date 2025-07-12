@@ -98,7 +98,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
       city: address.city || "",
       street: address.street || "",
       houseNumber: address.houseNumber || "",
-      addressType: addressType,
+      addressType: address.addressType || "apartment", // ✅ Always default to apartment
       floor: address.floor || "",
       apartmentNumber: address.apartmentNumber || "",
       entrance: address.entrance || "",
@@ -113,7 +113,12 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   })
 
   const onSubmit = (data: GuestAddressFormData) => {
-    setAddress(data)
+    // ✅ Ensure addressType is always set
+    const finalData = {
+      ...data,
+      addressType: data.addressType || "apartment"
+    }
+    setAddress(finalData)
     onNext()
   }
 

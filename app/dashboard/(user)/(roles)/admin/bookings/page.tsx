@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUserSession } from "@/lib/auth/require-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card";
@@ -30,12 +31,12 @@ function BookingsErrorFallback() {
           אירעה שגיאה בטעינת נתוני ההזמנות. אנא רענן את הדף או נסה שוב מאוחר יותר.
         </p>
         <div className="mt-4">
-          <a 
+          <Link 
             href="/dashboard/admin/bookings"
             className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             רענון הדף
-          </a>
+          </Link>
         </div>
       </CardContent>
     </Card>

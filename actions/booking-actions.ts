@@ -132,10 +132,8 @@ export async function getAvailableTimeSlots(
     const selectedDateInTZ = toZonedTime(selectedDateUTC, TIMEZONE)
 
     // Optimized database queries with lean() for better performance
-    const [treatment, settings] = await Promise.all([
-      Treatment.findById(treatmentId).lean().exec() as Promise<ITreatment | null>,
-      WorkingHoursSettings.findOne().lean().exec() as Promise<IWorkingHoursSettings | null>
-    ])
+    const treatment = await Treatment.findById(treatmentId).lean() as ITreatment | null
+    const settings = await (WorkingHoursSettings as any).findOne().lean() as IWorkingHoursSettings | null
 
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
@@ -407,7 +405,7 @@ export async function calculateBookingPrice(
       surchargesProfessionalPayment: 0,
     }
 
-    const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
+    const settings = await (WorkingHoursSettings as any).findOne().lean() as IWorkingHoursSettings | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
@@ -418,23 +416,37 @@ export async function calculateBookingPrice(
       ) {
         // Check if booking time is within surcharge time range
         const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
-        let isInSurchargeRange = true // Default to true if no time range specified
+        let isInSurchargeRange = false // ✅ Default to false - surcharge must be explicitly in range
         
-        if (daySettings.priceAddition.priceAdditionStartTime || daySettings.priceAddition.priceAdditionEndTime) {
-          let surchargeStartMinutes = 0
-          let surchargeEndMinutes = 24 * 60 // Default to full day
+        if (daySettings.priceAddition.priceAdditionStartTime && daySettings.priceAddition.priceAdditionEndTime) {
+          // Both start and end times are specified - check exact range
+          const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+          const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
           
-          if (daySettings.priceAddition.priceAdditionStartTime) {
-            const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
-            surchargeStartMinutes = (startHour * 60) + startMinute
+          const surchargeStartMinutes = (startHour * 60) + startMinute
+          const surchargeEndMinutes = (endHour * 60) + endMinute
+          
+          // Handle case where end time might be next day (e.g., 22:00 to 02:00)
+          if (surchargeEndMinutes < surchargeStartMinutes) {
+            // Crosses midnight
+            isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes || bookingTimeMinutes <= surchargeEndMinutes
+          } else {
+            // Same day range
+            isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
           }
-          
-          if (daySettings.priceAddition.priceAdditionEndTime) {
-            const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
-            surchargeEndMinutes = (endHour * 60) + endMinute
-          }
-          
-          isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
+        } else if (daySettings.priceAddition.priceAdditionStartTime) {
+          // Only start time specified - from start time to end of day
+          const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+          const surchargeStartMinutes = (startHour * 60) + startMinute
+          isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes
+        } else if (daySettings.priceAddition.priceAdditionEndTime) {
+          // Only end time specified - from start of day to end time
+          const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
+          const surchargeEndMinutes = (endHour * 60) + endMinute
+          isInSurchargeRange = bookingTimeMinutes <= surchargeEndMinutes
+        } else {
+          // No time range specified - apply to all times
+          isInSurchargeRange = true
         }
         
         if (isInSurchargeRange) {
@@ -472,10 +484,10 @@ export async function calculateBookingPrice(
     // Note: Evening surcharges are now handled through working hours settings with time ranges
 
     if (userSubscriptionId) {
-      const userSub = (await UserSubscription.findById(userSubscriptionId)
+      const userSub = await UserSubscription.findById(userSubscriptionId)
         .populate("subscriptionId")
         .populate({ path: "treatmentId", model: "Treatment", populate: { path: "durations" } })
-        .lean()) as (IUserSubscription & { treatmentId: ITreatment }) | null
+        .lean() as any
 
       if (
         userSub &&
@@ -825,7 +837,7 @@ export async function createBooking(
         city: selectedAddressDoc.city,
         street: selectedAddressDoc.street,
         streetNumber: selectedAddressDoc.streetNumber,
-        addressType: selectedAddressDoc.addressType,
+        addressType: selectedAddressDoc.addressType === "private" ? "house" : selectedAddressDoc.addressType,
         apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
         entrance:
           selectedAddressDoc.addressType === "apartment"
@@ -1461,7 +1473,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       Address.find({ userId, isArchived: { $ne: true } }).lean(),
       fetchUserActivePaymentMethods(),
       Treatment.find({ isActive: true }).populate("durations").lean(),
-      WorkingHoursSettings.findOne().lean(),
+      (WorkingHoursSettings as any).findOne().lean() as Promise<any>,
     ])
     logger.info("Parallel data fetch completed")
 
@@ -2039,7 +2051,7 @@ export async function getAllBookings(
       treatmentId: booking.treatmentId as any,
       professionalId: booking.professionalId || null,
       addressId: booking.addressId || null,
-    } as PopulatedBooking))
+    } as any as PopulatedBooking))
 
     return {
       bookings: populatedBookings,
@@ -2833,7 +2845,7 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
       workingHoursResult,
     ] = await Promise.allSettled([
       Treatment.find({ isActive: true }).populate("durations").lean(),
-      WorkingHoursSettings.findOne().lean(),
+      (WorkingHoursSettings as any).findOne().lean() as Promise<any>,
     ])
     logger.info("Guest booking data fetch completed")
 

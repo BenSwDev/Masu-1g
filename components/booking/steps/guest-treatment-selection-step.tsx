@@ -803,27 +803,6 @@ export function GuestTreatmentSelectionStep({
                 )
               })}
             </RadioGroup>
-            
-            {/* Change Treatment Button - Show only when duration is selected */}
-            {bookingOptions.selectedTreatmentId && bookingOptions.selectedDurationId && (
-              <div className="mt-6 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setBookingOptions(prev => ({
-                      ...prev,
-                      selectedTreatmentId: "",
-                      selectedDurationId: ""
-                    }))
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t("treatments.changeTreatment")}
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}

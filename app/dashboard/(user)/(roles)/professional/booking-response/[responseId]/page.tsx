@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { handleProfessionalResponse } from "@/actions/notification-service"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,26 +34,26 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
               asChild
               className="bg-green-600 hover:bg-green-700"
             >
-              <a href={`/dashboard/professional/booking-response/${responseId}?action=accept`}>
+              <Link href={`/dashboard/professional/booking-response/${responseId}?action=accept`}>
                 <CheckCircle className="h-4 w-4 mr-2" />
                 אקבל את ההזמנה
-              </a>
+              </Link>
             </Button>
             <Button 
               asChild
               variant="destructive"
             >
-              <a href={`/dashboard/professional/booking-response/${responseId}?action=decline`}>
+              <Link href={`/dashboard/professional/booking-response/${responseId}?action=decline`}>
                 <XCircle className="h-4 w-4 mr-2" />
                 אדחה את ההזמנה
-              </a>
+              </Link>
             </Button>
           </div>
           <div className="text-center">
             <Button asChild variant="outline" size="sm">
-              <a href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/professional/booking-management">
                 כניסה לאפליקציה
-              </a>
+              </Link>
             </Button>
           </div>
         </CardContent>
@@ -79,9 +80,9 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
           {action === "accept" && (
             <div className="text-center">
               <Button asChild>
-                <a href="/dashboard/professional/booking-management">
+                <Link href="/dashboard/professional/booking-management">
                   צפייה בהזמנות שלי
-                </a>
+                </Link>
               </Button>
             </div>
           )}
@@ -103,9 +104,9 @@ async function ResponseHandler({ responseId, action }: { responseId: string; act
           </p>
           <div className="text-center">
             <Button asChild variant="outline">
-              <a href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/professional/booking-management">
                 כניסה לאפליקציה
-              </a>
+              </Link>
             </Button>
           </div>
         </CardContent>

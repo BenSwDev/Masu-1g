@@ -203,7 +203,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
             <Calendar
               mode="single"
               selected={bookingDateObj}
-              onSelect={(date) => handleDateSelect(Array.isArray(date) ? date[0] : (date && 'from' in date ? date.from : date))}
+              onSelect={(date) => handleDateSelect(Array.isArray(date) ? date[0] : (date && 'from' in date ? date.from : date as Date))}
               disabled={isDateDisabled}
               className="rounded-md border"
               isBookingMode={true}

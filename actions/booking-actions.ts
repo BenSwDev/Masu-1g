@@ -275,7 +275,7 @@ export async function getAvailableTimeSlots(
     // יצירת סט של שעות תפוסות לביצועים מיטביים
     const bookedTimeSlots = new Set(
       existingBookings.map(booking => {
-        const bookingTime = new Date(booking.bookingDateTime)
+        const bookingTime = toZonedTime(new Date(booking.bookingDateTime), TIMEZONE)
         const hours = String(bookingTime.getHours()).padStart(2, '0')
         const minutes = String(bookingTime.getMinutes()).padStart(2, '0')
         return `${hours}:${minutes}`
@@ -414,8 +414,9 @@ export async function calculateBookingPrice(
         daySettings.priceAddition?.amount &&
         daySettings.priceAddition.amount > 0
       ) {
-        // Check if booking time is within surcharge time range
-        const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
+        // Check if booking time is within surcharge time range using localized time
+        const bookingTimeInTZ = toZonedTime(bookingDateTime, TIMEZONE)
+        const bookingTimeMinutes = bookingTimeInTZ.getHours() * 60 + bookingTimeInTZ.getMinutes()
         let isInSurchargeRange = false // ✅ Default to false - surcharge must be explicitly in range
         
         if (daySettings.priceAddition.priceAdditionStartTime && daySettings.priceAddition.priceAdditionEndTime) {

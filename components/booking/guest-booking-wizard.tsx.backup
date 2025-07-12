@@ -1475,8 +1475,11 @@ export default function UniversalBookingWizard({
             return null
           }
         }
+      } else if (currentUser) {
+        // No redemption - use current logged-in user
+        targetUserId = currentUser.id
       } else if (guestInfo.isBookingForSomeoneElse && guestInfo.recipientPhone) {
-        // ✅ NEW: Both logged-in users and guests booking for someone else - create user for recipient
+        // ✅ NEW: Guest booking for someone else - create user for recipient
         try {
           const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
           const recipientResult = await findOrCreateUserByPhone(guestInfo.recipientPhone, {
@@ -1491,17 +1494,14 @@ export default function UniversalBookingWizard({
             console.log("✅ Created/found user for recipient:", targetUserId)
           } else {
             console.warn("Failed to find/create recipient user:", recipientResult.error)
-            // Fall back to booker (current user or guest)
-            targetUserId = currentUser?.id || null
+            // Don't fail the booking, just proceed as guest booking
+            targetUserId = null
           }
         } catch (error) {
           console.warn("Error creating recipient user:", error)
-          // Fall back to booker (current user or guest)
-          targetUserId = currentUser?.id || null
+          // Don't fail the booking, just proceed as guest booking
+          targetUserId = null
         }
-      } else if (currentUser) {
-        // No redemption and not booking for someone else - use current logged-in user
-        targetUserId = currentUser.id
       }
       
       const result = targetUserId 

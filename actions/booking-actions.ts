@@ -121,15 +121,25 @@ export async function getAvailableTimeSlots(
   try {
     await dbConnect()
     
-    // Create a timezone-aware date from the dateString
+    // ✅ FIX: Create date consistently with calculateBookingPrice
     const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
 
     if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
     }
 
+    // ✅ FIX: Use same date format as calculateBookingPrice for consistency
+    const bookingDatePartUTC = new Date(
+      Date.UTC(
+        selectedDateUTC.getUTCFullYear(),
+        selectedDateUTC.getUTCMonth(),
+        selectedDateUTC.getUTCDate(),
+        12, 0, 0, 0,
+      ),
+    )
+
     // Convert to our target timezone
-    const selectedDateInTZ = toZonedTime(selectedDateUTC, TIMEZONE)
+    const selectedDateInTZ = toZonedTime(bookingDatePartUTC, TIMEZONE)
 
     // Optimized database queries with lean() for better performance
     const treatment = await Treatment.findById(treatmentId).lean() as ITreatment | null
@@ -158,7 +168,8 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.invalidTreatmentDuration" }
     }
 
-    const daySettings = getDayWorkingHours(selectedDateUTC, settings)
+    // ✅ FIX: Use same date as calculateBookingPrice for consistency
+    const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
     const dayOfWeek = selectedDateInTZ.getDay()
     
     if (!daySettings || !daySettings.isActive) {
@@ -173,8 +184,8 @@ export async function getAvailableTimeSlots(
     const now = new Date()
     const nowInTZ = toZonedTime(now, TIMEZONE)
     
-    // Check if selected date is today in the target timezone
-    const isToday = isSameDay(selectedDateUTC, now)
+    // ✅ FIX: Check if selected date is today using consistent date format
+    const isToday = isSameDay(bookingDatePartUTC, now)
     
     // Check if cutoff time has been reached for today
     let isCutoffTimeReached = false
@@ -229,12 +240,16 @@ export async function getAvailableTimeSlots(
     
     console.log("🕐 getAvailableTimeSlots - Working hours debug:", {
       selectedDate: selectedDateUTC.toISOString(),
+      bookingDatePartUTC: bookingDatePartUTC.toISOString(),
+      selectedDateInTZ: selectedDateInTZ.toISOString(),
+      dayOfWeek: dayOfWeek,
       daySettings: daySettings ? {
         isActive: daySettings.isActive,
         hasPriceAddition: daySettings.hasPriceAddition,
         priceAddition: daySettings.priceAddition,
         type: 'specialDateEvents' in daySettings ? 'specialDateEvent' : 
-              'date' in daySettings ? 'specialDate' : 'fixedHours'
+              'date' in daySettings ? 'specialDate' : 'fixedHours',
+        dayOfWeekFromSettings: 'dayOfWeek' in daySettings ? daySettings.dayOfWeek : null
       } : null
     })
     
@@ -267,11 +282,11 @@ export async function getAvailableTimeSlots(
       }
     }
 
-    // ✅ תיקון: בדיקת הזמנות קיימות למניעת דאבל בוקינג
-    const startOfDay = new Date(selectedDateUTC)
+    // ✅ FIX: Use consistent date format for existing bookings check
+    const startOfDay = new Date(bookingDatePartUTC)
     startOfDay.setHours(0, 0, 0, 0)
     
-    const endOfDay = new Date(selectedDateUTC)
+    const endOfDay = new Date(bookingDatePartUTC)
     endOfDay.setHours(23, 59, 59, 999)
     
     const existingBookings = await Booking.find({
@@ -469,15 +484,18 @@ export async function calculateBookingPrice(
       const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       
       // ✅ Enhanced logging for working hours debugging
-      console.log("🕐 Working hours calculation debug:", {
-        bookingDate: bookingDatePartUTC.toISOString(),
+      console.log("🕐 calculateBookingPrice - Working hours calculation debug:", {
+        bookingDateTime: bookingDateTime.toISOString(),
+        bookingDatePartUTC: bookingDatePartUTC.toISOString(),
         bookingTime: `${bookingDateTime.getHours()}:${bookingDateTime.getMinutes().toString().padStart(2, '0')}`,
+        dayOfWeekFromDate: toZonedTime(bookingDatePartUTC, TIMEZONE).getDay(),
         daySettings: daySettings ? {
           isActive: daySettings.isActive,
           hasPriceAddition: daySettings.hasPriceAddition,
           priceAddition: daySettings.priceAddition,
           type: 'specialDateEvents' in daySettings ? 'specialDateEvent' : 
-                'date' in daySettings ? 'specialDate' : 'fixedHours'
+                'date' in daySettings ? 'specialDate' : 'fixedHours',
+          dayOfWeekFromSettings: 'dayOfWeek' in daySettings ? daySettings.dayOfWeek : null
         } : null
       })
       

@@ -316,7 +316,7 @@ body {
             ? `${bookerName} заказал для вас процедуру в ${appName}!`
             : `${bookerName} booked a treatment for you at ${appName}!`
 
-        const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
+        const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
         const treatmentBookingForOtherTextContent = language === "he"
           ? `שלום ${recipientName},\n\n${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\n${bookingDetailsLink}${emailTextSignature}`
           : language === "ru"

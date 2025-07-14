@@ -227,6 +227,17 @@ export async function getAvailableTimeSlots(
     let surchargeStartTimeMinutes: number | null = null
     let surchargeEndTimeMinutes: number | null = null
     
+    console.log("🕐 getAvailableTimeSlots - Working hours debug:", {
+      selectedDate: selectedDateUTC.toISOString(),
+      daySettings: daySettings ? {
+        isActive: daySettings.isActive,
+        hasPriceAddition: daySettings.hasPriceAddition,
+        priceAddition: daySettings.priceAddition,
+        type: 'specialDateEvents' in daySettings ? 'specialDateEvent' : 
+              'date' in daySettings ? 'specialDate' : 'fixedHours'
+      } : null
+    })
+    
     if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
       const basePriceForSurchargeCalc =
         treatment.pricingType === "fixed"
@@ -302,19 +313,67 @@ export async function getAvailableTimeSlots(
           isAvailable: true,
         }
 
-        // Check if current slot is within surcharge time range
-        const isInSurchargeRange = surchargeAmount > 0 && 
-          surchargeStartTimeMinutes !== null && 
-          surchargeEndTimeMinutes !== null &&
-          currentMinutes >= surchargeStartTimeMinutes && 
-          currentMinutes <= surchargeEndTimeMinutes
+                    // ✅ FIX: Use same logic as calculateBookingPrice for consistency
+        let isInSurchargeRange = false
+        
+        console.log("🕐 getAvailableTimeSlots - Checking surcharge for slot:", {
+          timeStr,
+          currentMinutes,
+          surchargeAmount,
+          priceAdditionStartTime: daySettings.priceAddition?.priceAdditionStartTime,
+          priceAdditionEndTime: daySettings.priceAddition?.priceAdditionEndTime
+        })
+        
+        if (surchargeAmount > 0) {
+      if (daySettings.priceAddition.priceAdditionStartTime && daySettings.priceAddition.priceAdditionEndTime) {
+        // Both start and end times are specified - check exact range
+        const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+        const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
+        
+        const surchargeStartMinutes = (startHour * 60) + startMinute
+        const surchargeEndMinutes = (endHour * 60) + endMinute
+        
+        // Handle case where end time might be next day (e.g., 22:00 to 02:00)
+        if (surchargeEndMinutes < surchargeStartMinutes) {
+          // Crosses midnight
+          isInSurchargeRange = currentMinutes >= surchargeStartMinutes || currentMinutes <= surchargeEndMinutes
+        } else {
+          // Same day range
+          isInSurchargeRange = currentMinutes >= surchargeStartMinutes && currentMinutes <= surchargeEndMinutes
+        }
+      } else if (daySettings.priceAddition.priceAdditionStartTime) {
+        // Only start time specified - from start time to end of day
+        const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+        const surchargeStartMinutes = (startHour * 60) + startMinute
+        isInSurchargeRange = currentMinutes >= surchargeStartMinutes
+      } else if (daySettings.priceAddition.priceAdditionEndTime) {
+        // Only end time specified - from start of day to end time
+        const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
+        const surchargeEndMinutes = (endHour * 60) + endMinute
+        isInSurchargeRange = currentMinutes <= surchargeEndMinutes
+      } else {
+        // No time range specified - apply to all times
+        isInSurchargeRange = true
+      }
+    }
 
-        // Add price surcharge if applicable and within time range
+            // Add price surcharge if applicable and within time range
         if (isInSurchargeRange) {
+          console.log("✅ getAvailableTimeSlots - Adding surcharge to slot:", {
+            timeStr,
+            surchargeAmount,
+            surchargeDescription
+          })
           slot.surcharge = {
             description: surchargeDescription,
             amount: surchargeAmount,
           }
+        } else {
+          console.log("❌ getAvailableTimeSlots - No surcharge for slot:", {
+            timeStr,
+            currentMinutes,
+            surchargeAmount: surchargeAmount > 0 ? surchargeAmount : "no surcharge configured"
+          })
         }
 
         // Note: Evening surcharges are now handled through working hours settings with time ranges
@@ -408,6 +467,20 @@ export async function calculateBookingPrice(
     const settings = await (WorkingHoursSettings as any).findOne().lean() as IWorkingHoursSettings | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
+      
+      // ✅ Enhanced logging for working hours debugging
+      console.log("🕐 Working hours calculation debug:", {
+        bookingDate: bookingDatePartUTC.toISOString(),
+        bookingTime: `${bookingDateTime.getHours()}:${bookingDateTime.getMinutes().toString().padStart(2, '0')}`,
+        daySettings: daySettings ? {
+          isActive: daySettings.isActive,
+          hasPriceAddition: daySettings.hasPriceAddition,
+          priceAddition: daySettings.priceAddition,
+          type: 'specialDateEvents' in daySettings ? 'specialDateEvent' : 
+                'date' in daySettings ? 'specialDate' : 'fixedHours'
+        } : null
+      })
+      
       if (
         daySettings?.isActive &&
         daySettings.hasPriceAddition &&
@@ -418,6 +491,14 @@ export async function calculateBookingPrice(
         const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
         let isInSurchargeRange = false // ✅ Default to false - surcharge must be explicitly in range
         
+        console.log("🕐 Surcharge time range check:", {
+          bookingTimeMinutes,
+          priceAdditionStartTime: daySettings.priceAddition.priceAdditionStartTime,
+          priceAdditionEndTime: daySettings.priceAddition.priceAdditionEndTime,
+          surchargeAmount: daySettings.priceAddition.amount,
+          surchargeType: daySettings.priceAddition.type
+        })
+        
         if (daySettings.priceAddition.priceAdditionStartTime && daySettings.priceAddition.priceAdditionEndTime) {
           // Both start and end times are specified - check exact range
           const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
@@ -425,6 +506,12 @@ export async function calculateBookingPrice(
           
           const surchargeStartMinutes = (startHour * 60) + startMinute
           const surchargeEndMinutes = (endHour * 60) + endMinute
+          
+          console.log("🕐 Time range details:", {
+            surchargeStartMinutes,
+            surchargeEndMinutes,
+            crossesMidnight: surchargeEndMinutes < surchargeStartMinutes
+          })
           
           // Handle case where end time might be next day (e.g., 22:00 to 02:00)
           if (surchargeEndMinutes < surchargeStartMinutes) {
@@ -449,6 +536,12 @@ export async function calculateBookingPrice(
           isInSurchargeRange = true
         }
         
+        console.log("🕐 Surcharge range result:", {
+          isInSurchargeRange,
+          bookingTimeMinutes,
+          willApplySurcharge: isInSurchargeRange
+        })
+        
         if (isInSurchargeRange) {
           const surchargeBase = basePrice
           const surchargeAmount =
@@ -457,6 +550,13 @@ export async function calculateBookingPrice(
               : surchargeBase * (daySettings.priceAddition.amount / 100)
 
           if (surchargeAmount > 0) {
+            console.log("✅ Applying working hours surcharge:", {
+              surchargeBase,
+              surchargeAmount,
+              surchargeType: daySettings.priceAddition.type,
+              description: daySettings.priceAddition.description || ('notes' in daySettings ? daySettings.notes : '') || `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`
+            })
+            
             // Calculate professional share for this surcharge
             let professionalShare: IProfessionalShare | undefined = undefined
             // Check if this is a fixed hours or special date event (not legacy special date)
@@ -477,8 +577,19 @@ export async function calculateBookingPrice(
             })
             priceDetails.totalSurchargesAmount += surchargeAmount
           }
+        } else {
+          console.log("❌ No surcharge applied - booking time outside surcharge range")
         }
+      } else {
+        console.log("❌ No surcharge configuration found:", {
+          daySettingsExists: !!daySettings,
+          isActive: daySettings?.isActive,
+          hasPriceAddition: daySettings?.hasPriceAddition,
+          priceAdditionAmount: daySettings?.priceAddition?.amount
+        })
       }
+    } else {
+      console.log("❌ No working hours settings found in database")
     }
 
     // Note: Evening surcharges are now handled through working hours settings with time ranges
@@ -1662,10 +1773,7 @@ export async function professionalAcceptBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
-          const baseUrl =
-            process.env.NEXT_PUBLIC_APP_URL ||
-            process.env.NEXTAUTH_URL ||
-            ""
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ""
           const notificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
@@ -1673,7 +1781,7 @@ export async function professionalAcceptBooking(
             professionalName: professional.name || "מטפל/ת",
             clientName: clientUser.name || "לקוח/ה",
             userName: clientUser.name || "לקוח/ה",
-            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/booking-details/${acceptedBooking.bookingNumber}`,
           }
 
           const recipients = []
@@ -2158,10 +2266,7 @@ export async function assignProfessionalToBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
-          const baseUrl =
-            process.env.NEXT_PUBLIC_APP_URL ||
-            process.env.NEXTAUTH_URL ||
-            ""
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ""
           const clientNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
@@ -2169,7 +2274,7 @@ export async function assignProfessionalToBooking(
             professionalName: professional.name || "מטפל/ת",
             clientName: clientUser.name || "לקוח/ה",
             userName: clientUser.name || "לקוח/ה",
-            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/booking-details/${assignedBooking.bookingNumber}`,
           }
 
           const clientRecipients = []
@@ -2194,7 +2299,7 @@ export async function assignProfessionalToBooking(
             bookingDateTime: assignedBooking.bookingDateTime,
             professionalName: professional.name || "מטפל/ת",
             clientName: clientUser.name || "לקוח/ה",
-            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
+            bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
           }
 
           const professionalRecipients = []

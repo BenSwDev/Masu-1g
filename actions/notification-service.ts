@@ -274,9 +274,10 @@ export async function sendBookingConfirmationToUser(
       type: "treatment-booking-success" as const,
       treatmentName: (booking.treatmentId as any)?.name || "טיפול",
       bookingDateTime: booking.bookingDateTime,
+      bookingNumber: booking.bookingNumber,
       recipientName: user.name,
       userName: user.name,
-      bookingDetailsLink: `${process.env.NEXTAUTH_URL}/dashboard/member/bookings?bookingId=${bookingId}`
+      bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${booking.bookingNumber}`
     }
 
     const recipients = []

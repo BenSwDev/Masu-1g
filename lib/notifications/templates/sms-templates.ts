@@ -207,7 +207,7 @@ function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage)
 
   if (data.isForSomeoneElse) {
     // Message for the recipient when someone else booked for them
-    const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
+    const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
     let message: string
     switch (language) {
       case "he":
@@ -224,7 +224,7 @@ function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage)
     // Check if this is a booker who booked for someone else
     if (data.isBookerForSomeoneElse && data.actualRecipientName) {
       // Message for the booker when they booked for someone else
-      const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
+      const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
       let message: string
       switch (language) {
         case "he":
@@ -239,7 +239,7 @@ function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage)
       return message + smsSignature
     } else {
       // Message for the booker (booking for themselves)
-      const bookingDetailsLink = `${process.env.NEXTAUTH_URL}/booking-details/${data.bookingNumber}`
+      const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
       let message: string
       switch (language) {
         case "he":

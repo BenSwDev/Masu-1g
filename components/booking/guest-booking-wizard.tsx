@@ -826,7 +826,14 @@ export default function UniversalBookingWizard({
       source: bookingOptions.source,
       hasVoucher: Boolean(voucher),
       hasSubscription: Boolean(bookingOptions.selectedUserSubscriptionId),
-      currentStep
+      currentStep,
+      // ✅ Enhanced working hours debugging
+      workingHoursDebug: {
+        bookingDateUTC: bookingDateTime.toISOString(),
+        bookingTimeMinutes: bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes(),
+        dayOfWeek: bookingDateTime.getDay(),
+        timezone: 'Asia/Jerusalem'
+      }
     })
     
     const result = await calculateBookingPrice(payload)
@@ -1021,9 +1028,9 @@ export default function UniversalBookingWizard({
     const nextStepNumber = Math.min(currentStep + 1, CONFIRMATION_STEP_NUMBER)
     setCurrentStep(nextStepNumber)
     
-    // ✅ FIX: Trigger price recalculation when moving to summary (step 5) or payment (step 6) steps
-    // This ensures working hours surcharges are maintained correctly
-    if (nextStepNumber === 5 || nextStepNumber === 6) {
+    // ✅ FIX: Trigger price recalculation when moving to any step after scheduling (step 2)
+    // This ensures working hours surcharges are maintained correctly throughout the flow
+    if (nextStepNumber >= 3 && bookingOptions.selectedTreatmentId && bookingOptions.bookingDate && bookingOptions.bookingTime) {
       console.log(`🔄 Triggering price recalculation for step ${nextStepNumber} to ensure working hours surcharges are maintained`)
       
       // Small delay to ensure step state is updated
@@ -1037,8 +1044,8 @@ export default function UniversalBookingWizard({
     const prevStepNumber = Math.max(currentStep - 1, 1)
     setCurrentStep(prevStepNumber)
     
-    // ✅ FIX: Trigger price recalculation when moving back to scheduling step (step 2) or later
-    // This ensures working hours surcharges are maintained correctly
+    // ✅ FIX: Trigger price recalculation when moving back to any step after scheduling (step 2)
+    // This ensures working hours surcharges are maintained correctly when navigating back
     if (prevStepNumber >= 2 && bookingOptions.selectedTreatmentId && bookingOptions.bookingDate && bookingOptions.bookingTime) {
       console.log(`🔄 Triggering price recalculation for step ${prevStepNumber} (moving back) to ensure working hours surcharges are maintained`)
       

@@ -34,21 +34,31 @@ const TimeSlotButton = memo(({
   slot: TimeSlot
   isSelected: boolean
   onSelect: (time: string) => void
-}) => (
-  <Button
-    variant={isSelected ? "default" : "outline"}
-    size="sm"
-    onClick={() => onSelect(slot.time)}
-    className="text-xs flex flex-col items-center py-2 min-h-[60px]"
-  >
-    <span>{slot.time}</span>
-    {slot.surcharge && (
-      <span className="text-orange-600 text-[10px] font-medium mt-1">
-        +{slot.surcharge.amount.toFixed(2)} ₪
-      </span>
-    )}
-  </Button>
-))
+}) => {
+  // ✅ Enhanced logging for debugging surcharge display
+  if (slot.surcharge) {
+    console.log("🕐 TimeSlotButton - Rendering slot with surcharge:", {
+      time: slot.time,
+      surcharge: slot.surcharge
+    })
+  }
+  
+  return (
+    <Button
+      variant={isSelected ? "default" : "outline"}
+      size="sm"
+      onClick={() => onSelect(slot.time)}
+      className="text-xs flex flex-col items-center py-2 min-h-[60px]"
+    >
+      <span>{slot.time}</span>
+      {slot.surcharge && (
+        <span className="text-orange-600 text-[10px] font-medium mt-1">
+          +{slot.surcharge.amount.toFixed(2)} ₪
+        </span>
+      )}
+    </Button>
+  )
+})
 
 TimeSlotButton.displayName = "TimeSlotButton"
 

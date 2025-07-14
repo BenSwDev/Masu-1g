@@ -89,11 +89,22 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Convert the input date to the correct timezone
   const zonedDate = toZonedTime(date, TIMEZONE)
   
+  // ✅ Enhanced logging for debugging working hours issues
+  console.log("🕐 getDayWorkingHours - Input debug:", {
+    inputDate: date.toISOString(),
+    zonedDate: zonedDate.toISOString(),
+    dayOfWeek: zonedDate.getDay(),
+    hasSpecialDateEvents: settings.specialDateEvents?.length || 0,
+    hasSpecialDates: settings.specialDates?.length || 0,
+    hasFixedHours: settings.fixedHours?.length || 0
+  })
+  
   // First check for special date events (new priority system)
   if (settings.specialDateEvents) {
     for (const event of settings.specialDateEvents) {
       for (const eventDate of event.dates) {
         if (isSameDay(new Date(eventDate), date)) {
+          console.log("✅ Found special date event:", event)
           return event
         }
       }
@@ -103,12 +114,23 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Then check legacy special dates
   const specialDateSetting = settings.specialDates?.find((sd) => isSameDay(new Date(sd.date), date))
   if (specialDateSetting) {
+    console.log("✅ Found special date setting:", specialDateSetting)
     return specialDateSetting
   }
 
   // Finally check fixed hours for the day of week
   const dayOfWeek = zonedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
+  
+  console.log("🕐 getDayWorkingHours - Fixed hours result:", {
+    dayOfWeek,
+    foundFixedSetting: !!fixedDaySetting,
+    fixedSetting: fixedDaySetting ? {
+      dayOfWeek: fixedDaySetting.dayOfWeek,
+      hasPriceAddition: fixedDaySetting.hasPriceAddition,
+      priceAddition: fixedDaySetting.priceAddition
+    } : null
+  })
   
   return fixedDaySetting || null
 }
@@ -403,6 +425,24 @@ export async function getAvailableTimeSlots(
       const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
       workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }
+    
+    // ✅ Enhanced logging for debugging surcharge display issues
+    const timeSlotsWithSurcharges = timeSlots.filter(slot => slot.surcharge)
+    console.log("🕐 getAvailableTimeSlots - Final result:", {
+      selectedDate: dateString,
+      totalTimeSlots: timeSlots.length,
+      timeSlotsWithSurcharges: timeSlotsWithSurcharges.length,
+      surchargeSlots: timeSlotsWithSurcharges.map(slot => ({
+        time: slot.time,
+        surcharge: slot.surcharge
+      })),
+      daySettings: daySettings ? {
+        type: 'specialDateEvents' in daySettings ? 'specialDateEvent' : 
+              'date' in daySettings ? 'specialDate' : 'fixedHours',
+        hasPriceAddition: daySettings.hasPriceAddition,
+        priceAddition: daySettings.priceAddition
+      } : null
+    })
     
     return { success: true, timeSlots, workingHoursNote }
   } catch (error) {

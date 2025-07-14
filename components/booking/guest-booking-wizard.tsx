@@ -752,6 +752,18 @@ export default function UniversalBookingWizard({
         )
         
         if (result.success) {
+          const timeSlotsWithSurcharges = (result.timeSlots || []).filter(slot => slot.surcharge)
+          console.log("🕐 Booking Wizard - Received time slots:", {
+            dateStr,
+            totalTimeSlots: result.timeSlots?.length || 0,
+            timeSlotsWithSurcharges: timeSlotsWithSurcharges.length,
+            surchargeSlots: timeSlotsWithSurcharges.map(slot => ({
+              time: slot.time,
+              surcharge: slot.surcharge
+            })),
+            workingHoursNote: result.workingHoursNote
+          })
+          
           setTimeSlots(result.timeSlots || [])
           setWorkingHoursNote(result.workingHoursNote)
         } else {

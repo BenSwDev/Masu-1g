@@ -69,18 +69,7 @@ export default function BookingCreateConfirmationStep({
   }
 
   const calculatePrice = () => {
-    // Use calculated price from the actual price calculation if available
-    if (calculatedPrice) {
-      return {
-        basePrice: calculatedPrice.basePrice,
-        discount: calculatedPrice.couponDiscount + calculatedPrice.voucherAppliedAmount,
-        additionalFees: calculatedPrice.totalSurchargesAmount,
-        finalPrice: calculatedPrice.finalAmount
-      }
-    }
-
-    // Fallback calculation (should not be used if calculatedPrice is properly passed)
-    let basePrice = 0 // Will be determined by treatment selection
+    let basePrice = 320
     let discount = 0
     let additionalFees = 0
 
@@ -92,7 +81,6 @@ export default function BookingCreateConfirmationStep({
       discount += 100
     }
 
-    // Evening/weekend surcharge - this should come from working hours settings
     const isEvening = formData.bookingDateTime && formData.bookingDateTime.getHours() >= 20
     const isWeekend = formData.bookingDateTime && [5, 6].includes(formData.bookingDateTime.getDay())
     

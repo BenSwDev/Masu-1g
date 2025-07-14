@@ -21,6 +21,8 @@ interface GuestSchedulingStepProps {
   workingHoursNote?: string
   onNext: () => void
   onPrev: () => void
+  calculatedPrice?: any // Added for global price calculation
+  isPriceCalculating?: boolean // Added for global price calculation
 }
 
 // Memoized time slot button component for better performance
@@ -59,6 +61,8 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
   workingHoursNote,
   onNext,
   onPrev,
+  calculatedPrice,
+  isPriceCalculating,
 }: GuestSchedulingStepProps) {
   const { t, language, dir } = useTranslation()
 
@@ -131,8 +135,21 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     return timeSlots.find(slot => slot.time === bookingOptions.bookingTime) || null
   }, [bookingOptions.bookingTime, timeSlots])
 
-  // Calculate base price and surcharge - simplified to show current selection only
+  // ✅ FIX: Use global calculatedPrice instead of local calculation for consistency
   const priceCalculation = useMemo(() => {
+    // If we have calculated price from server, use it (this is the accurate one)
+    if (calculatedPrice && !isPriceCalculating) {
+      return {
+        basePrice: calculatedPrice.basePrice,
+        surchargeAmount: calculatedPrice.totalSurchargesAmount,
+        surchargeReason: calculatedPrice.surcharges?.length > 0 
+          ? calculatedPrice.surcharges[0].description || "תוספת מחיר"
+          : "",
+        finalPrice: calculatedPrice.finalAmount
+      }
+    }
+
+    // Fallback to local calculation only if server calculation is not available
     const basePrice = selectedTreatment?.pricingType === "fixed"
       ? selectedTreatment.fixedPrice || 0
       : selectedDuration?.price || 0
@@ -141,7 +158,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
     const finalPrice = basePrice + surchargeAmount
     
     return { basePrice, surchargeAmount, surchargeReason, finalPrice }
-  }, [selectedTreatment, selectedDuration, selectedTimeSlot])
+  }, [calculatedPrice, isPriceCalculating, selectedTreatment, selectedDuration, selectedTimeSlot])
 
   // Fix: selectedDate should be Date | undefined
   const bookingDateObj = useMemo(() => {
@@ -325,31 +342,80 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
                 )}
 
                 {/* Surcharge Breakdown */}
-                {bookingOptions.bookingTime && selectedTimeSlot?.surcharge && (
+                {/* ✅ FIX: Enhanced price preview using global calculation */}
+                {bookingOptions.bookingTime && (calculatedPrice || priceCalculation.surchargeAmount > 0) && (
                   <div className="mt-4 p-4 rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-orange-100">
                     <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
-                      <span>תוספת מחיר:</span>
-                      <span className="font-bold">
-                        {priceCalculation.surchargeReason === "workingHours.eveningHours" 
-                          ? "שעות ערב" 
-                          : priceCalculation.surchargeReason || "תוספת זמן מיוחד"}
-                      </span>
+                      <span>תצוגה מוקדמת של מחיר:</span>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                      <span>מחיר בסיס:</span>
-                      <span>{priceCalculation.basePrice.toFixed(2)} ₪</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>תוספת:</span>
-                      <span className="text-orange-700">+{priceCalculation.surchargeAmount.toFixed(2)} ₪</span>
-                    </div>
-                    <hr className="my-2 border-orange-300" />
-                    <div className="flex justify-between font-bold text-base mt-2">
-                      <span>סך הכל:</span>
-                      <span className="text-primary">{priceCalculation.finalPrice.toFixed(2)} ₪</span>
-                    </div>
+                      {isPriceCalculating ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                          <span className="text-sm">מחשב מחיר...</span>
+                        </div>
+                      ) : calculatedPrice ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span>מחיר בסיס:</span>
+                            <span>₪{calculatedPrice.basePrice.toFixed(2)}</span>
+                          </div>
+                          {calculatedPrice.totalSurchargesAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>תוספות:</span>
+                              <span className="text-orange-700">+₪{calculatedPrice.totalSurchargesAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {calculatedPrice.couponDiscount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>הנחת קופון:</span>
+                              <span className="text-green-700">-₪{calculatedPrice.couponDiscount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {calculatedPrice.voucherAppliedAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>שובר מתנה:</span>
+                              <span className="text-green-700">-₪{calculatedPrice.voucherAppliedAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {calculatedPrice.isBaseTreatmentCoveredBySubscription && (
+                            <div className="flex justify-between text-sm">
+                              <span>כיסוי מנוי:</span>
+                              <span className="text-green-700">-₪{calculatedPrice.basePrice.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <hr className="my-2 border-orange-300" />
+                          <div className="flex justify-between font-bold text-base mt-2">
+                            <span>מחיר סופי:</span>
+                            <span className="text-primary">
+                              {calculatedPrice.isFullyCoveredByVoucherOrSubscription ? (
+                                <span className="text-green-600">מכוסה במלואה!</span>
+                              ) : (
+                                `₪${calculatedPrice.finalAmount.toFixed(2)}`
+                              )}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span>מחיר בסיס:</span>
+                            <span>₪{priceCalculation.basePrice.toFixed(2)}</span>
+                          </div>
+                          {priceCalculation.surchargeAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>תוספת:</span>
+                              <span className="text-orange-700">+₪{priceCalculation.surchargeAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <hr className="my-2 border-orange-300" />
+                          <div className="flex justify-between font-bold text-base mt-2">
+                            <span>סך הכל:</span>
+                            <span className="text-primary">₪{priceCalculation.finalPrice.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

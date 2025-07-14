@@ -653,7 +653,6 @@ export default function UniversalBookingWizard({
 
   const guestUserCreatedRef = useRef(false)
   const priceCalculationIdRef = useRef<number>(0)
-  const priceCalculationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto create guest user and initial booking once mandatory info is provided
   useEffect(() => {
@@ -778,12 +777,6 @@ export default function UniversalBookingWizard({
   }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
   const triggerPriceCalculation = useCallback(async () => {
-    // Only calculate price from step 2 onwards (after treatment selection)
-    if (currentStep < 2) {
-      setCalculatedPrice(null)
-      return
-    }
-
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
@@ -811,11 +804,12 @@ export default function UniversalBookingWizard({
     const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
+    // ✅ Enhanced payload with all necessary data for working hours calculation
     const payload: CalculatePricePayloadType = {
       userId: currentUser?.id || guestUserId || undefined,
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
-      bookingDateTime,
+      bookingDateTime, // ✅ This is crucial - the exact date/time determines working hours surcharges
       couponCode: bookingOptions.appliedCouponCode,
       giftVoucherCode: voucher?.code,
       userSubscriptionId:
@@ -823,10 +817,23 @@ export default function UniversalBookingWizard({
       guestPhone: !currentUser ? guestInfo.phone : undefined, // Add guest phone for ownership validation
     }
     
+    // ✅ Enhanced logging for debugging working hours issues
+    console.log("💰 Triggering price calculation with payload:", {
+      treatmentId: payload.treatmentId,
+      bookingDateTime: payload.bookingDateTime,
+      selectedDate: bookingOptions.bookingDate,
+      selectedTime: bookingOptions.bookingTime,
+      source: bookingOptions.source,
+      hasVoucher: Boolean(voucher),
+      hasSubscription: Boolean(bookingOptions.selectedUserSubscriptionId),
+      currentStep
+    })
+    
     const result = await calculateBookingPrice(payload)
     
     // ✅ בדיקת race condition - וידוא שזה עדיין החישוב הרלוונטי
     if (priceCalculationIdRef.current !== currentCalculationId) {
+      console.log("⚠️ Price calculation race condition detected - ignoring outdated result")
       return // חישוב מיושן, התעלמות
     }
     
@@ -836,8 +843,14 @@ export default function UniversalBookingWizard({
         surcharges: result.priceDetails.surcharges,
         totalSurchargesAmount: result.priceDetails.totalSurchargesAmount,
         finalAmount: result.priceDetails.finalAmount,
+        isFullyCovered: result.priceDetails.isFullyCoveredByVoucherOrSubscription,
         bookingTime: bookingOptions.bookingTime,
-        bookingDate: bookingOptions.bookingDate
+        bookingDate: bookingOptions.bookingDate,
+        // ✅ Enhanced logging for working hours debugging
+        workingHoursInfo: {
+          hasSurcharges: result.priceDetails.surcharges.length > 0,
+          surchargeDescriptions: result.priceDetails.surcharges.map(s => s.description)
+        }
       })
       setCalculatedPrice(result.priceDetails)
     } else {
@@ -852,30 +865,28 @@ export default function UniversalBookingWizard({
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, guestInfo.phone, guestUserId, toast, initialData.activeTreatments, t, voucher?.code, currentUser])
-
-  // ✅ Debounced price calculation to prevent excessive API calls
-  const debouncedTriggerPriceCalculation = useCallback(() => {
-    // Clear any existing timeout
-    if (priceCalculationTimeoutRef.current) {
-      clearTimeout(priceCalculationTimeoutRef.current)
-    }
-    
-    // Set a new timeout for price calculation
-    priceCalculationTimeoutRef.current = setTimeout(() => {
-      triggerPriceCalculation()
-    }, 500) // 500ms debounce
-  }, [triggerPriceCalculation])
+  }, [
+    bookingOptions.selectedTreatmentId,
+    bookingOptions.selectedDurationId,
+    bookingOptions.bookingDate,
+    bookingOptions.bookingTime,
+    bookingOptions.appliedCouponCode,
+    bookingOptions.source,
+    bookingOptions.selectedUserSubscriptionId,
+    voucher?.code,
+    guestInfo.phone,
+    guestUserId,
+    currentUser?.id,
+    toast,
+    initialData.activeTreatments,
+    t,
+    currentStep
+  ])
 
   useEffect(() => {
-    // Trigger price calculation (function handles step validation internally)
-    debouncedTriggerPriceCalculation()
-
-    // Cleanup function to clear timeout on unmount
-    return () => {
-      if (priceCalculationTimeoutRef.current) {
-        clearTimeout(priceCalculationTimeoutRef.current)
-      }
+    // Trigger price calculation starting from step 2 (after treatment selection)
+    if (currentStep >= 2) {
+      triggerPriceCalculation()
     }
   }, [
     bookingOptions.selectedTreatmentId,
@@ -883,8 +894,13 @@ export default function UniversalBookingWizard({
     bookingOptions.bookingDate,
     bookingOptions.bookingTime,
     bookingOptions.appliedCouponCode,
-    currentStep, // Keep this to trigger calculation when moving between steps
-    debouncedTriggerPriceCalculation,
+    bookingOptions.source, // ✅ Add source to trigger recalculation when redemption changes
+    bookingOptions.selectedUserSubscriptionId, // ✅ Add subscription ID changes
+    guestInfo.email,
+    guestInfo.phone, // ✅ Add phone for ownership validation
+    guestAddress.city,
+    currentStep,
+    triggerPriceCalculation,
   ])
 
   // Effect to auto-select the first available time slot
@@ -1000,10 +1016,38 @@ export default function UniversalBookingWizard({
       await handleFinalSubmit()
       return
     }
-    setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
+    
+    // ✅ Move to next step first
+    const nextStepNumber = Math.min(currentStep + 1, CONFIRMATION_STEP_NUMBER)
+    setCurrentStep(nextStepNumber)
+    
+    // ✅ FIX: Trigger price recalculation when moving to summary (step 5) or payment (step 6) steps
+    // This ensures working hours surcharges are maintained correctly
+    if (nextStepNumber === 5 || nextStepNumber === 6) {
+      console.log(`🔄 Triggering price recalculation for step ${nextStepNumber} to ensure working hours surcharges are maintained`)
+      
+      // Small delay to ensure step state is updated
+      setTimeout(() => {
+        triggerPriceCalculation()
+      }, 100)
+    }
   }
 
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
+  const prevStep = () => {
+    const prevStepNumber = Math.max(currentStep - 1, 1)
+    setCurrentStep(prevStepNumber)
+    
+    // ✅ FIX: Trigger price recalculation when moving back to scheduling step (step 2) or later
+    // This ensures working hours surcharges are maintained correctly
+    if (prevStepNumber >= 2 && bookingOptions.selectedTreatmentId && bookingOptions.bookingDate && bookingOptions.bookingTime) {
+      console.log(`🔄 Triggering price recalculation for step ${prevStepNumber} (moving back) to ensure working hours surcharges are maintained`)
+      
+      // Small delay to ensure step state is updated
+      setTimeout(() => {
+        triggerPriceCalculation()
+      }, 100)
+    }
+  }
 
   // Legacy function - no longer used with new simplified approach
   const createPendingBooking = useCallback(async () => {
@@ -1590,6 +1634,8 @@ export default function UniversalBookingWizard({
             workingHoursNote={workingHoursNote}
             onNext={nextStep}
             onPrev={prevStep}
+            calculatedPrice={calculatedPrice}
+            isPriceCalculating={isPriceCalculating}
           />
         )
       case 3:

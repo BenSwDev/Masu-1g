@@ -324,11 +324,13 @@ export async function getAvailableTimeSlots(
     }
     
     // Add informative note about cutoff time
+    let workingHoursNote = daySettings.notes
     if (!isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime) {
       const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
+      workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }
     
-    return { success: true, timeSlots }
+    return { success: true, timeSlots, workingHoursNote }
   } catch (error) {
     logger.error("Error fetching available time slots:", { error })
     return { success: false, error: "bookings.errors.fetchTimeSlotsFailed" }
@@ -404,9 +406,8 @@ export async function calculateBookingPrice(
     }
 
     const settings = await (WorkingHoursSettings as any).findOne().lean() as IWorkingHoursSettings | null
-    let daySettings: IFixedHours | ISpecialDate | ISpecialDateEvent | null = null
     if (settings) {
-      daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
+      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
         daySettings?.isActive &&
         daySettings.hasPriceAddition &&
@@ -701,29 +702,13 @@ export async function calculateBookingPrice(
 
     // Debug logging
     logger.info("Price calculation result:", {
-      requestId: `price_calc_${Date.now()}`,
       basePrice: priceDetails.basePrice,
       totalSurchargesAmount: priceDetails.totalSurchargesAmount,
       treatmentPriceAfterSubscriptionOrTreatmentVoucher: priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
       subtotalBeforeGeneralReductions,
       finalAmount: priceDetails.finalAmount,
       bookingDateTime: validatedPayload.bookingDateTime,
-      surcharges: priceDetails.surcharges,
-      // Additional debug info
-      treatmentId: validatedPayload.treatmentId,
-      selectedDurationId: validatedPayload.selectedDurationId,
-      userId: validatedPayload.userId,
-      guestPhone: validatedPayload.guestPhone ? "provided" : "not_provided",
-      dayOfWeek: bookingDateTime.getDay(),
-      bookingTime: `${bookingDateTime.getHours()}:${String(bookingDateTime.getMinutes()).padStart(2, '0')}`,
-      workingHoursFound: !!settings,
-      daySettingsFound: !!daySettings,
-      daySettingsActive: daySettings?.isActive,
-      hasPriceAddition: daySettings?.hasPriceAddition,
-      priceAdditionAmount: daySettings?.priceAddition?.amount,
-      priceAdditionType: daySettings?.priceAddition?.type,
-      priceAdditionStartTime: daySettings?.priceAddition?.priceAdditionStartTime,
-      priceAdditionEndTime: daySettings?.priceAddition?.priceAdditionEndTime,
+      surcharges: priceDetails.surcharges
     })
 
     // Calculate professional payment and office commission
@@ -1144,6 +1129,41 @@ export async function createBooking(
           bookingId: String(finalBookingObject._id),
         })
       }
+
+      // Send notifications to professionals if booking is ready for assignment
+      if ((finalBookingObject.status as string) === "pending_professional") {
+        try {
+          const bookingIdStr = String(finalBookingObject._id)
+          logger.info("Sending automatic notifications to suitable professionals", { 
+            bookingId: bookingIdStr
+          })
+          
+          // ✅ FIX: Use sendAutomaticProfessionalNotifications directly to bypass admin authorization
+          const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
+          const notificationResult = await sendAutomaticProfessionalNotifications(bookingIdStr)
+          
+          if (notificationResult.success) {
+            logger.info("Professional notifications sent successfully", { 
+              bookingId: bookingIdStr,
+              sentCount: notificationResult.sentCount
+            })
+          } else {
+            logger.error("Failed to send professional notifications:", {
+              bookingId: bookingIdStr,
+              error: notificationResult.error
+            })
+          }
+        } catch (professionalNotificationError) {
+          logger.error("Failed to send professional notifications:", {
+            bookingId: String(finalBookingObject._id),
+            error: professionalNotificationError instanceof Error 
+              ? professionalNotificationError.message 
+              : String(professionalNotificationError),
+          })
+          // Don't fail the booking if professional notifications fail
+        }
+      }
+      
       logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
       
       return { success: true, booking: finalBookingObject }
@@ -2799,15 +2819,25 @@ export async function createGuestBooking(
       if ((finalBookingObject.status as string) === "pending_professional") {
         try {
           const bookingIdStr = String(finalBookingObject._id)
-          logger.info("Sending notifications to suitable professionals", { 
+          logger.info("Sending automatic notifications to suitable professionals", { 
             bookingId: bookingIdStr
           })
           
-          await sendNotificationToSuitableProfessionals(bookingIdStr)
+          // ✅ FIX: Use sendAutomaticProfessionalNotifications directly to bypass admin authorization
+          const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
+          const notificationResult = await sendAutomaticProfessionalNotifications(bookingIdStr)
           
-          logger.info("Professional notifications sent successfully", { 
-            bookingId: bookingIdStr
-          })
+          if (notificationResult.success) {
+            logger.info("Professional notifications sent successfully", { 
+              bookingId: bookingIdStr,
+              sentCount: notificationResult.sentCount
+            })
+          } else {
+            logger.error("Failed to send professional notifications:", {
+              bookingId: bookingIdStr,
+              error: notificationResult.error
+            })
+          }
         } catch (professionalNotificationError) {
           logger.error("Failed to send professional notifications:", {
             bookingId: String(finalBookingObject._id),

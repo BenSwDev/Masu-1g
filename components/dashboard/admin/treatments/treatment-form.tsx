@@ -31,33 +31,16 @@ interface TreatmentFormProps {
   onCancel: () => void
 }
 
-type TreatmentFormValues = {
-  name: string
-  category: "massages" | "facial_treatments"
-  description?: string
-  isActive: boolean
-  pricingType: "fixed" | "duration_based"
-  fixedPrice?: number
-  fixedProfessionalPrice?: number
-  durations?: {
-    minutes: number
-    price: number
-    professionalPrice: number
-    isActive: boolean
-  }[]
-  allowTherapistGenderSelection: boolean
-}
-
 export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Create form schema based on pricing type
+  // Create form schema that will infer the proper TypeScript types
   const formSchema = z.object({
-    name: z.string().min(2, { message: t("treatments.errors.nameRequired") }),
+    name: z.string().min(2, { message: t("treatments.errors.nameRequired") || "Name is required" }),
     category: z.enum(["massages", "facial_treatments"], { 
-      required_error: t("treatments.errors.categoryRequired") 
+      required_error: t("treatments.errors.categoryRequired") || "Category is required" 
     }),
     description: z.string().optional(),
     isActive: z.boolean(),
@@ -67,7 +50,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
     durations: z.array(
       z.object({
         minutes: z.number().refine(val => [60, 75, 90, 120].includes(val), {
-          message: t("treatments.errors.invalidDuration")
+          message: t("treatments.errors.invalidDuration") || "Invalid duration"
         }),
         price: z.number().min(0),
         professionalPrice: z.number().min(0),
@@ -75,7 +58,10 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
       })
     ).optional(),
     allowTherapistGenderSelection: z.boolean(),
-  }) satisfies z.ZodType<TreatmentFormValues>
+  })
+
+  // Infer the TypeScript type from the Zod schema
+  type TreatmentFormValues = z.infer<typeof formSchema>
 
   // Initialize form with existing treatment data or defaults
   const form = useForm<TreatmentFormValues>({
@@ -116,7 +102,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
     }
   }
 
-  const updateDuration = (index: number, field: string, value: number) => {
+  const updateDuration = (index: number, field: string, value: number | boolean) => {
     const newDurations = [...durations]
     newDurations[index] = { ...newDurations[index], [field]: value }
     setDurations(newDurations)
@@ -416,7 +402,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                             <FormLabel className="text-sm">{t("treatments.fields.isActive")}</FormLabel>
                             <Switch
                               checked={duration.isActive}
-                              onCheckedChange={(checked: boolean) => updateDuration(index, "isActive", checked ? 1 : 0)}
+                              onCheckedChange={(checked: boolean) => updateDuration(index, "isActive", checked)}
                             />
                           </div>
                         </div>

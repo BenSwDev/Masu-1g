@@ -690,6 +690,9 @@ export function GuestTreatmentSelectionStep({
                             </h2>
                             <TreatmentDescription description={treatment.description || ""} />
                             {treatment.pricingType === "duration_based" && (
+                              <Badge variant="secondary" className="mt-2 text-xs">
+                                {t("treatments.durationBased")}
+                              </Badge>
                             )}
                           </div>
                           
@@ -800,6 +803,7 @@ export function GuestTreatmentSelectionStep({
                 )
               })}
             </RadioGroup>
+
           </CardContent>
         </Card>
       )}

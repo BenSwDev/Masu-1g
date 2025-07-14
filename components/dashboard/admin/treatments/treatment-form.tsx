@@ -296,9 +296,6 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               <FormControl>
                                 <RadioGroupItem value="duration_based" />
                               </FormControl>
-                              <FormLabel className="font-normal">
-                                {t("treatments.pricingTypes.durationBased")}
-                              </FormLabel>
                             </FormItem>
                           </RadioGroup>
                         </FormControl>

@@ -324,13 +324,11 @@ export async function getAvailableTimeSlots(
     }
     
     // Add informative note about cutoff time
-    let workingHoursNote = daySettings.notes
     if (!isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime) {
       const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
-      workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }
     
-    return { success: true, timeSlots, workingHoursNote }
+    return { success: true, timeSlots }
   } catch (error) {
     logger.error("Error fetching available time slots:", { error })
     return { success: false, error: "bookings.errors.fetchTimeSlotsFailed" }

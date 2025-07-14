@@ -55,7 +55,18 @@ export default function BookingCreatePaymentStep({
   }
 
   const calculateFinalPrice = () => {
-    let basePrice = 320 // Default price, should come from treatment selection
+    // Use calculated price from the actual price calculation if available
+    if (calculatedPrice) {
+      return {
+        basePrice: calculatedPrice.basePrice,
+        discount: calculatedPrice.couponDiscount + calculatedPrice.voucherAppliedAmount,
+        additionalFees: calculatedPrice.totalSurchargesAmount,
+        finalPrice: calculatedPrice.finalAmount
+      }
+    }
+
+    // Fallback calculation (should not be used if calculatedPrice is properly passed)
+    let basePrice = 0 // Will be determined by treatment selection
     let discount = 0
     let additionalFees = 0
 
@@ -69,7 +80,7 @@ export default function BookingCreatePaymentStep({
       discount = Math.min(discount + 100, basePrice) // 100 NIS gift voucher example
     }
 
-    // Evening/weekend surcharge
+    // Evening/weekend surcharge - this should come from working hours settings
     const isEvening = formData.bookingDateTime && formData.bookingDateTime.getHours() >= 20
     const isWeekend = formData.bookingDateTime && [5, 6].includes(formData.bookingDateTime.getDay())
     

@@ -653,6 +653,7 @@ export default function UniversalBookingWizard({
 
   const guestUserCreatedRef = useRef(false)
   const priceCalculationIdRef = useRef<number>(0)
+  const priceCalculationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto create guest user and initial booking once mandatory info is provided
   useEffect(() => {
@@ -777,6 +778,12 @@ export default function UniversalBookingWizard({
   }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
   const triggerPriceCalculation = useCallback(async () => {
+    // Only calculate price from step 2 onwards (after treatment selection)
+    if (currentStep < 2) {
+      setCalculatedPrice(null)
+      return
+    }
+
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
@@ -845,12 +852,30 @@ export default function UniversalBookingWizard({
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, guestInfo.email, guestUserId, toast, initialData.activeTreatments, t, currentStep])
+  }, [bookingOptions, guestInfo.phone, guestUserId, toast, initialData.activeTreatments, t, voucher?.code, currentUser])
+
+  // ✅ Debounced price calculation to prevent excessive API calls
+  const debouncedTriggerPriceCalculation = useCallback(() => {
+    // Clear any existing timeout
+    if (priceCalculationTimeoutRef.current) {
+      clearTimeout(priceCalculationTimeoutRef.current)
+    }
+    
+    // Set a new timeout for price calculation
+    priceCalculationTimeoutRef.current = setTimeout(() => {
+      triggerPriceCalculation()
+    }, 500) // 500ms debounce
+  }, [triggerPriceCalculation])
 
   useEffect(() => {
-    // Trigger price calculation starting from step 2 (after treatment selection)
-    if (currentStep >= 2) {
-      triggerPriceCalculation()
+    // Trigger price calculation (function handles step validation internally)
+    debouncedTriggerPriceCalculation()
+
+    // Cleanup function to clear timeout on unmount
+    return () => {
+      if (priceCalculationTimeoutRef.current) {
+        clearTimeout(priceCalculationTimeoutRef.current)
+      }
     }
   }, [
     bookingOptions.selectedTreatmentId,
@@ -858,10 +883,8 @@ export default function UniversalBookingWizard({
     bookingOptions.bookingDate,
     bookingOptions.bookingTime,
     bookingOptions.appliedCouponCode,
-    guestInfo.email,
-    guestAddress.city,
-    currentStep,
-    triggerPriceCalculation,
+    currentStep, // Keep this to trigger calculation when moving between steps
+    debouncedTriggerPriceCalculation,
   ])
 
   // Effect to auto-select the first available time slot

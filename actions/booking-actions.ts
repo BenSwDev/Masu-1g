@@ -406,8 +406,9 @@ export async function calculateBookingPrice(
     }
 
     const settings = await (WorkingHoursSettings as any).findOne().lean() as IWorkingHoursSettings | null
+    let daySettings: IFixedHours | ISpecialDate | ISpecialDateEvent | null = null
     if (settings) {
-      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
+      daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
         daySettings?.isActive &&
         daySettings.hasPriceAddition &&
@@ -702,13 +703,29 @@ export async function calculateBookingPrice(
 
     // Debug logging
     logger.info("Price calculation result:", {
+      requestId: `price_calc_${Date.now()}`,
       basePrice: priceDetails.basePrice,
       totalSurchargesAmount: priceDetails.totalSurchargesAmount,
       treatmentPriceAfterSubscriptionOrTreatmentVoucher: priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
       subtotalBeforeGeneralReductions,
       finalAmount: priceDetails.finalAmount,
       bookingDateTime: validatedPayload.bookingDateTime,
-      surcharges: priceDetails.surcharges
+      surcharges: priceDetails.surcharges,
+      // Additional debug info
+      treatmentId: validatedPayload.treatmentId,
+      selectedDurationId: validatedPayload.selectedDurationId,
+      userId: validatedPayload.userId,
+      guestPhone: validatedPayload.guestPhone ? "provided" : "not_provided",
+      dayOfWeek: bookingDateTime.getDay(),
+      bookingTime: `${bookingDateTime.getHours()}:${String(bookingDateTime.getMinutes()).padStart(2, '0')}`,
+      workingHoursFound: !!settings,
+      daySettingsFound: !!daySettings,
+      daySettingsActive: daySettings?.isActive,
+      hasPriceAddition: daySettings?.hasPriceAddition,
+      priceAdditionAmount: daySettings?.priceAddition?.amount,
+      priceAdditionType: daySettings?.priceAddition?.type,
+      priceAdditionStartTime: daySettings?.priceAddition?.priceAdditionStartTime,
+      priceAdditionEndTime: daySettings?.priceAddition?.priceAdditionEndTime,
     })
 
     // Calculate professional payment and office commission

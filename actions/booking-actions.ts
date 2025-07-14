@@ -545,12 +545,16 @@ export async function calculateBookingPrice(
         daySettings.priceAddition?.amount &&
         daySettings.priceAddition.amount > 0
       ) {
-        // Check if booking time is within surcharge time range
-        const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
+        // ✅ FIX: Calculate booking time in local timezone for surcharge comparison
+        const bookingTimeInTZ = toZonedTime(bookingDateTime, TIMEZONE)
+        const bookingTimeMinutes = bookingTimeInTZ.getHours() * 60 + bookingTimeInTZ.getMinutes()
         let isInSurchargeRange = false // ✅ Default to false - surcharge must be explicitly in range
         
         console.log("🕐 Surcharge time range check:", {
           bookingTimeMinutes,
+          bookingTimeInTZ: bookingTimeInTZ.toISOString(),
+          localTime: `${bookingTimeInTZ.getHours()}:${bookingTimeInTZ.getMinutes().toString().padStart(2, '0')}`,
+          utcTime: `${bookingDateTime.getHours()}:${bookingDateTime.getMinutes().toString().padStart(2, '0')}`,
           priceAdditionStartTime: daySettings.priceAddition.priceAdditionStartTime,
           priceAdditionEndTime: daySettings.priceAddition.priceAdditionEndTime,
           surchargeAmount: daySettings.priceAddition.amount,

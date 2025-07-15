@@ -3,14 +3,14 @@ import { emailService } from "./email-service"
 import { smsService } from "./sms-service"
 import type { NotificationLanguage } from "./notification-types"
 
-export interface GuestInfo {
+interface GuestInfo {
   name: string
   email?: string
   phone?: string
   language: NotificationLanguage
 }
 
-export interface NotificationData {
+interface NotificationData {
   type: "treatment-booking-success"
   recipientName: string
   bookerName?: string

@@ -149,7 +149,7 @@ export async function registerUser(formData: FormData) {
   }
 }
 
-export async function checkUserExists(phone: string) {
+async function checkUserExists(phone: string) {
   const requestId = `check_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {

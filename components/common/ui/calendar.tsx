@@ -7,7 +7,7 @@ import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useTranslation } from "@/lib/translations/i18n"
 
-export type CalendarProps = {
+type CalendarProps = {
   mode?: "single" | "multiple" | "range"
   selected?: Date | Date[] | { from: Date; to?: Date }
   onSelect?: (date: Date | Date[] | { from: Date; to?: Date } | undefined) => void

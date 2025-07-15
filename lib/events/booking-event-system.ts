@@ -3,7 +3,7 @@
  * Provides a simple event bus for booking-related events
  */
 
-export interface BookingEvent {
+interface BookingEvent {
   type: string
   bookingId: string
   userId: string

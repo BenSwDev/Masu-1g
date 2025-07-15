@@ -20,7 +20,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { createPartner, updatePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 
-export interface PartnerData {
+interface PartnerData {
   id: string
   name: string
   email: string

@@ -15,7 +15,7 @@ const defaultNotificationPreferences: INotificationPreferences = {
   language: "he",
 }
 
-export async function getUserPreferences(): Promise<{
+async function getUserPreferences(): Promise<{
   success: boolean
   treatmentPreferences?: ITreatmentPreferences
   notificationPreferences?: INotificationPreferences

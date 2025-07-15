@@ -116,7 +116,7 @@ export const UserQueries = {
 }
 
 // Password Reset Token queries
-export const PasswordResetQueries = {
+const PasswordResetQueries = {
   // Find valid token
   async findValidToken(token: string) {
     return PasswordResetToken.findOne({
@@ -149,7 +149,7 @@ export const PasswordResetQueries = {
 }
 
 // Verification Token queries
-export const VerificationQueries = {
+const VerificationQueries = {
   // Find valid OTP
   async findValidOTP(identifier: string, type: string, code: string) {
     // Use UTC time for consistent expiry checks
@@ -188,7 +188,7 @@ export const VerificationQueries = {
 }
 
 // Aggregation pipelines for analytics
-export const AnalyticsQueries = {
+const AnalyticsQueries = {
   // User registration trends
   async getRegistrationTrends(days = 30) {
     const startDate = new Date()

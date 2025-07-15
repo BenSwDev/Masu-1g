@@ -239,7 +239,7 @@ interface ProfessionalManagementErrorProps {
   reset: () => void
 }
 
-export function ProfessionalManagementError({ 
+function ProfessionalManagementError({ 
   error, 
   reset 
 }: ProfessionalManagementErrorProps) {
@@ -291,7 +291,7 @@ interface ProfessionalManagementWrapperProps extends ProfessionalManagementProps
   fallback?: React.ReactNode
 }
 
-export function ProfessionalManagementWrapper({
+function ProfessionalManagementWrapper({
   fallback = <ProfessionalManagementLoading />,
   ...props
 }: ProfessionalManagementWrapperProps) {
@@ -303,4 +303,3 @@ export function ProfessionalManagementWrapper({
 }
 
 // Export default
-export default ProfessionalManagement 

@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
-export interface ICouponUsage extends Document {
+interface ICouponUsage extends Document {
   couponId: Types.ObjectId
   userId: Types.ObjectId
   orderId: Types.ObjectId // Will be used when 'regular orders' are implemented

@@ -94,7 +94,7 @@ async function dbConnect() {
 }
 
 // Export connection stats function
-export async function getConnectionStats() {
+async function getConnectionStats() {
   const conn = await dbConnect()
   if (!conn.connection.db) {
     throw new Error("Database connection not established")

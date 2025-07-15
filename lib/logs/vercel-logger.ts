@@ -134,5 +134,5 @@ class ProductionLogger {
   }
 }
 
-export const prodLogger = ProductionLogger.getInstance()
+const prodLogger = ProductionLogger.getInstance()
 export default prodLogger 

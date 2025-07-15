@@ -1,14 +1,14 @@
 import mongoose, { Schema, Document } from "mongoose"
 
 // Professional response status
-export type ProfessionalResponseStatus = 
+type ProfessionalResponseStatus = 
   | "pending"     // SMS נשלח, ממתין לתגובה
   | "accepted"    // מטפל קיבל את ההזמנה
   | "declined"    // מטפל דחה את ההזמנה
   | "expired"     // פג תוקף התגובה
 
 // Professional response interface
-export interface IProfessionalResponse extends Document {
+interface IProfessionalResponse extends Document {
   _id: mongoose.Types.ObjectId
   bookingId: mongoose.Types.ObjectId
   professionalId: mongoose.Types.ObjectId

@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache"
 /**
  * Get all available roles
  */
-export async function getAvailableRoles(): Promise<string[]> {
+async function getAvailableRoles(): Promise<string[]> {
   // This could be fetched from a database in the future
   // For now, we'll return the hardcoded roles
   return ["member", "admin"]
@@ -18,7 +18,7 @@ export async function getAvailableRoles(): Promise<string[]> {
 /**
  * Switch the active role for the current user
  */
-export async function switchActiveRole(role: string): Promise<{
+async function switchActiveRole(role: string): Promise<{
   success: boolean
   message: string
 }> {
@@ -50,7 +50,7 @@ export async function switchActiveRole(role: string): Promise<{
 /**
  * Add a role to a user (admin only)
  */
-export async function addRoleToUser(
+async function addRoleToUser(
   userId: string,
   role: string,
 ): Promise<{
@@ -98,7 +98,7 @@ export async function addRoleToUser(
 /**
  * Remove a role from a user (admin only)
  */
-export async function removeRoleFromUser(
+async function removeRoleFromUser(
   userId: string,
   role: string,
 ): Promise<{

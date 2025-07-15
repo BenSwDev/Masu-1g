@@ -12,7 +12,7 @@ import { getCities, toggleCityStatus } from "@/app/dashboard/(user)/(roles)/admi
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { useToast } from "@/components/common/ui/use-toast"
 
-export interface CityData {
+interface CityData {
   id: string
   name: string
   isActive: boolean

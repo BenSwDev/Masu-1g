@@ -7,14 +7,14 @@ import Booking from "@/lib/db/models/booking"
 import ProfessionalProfile from "@/lib/db/models/professional-profile"
 import { Types } from "mongoose"
 
-export interface FinancialDetail {
+interface FinancialDetail {
   bookingId: string
   treatmentName: string
   date: Date
   amount: number
 }
 
-export interface FinancialRecord {
+interface FinancialRecord {
   period: string
   treatments: number
   earnings: number
@@ -118,7 +118,7 @@ export async function getProfessionalFinancialSummary(
   }
 }
 
-export async function addProfessionalTransaction(
+async function addProfessionalTransaction(
   professionalUserId: string,
   type: "bonus" | "penalty" | "adjustment",
   amount: number,

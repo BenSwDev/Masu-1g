@@ -251,7 +251,7 @@ export async function deleteCoupon(id: string): Promise<{
 /**
  * Validate coupon code
  */
-export async function validateCouponCode(code: string): Promise<{
+async function validateCouponCode(code: string): Promise<{
   success: boolean
   coupon?: any
   error?: string
@@ -299,7 +299,7 @@ export async function validateCouponCode(code: string): Promise<{
 /**
  * Get partner assigned coupons (for partner dashboard)
  */
-export async function getPartnerAssignedCoupons(): Promise<{
+async function getPartnerAssignedCoupons(): Promise<{
   success: boolean
   coupons?: any[]
   error?: string

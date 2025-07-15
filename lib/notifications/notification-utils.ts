@@ -9,7 +9,7 @@ import { logger } from "@/lib/logs/logger"
  * @param length Length of the OTP code (default: 6)
  * @returns A string containing the OTP code
  */
-export function generateOTPCode(length = 6): string {
+function generateOTPCode(length = 6): string {
   const digits = "0123456789"
   let otp = ""
 
@@ -25,7 +25,7 @@ export function generateOTPCode(length = 6): string {
  * @param minutes Minutes until expiration (default: 10)
  * @returns Date object representing expiration time
  */
-export function calculateOTPExpiry(minutes = 10): Date {
+function calculateOTPExpiry(minutes = 10): Date {
   const expiryDate = new Date()
   expiryDate.setMinutes(expiryDate.getMinutes() + minutes)
   return expiryDate
@@ -36,7 +36,7 @@ export function calculateOTPExpiry(minutes = 10): Date {
  * @param phoneNumber The phone number to format
  * @returns Formatted phone number
  */
-export function formatPhoneNumber(phoneNumber: string): string {
+function formatPhoneNumber(phoneNumber: string): string {
   // Remove all non-digit characters
   const cleaned = phoneNumber.replace(/\D/g, "")
 
@@ -64,7 +64,7 @@ export function formatPhoneNumber(phoneNumber: string): string {
  * @param email The email address to obscure
  * @returns Obscured email (e.g., j***e@example.com)
  */
-export function obscureEmail(email: string): string {
+function obscureEmail(email: string): string {
   if (!email || !email.includes("@")) return email
 
   const [username, domain] = email.split("@")
@@ -80,7 +80,7 @@ export function obscureEmail(email: string): string {
  * @param phone The phone number to obscure
  * @returns Obscured phone number (e.g., ***-***-1234)
  */
-export function obscurePhone(phone: string): string {
+function obscurePhone(phone: string): string {
   const digits = phone.replace(/\D/g, "")
   if (digits.length <= 4) return phone
 
@@ -97,7 +97,7 @@ let devNotifications: {
   phone: {},
 };
 
-export function getDevOTP(identifier: string, type: "email" | "phone"): string | null {
+function getDevOTP(identifier: string, type: "email" | "phone"): string | null {
   const notifications = devNotifications[type];
   const notification = notifications[identifier];
   
@@ -126,7 +126,7 @@ export function storeDevOTP(identifier: string, type: "email" | "phone", code: s
   logger.debug(`Stored OTP for ${type}: ${identifier}`);
 }
 
-export function clearDevOTP(identifier: string, type: "email" | "phone"): void {
+function clearDevOTP(identifier: string, type: "email" | "phone"): void {
   delete devNotifications[type][identifier];
   logger.debug(`Cleared OTP for ${type}: ${identifier}`);
 }

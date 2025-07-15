@@ -66,7 +66,6 @@ import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/acti
 import { eventBus, createBookingEvent } from "@/lib/events/booking-event-system"
 import type { RedemptionCode } from "@/types/booking"
 
-export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
 // Define the timezone we'll use throughout the app
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
@@ -1538,7 +1537,7 @@ export async function getUserBookings(
   }
 }
 
-export async function cancelBooking(
+async function cancelBooking(
   bookingId: string,
   userId: string,
   cancelledByRole: "user" | "admin",
@@ -4054,7 +4053,7 @@ export async function getSuitableProfessionalsForBooking(
 }
 
 // Send notifications to all suitable professionals - UNIFIED SYSTEM
-export async function sendNotificationToSuitableProfessionals(
+async function sendNotificationToSuitableProfessionals(
   bookingId: string
 ): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   const session = await getServerSession(authOptions)

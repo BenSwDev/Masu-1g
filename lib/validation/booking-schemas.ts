@@ -7,7 +7,7 @@ import { citySchema } from "@/lib/validation/city-validation"
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
 
 // Create a timezone-aware today for validation
-export const getTodayInTimezone = () => {
+const getTodayInTimezone = () => {
   const now = new Date()
   const nowInTZ = toZonedTime(now, TIMEZONE)
   return startOfDay(nowInTZ)
@@ -16,7 +16,7 @@ export const getTodayInTimezone = () => {
 // ➕ סכמות חדשות
 
 // Schema for booking consents
-export const BookingConsentsSchema = z.object({
+const BookingConsentsSchema = z.object({
   customerAlerts: z.enum(["sms", "email", "none"], {
     required_error: "Customer alert method is required"
   }),
@@ -30,7 +30,7 @@ export const BookingConsentsSchema = z.object({
 })
 
 // Schema for gift information
-export const BookingGiftInfoSchema = z.object({
+const BookingGiftInfoSchema = z.object({
   isGift: z.boolean().default(false),
   giftGreeting: z.string().max(500, "Gift greeting too long").optional(),
   giftSendWhen: z.union([z.literal("now"), z.date()]).optional(),
@@ -38,7 +38,7 @@ export const BookingGiftInfoSchema = z.object({
 })
 
 // Schema for enhanced payment details
-export const EnhancedPaymentDetailsSchema = z.object({
+const EnhancedPaymentDetailsSchema = z.object({
   transactionId: z.string().optional(),
   amountPaid: z.number().min(0, "Amount must be positive").optional(),
   cardLast4: z.string().length(4, "Card last 4 must be exactly 4 digits").optional(),
@@ -47,13 +47,13 @@ export const EnhancedPaymentDetailsSchema = z.object({
 })
 
 // Schema for booking review
-export const BookingReviewSchema = z.object({
+const BookingReviewSchema = z.object({
   rating: z.number().int().min(1).max(5, "Rating must be between 1 and 5"),
   comment: z.string().max(1000, "Review comment too long").optional(),
 })
 
 // Schema for static pricing data
-export const StaticPricingDataSchema = z.object({
+const StaticPricingDataSchema = z.object({
   staticTreatmentPrice: z.number().min(0, "Treatment price must be positive"),
   staticTherapistPay: z.number().min(0, "Therapist pay must be positive"),
   companyFee: z.number().min(0, "Company fee must be positive"),
@@ -63,14 +63,14 @@ export const StaticPricingDataSchema = z.object({
 })
 
 // Schema for selecting the booking source
-export const BookingSourceSchema = z.object({
+const BookingSourceSchema = z.object({
   source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"], {
     required_error: "bookings.validation.sourceRequired",
   }),
 })
 
 // Schema for selecting treatment and duration
-export const TreatmentSelectionSchema = z.object({
+const TreatmentSelectionSchema = z.object({
   selectedUserSubscriptionId: z.string().optional(),
   selectedGiftVoucherId: z.string().optional(),
   selectedTreatmentId: z.string({ required_error: "bookings.validation.treatmentRequired" }),
@@ -79,7 +79,7 @@ export const TreatmentSelectionSchema = z.object({
 })
 
 // Schema for scheduling details
-export const SchedulingDetailsSchema = z
+const SchedulingDetailsSchema = z
   .object({
     bookingDate: z
       .date({ required_error: "bookings.validation.dateRequired" })
@@ -186,12 +186,12 @@ export const SchedulingDetailsSchema = z
   })
 
 // Schema for the summary/coupon step
-export const SummarySchema = z.object({
+const SummarySchema = z.object({
   // This schema is now effectively empty but kept for structure.
 })
 
 // Schema for payment details
-export const PaymentDetailsSchema = z.object({
+const PaymentDetailsSchema = z.object({
   selectedPaymentMethodId: z.string({
     required_error: "bookings.validation.paymentMethodRequired",
   }),
@@ -274,7 +274,7 @@ const BaseBookingWizardSchema = z.object({
 })
 
 // Apply validations with refinements
-export const BookingWizardSchema = BaseBookingWizardSchema
+const BookingWizardSchema = BaseBookingWizardSchema
   .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
     message: "bookings.validation.addressOrCustomRequired",
     path: ["selectedAddressId"],
@@ -401,12 +401,12 @@ export const CreateBookingPayloadSchema = z.object({
   review: BookingReviewSchema.optional(),
 })
 
-export type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>
-export type TreatmentSelectionFormValues = z.infer<typeof TreatmentSelectionSchema>
-export type SchedulingFormValues = z.infer<typeof SchedulingDetailsSchema>
-export type SummaryFormValues = z.infer<typeof SummarySchema>
-export type PaymentFormValues = z.infer<typeof PaymentDetailsSchema>
-export type BookingWizardFormValues = z.infer<typeof BookingWizardSchema>
+type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>
+type TreatmentSelectionFormValues = z.infer<typeof TreatmentSelectionSchema>
+type SchedulingFormValues = z.infer<typeof SchedulingDetailsSchema>
+type SummaryFormValues = z.infer<typeof SummarySchema>
+type PaymentFormValues = z.infer<typeof PaymentDetailsSchema>
+type BookingWizardFormValues = z.infer<typeof BookingWizardSchema>
 
 // Schema for guest booking creation (similar to CreateBookingPayloadSchema but with different userId handling)
 export const CreateGuestBookingPayloadSchema = z.object({
@@ -539,8 +539,8 @@ export type CreateBookingPayloadType = z.infer<typeof CreateBookingPayloadSchema
 export type CreateGuestBookingPayloadType = z.infer<typeof CreateGuestBookingPayloadSchema>
 
 // ➕ טיפוסים חדשים
-export type BookingConsentsType = z.infer<typeof BookingConsentsSchema>
-export type BookingGiftInfoType = z.infer<typeof BookingGiftInfoSchema>
-export type EnhancedPaymentDetailsType = z.infer<typeof EnhancedPaymentDetailsSchema>
-export type BookingReviewType = z.infer<typeof BookingReviewSchema>
-export type StaticPricingDataType = z.infer<typeof StaticPricingDataSchema>
+type BookingConsentsType = z.infer<typeof BookingConsentsSchema>
+type BookingGiftInfoType = z.infer<typeof BookingGiftInfoSchema>
+type EnhancedPaymentDetailsType = z.infer<typeof EnhancedPaymentDetailsSchema>
+type BookingReviewType = z.infer<typeof BookingReviewSchema>
+type StaticPricingDataType = z.infer<typeof StaticPricingDataSchema>

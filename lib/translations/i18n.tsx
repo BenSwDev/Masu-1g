@@ -17,7 +17,7 @@ const missingKeys = new Set<string>()
 export type Language = "he" | "en" | "ru"
 
 // Direction based on language
-export const getDirection = (lang: Language): "rtl" | "ltr" => {
+const getDirection = (lang: Language): "rtl" | "ltr" => {
   return lang === "he" ? "rtl" : "ltr"
 }
 

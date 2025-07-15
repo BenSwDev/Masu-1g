@@ -8,7 +8,7 @@ import { logger } from "@/lib/logs/logger"
  * SMS service implementation using Twilio
  * Handles SMS notifications with proper configuration validation and error handling
  */
-export class SMSService {
+class SMSService {
   private client: ReturnType<typeof twilio> | null
   private fromNumber: string | undefined
   private messagingServiceSid: string | undefined

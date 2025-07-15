@@ -16,7 +16,7 @@ interface UserNotificationProfile {
  * Smart Notification Service - respects user preferences
  * Always uses user's preferred communication methods and language
  */
-export class SmartNotificationService {
+class SmartNotificationService {
   
   /**
    * Get user notification profile with preferences

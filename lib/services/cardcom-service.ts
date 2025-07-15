@@ -2,7 +2,7 @@ import { logger } from "@/lib/logs/logger"
 import * as crypto from "crypto"
 
 // Types for CARDCOM API
-export interface CardcomConfig {
+interface CardcomConfig {
   terminal: string
   apiToken: string
   baseUrl: string
@@ -10,7 +10,7 @@ export interface CardcomConfig {
 }
 
 // Low Profile (iframe) payment request
-export interface LowProfileRequest {
+interface LowProfileRequest {
   TerminalNumber: string
   APIKey: string
   Operation: 1 // תמיד 1 לחיוב
@@ -26,7 +26,7 @@ export interface LowProfileRequest {
   Language: "he" // עברית
 }
 
-export interface LowProfileResponse {
+interface LowProfileResponse {
   ResponseCode: string // "0" = הצלחה
   Description: string
   url?: string // URL להפניה אם הצליח
@@ -34,7 +34,7 @@ export interface LowProfileResponse {
 }
 
 // Direct transaction request
-export interface TransactionRequest {
+interface TransactionRequest {
   TerminalNumber: string
   APIKey: string
   Operation: 1 | 2 // 1 = חיוב, 2 = זיכוי
@@ -52,7 +52,7 @@ export interface TransactionRequest {
   CreateToken?: boolean // ליצירת טוקן חדש
 }
 
-export interface TransactionResponse {
+interface TransactionResponse {
   ResponseCode: string
   Description: string
   InternalDealNumber?: string
@@ -61,7 +61,7 @@ export interface TransactionResponse {
   Last4?: string
 }
 
-export interface CardcomCallback {
+interface CardcomCallback {
   complete?: "1" | "0"
   token?: "1" | "0"
   sum?: string
@@ -92,7 +92,7 @@ const CARDCOM_ERROR_CODES: Record<string, string> = {
   "15": "מספר תעודת זהות שגוי"
 }
 
-export class CardcomService {
+class CardcomService {
   private config: CardcomConfig
 
   constructor() {

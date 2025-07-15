@@ -14,7 +14,7 @@ export const CACHE_KEYS = {
 } as const
 
 // Cache expiration times (in milliseconds)
-export const CACHE_EXPIRY = {
+const CACHE_EXPIRY = {
   SHORT: 5 * 60 * 1000, // 5 minutes
   MEDIUM: 30 * 60 * 1000, // 30 minutes
   LONG: 24 * 60 * 60 * 1000, // 1 day
@@ -30,7 +30,7 @@ interface CacheItem<T> {
 /**
  * Set an item in the cache with expiration
  */
-export function setCacheItem<T>(key: string, value: T, expiryTime: number = CACHE_EXPIRY.MEDIUM): void {
+function setCacheItem<T>(key: string, value: T, expiryTime: number = CACHE_EXPIRY.MEDIUM): void {
   if (typeof window === "undefined") return
 
   try {
@@ -72,7 +72,7 @@ export function getCacheItem<T>(key: string): T | null {
 /**
  * Remove an item from the cache
  */
-export function removeCacheItem(key: string): void {
+function removeCacheItem(key: string): void {
   if (typeof window === "undefined") return
 
   try {
@@ -85,7 +85,7 @@ export function removeCacheItem(key: string): void {
 /**
  * Clear all cache items with the masu_ prefix
  */
-export function clearAllCache(): void {
+function clearAllCache(): void {
   if (typeof window === "undefined") return
 
   try {
@@ -102,7 +102,7 @@ export function clearAllCache(): void {
 /**
  * Update the expiry time of an existing cache item
  */
-export function updateCacheExpiry<T>(key: string, newExpiryTime: number = CACHE_EXPIRY.MEDIUM): void {
+function updateCacheExpiry<T>(key: string, newExpiryTime: number = CACHE_EXPIRY.MEDIUM): void {
   if (typeof window === "undefined") return
 
   try {

@@ -77,7 +77,7 @@ export function formatCurrency(amount: number | undefined | null, currency = "IL
 }
 
 // Israeli date formatting functions
-export const formatDateIsraeli = (date: Date | string): string => {
+const formatDateIsraeli = (date: Date | string): string => {
   const d = typeof date === 'string' ? new Date(date) : date
   if (isNaN(d.getTime())) return 'תאריך לא תקין'
   
@@ -88,7 +88,7 @@ export const formatDateIsraeli = (date: Date | string): string => {
   return `${day}/${month}/${year}`
 }
 
-export const formatTimeIsraeli = (date: Date | string): string => {
+const formatTimeIsraeli = (date: Date | string): string => {
   const d = typeof date === 'string' ? new Date(date) : date
   if (isNaN(d.getTime())) return 'שעה לא תקינה'
   

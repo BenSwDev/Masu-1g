@@ -245,7 +245,7 @@ export async function getUserPurchaseHistory(
 /**
  * Get customer summary for admin
  */
-export async function getCustomerSummary(customerId: string): Promise<{
+async function getCustomerSummary(customerId: string): Promise<{
   success: boolean
   data?: CustomerSummary
   error?: string
@@ -348,7 +348,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
 /**
  * Get all customers list for admin
  */
-export async function getAllCustomers(
+async function getAllCustomers(
   page = 1,
   limit = 20,
   search?: string,
@@ -777,7 +777,7 @@ export async function getPurchaseStats(): Promise<{
 }
 
 // Weekly transaction summary for admin dashboard
-export async function getWeeklyAdminTransactionStats() {
+async function getWeeklyAdminTransactionStats() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes('admin')) {

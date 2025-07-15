@@ -77,10 +77,10 @@ export interface Professional {
 }
 
 // Professional with populated user data (for API responses)
-export type ProfessionalWithUser = Professional
+type ProfessionalWithUser = Professional
 
 // Professional creation data
-export interface CreateProfessionalData {
+interface CreateProfessionalData {
   name: string
   email: string
   phone: string
@@ -89,7 +89,7 @@ export interface CreateProfessionalData {
 }
 
 // Professional update data
-export interface UpdateProfessionalData {
+interface UpdateProfessionalData {
   specialization?: string
   experience?: string
   certifications?: string[]
@@ -100,7 +100,7 @@ export interface UpdateProfessionalData {
 }
 
 // Professional search/filter options
-export interface ProfessionalSearchOptions {
+interface ProfessionalSearchOptions {
   page?: number
   limit?: number
   search?: string

@@ -67,7 +67,7 @@ export const citySchema = z.string()
  * Sync version of city validation (for cases where async is not possible)
  * This should be used sparingly and only when the cache is already populated
  */
-export function validateCitySync(cityName: string): boolean {
+function validateCitySync(cityName: string): boolean {
   if (!activeCitiesCache) {
     console.warn("Cities cache not populated. Use async validation instead.")
     return false
@@ -78,14 +78,14 @@ export function validateCitySync(cityName: string): boolean {
 /**
  * Preload cities cache (useful for initialization)
  */
-export async function preloadCitiesCache(): Promise<void> {
+async function preloadCitiesCache(): Promise<void> {
   await getActiveCities()
 }
 
 /**
  * Get all active city names (useful for dropdowns)
  */
-export async function getActiveCityNames(): Promise<string[]> {
+async function getActiveCityNames(): Promise<string[]> {
   const activeCities = await getActiveCities()
   return Array.from(activeCities).sort()
 } 

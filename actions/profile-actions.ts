@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 
-export async function updateProfile(formData: FormData) {
+async function updateProfile(formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

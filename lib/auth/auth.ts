@@ -304,6 +304,6 @@ export const authOptions: NextAuthOptions = {
 }
 
 // Helper function to check if user has a specific role
-export function hasRole(roles: string[] | undefined, role: string): boolean {
+function hasRole(roles: string[] | undefined, role: string): boolean {
   return roles?.includes(role) || false
 }

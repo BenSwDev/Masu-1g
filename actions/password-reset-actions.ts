@@ -12,7 +12,7 @@ import { randomBytes } from "crypto"
 /**
  * Generate and send password reset email
  */
-export async function sendPasswordResetEmail(
+async function sendPasswordResetEmail(
   email: string,
   language: NotificationLanguage = "en",
 ): Promise<{
@@ -280,7 +280,7 @@ export async function resetPasswordWithToken(
 /**
  * Clean up expired tokens (can be called periodically)
  */
-export async function cleanupExpiredTokens(): Promise<void> {
+async function cleanupExpiredTokens(): Promise<void> {
   try {
     await dbConnect()
     const now = new Date()

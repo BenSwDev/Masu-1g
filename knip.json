@@ -1,0 +1,39 @@
+{
+  "entry": [
+    "app/**",
+    "next.config.{js,mjs,ts}",
+    "tailwind.config.{js,ts}",
+    "scripts/update-translations.js",
+    "scripts/seed-cities-temp.js",
+    "components/**",
+    "components/common/ui/**",
+    "lib/**",
+    "actions/**",
+    "hooks/**"
+  ],
+  "project": [
+    "**/*.{ts,tsx,js,jsx}"
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    ".next/**",
+    "node_modules/**",
+    "public/**",
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/*.backup",
+    "scripts/add-professional-profiles.js",
+    "scripts/check-db.js",
+    "scripts/populate-data-fixed.js",
+    "scripts/populate-data.js",
+    "scripts/test-notifications.ts"
+  ],
+  "includeEntryExports": true,
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "exports": "error",
+    "types": "error"
+  }
+}

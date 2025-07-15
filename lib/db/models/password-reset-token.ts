@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
-export interface IPasswordResetToken extends Document {
+interface IPasswordResetToken extends Document {
   userId: mongoose.Schema.Types.ObjectId
   token: string
   expiresAt: Date

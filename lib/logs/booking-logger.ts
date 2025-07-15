@@ -235,5 +235,5 @@ class BookingLogger {
   }
 }
 
-export const bookingLogger = BookingLogger.getInstance()
+const bookingLogger = BookingLogger.getInstance()
 export default bookingLogger 

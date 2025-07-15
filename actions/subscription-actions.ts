@@ -10,7 +10,7 @@ import { logger } from "@/lib/logs/logger"
 /**
  * Get all available subscriptions
  */
-export async function getSubscriptions(): Promise<{
+async function getSubscriptions(): Promise<{
   success: boolean
   subscriptions?: any[]
   error?: string
@@ -44,7 +44,7 @@ export async function getSubscriptions(): Promise<{
 /**
  * Get subscription by ID
  */
-export async function getSubscriptionById(id: string): Promise<{
+async function getSubscriptionById(id: string): Promise<{
   success: boolean
   subscription?: any
   error?: string
@@ -82,7 +82,7 @@ export async function getSubscriptionById(id: string): Promise<{
 /**
  * Admin: Create new subscription
  */
-export async function createSubscription(data: {
+async function createSubscription(data: {
   name: string
   description: string
   treatmentId: string
@@ -123,7 +123,7 @@ export async function createSubscription(data: {
 /**
  * Admin: Update subscription
  */
-export async function updateSubscription(id: string, data: Partial<{
+async function updateSubscription(id: string, data: Partial<{
   name: string
   description: string
   treatmentId: string
@@ -171,7 +171,7 @@ export async function updateSubscription(id: string, data: Partial<{
 /**
  * Admin: Delete subscription
  */
-export async function deleteSubscription(id: string): Promise<{
+async function deleteSubscription(id: string): Promise<{
   success: boolean
   error?: string
 }> {

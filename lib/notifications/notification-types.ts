@@ -1,5 +1,5 @@
 // Base notification data interface
-export interface BaseNotificationData {
+interface BaseNotificationData {
   type: string
 }
 
@@ -37,18 +37,18 @@ export interface TreatmentBookingSuccessNotificationData extends BaseNotificatio
   actualRecipientName?: string // The person they booked for (when isBookerForSomeoneElse is true)
 }
 
-export interface PurchaseSuccessNotificationData extends BaseNotificationData {
+interface PurchaseSuccessNotificationData extends BaseNotificationData {
   type: "purchase-success"
   message: string
 }
 
-export interface ReviewReminderNotificationData extends BaseNotificationData {
+interface ReviewReminderNotificationData extends BaseNotificationData {
   type: "review-reminder"
   recipientName: string
   reviewLink: string
 }
 
-export interface ReviewRequestNotificationData extends BaseNotificationData {
+interface ReviewRequestNotificationData extends BaseNotificationData {
   type: "review_request"
   customerName: string
   treatmentName: string

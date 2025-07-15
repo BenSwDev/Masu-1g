@@ -19,7 +19,7 @@ import type {
  * Centralized notification manager to handle all notification types
  * This is the single source of truth for notification logic
  */
-export class NotificationManager {
+class NotificationManager {
   private isDevelopment: boolean
 
   constructor() {

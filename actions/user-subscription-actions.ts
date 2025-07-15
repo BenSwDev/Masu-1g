@@ -125,7 +125,7 @@ interface PurchaseSubscriptionArgs {
   selectedDurationId?: string // ID of the selected duration object if treatment is duration-based
 }
 
-export async function purchaseSubscription({
+async function purchaseSubscription({
   subscriptionId,
   treatmentId,
   paymentMethodId,
@@ -390,7 +390,7 @@ export async function getUserSubscriptions() {
   }
 }
 
-export async function getAllUserSubscriptions(
+async function getAllUserSubscriptions(
   options: {
     userId?: string
     subscriptionId?: string
@@ -1024,7 +1024,7 @@ export async function saveAbandonedSubscriptionPurchase(
   }
 }
 
-export async function getAbandonedSubscriptionPurchase(
+async function getAbandonedSubscriptionPurchase(
   userId: string
 ): Promise<{ success: boolean; purchase?: any; error?: string }> {
   try {

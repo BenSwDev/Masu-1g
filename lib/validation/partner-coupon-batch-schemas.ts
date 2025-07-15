@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const PartnerCouponBatchBaseSchema = z
+const PartnerCouponBatchBaseSchema = z
   .object({
     name: z.string().min(1, "Name is required").trim(),
     description: z.string().optional(),

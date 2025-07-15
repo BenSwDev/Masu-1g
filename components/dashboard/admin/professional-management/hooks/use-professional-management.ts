@@ -14,7 +14,7 @@ interface UseProfessionalManagementOptions {
   initialSearch?: string
 }
 
-export interface ProfessionalManagementState {
+interface ProfessionalManagementState {
   professionals: Professional[]
   stats: ProfessionalStats
   pagination: PaginationInfo

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export type PaymentStatus = "pending" | "success" | "failed";
+type PaymentStatus = "pending" | "success" | "failed";
 
-export interface UsePaymentModalProps {
+interface UsePaymentModalProps {
   onSuccess: () => void | Promise<void>;
   onFailure?: (reason?: string) => void | Promise<void>;
 }

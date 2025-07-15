@@ -636,7 +636,7 @@ export async function getUsersForAdminSelection() {
   }
 }
 
-export interface PurchaseInitiationData {
+interface PurchaseInitiationData {
   voucherType: "treatment" | "monetary"
   treatmentId?: string
   selectedDurationId?: string
@@ -649,7 +649,7 @@ export interface PurchaseInitiationData {
   sendDate?: string
 }
 
-export interface GiftDetailsPayload {
+interface GiftDetailsPayload {
   recipientName: string
   recipientPhone: string
   recipientEmail?: string
@@ -657,14 +657,14 @@ export interface GiftDetailsPayload {
   sendDate?: string
 }
 
-export interface PaymentResultData {
+interface PaymentResultData {
   voucherId: string
   paymentId: string
   success: boolean
   amount: number
 }
 
-export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
+async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
   const requestId = `voucher_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
   
@@ -942,7 +942,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
   }
 }
 
-export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
+async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -1079,7 +1079,7 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
   }
 }
 
-export async function setGiftDetails(voucherId: string, details: GiftDetailsPayload) {
+async function setGiftDetails(voucherId: string, details: GiftDetailsPayload) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -1198,13 +1198,13 @@ export async function getMemberOwnedVouchers() {
   }
 }
 
-export interface OrderDetailsForRedemption {
+interface OrderDetailsForRedemption {
   orderId?: string
   totalAmount: number // Amount to be covered by voucher
   items?: { name: string; price: number }[] // For description purposes
 }
 
-export async function redeemGiftVoucher(code: string, orderDetails: OrderDetailsForRedemption) {
+async function redeemGiftVoucher(code: string, orderDetails: OrderDetailsForRedemption) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -1799,7 +1799,7 @@ export async function saveAbandonedGiftVoucherPurchase(
   }
 }
 
-export async function getAbandonedGiftVoucherPurchase(
+async function getAbandonedGiftVoucherPurchase(
   userId: string,
 ): Promise<{ success: boolean; purchase?: any; error?: string }> {
   try {

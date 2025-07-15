@@ -472,4 +472,4 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   )
 }
 
-export default GiftVoucherForm
+

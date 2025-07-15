@@ -438,7 +438,7 @@ export async function getProfessionalResponses(
 /**
  * Handle professional response to booking notification
  */
-export async function handleProfessionalResponse(
+async function handleProfessionalResponse(
   responseId: string,
   action: "accept" | "decline",
   responseMethod: "sms" | "app" | "phone" = "sms"

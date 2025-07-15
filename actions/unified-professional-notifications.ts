@@ -28,7 +28,7 @@ interface ProfessionalNotificationOptions {
  * Send notifications to professionals for a booking
  * This is the main unified function that handles all notification scenarios
  */
-export async function sendUnifiedProfessionalNotifications(
+async function sendUnifiedProfessionalNotifications(
   options: ProfessionalNotificationOptions
 ): Promise<{ success: boolean; sentCount?: number; error?: string; results?: any[] }> {
   try {

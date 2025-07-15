@@ -9,10 +9,10 @@ export type ProfessionalStatus =
   | "suspended"
 
 // Distance radius options
-export type DistanceRadius = "20km" | "40km" | "60km" | "80km" | "unlimited"
+type DistanceRadius = "20km" | "40km" | "60km" | "80km" | "unlimited"
 
 // Gender preference for professional
-export type GenderPreference = "no_preference" | "male_only" | "female_only"
+type GenderPreference = "no_preference" | "male_only" | "female_only"
 
 // Treatment pricing interface
 export interface ITreatmentPricing {
@@ -111,7 +111,7 @@ export interface IProfessionalProfile extends Document {
 }
 
 // Add static methods interface
-export interface IProfessionalProfileModel extends mongoose.Model<IProfessionalProfile> {
+interface IProfessionalProfileModel extends mongoose.Model<IProfessionalProfile> {
   findSuitableForBooking(
     treatmentId: string, 
     cityName: string, 

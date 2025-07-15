@@ -12,7 +12,7 @@ import {
 } from "@/components/common/ui/dropdown-menu"
 import { Button } from "@/components/common/ui/button"
 
-export interface PhoneInputProps
+interface PhoneInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "defaultValue"> {
   defaultCountryCode?: string
   onPhoneChange?: (fullNumber: string) => void
@@ -212,4 +212,4 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
 PhoneInput.displayName = "PhoneInput"
 
 export { PhoneInput }
-export default PhoneInput
+

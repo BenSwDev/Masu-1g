@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
-export interface IPayment extends Document {
+interface IPayment extends Document {
   _id: string
   order_id: string
   booking_id?: string // קישור להזמנה

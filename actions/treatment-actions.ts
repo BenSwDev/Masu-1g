@@ -73,7 +73,7 @@ export async function getTreatmentById(id: string): Promise<{
 /**
  * Admin: Create new treatment
  */
-export async function createTreatment(data: {
+async function createTreatment(data: {
   name: string
   description?: string
   category: string
@@ -120,7 +120,7 @@ export async function createTreatment(data: {
 /**
  * Admin: Update treatment
  */
-export async function updateTreatment(id: string, data: Partial<{
+async function updateTreatment(id: string, data: Partial<{
   name: string
   description?: string
   category: string
@@ -174,7 +174,7 @@ export async function updateTreatment(id: string, data: Partial<{
 /**
  * Admin: Delete treatment
  */
-export async function deleteTreatment(id: string): Promise<{
+async function deleteTreatment(id: string): Promise<{
   success: boolean
   error?: string
 }> {
@@ -204,7 +204,7 @@ export async function deleteTreatment(id: string): Promise<{
 /**
  * Get treatments for selection (simplified)
  */
-export async function getTreatmentsForSelection(): Promise<{
+async function getTreatmentsForSelection(): Promise<{
   success: boolean
   treatments?: Array<{
     _id: string

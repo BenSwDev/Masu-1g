@@ -81,7 +81,7 @@ export async function createReview(data: CreateReviewData): Promise<{ success: b
 /**
  * עדכון תגובת מטפל לחוות דעת
  */
-export async function updateReviewResponse(
+async function updateReviewResponse(
   reviewId: string, 
   professionalResponse: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -376,7 +376,7 @@ export async function getReviewByBookingId(bookingId: string): Promise<Populated
 /**
  * קבלת הזמנות שהושלמו ללא חוות דעת
  */
-export async function getCompletedBookingsWithoutReviews(): Promise<{
+async function getCompletedBookingsWithoutReviews(): Promise<{
   bookings: any[]
   totalPages: number
   totalBookings: number

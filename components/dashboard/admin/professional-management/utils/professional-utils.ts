@@ -41,7 +41,7 @@ export function getStatusBadgeConfig(status: ProfessionalStatus) {
 /**
  * Get status color for text/icons
  */
-export function getStatusColor(status: ProfessionalStatus) {
+function getStatusColor(status: ProfessionalStatus) {
   const colors = {
     active: "text-green-600",
     pending_admin_approval: "text-orange-600",
@@ -56,7 +56,7 @@ export function getStatusColor(status: ProfessionalStatus) {
 /**
  * Get status text in Hebrew
  */
-export function getStatusText(status: ProfessionalStatus) {
+function getStatusText(status: ProfessionalStatus) {
   const statusTexts = {
     active: "פעיל",
     pending_admin_approval: "ממתין לאישור אדמין",
@@ -89,7 +89,7 @@ export function formatDate(date?: Date | string) {
 /**
  * Format datetime for display
  */
-export function formatDateTime(date?: Date | string) {
+function formatDateTime(date?: Date | string) {
   if (!date) return "-"
   
   try {
@@ -109,7 +109,7 @@ export function formatDateTime(date?: Date | string) {
 /**
  * Get professional name safely
  */
-export function getProfessionalName(professional: Professional): string {
+function getProfessionalName(professional: Professional): string {
   if (typeof professional.userId === 'object' && professional.userId.name) {
     return professional.userId.name
   }
@@ -119,7 +119,7 @@ export function getProfessionalName(professional: Professional): string {
 /**
  * Get professional email safely
  */
-export function getProfessionalEmail(professional: Professional): string {
+function getProfessionalEmail(professional: Professional): string {
   if (typeof professional.userId === 'object' && professional.userId.email) {
     return professional.userId.email
   }
@@ -129,7 +129,7 @@ export function getProfessionalEmail(professional: Professional): string {
 /**
  * Get professional phone safely
  */
-export function getProfessionalPhone(professional: Professional): string {
+function getProfessionalPhone(professional: Professional): string {
   if (typeof professional.userId === 'object' && professional.userId.phone) {
     return formatPhoneForDisplay(professional.userId.phone)
   }
@@ -139,7 +139,7 @@ export function getProfessionalPhone(professional: Professional): string {
 /**
  * Get professional gender text
  */
-export function getProfessionalGender(professional: Professional): string {
+function getProfessionalGender(professional: Professional): string {
   if (typeof professional.userId === 'object' && professional.userId.gender) {
     return professional.userId.gender === 'male' ? 'זכר' : 'נקבה'
   }
@@ -149,21 +149,21 @@ export function getProfessionalGender(professional: Professional): string {
 /**
  * Get professional treatments count
  */
-export function getProfessionalTreatmentsCount(professional: Professional): number {
+function getProfessionalTreatmentsCount(professional: Professional): number {
   return professional.treatments?.length || 0
 }
 
 /**
  * Get professional work areas count
  */
-export function getProfessionalWorkAreasCount(professional: Professional): number {
+function getProfessionalWorkAreasCount(professional: Professional): number {
   return professional.workAreas?.length || 0
 }
 
 /**
  * Format currency for display
  */
-export function formatCurrency(amount: number): string {
+function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('he-IL', {
     style: 'currency',
     currency: 'ILS',
@@ -174,21 +174,21 @@ export function formatCurrency(amount: number): string {
 /**
  * Get professional ID safely
  */
-export function getProfessionalId(professional: Professional): string {
+function getProfessionalId(professional: Professional): string {
   return professional._id || ""
 }
 
 /**
  * Check if professional data is loading
  */
-export function isProfessionalDataLoading(professional: Professional): boolean {
+function isProfessionalDataLoading(professional: Professional): boolean {
   return !professional._id || typeof professional.userId === 'string'
 }
 
 /**
  * Calculate professional stats from array
  */
-export function calculateProfessionalStats(professionals: Professional[]) {
+function calculateProfessionalStats(professionals: Professional[]) {
   const stats = {
     total: professionals.length,
     active: 0,
@@ -220,7 +220,7 @@ export function calculateProfessionalStats(professionals: Professional[]) {
 /**
  * Sort professionals by field
  */
-export function sortProfessionals(
+function sortProfessionals(
   professionals: Professional[], 
   sortBy: string, 
   sortOrder: "asc" | "desc"
@@ -264,7 +264,7 @@ export function sortProfessionals(
 /**
  * Filter professionals by search term
  */
-export function filterProfessionals(
+function filterProfessionals(
   professionals: Professional[], 
   searchTerm: string
 ): Professional[] {
@@ -322,7 +322,7 @@ export const formatDateSafe = (date?: Date | string): string => {
 }
 
 // פורמט תאריך מפורט קבוע למניעת hydration mismatch
-export const formatDateTimeSafe = (date?: Date | string): string => {
+const formatDateTimeSafe = (date?: Date | string): string => {
   if (!date) return "-"
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date

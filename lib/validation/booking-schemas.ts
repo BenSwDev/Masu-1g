@@ -116,9 +116,9 @@ export const SchedulingDetailsSchema = z
     isBookingForSomeoneElse: z.boolean().default(false),
     recipientName: z.string().optional(),
     recipientPhone: z.string().optional(),
-    recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
-    recipientBirthDate: z.date().optional(),
-    recipientGender: z.enum(["male", "female"]).optional(),
+      recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional().or(z.literal("")),
+  recipientBirthDate: z.date().optional(),
+  recipientGender: z.enum(["male", "female"]).optional(),
   })
   .refine(
     (data) => {
@@ -147,6 +147,20 @@ export const SchedulingDetailsSchema = z
   )
   .refine(
     (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Gender is required when booking for someone else
+        return !!data.recipientGender
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientGenderRequired",
+      path: ["recipientGender"],
+    },
+  )
+  .refine(
+    (data) => {
+      // Age validation only applies if birth date is provided
       if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
         const today = new Date()
         const birthDate = new Date(data.recipientBirthDate)
@@ -239,9 +253,9 @@ const BaseBookingWizardSchema = z.object({
   isBookingForSomeoneElse: z.boolean().default(false),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
-  recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
+  recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional().or(z.literal("")),
   recipientBirthDate: z.date().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  recipientGender: z.enum(["male", "female"]).optional(),
   
   // Notification preferences for this booking
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
@@ -287,6 +301,19 @@ export const BookingWizardSchema = BaseBookingWizardSchema
     {
       message: "bookings.validation.recipientPhoneRequired",
       path: ["recipientPhone"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Gender is required when booking for someone else
+        return !!data.recipientGender
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientGenderRequired",
+      path: ["recipientGender"],
     },
   )
 
@@ -439,7 +466,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
     }, {
       message: "Invalid phone format"
     }),
-  recipientEmail: z.string().email("Invalid email format").optional(),
+  recipientEmail: z.string().email("Invalid email format").optional().or(z.literal("")),
   recipientBirthDate: z.date().optional(),
   recipientGender: z.enum(["male", "female"]).optional(),
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
@@ -494,6 +521,16 @@ export const CreateGuestBookingPayloadSchema = z.object({
 }, {
   message: "Recipient phone is required when booking for someone else",
   path: ["recipientPhone"]
+})
+.refine((data) => {
+  // If booking for someone else, validate recipient gender
+  if (data.isBookingForSomeoneElse) {
+    return !!data.recipientGender
+  }
+  return true
+}, {
+  message: "Recipient gender is required when booking for someone else",
+  path: ["recipientGender"]
 })
 
 

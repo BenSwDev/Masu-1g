@@ -1075,6 +1075,7 @@
           "recipientPhoneRequired": "טלפון המטופל נדרש כשמזמינים עבור מישהו אחר",
           "recipientEmailRequired": "אימייל המטופל נדרש כשמזמינים עבור מישהו אחר",
           "recipientEmailInvalid": "כתובת האימייל אינה תקינה",
+          "recipientGenderRequired": "מגדר המטופל נדרש כשמזמינים עבור מישהו אחר",
           "recipientMustBe16OrOlder": "גילאי 16 ומעלה בלבד",
           "recipientBirthDateRequired": "תאריך לידה נדרש",
           "recipientBirthDateInvalid": "תאריך לידה אינו תקין",

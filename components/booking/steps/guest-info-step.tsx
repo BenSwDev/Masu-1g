@@ -91,7 +91,7 @@ export function GuestInfoStep({
   const guestInfoSchema = z.object({
     firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
     lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
-    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional(),
+    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional().or(z.literal("")),
     phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
     birthDate: z.date().optional(),
     gender: z.enum(["male", "female"]).optional(),
@@ -99,7 +99,7 @@ export function GuestInfoStep({
     isBookingForSomeoneElse: z.boolean().default(false),
     recipientFirstName: z.string().optional(),
     recipientLastName: z.string().optional(),
-    recipientEmail: z.string().optional(),
+    recipientEmail: z.string().email({ message: "אימייל לא תקין" }).optional().or(z.literal("")),
     recipientPhone: z.string().optional(),
     recipientBirthDate: z.date().optional(),
     recipientGender: z.enum(["male", "female"]).optional(),
@@ -114,7 +114,7 @@ export function GuestInfoStep({
         data.recipientFirstName && data.recipientFirstName.trim() &&
         data.recipientLastName && data.recipientLastName.trim() &&
         data.recipientPhone && data.recipientPhone.trim() &&
-        (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
+        data.recipientGender // מגדר חובה, תאריך לידה לא חובה
       )
     }
     return true
@@ -149,19 +149,8 @@ export function GuestInfoStep({
     message: "טלפון מקבל הטיפול נדרש",
     path: ["recipientPhone"]
   }).refine((data) => {
-    // Additional validation for recipient birth date and gender when required
-    if (data.isBookingForSomeoneElse && !hideRecipientBirthGender) {
-      if (!data.recipientBirthDate) {
-        return false
-      }
-    }
-    return true
-  }, {
-    message: "תאריך לידה של מקבל הטיפול נדרש",
-    path: ["recipientBirthDate"]
-  }).refine((data) => {
-    // Additional validation for recipient gender when required
-    if (data.isBookingForSomeoneElse && !hideRecipientBirthGender) {
+    // Additional validation for recipient gender - always required when booking for someone else
+    if (data.isBookingForSomeoneElse) {
       if (!data.recipientGender) {
         return false
       }
@@ -667,7 +656,7 @@ export function GuestInfoStep({
                         <FormItem className="flex flex-col">
                           <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                             <CalendarIcon className="h-4 w-4" />
-                            {t("guestInfo.recipientBirthDate")} *
+                            {t("guestInfo.recipientBirthDate")}
                           </FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>

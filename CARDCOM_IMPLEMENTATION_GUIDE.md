@@ -1,300 +1,353 @@
-# מדריך יישום מערכת CARDCOM - מושלם ומוכן לייצור
+# מדריך יישום CARDCOM - MASU Platform
 
 ## סקירה כללית
 
-מערכת תשלומים מושלמת המשולבת עם CARDCOM, כוללת:
-- תשלומים מאובטחים עם יצירת טוקנים
-- חיובים וזיכויים ישירים
-- מעקב מלא אחר תשלומים
-- ממשק מנהל מתקדם
-- טיפול בשגיאות מקיף
+המערכת משולבת עם שירות התשלומים CARDCOM לטיפול בתשלומי הזמנות, מנויים וגיפט קארדים.
 
-## מבנה הקבצים שנוצרו
+## הגדרות חיבור
 
-```
-lib/
-├── db/models/
-│   └── payment.ts                 # מודל MongoDB לתשלומים
-├── services/
-│   └── cardcom-service.ts         # שירות CARDCOM המרכזי
-app/
-├── api/payments/
-│   ├── create/route.ts           # יצירת תשלום חדש
-│   ├── callback/route.ts         # עיבוד תוצאות מ-CARDCOM
-│   └── direct/route.ts           # חיובים/זיכויים ישירים
-├── payment/
-│   ├── success/page.tsx          # דף הצלחת תשלום
-│   └── error/page.tsx            # דף שגיאת תשלום
-components/
-├── booking/steps/
-│   └── guest-payment-step.tsx    # רכיב תשלום מעודכן
-└── dashboard/admin/payments/
-    └── direct-payment-modal.tsx  # רכיב חיובים/זיכויים למנהלים
-```
+### פרטי החיבור
+- **Terminal**: 125566
+- **API Token**: Q3ZqTMTZGrSIKjktQrfN
+- **Base URL**: https://secure.cardcom.solutions/api/v11
 
-## הגדרת משתני סביבה
-
-צור קובץ `.env.local` עם המשתנים הבאים:
+### משתני סביבה נדרשים
 
 ```env
 # CARDCOM Configuration
-CARDCOM_TERMINAL_NUMBER=your-terminal-number
-CARDCOM_USERNAME=your-username  
-CARDCOM_API_KEY=your-api-key
-CARDCOM_BASE_URL=https://secure.cardcom.solutions
-CARDCOM_TEST_MODE=true
+CARDCOM_TERMINAL=125566
+CARDCOM_API_TOKEN=Q3ZqTMTZGrSIKjktQrfN
+CARDCOM_BASE_URL=https://secure.cardcom.solutions/api/v11
+CARDCOM_TEST_MODE=true  # false לייצור
 
-# Payment URLs
-PAYMENT_SUCCESS_URL=https://yourdomain.com/payment/success
-PAYMENT_ERROR_URL=https://yourdomain.com/payment/error
-
-# Encryption key for token storage (32 characters)
-CARDCOM_ENCRYPTION_KEY=your-32-character-encryption-key
+# Application URLs
+NEXT_PUBLIC_BASE_URL=https://your-domain.com
 ```
 
-## תכונות המערכת
+## סוגי תשלום נתמכים
 
-### 1. תשלומים בסיסיים
-- יצירת תשלום חדש ב-CARDCOM
-- הפניה לדף תשלום מאובטח
-- קבלת תוצאות והחזרה לאתר
-- שמירת טוקן לשימוש עתידי
+### 1. Low Profile (iframe) Payments
+- תשלום דרך iframe של CARDCOM
+- מתאים לתשלומים רגילים עם הפניה
+- תמיכה ביצירת טוקנים לשימוש עתידי
 
-### 2. חיובים וזיכויים ישירים
-- חיוב נוסף באמצעות טוקן שמור
-- זיכוי/החזר כספי
-- ממשק מנהל נוח
-- מעקב מלא אחר הפעולות
+### 2. Direct Token Charge
+- חיוב ישיר עם טוקן קיים
+- מתאים למנויים וחיובים חוזרים
 
-### 3. ניהול תשלומים
-- מעקב סטטוס תשלומים
-- היסטוריית תשלומים מלאה
-- לוגים מפורטים
-- טיפול בשגיאות מתקדם
+### 3. Direct Card Charge
+- חיוב ישיר עם פרטי כרטיס אשראי
+- תמיכה ביצירת טוקן חדש
 
-### 4. אבטחה
-- הצפנת נתוני טוקן
-- ולידציות מקיפות
-- הגנה מפני CSRF
-- לוגים בטוחים (ללא נתונים רגישים)
+### 4. Refunds
+- החזרים דרך טוקן
 
-## זרימת תשלום בסיסית
+## API Endpoints
 
-1. **יצירת תשלום**: משתמש לוחץ "שלם כעת"
-2. **קריאה ל-API**: `/api/payments/create`
-3. **יצירה ב-CARDCOM**: שליחת נתונים ל-CARDCOM
-4. **הפניה**: משתמש מועבר לדף CARDCOM
-5. **תשלום**: משתמש מזין פרטי כרטיס
-6. **החזרה**: CARDCOM מחזיר ל-callback
-7. **עיבוד**: `/api/payments/callback` מעבד תוצאות
-8. **הצגה**: הפניה לדף הצלחה/שגיאה
-
-## זרימת חיוב/זיכוי ישיר
-
-1. **בחירת הזמנה**: מנהל בוחר הזמנה עם תשלום קיים
-2. **פתיחת מודל**: לחיצה על "חיוב/זיכוי"
-3. **מילוי פרטים**: סכום, תיאור, סוג פעולה
-4. **קריאה ל-API**: `/api/payments/direct`
-5. **חיפוש טוקן**: מציאת טוקן מהתשלום המקורי
-6. **ביצוע ב-CARDCOM**: שימוש בטוקן לחיוב/זיכוי
-7. **עדכון מסד נתונים**: שמירת פעולה חדשה
-8. **הצגת תוצאה**: הודעת הצלחה/שגיאה
-
-## API Routes
-
-### POST /api/payments/create
-יוצר תשלום חדש ב-CARDCOM
-
-**Body:**
-```json
+### יצירת תשלום
+```typescript
+POST /api/payments/create
 {
-  "bookingId": "booking-id",
+  "bookingId": "booking_id",
   "amount": 150.00,
   "description": "הזמנת טיפול",
   "customerName": "שם הלקוח",
   "customerEmail": "email@example.com",
-  "customerPhone": "0501234567"
+  "customerPhone": "050-1234567",
+  "type": "booking" // או "subscription", "gift_voucher"
 }
 ```
 
-**Response:**
-```json
+### ניהול הגדרות CARDCOM (מנהל בלבד)
+```typescript
+// קבלת הגדרות נוכחיות
+GET /api/admin/payments/cardcom-config
+
+// עדכון מצב TEST/PRODUCTION
+POST /api/admin/payments/cardcom-config
 {
-  "success": true,
-  "paymentId": "payment-uuid",
-  "redirectUrl": "https://secure.cardcom.solutions/..."
+  "testMode": false
 }
+
+// בדיקת חיבור
+PUT /api/admin/payments/cardcom-config
 ```
 
-### GET/POST /api/payments/callback
-מעבד תוצאות תשלום מ-CARDCOM
+## השירות CardcomService
 
-**Query Parameters:**
-- `status`: success/error
-- `paymentId`: מזהה התשלום
-- `complete`: 1/0
-- `token`: טוקן מ-CARDCOM
-- `sum`: סכום
-- `returnValue`: מזהה שהוחזר
+### מתודות זמינות
 
-### POST /api/payments/direct
-מבצע חיוב/זיכוי ישיר עם טוקן
-
-**Body:**
-```json
-{
-  "bookingId": "booking-id",
-  "amount": 50.00,
-  "description": "חיוב נוסף",
-  "action": "charge", // או "refund"
-  "originalPaymentId": "original-payment-id"
-}
+#### createLowProfilePayment
+```typescript
+const result = await cardcomService.createLowProfilePayment({
+  amount: 150.00,
+  description: "הזמנת טיפול",
+  paymentId: "unique_payment_id",
+  customerName: "שם הלקוח",
+  customerEmail: "email@example.com",
+  customerPhone: "050-1234567",
+  successUrl: "https://domain.com/payment/success",
+  errorUrl: "https://domain.com/payment/error"
+})
 ```
 
-## מודל MongoDB
+#### chargeToken
+```typescript
+const result = await cardcomService.chargeToken({
+  amount: 150.00,
+  description: "חיוב מנוי",
+  token: "customer_token",
+  paymentId: "unique_payment_id",
+  createNewToken: true // אופציונלי
+})
+```
 
-### Payment Schema
+#### chargeCard
+```typescript
+const result = await cardcomService.chargeCard({
+  amount: 150.00,
+  description: "תשלום חדש",
+  cardNumber: "4580123456789012",
+  cvv: "123",
+  expMonth: "12",
+  expYear: "25",
+  holderName: "שם בעל הכרטיס",
+  holderId: "123456789", // אופציונלי
+  paymentId: "unique_payment_id",
+  createToken: true // אופציונלי
+})
+```
+
+#### refund
+```typescript
+const result = await cardcomService.refund({
+  amount: 150.00,
+  description: "החזר",
+  token: "customer_token",
+  paymentId: "refund_payment_id"
+})
+```
+
+#### כלים נוספים
+```typescript
+// בדיקת סטטוס
+const status = cardcomService.getStatus()
+
+// מעבר בין מצבים
+cardcomService.setTestMode(true)
+
+// בדיקת חיבור
+const connectionTest = await cardcomService.testConnection()
+
+// עיבוד callback
+const callbackResult = cardcomService.processCallback(callbackData)
+```
+
+## תהליך התשלום
+
+### 1. יצירת תשלום
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant CARDCOM
+    participant DB
+
+    Client->>API: POST /api/payments/create
+    API->>DB: שמירת רשומת תשלום
+    API->>CARDCOM: יצירת Low Profile
+    CARDCOM-->>API: URL הפניה
+    API-->>Client: redirectUrl
+    Client->>CARDCOM: הפניה לתשלום
+```
+
+### 2. השלמת תשלום
+```mermaid
+sequenceDiagram
+    participant CARDCOM
+    participant API
+    participant DB
+    participant Booking
+
+    CARDCOM->>API: callback עם תוצאות
+    API->>DB: עדכון רשומת תשלום
+    API->>Booking: עדכון סטטוס הזמנה
+    API->>Client: הפניה לעמוד תוצאות
+```
+
+## מצב בדיקה (TEST MODE)
+
+### הפעלה
+```typescript
+// דרך משתה סביבה
+CARDCOM_TEST_MODE=true
+
+// דרך השירות
+cardcomService.setTestMode(true)
+
+// דרך פאנל מנהל
+POST /api/admin/payments/cardcom-config { "testMode": true }
+```
+
+### תכונות מצב בדיקה
+- תשלומים מדומים (לא חיוב אמיתי)
+- טוקנים מדומים
+- לוגים מפורטים
+- תגובות מדומות עקביות
+
+### מעבר לייצור
+1. עדכון `CARDCOM_TEST_MODE=false`
+2. וידוא פרטי חיבור נכונים
+3. בדיקת חיבור דרך הפאנל
+4. בדיקת תשלום ראשון
+
+## מודל הנתונים
+
+### Payment Document
 ```typescript
 {
-  _id: string              // UUID
-  order_id: string         // מזהה הזמנה
-  booking_id?: string      // קישור להזמנה
-  pay_type: "ccard" | "refund" | "cash"
-  sub_type: "direct" | "token" | "manual"
-  start_time: Date         // תחילת תשלום
-  end_time?: Date          // סיום תשלום
-  sum: number              // סכום
-  complete: boolean        // האם הושלם
-  has_token: boolean       // האם יש טוקן
-  transaction_id?: string  // מזהה עסקה
-  cardcom_internal_deal_number?: string
-  input_data?: any         // נתוני קלט
-  result_data?: any        // תגובה מ-CARDCOM
-  created_at: Date
-  updated_at: Date
+  _id: "payment_id",
+  order_id: "booking_id",
+  booking_id: "booking_id",
+  sum: 150.00,
+  pay_type: "ccard",
+  sub_type: "token",
+  input_data: {
+    bookingId: "booking_id",
+    amount: 150.00,
+    description: "הזמנת טיפול",
+    customerName: "שם הלקוח",
+    customerEmail: "email@example.com",
+    customerPhone: "050-1234567",
+    type: "booking",
+    timestamp: "2024-01-01T12:00:00.000Z"
+  },
+  result_data: {
+    status: "success",
+    complete: "1",
+    token: "1",
+    sum: "150.00",
+    returnValue: "payment_id",
+    internalDealNumber: "CARDCOM_TXN_123",
+    cardcomToken: "TOKEN_ABC123",
+    last4: "1234",
+    callbackTime: "2024-01-01T12:05:00.000Z"
+  },
+  transaction_id: "CARDCOM_TXN_123",
+  complete: true,
+  has_token: true,
+  start_time: "2024-01-01T12:00:00.000Z",
+  end_time: "2024-01-01T12:05:00.000Z"
 }
 ```
 
-## רכיבי UI
+## קודי שגיאה
 
-### GuestPaymentStep
-רכיב תשלום מעודכן שמשתמש ב-CARDCOM האמיתי במקום דמיה
-
-### DirectPaymentModal
-רכיב למנהלים לביצוע חיובים/זיכויים ישירים
-
-### דפי תוצאות
-- `/payment/success` - דף הצלחת תשלום
-- `/payment/error` - דף שגיאת תשלום
-
-## אבטחה ומיטבים
-
-### הצפנת טוקנים
 ```typescript
-// הצפנה
-const encryptedToken = cardcomService.encryptTokenData(tokenData)
-
-// פענוח
-const decryptedToken = cardcomService.decryptTokenData(encryptedData)
+const CARDCOM_ERROR_CODES = {
+  "0": "הצלחה",
+  "1": "שגיאה כללית",
+  "2": "פרמטר חסר או שגוי",
+  "3": "בעיה באימות",
+  "4": "טוקן לא תקף",
+  "5": "סכום לא תקף",
+  "6": "מטבע לא נתמך",
+  "7": "תקלה בתקשורת עם הבנק",
+  "8": "כרטיס אשראי לא תקף",
+  "9": "אין מספיק כסף בכרטיס",
+  "10": "כרטיס חסום",
+  "11": "עסקה דחויה",
+  "12": "תאריך תפוגה שגוי",
+  "13": "CVV שגוי",
+  "14": "שם בעל הכרטיס שגוי",
+  "15": "מספר תעודת זהות שגוי"
+}
 ```
 
-### לוגים בטוחים
-```typescript
-// ✅ בטוח - ללא נתונים רגישים
-logger.info("Payment created", { paymentId, amount, bookingId })
+## אבטחה
 
-// ❌ לא בטוח - חושף טוקן
-logger.info("Token received", { token: fullToken })
-```
-
-### ולידציות
-- בדיקת פרמטרים נדרשים
-- ולידציית סכומים
-- בדיקת הרשאות משתמש
-- אימות מקור הקריאה
-
-## טיפול בשגיאות
-
-### שגיאות CARDCOM נפוצות
-- `"1"` - פרמטר חסר או לא תקין
-- `"2"` - שגיאה בחיבור למסד נתונים
-- `"3"` - אין הרשאה לביצוע הפעולה
-- `"700"` - כרטיס נדחה
-
-### שגיאות מקומיות
-- חיפוש טוקן נכשל
-- הזמנה לא נמצאה
-- סכום לא תקין
-- שגיאת רשת
-
-## בדיקות ואימותים
-
-### בדיקות בסיסיות
-1. ✅ יצירת תשלום חדש
-2. ✅ עיבוד callback מוצלח
-3. ✅ עיבוד callback נכשל
-4. ✅ חיוב ישיר עם טוקן
-5. ✅ זיכוי ישיר עם טוקן
+### הגנות מיושמות
+- הצפנת טוקנים
+- ולידציה של callbacks
+- HTTPS חובה
+- טיפול בשגיאות מובנה
+- לוגים מפורטים
 
 ### בדיקות אבטחה
-1. ✅ הצפנת/פענוח טוקנים
-2. ✅ ולידציית פרמטרים
-3. ✅ הגנה מפני CSRF
-4. ✅ לוגים בטוחים
+- [ ] וידוא HTTPS בייצור
+- [ ] בדיקת ולידציה של נתונים
+- [ ] בדיקת הגנה מפני CSRF
+- [ ] בדיקת טיפול בשגיאות
 
-### בדיקות שגיאות
-1. ✅ טיפול בשגיאות CARDCOM
-2. ✅ טיפול בשגיאות רשת
-3. ✅ טיפול בנתונים חסרים
-4. ✅ timeout handling
+## ניטור ולוגים
 
-## פריסה לייצור
+### לוגים זמינים
+```typescript
+// יצירת תשלום
+logger.info("Creating CARDCOM Low Profile payment", {
+  paymentId, amount, testMode, terminal
+})
 
-### שלבי הפריסה
-1. **הגדרת משתני סביבה** בפלטפורמת הפריסה
-2. **עדכון URLs** לכתובות הייצור
-3. **שינוי CARDCOM_TEST_MODE** ל-`false`
-4. **בדיקת חיבור** למסד נתונים
-5. **בדיקת תשלום מבחן** בסביבת הייצור
+// תוצאות תשלום
+logger.info("Payment callback received", {
+  paymentId, complete, token, sum, transactionId
+})
 
-### מעקב ותחזוקה
-- מעקב לוגים בזמן אמת
-- התראות על שגיאות תשלום
-- גיבוי מסד נתונים יומי
-- עדכון אבטחה שוטף
-
-## תמיכה ופתרון בעיות
-
-### בעיות נפוצות
-1. **תשלום לא מושלם** - בדוק לוגים ב-`/logs`
-2. **טוקן לא נמצא** - ודא שהתשלום המקורי הושלם בהצלחה
-3. **שגיאת הצפנה** - בדוק את `CARDCOM_ENCRYPTION_KEY`
-4. **callback לא מגיע** - ודא שה-URLs נכונים
-
-### לוגים חשובים
-```bash
-# תשלומים חדשים
-grep "Payment created" logs/
-
-# תשלומים מושלמים
-grep "Payment completed" logs/
-
-# שגיאות CARDCOM
-grep "CARDCOM error" logs/
-
-# חיובים ישירים
-grep "Direct charge" logs/
+// שגיאות
+logger.error("CARDCOM API Error", {
+  code, description, errorMessage
+})
 ```
 
-## סיכום
+### מדדי ביצועים
+- זמן תגובה של API
+- שיעור הצלחת תשלומים
+- סוגי שגיאות נפוצים
+- שימוש במצב בדיקה vs ייצור
 
-המערכת מיושמת במלואה וכוללת:
-- ✅ תשלומים מאובטחים עם CARDCOM
-- ✅ חיובים וזיכויים ישירים
-- ✅ ממשק מנהל מתקדם
-- ✅ טיפול בשגיאות מקיף
-- ✅ אבטחה מתקדמת
-- ✅ לוגים מפורטים
-- ✅ תיעוד מלא
+## בדיקות לפני העלאה
 
-המערכת מוכנה לייצור ויכולה להתחיל לעבוד מיד לאחר הגדרת משתני הסביבה. 
+### מצב בדיקה
+- [ ] יצירת תשלום Low Profile
+- [ ] השלמת תשלום מוצלח
+- [ ] טיפול בתשלום נכשל
+- [ ] חיוב עם טוקן
+- [ ] יצירת החזר
+
+### מצב ייצור
+- [ ] בדיקת חיבור אמיתי
+- [ ] תשלום בסכום קטן (1 ש"ח)
+- [ ] וידוא קבלת callbacks
+- [ ] בדיקת עדכון סטטוס הזמנות
+
+### פאנל מנהל
+- [ ] הצגת הגדרות נכונות
+- [ ] מעבר בין מצבים
+- [ ] בדיקת חיבור
+- [ ] הצגת אזהרות מתאימות
+
+## תחזוקה
+
+### עדכונים נדרשים
+- מעקב אחר שינויים ב-API של CARDCOM
+- עדכון תעודות SSL
+- ניטור ביצועים
+- גיבוי נתוני תשלומים
+
+### פתרון בעיות נפוצות
+1. **תשלום לא מועבר**: בדיקת callback URL
+2. **שגיאת אימות**: וידוא נכונות Token
+3. **חיבור נכשל**: בדיקת firewall ו-DNS
+4. **טוקן לא תקף**: בדיקת תוקף ושימוש
+
+## תמיכה
+
+לבעיות טכניות:
+1. בדיקת לוגים במערכת
+2. בדיקת סטטוס CARDCOM
+3. פנייה לתמיכה של CARDCOM
+4. בדיקת התיעוד הטכני
+
+---
+
+**הערה חשובה**: יש לוודא שכל התשלומים במצב ייצור נבדקים היטב לפני העלאה לאוויר. 

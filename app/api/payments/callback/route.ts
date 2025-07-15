@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Payment } from "@/lib/db/models/payment"
 import { Booking } from "@/lib/db/models/booking"
-import { cardcomService, type TokenData } from "@/lib/services/cardcom-service"
+import { cardcomService } from "@/lib/services/cardcom-service"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { updateBookingStatusAfterPayment } from "@/actions/booking-actions"
@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
     const sum = searchParams.get("sum")
     const returnValue = searchParams.get("ReturnValue")
     const internalDealNumber = searchParams.get("InternalDealNumber")
-    const last4 = searchParams.get("last4")
-    const tokenData = searchParams.get("tokenData")
+    const last4 = searchParams.get("Last4")
+    const cardcomToken = searchParams.get("Token")
     const isMockPayment = searchParams.get("mock") === "true"
 
     logger.info("Payment callback received", {
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
       sum,
       returnValue,
       internalDealNumber,
-      hasTokenData: !!tokenData,
+      last4,
+      cardcomToken,
       isMockPayment
     })
 
@@ -75,46 +76,17 @@ export async function GET(request: NextRequest) {
       updateData.cardcom_internal_deal_number = internalDealNumber
     }
 
-    // אם יש נתוני טוקן - הצפנה ושמירה
-    if (isSuccess && token === "1") {
-      try {
-        let parsedTokenData: TokenData
-        
-        if (isMockPayment) {
-          // במצב בדיקה - יצירת נתוני טוקן מדומים
-          parsedTokenData = {
-            token: "TEST_TOKEN_" + Math.random().toString(36).substr(2, 16),
-            last4: "1234",
-            name: "Test Customer",
-            phone: "050-1234567",
-            email: "test@example.com"
-          }
-          logger.info("Mock token data created for test payment", {
-            paymentId: finalPaymentId,
-            last4: parsedTokenData.last4
-          })
-        } else if (tokenData) {
-          // במצב ייצור - פענוח נתוני טוקן אמיתיים
-          parsedTokenData = JSON.parse(decodeURIComponent(tokenData))
-        } else {
-          throw new Error("No token data available")
-        }
-        
-        const encryptedTokenData = cardcomService.encryptTokenData(parsedTokenData)
-        updateData.result_data.tokenData = encryptedTokenData
-        
-        logger.info("Token data encrypted and saved", {
-          paymentId: finalPaymentId,
-          last4: parsedTokenData.last4,
-          isMock: isMockPayment
-        })
-      } catch (error) {
-        logger.error("Failed to process token data", {
-          paymentId: finalPaymentId,
-          error: error instanceof Error ? error.message : String(error),
-          isMock: isMockPayment
-        })
-      }
+    // שמירת נתוני טוקן אם קיימים
+    if (isSuccess && token === "1" && cardcomToken) {
+      updateData.result_data.cardcomToken = cardcomToken
+      updateData.result_data.last4 = last4
+      
+      logger.info("Payment token saved", {
+        paymentId: finalPaymentId,
+        last4: last4,
+        hasToken: !!cardcomToken,
+        isMock: isMockPayment
+      })
     }
 
     await Payment.findByIdAndUpdate(finalPaymentId, updateData)

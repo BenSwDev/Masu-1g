@@ -3,62 +3,62 @@ import * as crypto from "crypto"
 
 // Types for CARDCOM API
 export interface CardcomConfig {
-  terminalNumber: string
-  username: string
-  apiKey: string
+  terminal: string
+  apiToken: string
   baseUrl: string
   testMode: boolean
 }
 
-export interface CreatePaymentRequest {
+// Low Profile (iframe) payment request
+export interface LowProfileRequest {
   TerminalNumber: string
-  UserName: string
   APIKey: string
   Operation: 1 // תמיד 1 לחיוב
   Currency: 1 // תמיד 1 לשקלים
   Sum: number
   Description: string
   ReturnValue: string // מזהה התשלום שלנו
-  CreateToken: true // תמיד true ליצירת טוקן
   SuccessRedirectUrl: string
   ErrorRedirectUrl: string
   CustomerName?: string
   CustomerEmail?: string
   CustomerPhone?: string
+  Language: "he" // עברית
 }
 
-export interface CreatePaymentResponse {
+export interface LowProfileResponse {
   ResponseCode: string // "0" = הצלחה
   Description: string
   url?: string // URL להפניה אם הצליח
   LowProfileCode?: string
 }
 
-export interface DirectChargeRequest {
+// Direct transaction request
+export interface TransactionRequest {
   TerminalNumber: string
-  UserName: string
   APIKey: string
   Operation: 1 | 2 // 1 = חיוב, 2 = זיכוי
   Currency: 1
   Sum: number
   Description: string
-  Token: string
+  Token?: string // טוקן של כרטיס קיים
+  CardNumber?: string // מספר כרטיס חדש
+  CVV?: string
+  ExpMonth?: string
+  ExpYear?: string
+  HolderName?: string
+  HolderId?: string
   ReturnValue: string
+  CreateToken?: boolean // ליצירת טוקן חדש
 }
 
-export interface DirectChargeResponse {
+export interface TransactionResponse {
   ResponseCode: string
   Description: string
   InternalDealNumber?: string
   TransactionID?: string
-}
-
-export interface TokenData {
-  token: string
-  last4: string
-  name: string
-  phone: string
-  email: string
+  Token?: string // טוקן חדש שנוצר
+  Last4?: string
 }
 
 export interface CardcomCallback {
@@ -68,8 +68,8 @@ export interface CardcomCallback {
   currency?: string
   ReturnValue?: string
   InternalDealNumber?: string
-  last4?: string
-  tokenData?: string // JSON מוצפן
+  Last4?: string
+  Token?: string
 }
 
 // קודי שגיאה של CARDCOM
@@ -85,6 +85,11 @@ const CARDCOM_ERROR_CODES: Record<string, string> = {
   "8": "כרטיס אשראי לא תקף",
   "9": "אין מספיק כסף בכרטיס",
   "10": "כרטיס חסום",
+  "11": "עסקה דחויה",
+  "12": "תאריך תפוגה שגוי",
+  "13": "CVV שגוי",
+  "14": "שם בעל הכרטיס שגוי",
+  "15": "מספר תעודת זהות שגוי"
 }
 
 export class CardcomService {
@@ -92,78 +97,78 @@ export class CardcomService {
 
   constructor() {
     this.config = {
-      terminalNumber: process.env.CARDCOM_TERMINAL_NUMBER || "",
-      username: process.env.CARDCOM_USERNAME || "",
-      apiKey: process.env.CARDCOM_API_KEY || "",
+      terminal: process.env.CARDCOM_TERMINAL || "125566",
+      apiToken: process.env.CARDCOM_API_TOKEN || "Q3ZqTMTZGrSIKjktQrfN",
       baseUrl: process.env.CARDCOM_BASE_URL || "https://secure.cardcom.solutions/api/v11",
       testMode: process.env.CARDCOM_TEST_MODE === "true",
     }
-
-    // הגדרות יאומתו בזמן השימוש בפונקציות
   }
 
   /**
    * בדיקת הגדרות CARDCOM
    */
   private validateConfig(): { valid: boolean; error?: string } {
-    if (!this.config.terminalNumber || !this.config.username || !this.config.apiKey) {
+    if (!this.config.terminal || !this.config.apiToken) {
       return {
         valid: false,
-        error: "CARDCOM configuration missing - please check environment variables"
+        error: "CARDCOM configuration missing - terminal and API token required"
       }
     }
     return { valid: true }
   }
 
   /**
-   * יצירת תשלום חדש ב-CARDCOM
+   * יצירת תשלום Low Profile (iframe)
    */
-  async createPayment(params: {
+  async createLowProfilePayment(params: {
     amount: number
     description: string
     paymentId: string
     customerName?: string
     customerEmail?: string
     customerPhone?: string
-    resultUrl?: string
-  }): Promise<{ success: boolean; data?: CreatePaymentResponse; error?: string }> {
-    // בדיקת הגדרות
+    successUrl?: string
+    errorUrl?: string
+  }): Promise<{ success: boolean; data?: LowProfileResponse; error?: string }> {
+    
     const configCheck = this.validateConfig()
     if (!configCheck.valid) {
       return { success: false, error: configCheck.error }
     }
 
     try {
-      // URL אחיד לתוצאות תשלום
-      const resultUrl = params.resultUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`
+      // URLs לתוצאות תשלום
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+      const successUrl = params.successUrl || `${baseUrl}/payment/success`
+      const errorUrl = params.errorUrl || `${baseUrl}/payment/error`
       
-      const payload: CreatePaymentRequest = {
-        TerminalNumber: this.config.terminalNumber,
-        UserName: this.config.username,
-        APIKey: this.config.apiKey,
+      const payload: LowProfileRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
         Operation: 1,
         Currency: 1,
         Sum: params.amount,
         Description: params.description,
         ReturnValue: params.paymentId,
-        CreateToken: true,
-        SuccessRedirectUrl: resultUrl,
-        ErrorRedirectUrl: resultUrl,
+        SuccessRedirectUrl: successUrl,
+        ErrorRedirectUrl: errorUrl,
         CustomerName: params.customerName,
         CustomerEmail: params.customerEmail,
         CustomerPhone: params.customerPhone,
+        Language: "he"
       }
 
-      logger.info("Creating CARDCOM payment", {
+      logger.info("Creating CARDCOM Low Profile payment", {
         paymentId: params.paymentId,
         amount: params.amount,
         testMode: this.config.testMode,
+        terminal: this.config.terminal
       })
 
       const response = await this.sendRequest("LowProfile", payload)
       return this.handleResponse(response)
     } catch (error) {
-      logger.error("CARDCOM createPayment error", {
+      logger.error("CARDCOM createLowProfilePayment error", {
         error: error instanceof Error ? error.message : String(error),
         paymentId: params.paymentId,
       })
@@ -172,70 +177,128 @@ export class CardcomService {
   }
 
   /**
-   * חיוב ישיר עם טוקן
+   * חיוב ישיר עם טוקן קיים
    */
-  async directCharge(params: {
+  async chargeToken(params: {
     amount: number
     description: string
     token: string
     paymentId: string
-  }): Promise<{ success: boolean; data?: DirectChargeResponse; error?: string }> {
-    // בדיקת הגדרות
+    createNewToken?: boolean
+  }): Promise<{ success: boolean; data?: TransactionResponse; error?: string }> {
+    
     const configCheck = this.validateConfig()
     if (!configCheck.valid) {
       return { success: false, error: configCheck.error }
     }
 
     try {
-      const payload: DirectChargeRequest = {
-        TerminalNumber: this.config.terminalNumber,
-        UserName: this.config.username,
-        APIKey: this.config.apiKey,
+      const payload: TransactionRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
         Operation: 1, // חיוב
         Currency: 1,
         Sum: params.amount,
         Description: params.description,
         Token: params.token,
         ReturnValue: params.paymentId,
+        CreateToken: params.createNewToken || false
       }
 
-      logger.info("CARDCOM direct charge", {
+      logger.info("CARDCOM token charge", {
         paymentId: params.paymentId,
         amount: params.amount,
         hasToken: !!params.token,
+        testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Charge", payload)
+      const response = await this.sendRequest("Transaction", payload)
       return this.handleResponse(response)
     } catch (error) {
-      logger.error("CARDCOM directCharge error", {
+      logger.error("CARDCOM chargeToken error", {
         error: error instanceof Error ? error.message : String(error),
         paymentId: params.paymentId,
       })
-      return { success: false, error: "שגיאה בחיוב ישיר" }
+      return { success: false, error: "שגיאה בחיוב עם טוקן" }
     }
   }
 
   /**
-   * זיכוי ישיר עם טוקן
+   * חיוב ישיר עם פרטי כרטיס אשראי
    */
-  async directRefund(params: {
+  async chargeCard(params: {
     amount: number
     description: string
-    token: string
+    cardNumber: string
+    cvv: string
+    expMonth: string
+    expYear: string
+    holderName: string
+    holderId?: string
     paymentId: string
-  }): Promise<{ success: boolean; data?: DirectChargeResponse; error?: string }> {
-    // בדיקת הגדרות
+    createToken?: boolean
+  }): Promise<{ success: boolean; data?: TransactionResponse; error?: string }> {
+    
     const configCheck = this.validateConfig()
     if (!configCheck.valid) {
       return { success: false, error: configCheck.error }
     }
 
     try {
-      const payload: DirectChargeRequest = {
-        TerminalNumber: this.config.terminalNumber,
-        UserName: this.config.username,
-        APIKey: this.config.apiKey,
+      const payload: TransactionRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
+        Operation: 1, // חיוב
+        Currency: 1,
+        Sum: params.amount,
+        Description: params.description,
+        CardNumber: params.cardNumber,
+        CVV: params.cvv,
+        ExpMonth: params.expMonth,
+        ExpYear: params.expYear,
+        HolderName: params.holderName,
+        HolderId: params.holderId,
+        ReturnValue: params.paymentId,
+        CreateToken: params.createToken || false
+      }
+
+      logger.info("CARDCOM card charge", {
+        paymentId: params.paymentId,
+        amount: params.amount,
+        cardLast4: params.cardNumber.slice(-4),
+        testMode: this.config.testMode
+      })
+
+      const response = await this.sendRequest("Transaction", payload)
+      return this.handleResponse(response)
+    } catch (error) {
+      logger.error("CARDCOM chargeCard error", {
+        error: error instanceof Error ? error.message : String(error),
+        paymentId: params.paymentId,
+      })
+      return { success: false, error: "שגיאה בחיוב כרטיס אשראי" }
+    }
+  }
+
+  /**
+   * זיכוי/החזר
+   */
+  async refund(params: {
+    amount: number
+    description: string
+    token: string
+    paymentId: string
+  }): Promise<{ success: boolean; data?: TransactionResponse; error?: string }> {
+    
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
+    try {
+      const payload: TransactionRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
         Operation: 2, // זיכוי
         Currency: 1,
         Sum: params.amount,
@@ -244,20 +307,21 @@ export class CardcomService {
         ReturnValue: params.paymentId,
       }
 
-      logger.info("CARDCOM direct refund", {
+      logger.info("CARDCOM refund", {
         paymentId: params.paymentId,
         amount: params.amount,
         hasToken: !!params.token,
+        testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Charge", payload)
+      const response = await this.sendRequest("Transaction", payload)
       return this.handleResponse(response)
     } catch (error) {
-      logger.error("CARDCOM directRefund error", {
+      logger.error("CARDCOM refund error", {
         error: error instanceof Error ? error.message : String(error),
         paymentId: params.paymentId,
       })
-      return { success: false, error: "שגיאה בזיכוי" }
+      return { success: false, error: "שגיאה בביצוע החזר" }
     }
   }
 
@@ -269,6 +333,7 @@ export class CardcomService {
     if (this.config.testMode) {
       logger.info("CARDCOM TEST MODE - returning mock response", {
         endpoint,
+        terminal: this.config.terminal,
         testMode: true,
       })
       
@@ -276,6 +341,13 @@ export class CardcomService {
     }
 
     const url = `${this.config.baseUrl}/${endpoint}`
+
+    logger.info("Sending CARDCOM request", {
+      url,
+      endpoint,
+      terminal: this.config.terminal,
+      operation: data.Operation
+    })
 
     const response = await fetch(url, {
       method: "POST",
@@ -291,6 +363,12 @@ export class CardcomService {
     }
 
     const result = await response.json()
+    
+    logger.info("CARDCOM response received", {
+      responseCode: result.ResponseCode,
+      description: result.Description
+    })
+    
     return result
   }
 
@@ -303,20 +381,31 @@ export class CardcomService {
       Description: "הצלחה - מצב בדיקה",
     }
 
+    const mockTransactionId = "TEST_" + Math.random().toString(36).substr(2, 9)
+    const mockToken = "TOK_" + Math.random().toString(36).substr(2, 16)
+
     switch (endpoint) {
       case "LowProfile":
         return {
           ...baseResponse,
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true`,
-          LowProfileCode: "TEST_" + Math.random().toString(36).substr(2, 9),
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
+          LowProfileCode: mockTransactionId,
         }
 
-      case "Charge":
-        return {
+      case "Transaction":
+        const transactionResponse: any = {
           ...baseResponse,
-          InternalDealNumber: "TEST_" + Math.random().toString(36).substr(2, 9),
-          TransactionID: "TXN_" + Math.random().toString(36).substr(2, 9),
+          InternalDealNumber: mockTransactionId,
+          TransactionID: "TXN_" + mockTransactionId,
         }
+
+        // אם נדרש ליצור טוקן, נוסיף אותו
+        if (data.CreateToken || data.Token) {
+          transactionResponse.Token = mockToken
+          transactionResponse.Last4 = data.CardNumber ? data.CardNumber.slice(-4) : "1234"
+        }
+
+        return transactionResponse
 
       default:
         return baseResponse
@@ -344,59 +433,112 @@ export class CardcomService {
   }
 
   /**
-   * הצפנת נתוני טוקן
+   * עיבוד callback מ-CARDCOM
    */
-  encryptTokenData(tokenData: TokenData): string {
-    const algorithm = "aes-256-gcm"
-    const key = Buffer.from(process.env.CARDCOM_ENCRYPTION_KEY || "", "utf8").slice(0, 32)
-
-    const iv = crypto.randomBytes(16)
-    const cipher = crypto.createCipheriv(algorithm, key, iv)
-    cipher.setAAD(Buffer.from("cardcom-token"))
-
-    let encrypted = cipher.update(JSON.stringify(tokenData), "utf8", "hex")
-    encrypted += cipher.final("hex")
-
-    const authTag = cipher.getAuthTag()
-
-    return JSON.stringify({
-      iv: iv.toString("hex"),
-      data: encrypted,
-      authTag: authTag.toString("hex"),
-    })
-  }
-
-  /**
-   * פענוח נתוני טוקן
-   */
-  decryptTokenData(encryptedData: string): TokenData | null {
+  processCallback(callbackData: CardcomCallback): {
+    success: boolean
+    paymentId?: string
+    transactionId?: string
+    token?: string
+    last4?: string
+    amount?: number
+    error?: string
+  } {
     try {
-      const { iv, data, authTag } = JSON.parse(encryptedData)
-      const algorithm = "aes-256-gcm"
-      const key = Buffer.from(process.env.CARDCOM_ENCRYPTION_KEY || "", "utf8").slice(0, 32)
+      // בדיקת השלמת התשלום
+      if (callbackData.complete !== "1") {
+        return {
+          success: false,
+          error: "התשלום לא הושלם בהצלחה"
+        }
+      }
 
-      const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(iv, "hex"))
-      decipher.setAAD(Buffer.from("cardcom-token"))
-      decipher.setAuthTag(Buffer.from(authTag, "hex"))
-
-      let decrypted = decipher.update(data, "hex", "utf8")
-      decrypted += decipher.final("utf8")
-
-      return JSON.parse(decrypted)
+      return {
+        success: true,
+        paymentId: callbackData.ReturnValue,
+        transactionId: callbackData.InternalDealNumber,
+        token: callbackData.Token,
+        last4: callbackData.Last4,
+        amount: callbackData.sum ? parseFloat(callbackData.sum) : undefined
+      }
     } catch (error) {
-      logger.error("Failed to decrypt token data", { error })
-      return null
+      logger.error("Error processing CARDCOM callback", {
+        error: error instanceof Error ? error.message : String(error),
+        callbackData
+      })
+
+      return {
+        success: false,
+        error: "שגיאה בעיבוד תגובת התשלום"
+      }
     }
   }
 
   /**
-   * בדיקת סטטוס השירות
+   * קבלת מצב הגדרות
    */
   getStatus() {
     return {
-      configured: !!(this.config.terminalNumber && this.config.username && this.config.apiKey),
+      configured: !!(this.config.terminal && this.config.apiToken),
       testMode: this.config.testMode,
       baseUrl: this.config.baseUrl,
+      terminal: this.config.terminal.substring(0, 3) + "***", // הסתרת חלק מהטרמינל
+    }
+  }
+
+  /**
+   * מעבר בין מצב בדיקה לייצור
+   */
+  setTestMode(testMode: boolean) {
+    this.config.testMode = testMode
+    logger.info("CARDCOM test mode changed", { testMode })
+  }
+
+  /**
+   * בדיקת חיבור ל-CARDCOM
+   */
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
+    try {
+      // נבצע בקשת תשלום מדומה לבדיקת החיבור
+      const testPayload: LowProfileRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
+        Operation: 1,
+        Currency: 1,
+        Sum: 1, // שקל אחד לבדיקה
+        Description: "בדיקת חיבור",
+        ReturnValue: "test_connection_" + Date.now(),
+        SuccessRedirectUrl: "https://example.com/success",
+        ErrorRedirectUrl: "https://example.com/error",
+        Language: "he"
+      }
+
+      if (this.config.testMode) {
+        // במצב בדיקה, רק נחזיר הצלחה
+        return { success: true }
+      }
+
+      // בדיקת חיבור אמיתית
+      const response = await this.sendRequest("LowProfile", testPayload)
+      
+      if (response.ResponseCode === "0") {
+        return { success: true }
+      } else {
+        return { 
+          success: false, 
+          error: CARDCOM_ERROR_CODES[response.ResponseCode] || response.Description 
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: "שגיאה בחיבור ל-CARDCOM: " + (error instanceof Error ? error.message : String(error))
+      }
     }
   }
 }

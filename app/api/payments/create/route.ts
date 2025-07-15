@@ -66,14 +66,15 @@ export async function POST(request: NextRequest) {
     })
 
     // קריאה ל-CARDCOM
-    const cardcomResult = await cardcomService.createPayment({
+    const cardcomResult = await cardcomService.createLowProfilePayment({
       amount,
       description: description || `הזמנה ${bookingId}`,
       paymentId,
       customerName,
       customerEmail,
       customerPhone,
-      resultUrl: callbackUrl
+      successUrl: `${baseUrl}/payment/success`,
+      errorUrl: `${baseUrl}/payment/error`
     })
 
     if (cardcomResult.success && cardcomResult.data?.url) {

@@ -1319,9 +1319,9 @@ export default function UniversalBookingWizard({
         console.log("🗑️ Cleared localStorage")
       }
       
-      // Immediately redirect to confirmation page
-      console.log("🔄 Redirecting to confirmation page")
-      const confirmationUrl = `/bookings/confirmation?bookingId=${finalBookingId}&status=success`
+      // Immediately redirect to booking details page
+      console.log("🔄 Redirecting to booking details page")
+      const confirmationUrl = `/booking-details/${finalBookingId}`
       console.log("🎯 Redirecting to:", confirmationUrl)
       
       // Add a small delay to ensure state is updated

@@ -2364,6 +2364,7 @@ export async function assignProfessionalToBooking(
             bookingDateTime: assignedBooking.bookingDateTime,
             professionalName: professional.name || "מטפל/ת",
             clientName: clientUser.name || "לקוח/ה",
+            address: assignedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
             bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
           }
 

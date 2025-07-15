@@ -51,6 +51,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "professional-booking-notification":
       return getProfessionalBookingNotificationSmsTemplate(data, language)
 
+    case "BOOKING_ASSIGNED_PROFESSIONAL":
+      return getBookingAssignedProfessionalSmsTemplate(data, language)
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,
@@ -181,6 +184,83 @@ function getPasswordResetSmsTemplate(resetUrl: string, language: SMSLanguage): s
     default: // English
       message = `To reset your ${appName} password, click the link: ${resetUrl}`
   }
+  return message + smsSignature
+}
+
+// Booking Assigned Professional SMS Template
+function getBookingAssignedProfessionalSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  const managementLink = data.bookingDetailsLink || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/professional`
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🎯 הזמנה שוייכה אליך!
+
+${data.professionalName} שלום,
+שוייכת אליך הזמנה חדשה:
+
+📋 טיפול: ${data.treatmentName}
+👤 לקוח: ${data.clientName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📍 כתובת: ${data.address || 'לא זמינה'}
+
+📱 לניהול ההזמנה: ${managementLink}
+
+ההזמנה שוייכה על ידי מנהל המערכת`
+      break
+    case "ru":
+      message = `🎯 Заказ назначен вам!
+
+${data.professionalName}, здравствуйте,
+Вам назначен новый заказ:
+
+📋 Процедура: ${data.treatmentName}
+👤 Клиент: ${data.clientName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📍 Адрес: ${data.address || 'недоступен'}
+
+📱 Управление заказом: ${managementLink}
+
+Заказ назначен администратором системы`
+      break
+    default: // English
+      message = `🎯 Booking assigned to you!
+
+Hello ${data.professionalName},
+A new booking has been assigned to you:
+
+📋 Treatment: ${data.treatmentName}
+👤 Client: ${data.clientName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📍 Address: ${data.address || 'not available'}
+
+📱 Manage booking: ${managementLink}
+
+Booking assigned by system administrator`
+  }
+  
   return message + smsSignature
 }
 

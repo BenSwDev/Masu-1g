@@ -109,21 +109,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Assign professional to booking
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      bookingId,
-      {
-        professionalId: new Types.ObjectId(professionalId),
-        status: "confirmed" // Update status to confirmed when assigned
-      },
-      { new: true }
-    ).populate("treatmentId")
-     .populate("professionalId")
-     .populate("userId")
+    // Use the proper assignment function that sends notifications
+    const { assignProfessionalToBooking } = await import("@/actions/booking-actions")
+    const assignResult = await assignProfessionalToBooking(bookingId, professionalId)
+    
+    if (!assignResult.success) {
+      return NextResponse.json(
+        { success: false, error: assignResult.error || "Failed to assign professional" },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
-      booking: updatedBooking,
+      booking: assignResult.booking,
       message: "Booking assigned to professional successfully"
     })
 

@@ -6,11 +6,12 @@ export interface EmailNotificationData {
     | "adminPasswordReset"
     | "otp"
     | "treatment-booking-success"
-      | "professional-booking-notification"
-  | "professional-on-way"
-  | "purchase-success"
-  | "review-reminder"
-  | "review_request"
+    | "professional-booking-notification"
+    | "BOOKING_ASSIGNED_PROFESSIONAL"
+    | "professional-on-way"
+    | "purchase-success"
+    | "review-reminder"
+    | "review_request"
   userName?: string
   email?: string
   resetLink?: string
@@ -22,11 +23,8 @@ export interface EmailNotificationData {
   reviewLink?: string // For review-reminder
   // Review request fields
   customerName?: string
-  treatmentName?: string
-  professionalName?: string
   reviewUrl?: string
   bookingId?: string
-  bookingNumber?: string
   // Treatment booking fields
   recipientName?: string
   bookerName?: string
@@ -40,8 +38,10 @@ export interface EmailNotificationData {
   // Professional booking notification fields
   responseLink?: string
   price?: number
-  // Professional on-way notification fields
   professionalName?: string
+  clientName?: string
+  address?: string
+  bookingDetailsLink?: string
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -308,6 +308,8 @@ body {
         }
       )
 
+      const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
+
       if (isForSomeoneElse) {
         // Email for recipient when someone else booked for them
         subject = language === "he" 
@@ -315,8 +317,6 @@ body {
           : language === "ru"
             ? `${bookerName} заказал для вас процедуру в ${appName}!`
             : `${bookerName} booked a treatment for you at ${appName}!`
-
-        const bookingDetailsLink = `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${data.bookingNumber}`
         const treatmentBookingForOtherTextContent = language === "he"
           ? `שלום ${recipientName},\n\n${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\n${bookingDetailsLink}${emailTextSignature}`
           : language === "ru"
@@ -596,6 +596,74 @@ body {
         <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
         <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.`}</p>
         <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "BOOKING_ASSIGNED_PROFESSIONAL": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { 
+          weekday: "long",
+          day: "2-digit", 
+          month: "long", 
+          year: "numeric", 
+          timeZone: "Asia/Jerusalem" 
+        }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      const managementLink = data.bookingDetailsLink || "https://masu.co.il"
+      
+      subject = language === "he" ? "נשמח אם תוכל לקחת הזמנה זו!" : language === "ru" ? "Мы будем рады, если вы сможете принять этот заказ!" : "We'd love for you to take this booking!"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.professionalName},\n\nשוייכת אליך הזמנה חדשה לטיפול ${data.treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime}.\n\nפרטי הלקוח: ${data.clientName}${data.address ? `\nכתובת: ${data.address}` : ""}\n\nניתן לצפות בפרטי ההזמנה ולנהל אותה דרך הקישור הבא:\n${managementLink}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.professionalName},\n\nВам назначен новый заказ на процедуру ${data.treatmentName} на ${formattedDate} в ${formattedTime}.\n\nДанные клиента: ${data.clientName}${data.address ? `\nАдрес: ${data.address}` : ""}\n\nВы можете просмотреть детали заказа и управлять им по ссылке:\n${managementLink}`
+            : `Hello ${data.professionalName},\n\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} has been assigned to you.\n\nClient details: ${data.clientName}${data.address ? `\nAddress: ${data.address}` : ""}\n\nYou can view the booking details and manage it at:\n${managementLink}`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "הזמנה חדשה שוייכה אליך!" : language === "ru" ? "Вам назначен новый заказ!" : "New booking assigned to you!"}</h2>
+        <p>${language === "he" ? `שלום ${data.professionalName},` : language === "ru" ? `Здравствуйте, ${data.professionalName},` : `Hello ${data.professionalName},`}</p>
+        <p>${language === "he" ? `שוייכת אליך הזמנה חדשה לטיפול ${data.treatmentName}.` : language === "ru" ? `Вам назначен новый заказ на процедуру ${data.treatmentName}.` : `A new booking for ${data.treatmentName} has been assigned to you.`}</p>
+
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "לקוח:" : language === "ru" ? "Клиент:" : "Client:"}</span>
+            <span class="value">${data.clientName}</span>
+          </div>
+          ${data.address ? `<div class="booking-detail">
+            <span class="label">${language === "he" ? "כתובת:" : language === "ru" ? "Адрес:" : "Address:"}</span>
+            <span class="value">${data.address}</span>
+          </div>` : ''}
+        </div>
+
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${managementLink}" class="button">${language === "he" ? "לצפייה וניהול ההזמנה" : language === "ru" ? "Посмотреть и управлять заказом" : "View & Manage Booking"}</a>
+        </p>
+        
+        <p>${language === "he" ? "ההזמנה שוייכה אליך על ידי מנהל המערכת. אנא צפה בפרטים ונהל את ההזמנה לפי הצורך." : language === "ru" ? "Заказ назначен вам администратором системы. Пожалуйста, просмотрите детали и управляйте заказом по необходимости." : "This booking was assigned to you by the system administrator. Please review the details and manage the booking as needed."}</p>
       `
       text = textContent
       html = wrapHtml(htmlContent, subject)

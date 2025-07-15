@@ -2327,7 +2327,7 @@ export async function assignProfessionalToBooking(
         ])
 
         if (clientUser && professional && treatment) {
-          // Client notification
+          // Client notification - inform them that a professional has been assigned
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
@@ -2354,18 +2354,46 @@ export async function assignProfessionalToBooking(
             await unifiedNotificationService.sendNotificationToMultiple(clientRecipients, clientNotificationData)
           }
 
-          // Professional notification
+          // Professional notification - Create an auto-accepted response and send professional to pre-approved state
+          const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
+
+          // First, expire any existing pending responses for this professional on this booking
+          await ProfessionalResponse.updateMany(
+            {
+              bookingId: new mongoose.Types.ObjectId(assignedBooking._id),
+              professionalId: new mongoose.Types.ObjectId(professionalId),
+              status: "pending"
+            },
+            { status: "expired" }
+          )
+
+          // Create a new response record that's already accepted (simulating the professional accepted)
+          const response = new ProfessionalResponse({
+            bookingId: new mongoose.Types.ObjectId(assignedBooking._id),
+            professionalId: new mongoose.Types.ObjectId(professionalId),
+            phoneNumber: professional.phone,
+            status: "accepted", // Already accepted by admin assignment
+            respondedAt: new Date(),
+            responseMethod: "admin_assignment"
+          })
+
+          await response.save()
+
+          // Send professional notification with link to pre-approved response page
           const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
           const professionalNotificationMethods = professional.notificationPreferences?.methods || ["sms"]
 
-          const professionalNotificationData: ProfessionalBookingNotificationData = {
-            type: "BOOKING_ASSIGNED_PROFESSIONAL",
+          // Use the same responseId link format as normal bookings, but the professional will see pre-approved state
+          const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`
+
+          const professionalNotificationData = {
+            type: "professional-booking-notification" as const,
             treatmentName: treatment.name,
             bookingDateTime: assignedBooking.bookingDateTime,
-            professionalName: professional.name || "מטפל/ת",
-            clientName: clientUser.name || "לקוח/ה",
             address: assignedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
-            bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
+            price: assignedBooking.priceDetails?.finalAmount || 0,
+            responseLink,
+            responseId: response._id.toString()
           }
 
           const professionalRecipients = []
@@ -2377,7 +2405,9 @@ export async function assignProfessionalToBooking(
           }
           
           if (professionalRecipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(professionalRecipients, professionalNotificationData)
+            // Import the notification service specifically for professional notifications
+            const { unifiedNotificationService: professionalNotificationService } = await import("@/lib/notifications/unified-notification-service")
+            await professionalNotificationService.sendNotificationToMultiple(professionalRecipients, professionalNotificationData)
           }
         }
       } catch (notificationError) {

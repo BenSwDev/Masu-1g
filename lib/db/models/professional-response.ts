@@ -59,7 +59,7 @@ const ProfessionalResponseSchema = new Schema<IProfessionalResponse>({
   respondedAt: { type: Date },
   responseMethod: { 
     type: String, 
-    enum: ["sms", "app", "phone"]
+    enum: ["sms", "app", "phone", "admin_assignment"]
   }
 }, {
   timestamps: true,

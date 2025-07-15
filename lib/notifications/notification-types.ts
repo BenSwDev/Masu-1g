@@ -65,6 +65,7 @@ export interface ProfessionalBookingNotificationData extends BaseNotificationDat
   address?: string
   price?: number
   responseLink?: string
+  responseId?: string
   // Additional fields for professional notifications
   professionalName?: string
   clientName?: string

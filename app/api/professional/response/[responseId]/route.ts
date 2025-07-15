@@ -33,10 +33,10 @@ export async function GET(
       )
     }
 
-    // Import models
-    const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
-    const Booking = (await import("@/lib/db/models/booking")).default
-    const User = (await import("@/lib/db/models/user")).default
+    // Import models dynamically to avoid circular dependency issues
+    const { default: ProfessionalResponse } = await import("@/lib/db/models/professional-response") as any
+    const { default: Booking } = await import("@/lib/db/models/booking") as any
+    const { default: User } = await import("@/lib/db/models/user") as any
 
     // Get response with related data
     const response = await ProfessionalResponse.findById(responseId)
@@ -100,7 +100,9 @@ export async function GET(
       professionalName: professional.name,
       professionalPhone: response.phoneNumber || professional.phone || "",
       canRespond,
-      bookingCurrentStatus: booking.status
+      bookingCurrentStatus: booking.status,
+      isAdminAssigned: response.responseMethod === "admin_assignment",
+      responseMethod: response.responseMethod
     }
 
     return NextResponse.json({

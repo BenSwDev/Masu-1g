@@ -37,6 +37,7 @@ export interface EmailNotificationData {
   actualRecipientName?: string // Added missing field
   // Professional booking notification fields
   responseLink?: string
+  responseId?: string // Added to support admin assignment detection
   price?: number
   professionalName?: string
   clientName?: string
@@ -584,21 +585,55 @@ body {
         { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
       )
       const responseLink = data.responseLink || "https://masu.co.il"
-      subject = language === "he" ? "הזמנה חדשה זמינה" : language === "ru" ? "Доступен новый заказ" : "New booking available"
-      const textContent =
-        (language === "he"
-          ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.\nלהשיב להזמנה: ${responseLink}`
-          : language === "ru"
-            ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.\nОтветить на заказ: ${responseLink}`
-            : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.\nRespond here: ${responseLink}`) +
-        emailTextSignature
-      const htmlContent = `
-        <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
-        <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.`}</p>
-        <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
-      `
-      text = textContent
-      html = wrapHtml(htmlContent, subject)
+      
+      // Check if this is an admin assignment (based on presence of responseId indicating pre-created response)
+      const isAdminAssigned = !!data.responseId
+      
+      if (isAdminAssigned) {
+        subject = language === "he" ? "ההזמנה שוייכה אליך!" : language === "ru" ? "Заказ назначен вам!" : "Booking assigned to you!"
+        const textContent =
+          (language === "he"
+            ? `שלום,\n\n🎯 מנהל המערכת שייך אליך הזמנה לטיפול ${data.treatmentName}!\n\nפרטי ההזמנה:\n📅 תאריך: ${formattedDate}\n🕐 שעה: ${formattedTime}\n📍 כתובת: ${data.address || data.bookingAddress}\n\nההזמנה מאושרת ומוכנה לטיפול.\nניתן לעדכן סטטוס ול\"בדרך\" דרך הקישור: ${responseLink}`
+            : language === "ru"
+              ? `Здравствуйте,\n\n🎯 Администратор назначил вам заказ на процедуру ${data.treatmentName}!\n\nДетали заказа:\n📅 Дата: ${formattedDate}\n🕐 Время: ${formattedTime}\n📍 Адрес: ${data.address || data.bookingAddress}\n\nЗаказ подтвержден и готов к выполнению.\nВы можете обновить статус через ссылку: ${responseLink}`
+              : `Hello,\n\n🎯 The system administrator has assigned you a booking for ${data.treatmentName}!\n\nBooking details:\n📅 Date: ${formattedDate}\n🕐 Time: ${formattedTime}\n📍 Address: ${data.address || data.bookingAddress}\n\nThe booking is confirmed and ready for treatment.\nYou can update the status via: ${responseLink}`) +
+          emailTextSignature
+        const htmlContent = `
+          <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 24px;">🎯 ${language === "he" ? "ההזמנה שוייכה אליך!" : language === "ru" ? "Заказ назначен вам!" : "Booking assigned to you!"}</h2>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">${language === "he" ? "מנהל המערכת שייך אליך הזמנה חדשה" : language === "ru" ? "Администратор назначил вам новый заказ" : "The administrator has assigned you a new booking"}</p>
+          </div>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #1f2937;">${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</strong> ${data.treatmentName}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</strong> ${formattedTime}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "כתובת:" : language === "ru" ? "Адрес:" : "Address:"}</strong> ${data.address || data.bookingAddress}</p>
+          </div>
+          <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #0277bd;"><strong>💡 ${language === "he" ? "ההזמנה כבר מאושרת ומוכנה לטיפול" : language === "ru" ? "Заказ уже подтвержден и готов к выполнению" : "The booking is already confirmed and ready for treatment"}</strong></p>
+          </div>
+          <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "כניסה לעמוד הטיפול" : language === "ru" ? "Войти на страницу лечения" : "Go to Treatment Page"}</a></p>
+        `
+        text = textContent
+        html = wrapHtml(htmlContent, subject)
+      } else {
+        subject = language === "he" ? "הזמנה חדשה זמינה" : language === "ru" ? "Доступен новый заказ" : "New booking available"
+        const textContent =
+          (language === "he"
+            ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address || data.bookingAddress}.\nלהשיב להזמנה: ${responseLink}`
+            : language === "ru"
+              ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address || data.bookingAddress}.\nОтветить на заказ: ${responseLink}`
+              : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address || data.bookingAddress} is available.\nRespond here: ${responseLink}`) +
+          emailTextSignature
+        const htmlContent = `
+          <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
+          <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address || data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address || data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address || data.bookingAddress} is available.`}</p>
+          <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
+        `
+        text = textContent
+        html = wrapHtml(htmlContent, subject)
+      }
       break
     }
 

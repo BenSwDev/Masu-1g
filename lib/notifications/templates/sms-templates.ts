@@ -96,10 +96,28 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
     treatmentDisplay += ` (${data.treatmentDuration} דקות)`
   }
 
+  // Check if this is an admin assignment (based on presence of responseId indicating pre-created response)
+  const isAdminAssigned = !!data.responseId
+
   let message: string
   switch (language) {
     case "he":
-      message = `🔔 הזמנה חדשה זמינה!
+      if (isAdminAssigned) {
+        message = `🎯 ההזמנה שוייכה אליך!
+
+📋 טיפול: ${treatmentDisplay}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📍 כתובת: ${data.address || city}
+
+✅ מנהל המערכת שייך אותך להזמנה
+💡 ההזמנה מאושרת ומוכנה לטיפול
+
+🔗 כניסה לעמוד הטיפול: ${responseUrl}
+
+או הכנס לאפליקציה: masu.co.il`
+      } else {
+        message = `🔔 הזמנה חדשה זמינה!
 
 📋 טיפול: ${treatmentDisplay}
 📅 תאריך: ${bookingDate}
@@ -109,6 +127,7 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
 ✅ לקבלת ההזמנה: ${responseUrl}?action=accept
 
 או הכנס לאפליקציה: masu.co.il`
+      }
       break
     case "ru":
       message = `🔔 Доступен новый заказ!
@@ -216,7 +235,7 @@ function getBookingAssignedProfessionalSmsTemplate(data: any, language: SMSLangu
       message = `🎯 הזמנה שוייכה אליך!
 
 ${data.professionalName} שלום,
-שוייכת אליך הזמנה חדשה:
+שוייכה אליך הזמנה חדשה:
 
 📋 טיפול: ${data.treatmentName}
 👤 לקוח: ${data.clientName}

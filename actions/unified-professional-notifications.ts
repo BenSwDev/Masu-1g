@@ -81,22 +81,56 @@ export async function sendUnifiedProfessionalNotifications(
     } else if (options.sendToAllSuitable) {
       // Automatic notifications to all suitable professionals
       const { findSuitableProfessionals } = await import("@/actions/booking-actions")
+      
+      logger.info("Starting to find suitable professionals for booking", {
+        bookingId: options.bookingId
+      })
+      
       const suitableResult = await findSuitableProfessionals(options.bookingId)
       
+      logger.info("Result from findSuitableProfessionals", {
+        bookingId: options.bookingId,
+        success: suitableResult.success,
+        professionalsCount: suitableResult.professionals?.length || 0,
+        error: suitableResult.error
+      })
+      
       if (!suitableResult.success || !suitableResult.professionals) {
-        return { success: false, error: "No suitable professionals found" }
+        logger.error("No suitable professionals found for booking", {
+          bookingId: options.bookingId,
+          error: suitableResult.error
+        })
+        return { success: false, error: suitableResult.error || "No suitable professionals found" }
       }
 
-      // Convert suitable professionals to notification format
-      professionalsToNotify = suitableResult.professionals.map(prof => ({
-        professionalId: prof.userId._id.toString(),
-        email: !!prof.userId.email,
-        sms: !!prof.userId.phone
-      }))
+      // Convert suitable professionals to notification format - CHECK USER PREFERENCES
+      professionalsToNotify = suitableResult.professionals.map(prof => {
+        // Get notification preferences from user (professional)
+        const userNotificationMethods = prof.userId?.notificationPreferences?.methods || ["sms"]
+        
+        const result = {
+          professionalId: prof._id.toString(),
+          email: !!prof.email && userNotificationMethods.includes("email"),
+          sms: !!prof.phone && userNotificationMethods.includes("sms")
+        }
+        
+        logger.info("Professional notification preferences", {
+          professionalId: prof._id.toString(),
+          professionalName: prof.userId?.name,
+          hasEmail: !!prof.email,
+          hasPhone: !!prof.phone,
+          userPreferences: userNotificationMethods,
+          willSendEmail: result.email,
+          willSendSms: result.sms
+        })
+        
+        return result
+      })
 
       logger.info("Sending notifications to all suitable professionals", {
         bookingId: options.bookingId,
-        count: professionalsToNotify.length
+        count: professionalsToNotify.length,
+        professionals: professionalsToNotify.map(p => ({ id: p.professionalId, hasEmail: p.email, hasSms: p.sms }))
       })
     } else {
       return { success: false, error: "No professionals specified for notification" }

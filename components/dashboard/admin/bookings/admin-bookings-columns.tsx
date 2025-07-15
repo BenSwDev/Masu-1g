@@ -52,6 +52,7 @@ import { assignProfessionalToBooking, getAvailableProfessionals, getSuitableProf
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
 import { ProfessionalNotificationModal } from "./professional-notification-modal"
+import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
 import ReviewDetailModal from "../reviews/review-detail-modal"
 import SendReviewDialog from "./send-review-dialog"
 import { getReviewByBookingId } from "@/actions/review-actions"
@@ -442,6 +443,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   const [selectedProfessional, setSelectedProfessional] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: suitableProfessionals, isLoading: loadingSuitable } = useQuery({
@@ -691,6 +693,20 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             שלח לתפוצה
           </Button>
         )}
+
+        {canSendNotifications && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSuitableProfessionalsModal(true)}
+            className="text-purple-600 border-purple-200 hover:bg-purple-50 w-full"
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <Eye className="mr-2 h-3 w-3" />
+            מטפלים מתאימים
+          </Button>
+        )}
       </div>
 
       {/* Assignment Dialog */}
@@ -777,6 +793,13 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
         }}
+      />
+
+      {/* Suitable Professionals Modal */}
+      <SuitableProfessionalsModal
+        open={showSuitableProfessionalsModal}
+        onOpenChange={setShowSuitableProfessionalsModal}
+        booking={booking}
       />
     </>
   )

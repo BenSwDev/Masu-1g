@@ -1,0 +1,61 @@
+האם אתה מוצא גם שגיאות בתהליך תוספות המחיר? משהו שלא עקבי?
+(תתעלם ממה שכבר תיקנת בסוג הכתובת)
+Jul 12 19:49:13.21
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+{"timestamp":"2025-07-12T16:49:13.632Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:49:11.70
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+2
+/bookings/treatment
+{"timestamp":"2025-07-12T16:49:10.567Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:49:06.01
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+{"timestamp":"2025-07-12T16:49:04.859Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:49:04.42
+GET
+200
+v0-masu-lo.vercel.app
+/api/cities
+3
+Cities API: Found cities: 30
+Jul 12 19:49:03.18
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+{"timestamp":"2025-07-12T16:49:02.044Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:48:54.58
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+2
+{"timestamp":"2025-07-12T16:48:53.426Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:48:49.23
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+{"timestamp":"2025-07-12T16:48:49.101Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:48:48.15
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+2
+{"timestamp":"2025-07-12T16:48:48.017Z","level":"info","message":"Price calculation result:","data":{"basePrice":380,"totalSurchargesAmount":0,"treatmentPriceAfterSubscriptionOrTreatmentVoucher":380,"subtotalBeforeGeneralReductions":380,"finalAmount":380,"bookingDateTime":"2025-07-17T17:30:00.000Z","surcharges":[]}}
+Jul 12 19:48:47.03
+POST
+200
+v0-masu-lo.vercel.app
+/bookings/treatment
+2

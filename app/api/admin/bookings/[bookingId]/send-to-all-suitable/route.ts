@@ -57,11 +57,27 @@ export async function POST(
     }
 
     // Prepare notification data for all suitable professionals
-    const professionalNotifications = suitableProfessionals.map(professional => ({
-      professionalId: professional._id,
-      email: !!professional.email, // Send email if available
-      sms: !!professional.phone   // Send SMS if available
-    }))
+    // ✅ FIX: Need to get full professional data with notification preferences
+    const { findSuitableProfessionals } = await import("@/actions/booking-actions")
+    const fullProfessionalsResult = await findSuitableProfessionals(bookingId)
+    
+    if (!fullProfessionalsResult.success || !fullProfessionalsResult.professionals) {
+      return NextResponse.json(
+        { success: false, error: "Failed to get professional notification preferences" },
+        { status: 400 }
+      )
+    }
+    
+    const professionalNotifications = fullProfessionalsResult.professionals.map(professional => {
+      // Get notification preferences from user (professional)
+      const userNotificationMethods = professional.userId?.notificationPreferences?.methods || ["sms"]
+      
+      return {
+        professionalId: professional._id,
+        email: !!professional.email && userNotificationMethods.includes("email"),
+        sms: !!professional.phone && userNotificationMethods.includes("sms")
+      }
+    })
 
     // Send notifications using the unified system
     const result = await sendManualProfessionalNotifications(bookingId, professionalNotifications)

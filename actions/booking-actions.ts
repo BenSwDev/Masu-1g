@@ -1307,8 +1307,11 @@ export async function createBooking(
       if ((finalBookingObject.status as string) === "pending_professional") {
         try {
           const bookingIdStr = String(finalBookingObject._id)
-          logger.info("Sending automatic notifications to suitable professionals", { 
-            bookingId: bookingIdStr
+          logger.info("Booking is ready for professional assignment - sending automatic notifications (createBooking)", { 
+            bookingId: bookingIdStr,
+            bookingStatus: finalBookingObject.status,
+            treatmentId: finalBookingObject.treatmentId,
+            city: finalBookingObject.bookingAddressSnapshot?.city
           })
           
           // ✅ FIX: Use sendAutomaticProfessionalNotifications directly to bypass admin authorization
@@ -2573,6 +2576,41 @@ export async function updateBookingByAdmin(
       }
     }
     
+    // ✅ FIX: Send notifications to professionals when admin changes status to pending_professional
+    if (updates.status === "pending_professional" && !booking.professionalId) {
+      try {
+        logger.info("Admin changed booking status to pending_professional - sending automatic notifications", { 
+          bookingId,
+          adminId: session.user.id,
+          treatmentId: booking.treatmentId,
+          city: booking.bookingAddressSnapshot?.city
+        })
+        
+        const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
+        const notificationResult = await sendAutomaticProfessionalNotifications(bookingId)
+        
+        if (notificationResult.success) {
+          logger.info("Professional notifications sent successfully after admin status change", { 
+            bookingId,
+            sentCount: notificationResult.sentCount
+          })
+        } else {
+          logger.error("Failed to send professional notifications after admin status change:", {
+            bookingId,
+            error: notificationResult.error
+          })
+        }
+      } catch (professionalNotificationError) {
+        logger.error("Failed to send professional notifications after admin status change:", {
+          bookingId,
+          error: professionalNotificationError instanceof Error 
+            ? professionalNotificationError.message 
+            : String(professionalNotificationError),
+        })
+        // Don't fail the booking update if professional notifications fail
+      }
+    }
+    
     // Revalidate relevant paths
     revalidatePath("/dashboard/admin/bookings")
     revalidatePath("/dashboard/member/bookings")
@@ -2986,8 +3024,11 @@ export async function createGuestBooking(
       if ((finalBookingObject.status as string) === "pending_professional") {
         try {
           const bookingIdStr = String(finalBookingObject._id)
-          logger.info("Sending automatic notifications to suitable professionals", { 
-            bookingId: bookingIdStr
+          logger.info("Booking is ready for professional assignment - sending automatic notifications (createGuestBooking)", { 
+            bookingId: bookingIdStr,
+            bookingStatus: finalBookingObject.status,
+            treatmentId: finalBookingObject.treatmentId,
+            city: finalBookingObject.bookingAddressSnapshot?.city
           })
           
           // ✅ FIX: Use sendAutomaticProfessionalNotifications directly to bypass admin authorization
@@ -3685,6 +3726,13 @@ export async function updateBookingStatusAfterPayment(
     // Send automatic notifications to suitable professionals after successful payment
     if (paymentStatus === "success" && updatedBooking) {
       try {
+        logger.info("Payment successful - sending automatic notifications to suitable professionals", {
+          bookingId,
+          bookingStatus: updatedBooking.status,
+          treatmentId: updatedBooking.treatmentId,
+          city: updatedBooking.bookingAddressSnapshot?.city
+        })
+        
         const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
         const notificationResult = await sendAutomaticProfessionalNotifications(bookingId)
         
@@ -3762,6 +3810,14 @@ export async function findSuitableProfessionals(
     const genderPreference = booking.therapistGenderPreference
     const durationId = booking.selectedDurationId?._id.toString()
     
+    logger.info("Finding suitable professionals for booking:", {
+      bookingId,
+      treatmentId,
+      cityName,
+      genderPreference: genderPreference || 'any',
+      durationId: durationId || 'any'
+    })
+    
     console.log("Finding suitable professionals for booking:", {
       bookingId,
       treatmentId,
@@ -3790,13 +3846,14 @@ export async function findSuitableProfessionals(
       { 'workAreas.coveredCities': cityName }
     ]
     
+    logger.info("Professional search query:", { query })
     console.log("Professional search query:", JSON.stringify(query, null, 2))
     
     // Find professionals with all criteria
     let professionals = await ProfessionalProfile.find(query)
       .populate({
         path: 'userId',
-        select: 'name email phone gender roles',
+        select: 'name email phone gender roles notificationPreferences',
         model: User,
         // CRITICAL: Only users with professional role
         match: { roles: 'professional' }
@@ -3804,10 +3861,18 @@ export async function findSuitableProfessionals(
       .populate('treatments.treatmentId')
       .lean()
     
+    logger.info(`Found ${professionals.length} professionals matching basic criteria`, {
+      bookingId,
+      professionalsFound: professionals.length
+    })
     console.log(`Found ${professionals.length} professionals matching basic criteria`)
     
     // Filter out professionals where userId is null (didn't match professional role)
     professionals = professionals.filter(prof => prof.userId !== null)
+    logger.info(`After filtering for professional role: ${professionals.length} professionals`, {
+      bookingId,
+      professionalsAfterRoleFilter: professionals.length
+    })
     console.log(`After filtering for professional role: ${professionals.length} professionals`)
     
     // Filter by gender preference if specified
@@ -3816,6 +3881,12 @@ export async function findSuitableProfessionals(
       professionals = professionals.filter(prof => {
         const user = prof.userId as any
         return user && user.gender === genderPreference
+      })
+      logger.info(`After gender filter (${genderPreference}): ${professionals.length} professionals (was ${beforeGenderFilter})`, {
+        bookingId,
+        genderPreference,
+        beforeCount: beforeGenderFilter,
+        afterCount: professionals.length
       })
       console.log(`After gender filter (${genderPreference}): ${professionals.length} professionals (was ${beforeGenderFilter})`)
     }
@@ -3829,6 +3900,12 @@ export async function findSuitableProfessionals(
           (!t.durationId || t.durationId.toString() === durationId)
         )
       )
+      logger.info(`After duration filter: ${professionals.length} professionals (was ${beforeDurationFilter})`, {
+        bookingId,
+        durationId,
+        beforeCount: beforeDurationFilter,
+        afterCount: professionals.length
+      })
       console.log(`After duration filter: ${professionals.length} professionals (was ${beforeDurationFilter})`)
     }
     

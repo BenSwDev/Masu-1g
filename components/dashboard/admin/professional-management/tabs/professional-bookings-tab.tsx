@@ -174,6 +174,10 @@ function ProfessionalBookingsTab({
       // Send notifications to professional about all potential bookings
       const userId = typeof professional.userId === 'object' ? professional.userId._id : professional.userId
       
+      // Get user notification preferences from professional.userId
+      const userObj = typeof professional.userId === 'object' ? professional.userId : null
+      const userNotificationMethods = userObj?.notificationPreferences?.methods || ["sms"]
+      
       for (const booking of potentialBookings) {
         const response = await fetch(`/api/admin/bookings/${booking._id}/notify-professionals`, {
           method: "POST",
@@ -183,8 +187,8 @@ function ProfessionalBookingsTab({
           body: JSON.stringify({
             professionals: [{
               professionalId: userId,
-              email: true,
-              sms: true
+              email: !!userObj?.email && userNotificationMethods.includes("email"),
+              sms: !!userObj?.phone && userNotificationMethods.includes("sms")
             }]
           })
         })

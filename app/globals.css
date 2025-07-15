@@ -224,6 +224,35 @@
     height: auto !important;
   }
 
+  /* Main layout styles for isolated pages */
+  .main-layout {
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  html:has(.main-layout),
+  body:has(.main-layout) {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  /* Alternative for browsers that don't support :has() */
+  body.main-active {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  html.main-active {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
   /* Prevent zoom on mobile inputs */
   @media screen and (max-width: 768px) {
     input[type="text"],

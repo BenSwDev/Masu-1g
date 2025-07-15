@@ -22,6 +22,15 @@ interface Professional {
   treatments?: any[]
   isOnline?: boolean
   lastSeen?: Date
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+    phone?: string
+    notificationPreferences?: {
+      methods: string[]
+    }
+  }
 }
 
 interface ProfessionalNotificationModalProps {
@@ -74,12 +83,15 @@ export function ProfessionalNotificationModal({
         const suitableIds = new Set(suitableProfs.map(p => p._id))
         setSelectedProfessionals(suitableIds)
         
-        // Set default notification preferences (both email and SMS)
+        // Set default notification preferences based on user preferences
         const defaultPrefs: Record<string, NotificationPreferences> = {}
         suitableProfs.forEach(prof => {
+          // Get user notification preferences, default to ["sms"] if not set
+          const userNotificationMethods = prof.userId?.notificationPreferences?.methods || ["sms"]
+          
           defaultPrefs[prof._id] = {
-            email: !!prof.email,
-            sms: !!prof.phone
+            email: !!prof.email && userNotificationMethods.includes("email"),
+            sms: !!prof.phone && userNotificationMethods.includes("sms")
           }
         })
         setNotificationPreferences(defaultPrefs)
@@ -96,9 +108,12 @@ export function ProfessionalNotificationModal({
         const allPrefs = { ...notificationPreferences }
         allData.professionals.forEach((prof: Professional) => {
           if (!allPrefs[prof._id]) {
+            // Get user notification preferences, default to ["sms"] if not set
+            const userNotificationMethods = prof.userId?.notificationPreferences?.methods || ["sms"]
+            
             allPrefs[prof._id] = {
-              email: !!prof.email,
-              sms: !!prof.phone
+              email: !!prof.email && userNotificationMethods.includes("email"),
+              sms: !!prof.phone && userNotificationMethods.includes("sms")
             }
           }
         })

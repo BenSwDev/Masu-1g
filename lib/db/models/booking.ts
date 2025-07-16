@@ -272,7 +272,6 @@ const BookingSchema: Schema<IBooking> = new Schema(
       ],
       default: "pending_payment",
       required: true,
-      index: true,
     },
     priceDetails: { type: PriceDetailsSchema, required: true },
     paymentDetails: { type: PaymentDetailsSchema, required: true },

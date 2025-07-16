@@ -48,7 +48,7 @@ export async function GET(
       treatmentName: (booking.treatmentId as any)?.name || 'טיפול לא מוגדר',
       professionalName: (booking.professionalId as any)?.name || 'מטפל לא מוגדר',
       bookingDateTime: booking.bookingDateTime,
-      address: booking.address,
+      address: booking.addressId,
       status: booking.status,
       canReview: canReview && !existingReview,
       existingReview: existingReview ? {

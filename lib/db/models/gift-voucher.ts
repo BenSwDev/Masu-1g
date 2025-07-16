@@ -143,7 +143,6 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
         "cancelled",
       ],
       default: "pending_payment",
-      index: true,
     },
     purchaseDate: { type: Date, default: Date.now },
     validFrom: { type: Date, required: true },

@@ -129,6 +129,7 @@ export interface PhoneRecipient {
   type: "phone"
   value: string
   language: NotificationLanguage
+  name?: string // Optional name for personalization
 }
 
 // Union type for all recipients

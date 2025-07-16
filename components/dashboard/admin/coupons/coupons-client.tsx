@@ -39,8 +39,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     (initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || [],
   )
   const [pagination, setPagination] = React.useState({
-    totalPages: initialData?.totalPages || 1,
-    currentPage: initialData?.currentPage || 1,
+    totalPages: 1,
+    currentPage: 1,
     totalCoupons: initialData?.totalCoupons || 0,
   })
   const [loading, setLoading] = React.useState(false)
@@ -164,8 +164,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
   React.useEffect(() => {
     setCoupons((initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || [])
     setPagination({
-      totalPages: initialData?.totalPages || 1,
-      currentPage: initialData?.currentPage || 1,
+      totalPages: 1,
+      currentPage: 1,
       totalCoupons: initialData?.totalCoupons || 0,
     })
   }, [initialData])

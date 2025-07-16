@@ -79,9 +79,9 @@ export async function getCustomerSummary(customerId: string): Promise<GetCustome
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === 'completed')
     const cancelledBookings = bookings.filter(b => 
-      b.status === 'cancelled_by_user' || b.status === 'cancelled_by_admin'
+      b.status === 'cancelled' || b.status === 'refunded'
     )
-    const noShowBookings = bookings.filter(b => b.status === 'no_show')
+    const noShowBookings = bookings.filter(b => b.status === 'cancelled')
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()

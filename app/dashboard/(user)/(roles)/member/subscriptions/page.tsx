@@ -43,7 +43,7 @@ async function SubscriptionsData() {
     return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error || "Unknown error"}</div>
   }
 
-  return <UserSubscriptionsClient userSubscriptions={result.userSubscriptions} pagination={result.pagination} />
+  return <UserSubscriptionsClient userSubscriptions={result.userSubscriptions} />
 }
 
 export default function UserSubscriptionsPage() {

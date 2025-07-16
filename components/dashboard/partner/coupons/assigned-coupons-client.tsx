@@ -20,9 +20,9 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
 
   const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData?.coupons || [])
   const [pagination, setPagination] = React.useState({
-    totalPages: initialData?.totalPages || 1,
-    currentPage: initialData?.currentPage || 1,
-    totalCoupons: initialData?.totalCoupons || 0,
+    totalPages: 1,
+    currentPage: 1,
+    totalCoupons: 0,
   })
   const [loading, setLoading] = React.useState(false)
 

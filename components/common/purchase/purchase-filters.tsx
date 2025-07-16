@@ -253,7 +253,7 @@ export default function PurchaseFiltersComponent({
                 <Calendar
                   mode="single"
                   selected={filters.dateFrom}
-                  onSelect={(date) => onFiltersChange({ ...filters, dateFrom: date })}
+                  onSelect={(date) => onFiltersChange({ ...filters, dateFrom: date || undefined })}
                   disabled={(date) => date > new Date()}
                   initialFocus
                 />
@@ -288,7 +288,7 @@ export default function PurchaseFiltersComponent({
                 <Calendar
                   mode="single"
                   selected={filters.dateTo}
-                  onSelect={(date) => onFiltersChange({ ...filters, dateTo: date })}
+                  onSelect={(date) => onFiltersChange({ ...filters, dateTo: date || undefined })}
                   disabled={(date) => date > new Date() || (filters.dateFrom && date < filters.dateFrom)}
                   initialFocus
                 />

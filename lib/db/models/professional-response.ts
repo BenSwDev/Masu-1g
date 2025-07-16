@@ -53,8 +53,7 @@ const ProfessionalResponseSchema = new Schema<IProfessionalResponse>({
     type: String, 
     enum: ["pending", "accepted", "declined", "expired"],
     default: "pending",
-    required: true,
-    index: true
+    required: true
   },
   respondedAt: { type: Date },
   responseMethod: { 

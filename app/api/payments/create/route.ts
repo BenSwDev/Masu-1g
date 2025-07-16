@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
       customerName, 
       customerEmail, 
       customerPhone,
-      type // booking, subscription, gift_voucher
+      type, // booking, subscription, gift_voucher
+      createDocument, // האם ליצור מסמך (חשבונית)
+      documentType // סוג המסמך
     } = body
 
     // ולידציה
@@ -68,13 +70,15 @@ export async function POST(request: NextRequest) {
     // קריאה ל-CARDCOM
     const cardcomResult = await cardcomService.createLowProfilePayment({
       amount,
-      description: description || `הזמנה ${bookingId}`,
+      description: description || `הזמנת טיפול - הזמנה ${bookingId}`,
       paymentId,
       customerName,
       customerEmail,
       customerPhone,
       successUrl: `${baseUrl}/payment/success`,
-      errorUrl: `${baseUrl}/payment/error`
+      errorUrl: `${baseUrl}/payment/error`,
+      createDocument: createDocument !== false, // ברירת מחדל true
+      documentType: documentType || (type === "booking" ? "Order" : "Receipt")
     })
 
     if (cardcomResult.success && cardcomResult.data?.url) {

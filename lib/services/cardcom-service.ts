@@ -9,6 +9,18 @@ interface CardcomConfig {
   testMode: boolean
 }
 
+// Document for creating invoice/receipt with payment
+interface CardcomDocument {
+  Name?: string // Customer name
+  DocumentTypeToCreate?: "Order" | "Invoice" | "Receipt" // Type of document to create
+  Email?: string // Email to send document to
+  Products?: Array<{
+    Description: string
+    UnitCost: number
+    Quantity?: number
+  }>
+}
+
 // Low Profile (iframe) payment request
 interface LowProfileRequest {
   TerminalNumber: string
@@ -24,6 +36,7 @@ interface LowProfileRequest {
   CustomerEmail?: string
   CustomerPhone?: string
   Language: "he" // עברית
+  Document?: CardcomDocument // Optional document creation
 }
 
 interface LowProfileResponse {
@@ -138,6 +151,8 @@ class CardcomService {
     customerPhone?: string
     successUrl?: string
     errorUrl?: string
+    createDocument?: boolean // האם ליצור מסמך (חשבונית)
+    documentType?: "Order" | "Invoice" | "Receipt" // סוג המסמך
   }): Promise<{ success: boolean; data?: LowProfileResponse; error?: string }> {
     
     const configCheck = this.validateConfig()
@@ -168,6 +183,20 @@ class CardcomService {
         Language: "he"
       }
 
+      // הוספת מסמך אם נדרש
+      if (params.createDocument && params.customerEmail) {
+        payload.Document = {
+          Name: params.customerName || "לקוח",
+          DocumentTypeToCreate: params.documentType || "Receipt",
+          Email: params.customerEmail,
+          Products: [{
+            Description: params.description,
+            UnitCost: params.amount,
+            Quantity: 1
+          }]
+        }
+      }
+
       logger.info("Creating CARDCOM Low Profile payment", {
         paymentId: params.paymentId,
         amount: params.amount,
@@ -178,6 +207,8 @@ class CardcomService {
         baseUrl,
         description: params.description,
         customerName: params.customerName,
+        createDocument: params.createDocument,
+        documentType: params.documentType,
         customerEmail: params.customerEmail
       })
 

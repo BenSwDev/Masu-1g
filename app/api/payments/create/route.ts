@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
       customerPhone,
       type, // booking, subscription, gift_voucher
       createDocument, // האם ליצור מסמך (חשבונית)
-      documentType // סוג המסמך
+      documentType, // סוג המסמך
+      drawerMode // האם להשתמש במצב drawer
     } = body
 
     // ולידציה
@@ -78,7 +79,8 @@ export async function POST(request: NextRequest) {
       successUrl: `${baseUrl}/payment/success`,
       errorUrl: `${baseUrl}/payment/error`,
       createDocument: createDocument !== false, // ברירת מחדל true
-      documentType: documentType || (type === "booking" ? "Order" : "Receipt")
+      documentType: documentType || (type === "booking" ? "Order" : "Receipt"),
+      drawerMode: drawerMode === true // העברת מצב drawer
     })
 
     if (cardcomResult.success && cardcomResult.data?.url) {

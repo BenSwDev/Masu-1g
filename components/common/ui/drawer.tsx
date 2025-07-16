@@ -95,13 +95,11 @@ DrawerDescription.displayName = DrawerPrimitive.Description.displayName
 
 export {
   Drawer,
-  
-  
-  DrawerTrigger,
-  
+  DrawerClose,
+  DrawerFooter,
+  DrawerDescription,
+  DrawerTrigger, 
   DrawerContent,
   DrawerHeader,
-  
-  DrawerTitle,
-  
+  DrawerTitle
 }

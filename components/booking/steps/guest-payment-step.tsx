@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/translations/i18n";
-import { usePaymentModal } from "@/hooks/use-payment-modal";
+import { usePaymentDrawer } from "@/hooks/use-payment-drawer";
+import { PaymentDrawer } from "@/components/common/purchase/payment-drawer";
 import { toast } from "sonner";
 import { Button } from "@/components/common/ui/button";
 import {
@@ -11,15 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/ui/card";
-import { PaymentIframe } from "@/components/common/purchase/payment-iframe";
 import { Separator } from "@/components/common/ui/separator";
 import { Badge } from "@/components/common/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/common/ui/dialog";
 import { Alert, AlertDescription } from "@/components/common/ui/alert";
 import { Checkbox } from "@/components/common/ui/checkbox";
 import {
@@ -111,25 +105,20 @@ export function GuestPaymentStep({
   purchaseDetails = {},
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation()
-  const {
-    showPaymentModal,
-    paymentStatus,
-    countdown,
-    isCountingDown,
-    openModal,
-    handlePaymentSuccess,
-    handlePaymentFailure,
-    handleTryAgain,
-    handleOpenChange,
-  } = usePaymentModal({ 
-    onSuccess: async () => {
-      console.log("🏦 GuestPaymentStep onSuccess triggered - payment simulation successful")
+  const paymentDrawer = usePaymentDrawer({ 
+    onSuccess: async (data) => {
+      console.log("🏦 GuestPaymentStep onSuccess triggered - payment completed successfully", data)
       
       // ✅ Simply call onConfirm which will create the final booking directly
       console.log("🎯 Calling onConfirm (handleFinalSubmit)")
       onConfirm();
     },
-    onFailure: customFailureHandler
+    onError: (error) => {
+      console.log("🚨 Payment failed:", error)
+      if (customFailureHandler) {
+        customFailureHandler(error)
+      }
+    }
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
@@ -204,7 +193,7 @@ export function GuestPaymentStep({
   };
 
   const handlePayNow = async () => {
-    if (isCountingDown || !termsAccepted || isPaymentLoading) return;
+    if (!termsAccepted || isPaymentLoading || paymentDrawer.isLoading) return;
 
     setIsPaymentLoading(true);
 
@@ -261,28 +250,18 @@ export function GuestPaymentStep({
         description = `הזמנת טיפול - הזמנה ${finalBookingId}`;
       }
 
-      const paymentResponse = await fetch('/api/payments/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: finalBookingId,
-          amount: calculatedPrice?.finalAmount || 0,
-          description: description,
-          customerName: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim(),
-          customerEmail: guestInfo.email,
-          customerPhone: guestInfo.phone,
-          type: purchaseType  // ✅ העברת סוג הרכישה ל-API
-        })
+      // ✅ פתיחת PaymentDrawer עם כל הנתונים
+      await paymentDrawer.openDrawer({
+        bookingId: finalBookingId,
+        amount: calculatedPrice?.finalAmount || 0,
+        description: description,
+        customerName: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim(),
+        customerEmail: guestInfo.email,
+        customerPhone: guestInfo.phone,
+        type: purchaseType,
+        createDocument: true,
+        documentType: purchaseType === "booking" ? "Order" : "Receipt"
       });
-
-      const paymentData = await paymentResponse.json();
-
-      if (paymentData.success && paymentData.redirectUrl) {
-        // Set payment URL for iframe instead of redirect
-        setPaymentUrl(paymentData.redirectUrl);
-      } else {
-        throw new Error(paymentData.error || 'שגיאה ביצירת התשלום');
-      }
       
     } catch (error) {
       console.error("Payment preparation failed:", error);
@@ -726,161 +705,36 @@ export function GuestPaymentStep({
 
         {/* Navigation */}
         <div className="space-y-4">
-          {/* כפתורי דמיה לבדיקות */}
-          <Card className="border-dashed border-2 border-yellow-300 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="text-center mb-4">
-                <AlertTriangle className="mx-auto h-6 w-6 text-yellow-600 mb-2" />
-                <h3 className="text-lg font-medium text-yellow-800">
-                  כפתורי דמיה - לבדיקות בלבד
-                </h3>
-                <p className="text-sm text-yellow-700">
-                  כפתורים אלה מדמים הצלחה/כישלון בתשלום ללא חיוב אמיתי
-                </p>
-              </div>
-              <div className="flex gap-3 justify-center">
-                <Button
-                  onClick={() => {
-                    console.log("🟢 Demo Success clicked");
-                    handlePaymentSuccess();
-                  }}
-                  variant="outline"
-                  className="border-green-500 text-green-700 hover:bg-green-50"
-                  disabled={isLoading || isCountingDown || !termsAccepted}
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  דמיה: הצלחה
-                </Button>
-                <Button
-                  onClick={() => {
-                    console.log("🔴 Demo Failure clicked");
-                    handlePaymentFailure("בדיקת כישלון מדומה");
-                  }}
-                  variant="outline"
-                  className="border-red-500 text-red-700 hover:bg-red-50"
-                  disabled={isLoading || isCountingDown || !termsAccepted}
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  דמיה: כישלון
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* כפתורי ניווט רגילים */}
+          {/* כפתורי ניווט עם תשלום */}
           <div className="flex justify-between">
             <Button variant="outline" onClick={onPrev} disabled={isLoading}>
               חזור
             </Button>
             <Button
               onClick={handlePayNow}
-              disabled={isLoading || isPaymentLoading || isCountingDown || !termsAccepted}
+              disabled={isLoading || isPaymentLoading || paymentDrawer.isLoading || !termsAccepted}
               size="lg"
               className="px-8"
             >
-              {(isLoading || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isCountingDown
-                ? `נסה שוב בעוד ${countdown} שניות`
-                : `שלם כעת בכרטיס אשראי ${formatPrice(calculatedPrice.finalAmount)}`}
+              {(isLoading || isPaymentLoading || paymentDrawer.isLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {`שלם כעת בכרטיס אשראי ${formatPrice(calculatedPrice.finalAmount)}`}
             </Button>
           </div>
-
-          {/* Payment IFRAME */}
-          {paymentUrl && (
-            <div className="mt-6">
-              <PaymentIframe
-                paymentUrl={paymentUrl}
-                bookingId={pendingBookingId || undefined}
-                onSuccess={handlePaymentSuccess}
-                onError={(error: string) => {
-                  console.log("🔴 Credit Card Payment Failed - calling handlePaymentFailure like demo");
-                  handlePaymentFailure(error);
-                }}
-                onCancel={handlePaymentCancel}
-                height="600px"
-                className="w-full"
-              />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Payment Modal */}
-      <Dialog open={showPaymentModal} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-6" dir={dir}>
-            {paymentStatus === "pending" && (
-              <>
-                {/* Credit Card Payment Processing */}
-                <div className="border-2 border-primary/20 rounded-lg p-8 text-center bg-gradient-to-br from-primary/5 to-primary/10">
-                  <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
-                  <h3 className="text-lg font-semibold text-primary mb-2">
-                    מעבר לתשלום מאובטח
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    עכשיו תועבר/י לדף התשלום המאובטח של כרטיס אשראי
-                  </p>
-                  <div className="mt-4 p-4 bg-white border rounded-lg shadow-sm">
-                    <p className="text-sm text-gray-600 mb-2">
-                      סכום לתשלום:{" "}
-                      <span className="font-bold text-primary">
-                        {formatPrice(calculatedPrice.finalAmount)}
-                      </span>
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                      <Shield className="h-3 w-3" />
-                      תשלום מאובטח עם הצפנה SSL
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    מכין את התשלום...
-                  </div>
-                </div>
-              </>
-            )}
-
-            {paymentStatus === "success" && (
-              <div className="text-center py-8">
-                <CheckCircle className="mx-auto h-16 w-16 text-green-600 mb-4" />
-                <h3 className="text-xl font-semibold text-green-700 mb-2">
-                  התשלום בוצע בהצלחה!
-                </h3>
-                <p className="text-gray-600">
-                  ההזמנה אושרה ופרטיה נשלחו אליך באימייל
-                </p>
-              </div>
-            )}
-
-            {paymentStatus === "failed" && (
-              <div className="text-center py-8">
-                <XCircle className="mx-auto h-16 w-16 text-red-600 mb-4" />
-                <h3 className="text-xl font-semibold text-red-700 mb-2">
-                  התשלום נכשל
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  אירעה שגיאה בביצוע התשלום. אנא נסה שוב.
-                </p>
-
-                <Alert className="mb-6">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    לא חויבת. אין תשלום שבוצע עבור ההזמנה הזו.
-                  </AlertDescription>
-                </Alert>
-
-                <Button onClick={handleTryAgain} className="w-full">
-                  נסה שנית
-                </Button>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Payment Drawer */}
+      <PaymentDrawer
+        isOpen={paymentDrawer.isOpen}
+        onClose={paymentDrawer.closeDrawer}
+        paymentUrl={paymentDrawer.paymentUrl}
+        paymentId={paymentDrawer.paymentId}
+        bookingId={paymentDrawer.paymentData?.bookingId}
+        amount={paymentDrawer.paymentData?.amount}
+        description={paymentDrawer.paymentData?.description}
+        onSuccess={paymentDrawer.handleSuccess}
+        onError={paymentDrawer.handleError}
+      />
     </>
   );
 }

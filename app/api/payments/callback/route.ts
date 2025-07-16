@@ -122,7 +122,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // הפניה לעמוד תוצאות אחיד
+    // בדיקה אם הבקשה מגיעה מתוך drawer
+    const isDrawerMode = searchParams.get("drawer") === "true"
+    
+    if (isDrawerMode) {
+      // במצב drawer - החזרת JSON response במקום redirect
+      return NextResponse.json({
+        success: isSuccess,
+        status: isSuccess ? 'success' : 'failed',
+        paymentId: finalPaymentId,
+        bookingId: payment.booking_id,
+        transactionId: internalDealNumber,
+        complete: isSuccess ? '1' : '0',
+        reason: searchParams.get("reason") || (isSuccess ? undefined : "payment_failed"),
+        message: isSuccess ? 'התשלום הושלם בהצלחה' : 'התשלום נכשל'
+      })
+    }
+
+    // הפניה לעמוד תוצאות אחיד (מצב רגיל)
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const reason = searchParams.get("reason") || (isSuccess ? undefined : "payment_failed")
     

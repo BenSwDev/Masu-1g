@@ -42,8 +42,12 @@ interface LowProfileRequest {
 interface LowProfileResponse {
   ResponseCode: string // "0" = הצלחה
   Description: string
-  url?: string // URL להפניה אם הצליח
-  LowProfileCode?: string
+  Url?: string // URL להפניה אם הצליח (עם U גדולה!)
+  LowProfileId?: string // מזהה התשלום
+  UrlToPayPal?: string
+  UrlToBit?: string
+  url?: string // Legacy field (עם u קטנה)
+  LowProfileCode?: string // Legacy field
 }
 
 // Direct transaction request
@@ -153,6 +157,7 @@ class CardcomService {
     errorUrl?: string
     createDocument?: boolean // האם ליצור מסמך (חשבונית)
     documentType?: "Order" | "Invoice" | "Receipt" // סוג המסמך
+    drawerMode?: boolean // האם להשתמש במצב drawer
   }): Promise<{ success: boolean; data?: LowProfileResponse; error?: string }> {
     
     const configCheck = this.validateConfig()
@@ -162,10 +167,11 @@ class CardcomService {
 
     try {
       // URLs לתוצאות תשלום - הפניה ל-callback API עם פרמטרים
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
       const callbackUrl = `${baseUrl}/api/payments/callback`
-      const successUrl = params.successUrl || `${callbackUrl}?status=success&paymentId=${params.paymentId}`
-      const errorUrl = params.errorUrl || `${callbackUrl}?status=error&paymentId=${params.paymentId}`
+      const drawerParam = params.drawerMode ? "&drawer=true" : ""
+      const successUrl = params.successUrl || `${callbackUrl}?status=success&paymentId=${params.paymentId}${drawerParam}`
+      const errorUrl = params.errorUrl || `${callbackUrl}?status=error&paymentId=${params.paymentId}${drawerParam}`
       
       const payload: LowProfileRequest = {
         TerminalNumber: parseInt(this.config.terminal),
@@ -184,11 +190,12 @@ class CardcomService {
       }
 
       // הוספת מסמך אם נדרש
-      if (params.createDocument && params.customerEmail) {
+      if (params.createDocument) {
         payload.Document = {
           Name: params.customerName || "לקוח",
           DocumentTypeToCreate: params.documentType || "Receipt",
-          Email: params.customerEmail,
+          // רק אם יש אימייל - נשלח מייל
+          ...(params.customerEmail && { Email: params.customerEmail }),
           Products: [{
             Description: params.description,
             UnitCost: params.amount,
@@ -471,8 +478,15 @@ class CardcomService {
    * עיבוד תגובה מ-CARDCOM
    */
   private handleResponse(response: any): { success: boolean; data?: any; error?: string } {
-    if (response.ResponseCode === "0") {
-      return { success: true, data: response }
+    if (response.ResponseCode === "0" || response.ResponseCode === 0) {
+      // נוודא שנחזיר את ה-URL בשדה הנכון (url עם u קטנה) לתאימות לאחור
+      const processedResponse = {
+        ...response,
+        url: response.Url || response.url, // משתמשים ב-Url (עם U גדולה) מCARDCOM
+        LowProfileCode: response.LowProfileId || response.LowProfileCode // תמיכה בשני השמות
+      }
+      
+      return { success: true, data: processedResponse }
     } else {
       const errorMessage =
         CARDCOM_ERROR_CODES[response.ResponseCode] || response.Description || "שגיאה לא ידועה"
@@ -581,7 +595,7 @@ class CardcomService {
       // בדיקת חיבור אמיתית
       const response = await this.sendRequest("LowProfile/Create", testPayload)
       
-      if (response.ResponseCode === "0") {
+      if (response.ResponseCode === "0" || response.ResponseCode === 0) {
         return { success: true }
       } else {
         return { 

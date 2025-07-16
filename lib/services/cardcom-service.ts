@@ -117,7 +117,7 @@ class CardcomService {
       terminal: process.env.CARDCOM_TERMINAL || "125566",
       apiToken: process.env.CARDCOM_API_TOKEN || "Q3ZqTMTZGrSIKjktQrfN",  
       baseUrl: process.env.CARDCOM_BASE_URL || "https://secure.cardcom.solutions/api/v11",
-      testMode: process.env.CARDCOM_TEST_MODE === "true",
+      testMode: process.env.CARDCOM_TEST_MODE === "false"
     }
     
     // ✅ Log CARDCOM configuration for debugging
@@ -383,24 +383,15 @@ class CardcomService {
    * שליחת בקשה ל-CARDCOM
    */
   private async sendRequest(endpoint: string, data: any): Promise<any> {
-    // במצב בדיקה מחזירים תגובה מדומה, במצב ייצור משתמשים ב-API האמיתי
-    if (this.config.testMode) {
-      logger.info("CARDCOM TEST MODE - returning mock response", {
-        endpoint,
-        terminal: this.config.terminal,
-        testMode: true,
-      })
-      
-      return this.getMockResponse(endpoint, data)
-    }
-
     const url = `${this.config.baseUrl}/${endpoint}`
 
     logger.info("Sending CARDCOM request", {
       url,
       endpoint,
       terminal: this.config.terminal,
-      operation: data.Operation
+      operation: data.Operation,
+      testMode: this.config.testMode,
+      hasEmail: !!(data.Document && data.Document.Email)
     })
 
     const response = await fetch(url, {
@@ -416,7 +407,8 @@ class CardcomService {
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
-      url
+      url,
+      testMode: this.config.testMode
     })
 
     if (!response.ok) {
@@ -427,51 +419,12 @@ class CardcomService {
     
     logger.info("CARDCOM response received", {
       responseCode: result.ResponseCode,
-      description: result.Description
+      description: result.Description,
+      hasUrl: !!result.Url,
+      testMode: this.config.testMode
     })
     
     return result
-  }
-
-  /**
-   * תגובות מדומות למצב בדיקה
-   */
-  private getMockResponse(endpoint: string, data: any): any {
-    const baseResponse = {
-      ResponseCode: "0",
-      Description: "הצלחה - מצב בדיקה",
-    }
-
-    const mockTransactionId = "TEST_" + Math.random().toString(36).substr(2, 9)
-    const mockToken = "TOK_" + Math.random().toString(36).substr(2, 16)
-
-    switch (endpoint) {
-      case "LowProfile/Create":
-        return {
-          ...baseResponse,
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
-          LowProfileCode: mockTransactionId,
-        }
-
-      case "Transactions/Transaction":
-      case "Transactions/RefundByTransactionId":
-        const transactionResponse: any = {
-          ...baseResponse,
-          InternalDealNumber: mockTransactionId,
-          TransactionID: "TXN_" + mockTransactionId,
-        }
-
-        // אם נדרש ליצור טוקן, נוסיף אותו
-        if (data.CreateToken || data.Token) {
-          transactionResponse.Token = mockToken
-          transactionResponse.Last4 = data.CardNumber ? data.CardNumber.slice(-4) : "1234"
-        }
-
-        return transactionResponse
-
-      default:
-        return baseResponse
-    }
   }
 
   /**

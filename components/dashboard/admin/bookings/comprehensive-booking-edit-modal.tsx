@@ -136,6 +136,11 @@ export default function ComprehensiveBookingEditModal({
       if (editedBooking.paymentDetails?.paymentStatus !== booking.paymentDetails?.paymentStatus) {
         updates.paymentStatus = editedBooking.paymentDetails?.paymentStatus
       }
+      
+      // Check if professional payment status changed
+      if (editedBooking.professionalPaymentStatus !== booking.professionalPaymentStatus) {
+        updates.professionalPaymentStatus = editedBooking.professionalPaymentStatus
+      }
 
       // Only update if there are actual changes
       if (Object.keys(updates).length > 0) {
@@ -957,18 +962,21 @@ export default function ComprehensiveBookingEditModal({
                                          <div className="space-y-2">
                        <Label>{t("adminBookings.professionalPaid")}</Label>
                        <Select 
-                         value="pending"
-                         onValueChange={(value) => {
-                           // TODO: Add professional payment status to booking model and update logic
+                         value={booking.professionalPaymentStatus || "pending"}
+                         onValueChange={(value: "pending" | "paid" | "failed") => {
+                           setEditedBooking(prev => ({ 
+                             ...prev, 
+                             professionalPaymentStatus: value 
+                           }))
                          }}
                        >
                          <SelectTrigger>
                            <SelectValue />
                          </SelectTrigger>
                          <SelectContent>
-                           <SelectItem value="pending">{t("adminBookings.paymentStatuses.pending")}</SelectItem>
-                           <SelectItem value="paid">{t("adminBookings.paymentStatuses.paid")}</SelectItem>
-                           <SelectItem value="failed">{t("adminBookings.paymentStatuses.failed")}</SelectItem>
+                           <SelectItem value="pending">ממתין לתשלום</SelectItem>
+                           <SelectItem value="paid">שולם</SelectItem>
+                           <SelectItem value="failed">נכשל</SelectItem>
                          </SelectContent>
                        </Select>
                      </div>

@@ -34,6 +34,7 @@ export interface IPriceDetails {
   totalOfficeCommission?: number // Total office commission
   baseProfessionalPayment?: number // Professional payment from base treatment
   surchargesProfessionalPayment?: number // Professional payment from surcharges
+  professionalPaymentOverride?: number // Manual override for professional payment (admin only)
 }
 
 export interface IPaymentDetails {
@@ -113,7 +114,8 @@ export interface IBooking extends Document {
   recipientEmail?: string // Email of the person receiving the treatment
   recipientBirthDate?: Date // Birth date of the person receiving the treatment
   recipientGender?: "male" | "female" // Gender of the person receiving the treatment
-  isBookingForSomeoneElse?: boolean // NEW FIELD
+  isBookingForSomeoneElse?: boolean
+  professionalPaymentStatus?: "pending" | "paid" | "failed" // Professional payment status/ NEW FIELD
   formState?: { // NEW FIELD for storing form data for recovery
     currentStep: number
     guestInfo?: any
@@ -202,6 +204,7 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     totalOfficeCommission: { type: Number, min: 0 },
     baseProfessionalPayment: { type: Number, min: 0 },
     surchargesProfessionalPayment: { type: Number, min: 0 },
+    professionalPaymentOverride: { type: Number, min: 0 },
   },
   { _id: false },
 )
@@ -294,6 +297,11 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientBirthDate: { type: Date },
     recipientGender: { type: String, enum: ["male", "female"] },
     isBookingForSomeoneElse: { type: Boolean, default: false },
+    professionalPaymentStatus: { 
+      type: String, 
+      enum: ["pending", "paid", "failed"], 
+      default: "pending" 
+    },
     reviewReminderSentAt: { type: Date },
     formState: {
       currentStep: { type: Number },

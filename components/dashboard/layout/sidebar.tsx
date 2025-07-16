@@ -34,6 +34,7 @@ import {
   BarChart3,
   PieChart,
   Star,
+  DollarSign,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -321,6 +322,8 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
       professional: [
+        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
+        { titleKey: "financial", icon: DollarSign, hrefSuffix: "financial" },
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
         { titleKey: "location", icon: MapPin, hrefSuffix: "location" },
         { titleKey: "bankAccount", icon: CreditCard, hrefSuffix: "bank-account" },

@@ -4,6 +4,7 @@ import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
+import { Input } from "@/components/common/ui/input"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -20,7 +21,10 @@ import {
   Mail,
   UserCheck,
   UserX,
-  Eye
+  Eye,
+  Edit,
+  CheckCircle,
+  XCircle
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -873,8 +877,14 @@ const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   )
 }
 
-// Add missing FinancialSummaryInfo component
+// Enhanced FinancialSummaryInfo component with professional payment editing
 const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState("")
+  const [updating, setUpdating] = useState(false)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
   if (!booking?.priceDetails) {
     return <div className="text-sm text-muted-foreground">-</div>
   }
@@ -883,15 +893,139 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   const finalAmount = priceDetails.finalAmount || 0
   const professionalPayment = priceDetails.totalProfessionalPayment || 0
   const officeCommission = priceDetails.totalOfficeCommission || 0
+  const hasProfessional = !!booking.professionalId
+
+  const handleEditStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setEditValue(professionalPayment.toString())
+    setIsEditing(true)
+  }
+
+  const handleEditSave = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const newAmount = parseFloat(editValue)
+    if (isNaN(newAmount) || newAmount < 0) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "סכום לא תקין"
+      })
+      return
+    }
+
+    setUpdating(true)
+    try {
+      // Call the update action
+      const { updateProfessionalPaymentForBooking } = await import("@/actions/booking-actions")
+      const result = await updateProfessionalPaymentForBooking(booking._id, newAmount)
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "מחיר מטפל עודכן בהצלחה"
+        })
+        setIsEditing(false)
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון מחיר מטפל"
+        })
+      }
+    } catch (error) {
+      console.error("Error updating professional payment:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בעדכון מחיר מטפל"
+      })
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleEditCancel = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsEditing(false)
+    setEditValue("")
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleEditSave(e as any)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      handleEditCancel(e as any)
+    }
+  }
 
   return (
     <div className="space-y-1 max-w-[150px]">
       <div className="text-sm font-medium">
         סה"כ: ₪{finalAmount.toFixed(0)}
       </div>
-      <div className="text-xs text-gray-600">
-        למטפל: ₪{professionalPayment.toFixed(0)}
+      
+      {/* Professional payment with edit capability */}
+      <div className="flex items-center gap-1">
+        {isEditing ? (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="h-6 w-16 text-xs"
+              min="0"
+              step="1"
+              disabled={updating}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-5 w-5 p-0"
+              onClick={handleEditSave}
+              disabled={updating}
+            >
+              <CheckCircle className="h-3 w-3 text-green-600" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-5 w-5 p-0"
+              onClick={handleEditCancel}
+              disabled={updating}
+            >
+              <XCircle className="h-3 w-3 text-red-600" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-600">
+              למטפל: ₪{professionalPayment.toFixed(0)}
+            </span>
+            {hasProfessional && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100"
+                onClick={handleEditStart}
+                title="ערוך מחיר מטפל"
+              >
+                <Edit className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
+      
       <div className={`text-xs ${officeCommission >= 0 ? 'text-gray-600' : 'text-red-600'}`}>
         לחברה: {officeCommission >= 0 ? '₪' : '-₪'}{Math.abs(officeCommission).toFixed(0)}
       </div>

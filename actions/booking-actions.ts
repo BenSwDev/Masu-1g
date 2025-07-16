@@ -2291,6 +2291,15 @@ export async function assignProfessionalToBooking(
         throw new Error("bookings.errors.professionalNotFound")
       }
 
+      // Find professional profile for payment calculation
+      const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+      const professionalProfile = await ProfessionalProfile.findOne({ userId: professionalId })
+        .session(mongooseDbSession)
+      
+      if (!professionalProfile) {
+        throw new Error("bookings.errors.professionalProfileNotFound")
+      }
+
       // Find and update booking
       const booking = await Booking.findById(bookingId).session(mongooseDbSession)
       if (!booking) {
@@ -2304,6 +2313,15 @@ export async function assignProfessionalToBooking(
       if (["completed", "cancelled", "refunded"].includes(booking.status)) {
         throw new Error("bookings.errors.bookingCannotBeAssigned")
       }
+
+      // Calculate professional payment using our new utility function
+      const { calculateProfessionalPaymentForBooking, updateBookingWithProfessionalPayment } = 
+        await import("@/lib/utils/professional-payment-utils")
+      
+      const paymentCalculation = calculateProfessionalPaymentForBooking(booking, professionalProfile)
+      
+      // Update booking with calculated professional payment
+      updateBookingWithProfessionalPayment(booking, paymentCalculation)
 
       booking.professionalId = new mongoose.Types.ObjectId(professionalId)
       booking.status = "confirmed"
@@ -2480,6 +2498,60 @@ export async function getAvailableProfessionals(): Promise<{ success: boolean; p
   }
 }
 
+export async function updateProfessionalPaymentForBooking(
+  bookingId: string,
+  newPaymentAmount: number
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  try {
+    await dbConnect()
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+
+    if (!booking.professionalId) {
+      return { success: false, error: "bookings.errors.noProfessionalAssigned" }
+    }
+
+    if (!booking.priceDetails) {
+      return { success: false, error: "bookings.errors.noPriceDetails" }
+    }
+
+    // Set the professional payment override
+    booking.priceDetails.professionalPaymentOverride = newPaymentAmount
+    booking.priceDetails.totalProfessionalPayment = newPaymentAmount
+    
+    // Recalculate office commission
+    const customerPaid = booking.priceDetails.finalAmount || 0
+    booking.priceDetails.totalOfficeCommission = customerPaid - newPaymentAmount
+
+    await booking.save()
+
+    logger.info("Professional payment updated by admin", {
+      bookingId,
+      adminId: session.user.id,
+      newPaymentAmount,
+      customerPaid,
+      newOfficeCommission: booking.priceDetails.totalOfficeCommission
+    })
+
+    revalidatePath("/dashboard/admin/bookings")
+    return { success: true, booking: booking.toObject() }
+  } catch (error) {
+    logger.error("Error updating professional payment:", { error, bookingId, newPaymentAmount })
+    const errorMessage = error instanceof Error ? error.message : "bookings.errors.updateProfessionalPaymentFailed"
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.updateProfessionalPaymentFailed",
+    }
+  }
+}
+
 export async function updateBookingByAdmin(
   bookingId: string,
   updates: {
@@ -2491,6 +2563,7 @@ export async function updateBookingByAdmin(
     notes?: string
     professionalId?: string
     paymentStatus?: "pending" | "paid" | "failed" | "not_required"
+    professionalPaymentStatus?: "pending" | "paid" | "failed"
   }
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   const session = await getServerSession(authOptions)
@@ -2545,6 +2618,10 @@ export async function updateBookingByAdmin(
     
     if (updates.paymentStatus !== undefined) {
       booking.paymentDetails.paymentStatus = updates.paymentStatus
+    }
+    
+    if (updates.professionalPaymentStatus !== undefined) {
+      booking.professionalPaymentStatus = updates.professionalPaymentStatus
     }
 
     // Calculate and set pricing fields if missing (backward compatibility)

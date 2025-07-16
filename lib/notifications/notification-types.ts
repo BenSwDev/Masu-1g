@@ -94,6 +94,15 @@ export interface ProfessionalBookingNotificationData extends BaseNotificationDat
   bookingDetailsLink?: string
 }
 
+// Professional on way notification data
+export interface ProfessionalOnWayNotificationData extends BaseNotificationData {
+  type: "professional-on-way"
+  professionalName: string
+  treatmentName: string
+  bookingDateTime: Date
+  bookingNumber: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
@@ -104,6 +113,7 @@ export type NotificationData =
   | ReviewReminderNotificationData
   | ReviewRequestNotificationData
   | ProfessionalBookingNotificationData
+  | ProfessionalOnWayNotificationData
 
 // Notification result interface
 export interface NotificationResult {

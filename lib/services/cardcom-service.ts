@@ -181,7 +181,7 @@ class CardcomService {
         customerEmail: params.customerEmail
       })
 
-      const response = await this.sendRequest("LowProfile", payload)
+      const response = await this.sendRequest("payments", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM createLowProfilePayment error", {
@@ -228,7 +228,7 @@ class CardcomService {
         testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Transaction", payload)
+      const response = await this.sendRequest("directPay", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM chargeToken error", {
@@ -285,7 +285,7 @@ class CardcomService {
         testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Transaction", payload)
+      const response = await this.sendRequest("directPay", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM chargeCard error", {
@@ -330,7 +330,7 @@ class CardcomService {
         testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Transaction", payload)
+      const response = await this.sendRequest("directRefund", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM refund error", {
@@ -411,14 +411,15 @@ class CardcomService {
     const mockToken = "TOK_" + Math.random().toString(36).substr(2, 16)
 
     switch (endpoint) {
-      case "LowProfile":
+      case "payments":
         return {
           ...baseResponse,
           url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
           LowProfileCode: mockTransactionId,
         }
 
-      case "Transaction":
+      case "directPay":
+      case "directRefund":
         const transactionResponse: any = {
           ...baseResponse,
           InternalDealNumber: mockTransactionId,
@@ -550,7 +551,7 @@ class CardcomService {
       }
 
       // בדיקת חיבור אמיתית
-      const response = await this.sendRequest("LowProfile", testPayload)
+      const response = await this.sendRequest("payments", testPayload)
       
       if (response.ResponseCode === "0") {
         return { success: true }
@@ -631,7 +632,7 @@ class CardcomService {
         testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Transaction", payload)
+      const response = await this.sendRequest("directPay", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM directCharge error", {
@@ -676,7 +677,7 @@ class CardcomService {
         testMode: this.config.testMode
       })
 
-      const response = await this.sendRequest("Transaction", payload)
+      const response = await this.sendRequest("directRefund", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM directRefund error", {

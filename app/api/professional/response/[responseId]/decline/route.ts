@@ -37,7 +37,7 @@ export async function POST(
     const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
 
     // Get response
-    const response = await ProfessionalResponse.findById(responseId)
+    const response = await (ProfessionalResponse.findById as any)(responseId)
       .populate('professionalId')
       .populate('bookingId')
 

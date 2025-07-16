@@ -81,7 +81,7 @@ export async function GET(
     const validProfessionals = allProfessionals.filter(prof => prof.userId !== null)
 
     // Get notification responses for this booking
-    const responses = await ProfessionalResponse.find({
+    const responses = await (ProfessionalResponse.find as any)({
       bookingId: new mongoose.Types.ObjectId(bookingId)
     }).lean()
 

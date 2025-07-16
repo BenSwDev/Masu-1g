@@ -58,7 +58,7 @@ export interface GetTreatmentsResult {
 export async function getActiveSubscriptionsForPurchase(): Promise<GetActiveSubscriptionsResult> {
   try {
     await dbConnect()
-    const subscriptions = await Subscription.find({ isActive: true })
+    const subscriptions = await (Subscription.find as any)({ isActive: true })
       .sort({ createdAt: -1 })
       .lean()
 

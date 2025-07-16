@@ -44,7 +44,7 @@ export async function POST(
 
     try {
       // Get response with booking in transaction
-      const response = await ProfessionalResponse.findById(responseId)
+      const response = await (ProfessionalResponse.findById as any)(responseId)
         .populate('bookingId')
         .populate('professionalId')
         .session(session)

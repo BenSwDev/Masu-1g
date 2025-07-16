@@ -166,7 +166,7 @@ export async function updateSubscription(id: string, formData: FormData): Promis
     })
 
     // Update subscription
-    const subscription = await Subscription.findByIdAndUpdate(
+    const subscription = await (Subscription.findByIdAndUpdate as any)(
       id,
       { ...validatedData, updatedAt: new Date() },
       { new: true },
@@ -209,7 +209,7 @@ export async function deleteSubscription(id: string): Promise<DeleteSubscription
 
     await dbConnect()
 
-    const subscription = await Subscription.findByIdAndDelete(id)
+    const subscription = await (Subscription.findByIdAndDelete as any)(id)
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -262,7 +262,7 @@ export async function getSubscriptions(options: GetSubscriptionsOptions = {}): P
     }
 
     // Execute query
-    const subscriptions = await Subscription.find(query)
+    const subscriptions = await (Subscription.find as any)(query)
       .sort(sort)
       .skip(skip)
       .limit(limit)

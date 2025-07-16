@@ -183,7 +183,7 @@ const VerificationQueries = {
 
   // Increment attempts
   async incrementAttempts(id: string) {
-    return VerificationToken.findByIdAndUpdate(id, { $inc: { attempts: 1 } }, { new: true }).exec()
+    return (VerificationToken.findByIdAndUpdate as any)(id, { $inc: { attempts: 1 } }, { new: true }).exec()
   },
 }
 

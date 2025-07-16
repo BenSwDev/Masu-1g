@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
             city: selectedAddressDoc.city,
             street: selectedAddressDoc.street,
             streetNumber: selectedAddressDoc.streetNumber,
-            addressType: selectedAddressDoc.addressType,
+            addressType: selectedAddressDoc.addressType as "apartment" | "house" | "office" | "hotel" | "other",
             apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
             entrance: selectedAddressDoc.addressType === "apartment" 
               ? selectedAddressDoc.apartmentDetails?.entrance
@@ -161,9 +161,6 @@ export async function POST(request: NextRequest) {
               : undefined,
           } as IPriceDetails,
           paymentDetails: {
-            paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
-              ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
-              : undefined,
             paymentStatus: validatedPayload.priceDetails.finalAmount === 0
               ? "not_required"
               : validatedPayload.paymentDetails.paymentStatus || "pending",

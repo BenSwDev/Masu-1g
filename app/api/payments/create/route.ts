@@ -99,7 +99,10 @@ export async function POST(request: NextRequest) {
 
       logger.error("Failed to create payment", {
         paymentId,
-        error: cardcomResult.error
+        error: cardcomResult.error,
+        fullCardcomResult: cardcomResult,
+        amount,
+        customerEmail
       })
 
       return NextResponse.json(

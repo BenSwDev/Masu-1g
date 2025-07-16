@@ -98,10 +98,19 @@ class CardcomService {
   constructor() {
     this.config = {
       terminal: process.env.CARDCOM_TERMINAL || "125566",
-      apiToken: process.env.CARDCOM_API_TOKEN || "Q3ZqTMTZGrSIKjktQrfN",
+      apiToken: process.env.CARDCOM_API_TOKEN || "Q3ZqTMTZGrSIKjktQrfN",  
       baseUrl: process.env.CARDCOM_BASE_URL || "https://secure.cardcom.solutions/api/v11",
       testMode: process.env.CARDCOM_TEST_MODE === "true",
     }
+    
+    // ✅ Log CARDCOM configuration for debugging
+    logger.info("CARDCOM Service initialized", {
+      terminal: this.config.terminal,
+      hasApiToken: !!this.config.apiToken,
+      baseUrl: this.config.baseUrl,
+      testMode: this.config.testMode,
+      environment: process.env.NODE_ENV
+    })
   }
 
   /**
@@ -137,10 +146,11 @@ class CardcomService {
     }
 
     try {
-      // URLs לתוצאות תשלום
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      const successUrl = params.successUrl || `${baseUrl}/payment/success`
-      const errorUrl = params.errorUrl || `${baseUrl}/payment/error`
+      // URLs לתוצאות תשלום - הפניה ל-callback API עם פרמטרים
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      const callbackUrl = `${baseUrl}/api/payments/callback`
+      const successUrl = params.successUrl || `${callbackUrl}?status=success&paymentId=${params.paymentId}`
+      const errorUrl = params.errorUrl || `${callbackUrl}?status=error&paymentId=${params.paymentId}`
       
       const payload: LowProfileRequest = {
         TerminalNumber: this.config.terminal,
@@ -162,7 +172,13 @@ class CardcomService {
         paymentId: params.paymentId,
         amount: params.amount,
         testMode: this.config.testMode,
-        terminal: this.config.terminal
+        terminal: this.config.terminal,
+        successUrl,
+        errorUrl,
+        baseUrl,
+        description: params.description,
+        customerName: params.customerName,
+        customerEmail: params.customerEmail
       })
 
       const response = await this.sendRequest("LowProfile", payload)
@@ -329,8 +345,11 @@ class CardcomService {
    * שליחת בקשה ל-CARDCOM
    */
   private async sendRequest(endpoint: string, data: any): Promise<any> {
-    // במצב בדיקה - מחזיר תגובה מדומה
-    if (this.config.testMode) {
+    // ✅ FORCE PRODUCTION MODE - Always use real CARDCOM API
+    // במצב פרודקשן תמיד משתמשים ב-API האמיתי של CARDCOM
+    const forceProduction = true
+    
+    if (this.config.testMode && !forceProduction) {
       logger.info("CARDCOM TEST MODE - returning mock response", {
         endpoint,
         terminal: this.config.terminal,
@@ -356,6 +375,13 @@ class CardcomService {
         Accept: "application/json",
       },
       body: JSON.stringify(data),
+    })
+
+    logger.info("CARDCOM API Response Status", {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      url
     })
 
     if (!response.ok) {

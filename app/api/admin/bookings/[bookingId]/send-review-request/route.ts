@@ -130,7 +130,7 @@ export async function POST(
 
       logger.info("Review request sent by admin", {
         bookingId,
-        adminUserId: session.userId,
+        adminUserId: session.user.id,
         customerName: customer.name,
         recipientCount: recipients.length,
         sentVia: recipients.map(r => r.type).join(", ")

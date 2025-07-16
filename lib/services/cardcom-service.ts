@@ -567,6 +567,125 @@ class CardcomService {
       }
     }
   }
+
+  /**
+   * פענוח נתוני טוקן (לתשלומים ישירים)
+   */
+  decryptTokenData(tokenData: any): { token: string; last4: string } | null {
+    try {
+      // אם הטוקן כבר פענוח, החזר אותו
+      if (tokenData && typeof tokenData === 'object' && tokenData.token) {
+        return {
+          token: tokenData.token,
+          last4: tokenData.last4 || tokenData.Last4 || "****"
+        }
+      }
+      
+      // אם הטוקן הוא string, נסה לפענח אותו
+      if (typeof tokenData === 'string') {
+        return {
+          token: tokenData,
+          last4: "****"
+        }
+      }
+      
+      logger.error("Invalid token data format", { tokenData })
+      return null
+    } catch (error) {
+      logger.error("Error decrypting token data", { error, tokenData })
+      return null
+    }
+  }
+
+  /**
+   * חיוב ישיר עם טוקן (לתשלומים חוזרים)
+   */
+  async directCharge(params: {
+    amount: number
+    description: string
+    token: string
+    paymentId: string
+  }): Promise<{ success: boolean; data?: TransactionResponse; error?: string }> {
+    
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
+    try {
+      const payload: TransactionRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
+        Operation: 1, // חיוב
+        Currency: 1,
+        Sum: params.amount,
+        Description: params.description,
+        Token: params.token,
+        ReturnValue: params.paymentId,
+      }
+
+      logger.info("CARDCOM direct charge", {
+        paymentId: params.paymentId,
+        amount: params.amount,
+        hasToken: !!params.token,
+        testMode: this.config.testMode
+      })
+
+      const response = await this.sendRequest("Transaction", payload)
+      return this.handleResponse(response)
+    } catch (error) {
+      logger.error("CARDCOM directCharge error", {
+        error: error instanceof Error ? error.message : String(error),
+        paymentId: params.paymentId,
+      })
+      return { success: false, error: "שגיאה בחיוב ישיר" }
+    }
+  }
+
+  /**
+   * החזר ישיר עם טוקן
+   */
+  async directRefund(params: {
+    amount: number
+    description: string
+    token: string
+    paymentId: string
+  }): Promise<{ success: boolean; data?: TransactionResponse; error?: string }> {
+    
+    const configCheck = this.validateConfig()
+    if (!configCheck.valid) {
+      return { success: false, error: configCheck.error }
+    }
+
+    try {
+      const payload: TransactionRequest = {
+        TerminalNumber: this.config.terminal,
+        APIKey: this.config.apiToken,
+        Operation: 2, // זיכוי
+        Currency: 1,
+        Sum: params.amount,
+        Description: params.description,
+        Token: params.token,
+        ReturnValue: params.paymentId,
+      }
+
+      logger.info("CARDCOM direct refund", {
+        paymentId: params.paymentId,
+        amount: params.amount,
+        hasToken: !!params.token,
+        testMode: this.config.testMode
+      })
+
+      const response = await this.sendRequest("Transaction", payload)
+      return this.handleResponse(response)
+    } catch (error) {
+      logger.error("CARDCOM directRefund error", {
+        error: error instanceof Error ? error.message : String(error),
+        paymentId: params.paymentId,
+      })
+      return { success: false, error: "שגיאה בביצוע החזר ישיר" }
+    }
+  }
 }
 
 export const cardcomService = new CardcomService() 

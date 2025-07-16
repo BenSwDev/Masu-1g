@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     const _data = results.map(r => ({ professionalId: r._id, count: r.count }))
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data: _data })
 
   } catch (error) {
     console.error('Error fetching bookings per professional:', error)

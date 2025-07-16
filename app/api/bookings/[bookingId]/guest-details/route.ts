@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getBookingById } from "@/actions/booking-actions"
 import { dbConnect } from "@/lib/db/db"
 import { Booking } from "@/lib/db/models/booking"
-import { Treatment } from "@/lib/db/models/treatment"
+import { ITreatment } from "@/lib/db/models/treatment"
 import { logger } from "@/lib/logs/logger"
 
 export async function GET(

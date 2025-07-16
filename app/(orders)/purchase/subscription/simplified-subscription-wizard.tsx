@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Progress } from "@/components/common/ui/progress"
@@ -21,31 +22,32 @@ interface Props {
 }
 
 // Convert serialized data to model types
-function convertToSubscription(sub: SerializedSubscription): ISubscription {
+function convertToSubscription(sub: SerializedSubscription): ISubscription & { _id: string } {
   return {
     ...sub,
-    _id: sub._id as any,
+    _id: sub._id as string,
     createdAt: new Date(sub.createdAt),
     updatedAt: new Date(sub.updatedAt),
-  } as ISubscription
+  } as ISubscription & { _id: string }
 }
 
-function convertToTreatment(treatment: SerializedTreatment): ITreatment {
+function convertToTreatment(treatment: SerializedTreatment): any {
   return {
     ...treatment,
-    _id: treatment._id as any,
+    _id: treatment._id as string,
     durations: treatment.durations?.map(d => ({
       ...d,
-      _id: d._id as any,
+      _id: d._id as string,
     })),
     createdAt: new Date(treatment.createdAt),
     updatedAt: new Date(treatment.updatedAt),
-  } as ITreatment
+  }
 }
 
 export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
   const router = useRouter()
   const { toast } = useToast()
+  const { language, dir } = useTranslation()
 
   // Data state
   const [dataLoading, setDataLoading] = useState(!propSubscriptions || !propTreatments)

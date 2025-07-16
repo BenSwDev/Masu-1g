@@ -345,11 +345,8 @@ class CardcomService {
    * שליחת בקשה ל-CARDCOM
    */
   private async sendRequest(endpoint: string, data: any): Promise<any> {
-    // ✅ FORCE PRODUCTION MODE - Always use real CARDCOM API
-    // במצב פרודקשן תמיד משתמשים ב-API האמיתי של CARDCOM
-    const forceProduction = true
-    
-    if (this.config.testMode && !forceProduction) {
+    // במצב בדיקה מחזירים תגובה מדומה, במצב ייצור משתמשים ב-API האמיתי
+    if (this.config.testMode) {
       logger.info("CARDCOM TEST MODE - returning mock response", {
         endpoint,
         terminal: this.config.terminal,
@@ -414,7 +411,7 @@ class CardcomService {
       case "payments":
         return {
           ...baseResponse,
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
+          url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
           LowProfileCode: mockTransactionId,
         }
 

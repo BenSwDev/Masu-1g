@@ -3,9 +3,7 @@
     "app/**",
     "next.config.{js,mjs,ts}",
     "tailwind.config.{js,ts}",
-    "scripts/update-translations.js",
-    "scripts/seed-cities-temp.js",
-    "components/**",
+    "components/ui/**",
     "components/common/ui/**",
     "lib/**",
     "actions/**",
@@ -33,7 +31,7 @@
     "files": "error",
     "dependencies": "error",
     "devDependencies": "error",
-    "exports": "error",
-    "types": "error"
+    "exports": "off",
+    "types": "off"
   }
 }

@@ -460,6 +460,12 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
             onConfirm={handlePurchase}
             onPrev={prevStep}
             isLoading={isLoading}
+            purchaseType="gift_voucher"
+            purchaseDetails={{
+              treatmentName: selectedTreatment?.name,
+              voucherType: voucherType,
+              voucherAmount: voucherType === "monetary" ? monetaryValue : undefined,
+            }}
           />
         </CardContent>
       </Card>

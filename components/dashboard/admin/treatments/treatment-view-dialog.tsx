@@ -206,7 +206,6 @@ export function TreatmentViewDialog({
                             </div>
                             <Badge 
                               variant={duration.isActive ? "default" : "secondary"}
-                              size="sm"
                             >
                               {duration.isActive ? "פעיל" : "לא פעיל"}
                             </Badge>

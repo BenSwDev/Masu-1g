@@ -245,7 +245,7 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
           notificationLanguage: "he",
         },
         userAddresses: [],
-        userPaymentMethods: [],
+        // Removed userPaymentMethods - using CARDCOM only
         workingHoursSettings: {},
         currentUser: {
           id: "",
@@ -348,6 +348,12 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
         onConfirm={handlePurchase}
         onPrev={prevStep}
         isLoading={isLoading}
+        purchaseType="gift_voucher"
+        purchaseDetails={{
+          treatmentName: selectedTreatment?.name,
+          voucherType: voucherType,
+          voucherAmount: voucherType === "monetary" ? monetaryValue : undefined,
+        }}
       />
     )
     if (currentStep === 6 && purchaseComplete) return <GuestGiftVoucherConfirmation voucher={purchasedVoucher} />

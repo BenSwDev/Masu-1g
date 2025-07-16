@@ -35,6 +35,27 @@ export interface TreatmentBookingSuccessNotificationData extends BaseNotificatio
   isForSomeoneElse: boolean
   isBookerForSomeoneElse?: boolean // Special flag for booker who booked for someone else
   actualRecipientName?: string // The person they booked for (when isBookerForSomeoneElse is true)
+  // ➕ הוספת פרטי תשלום מפורטים
+  priceDetails?: {
+    basePrice: number
+    surcharges?: Array<{ description: string; amount: number }>
+    totalSurchargesAmount: number
+    discountAmount?: number
+    voucherAppliedAmount?: number
+    couponDiscount?: number
+    finalAmount: number
+    isFullyCoveredByVoucherOrSubscription?: boolean
+    appliedCouponCode?: string
+    appliedGiftVoucherCode?: string
+    redeemedSubscriptionName?: string
+  }
+  paymentDetails?: {
+    paymentStatus: string
+    transactionId?: string
+    paymentMethod?: string
+    cardLast4?: string
+  }
+  bookingSource?: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
 }
 
 interface PurchaseSuccessNotificationData extends BaseNotificationData {

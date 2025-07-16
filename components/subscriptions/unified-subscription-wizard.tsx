@@ -511,6 +511,12 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
             isLoading={isLoading}
             pendingBookingId={pendingSubscriptionId}
             customFailureHandler={pendingSubscriptionId ? handlePaymentFailure : undefined}
+            purchaseType="subscription"
+            purchaseDetails={{
+              treatmentName: selectedTreatment?.name,
+              subscriptionName: selectedSubscription?.name,
+              treatmentQuantity: selectedSubscription?.quantity || 1,
+            }}
           />
         </CardContent>
       </Card>

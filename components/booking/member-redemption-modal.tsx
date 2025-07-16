@@ -31,7 +31,7 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
           <DialogTitle>{t("bookings.redeem.chooseTitle") || "מימוש שובר או מנוי"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {subscriptions?.map((sub: IUserSubscription) => (
+          {subscriptions?.map((sub: any) => (
             <div key={sub._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{(sub.subscriptionId as any)?.name}</div>
               {sub.treatmentId && (
@@ -43,7 +43,7 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
               </div>
             </div>
           ))}
-          {vouchers?.map((v: IGiftVoucher) => (
+          {vouchers?.map((v: any) => (
             <div key={v._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{v.voucherType === "monetary" ? t("giftVouchers.types.monetary") || "שובר כספי" : t("giftVouchers.types.treatment") || "שובר טיפול"}</div>
               <div className="mt-2 p-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">

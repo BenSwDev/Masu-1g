@@ -487,7 +487,7 @@ const AdminUserSubscriptionsClient = ({
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page}, {t("common.pagination.total")}: {pagination.total}, {t("common.pagination.totalResults")}: {pagination.totalResults}
+            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page}, {t("common.pagination.total")}: {pagination.total}
           </div>
           <div className="flex gap-2 items-center">
             <Button

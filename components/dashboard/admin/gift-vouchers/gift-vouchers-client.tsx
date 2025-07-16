@@ -395,7 +395,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
                   defaultMonth={filterDateRange?.from}
                   selected={filterDateRange?.from ? { from: filterDateRange.from, to: filterDateRange.to } : undefined}
                   onSelect={(date) => setFilterDateRange(date as any)}
-                  numberOfMonths={2}
+
                 />
               </PopoverContent>
             </Popover>

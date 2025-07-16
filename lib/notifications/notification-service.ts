@@ -6,6 +6,12 @@ import { unifiedNotificationService } from "@/lib/notifications/unified-notifica
 import { smsService } from "@/lib/notifications/sms-service"
 import mongoose from "mongoose"
 
+// Static imports for all models
+import VerificationToken from "@/lib/db/models/verification-token"
+import User from "@/lib/db/models/user"
+import Booking from "@/lib/db/models/booking"
+import ProfessionalResponse from "@/lib/db/models/professional-response"
+
 /**
  * General Notification Service
  * 
@@ -26,10 +32,6 @@ export async function sendOTP(
 ): Promise<{ success: boolean; error?: string; messageId?: string; obscuredIdentifier?: string }> {
   try {
     await dbConnect()
-
-    // Import models
-    const VerificationToken = (await import("@/lib/db/models/verification-token")).default
-    const User = (await import("@/lib/db/models/user")).default
 
     // Check if user exists with this phone
     const user = await User.findOne({ phone }).lean()
@@ -52,7 +54,7 @@ export async function sendOTP(
     })
 
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-    await VerificationToken.create({
+    await (VerificationToken as any).create({
       identifier: phone,
       identifierType: "phone",
       code: otp,
@@ -106,10 +108,6 @@ export async function verifyOTP(
   try {
     await dbConnect()
     
-    // Import models
-    const VerificationToken = (await import("@/lib/db/models/verification-token")).default
-    const User = (await import("@/lib/db/models/user")).default
-    
     // Check if user exists with this phone
     const user = await User.findOne({ phone }).lean()
     if (!user) {
@@ -122,7 +120,7 @@ export async function verifyOTP(
 
     // Find valid OTP token
     const now = new Date()
-    const otpToken = await VerificationToken.findOne({
+    const otpToken = await (VerificationToken as any).findOne({
       identifier: phone,
       identifierType: "phone",
       code: otp,
@@ -149,7 +147,7 @@ export async function verifyOTP(
     }
 
     // Increment attempts
-    await VerificationToken.updateOne(
+    await (VerificationToken as any).updateOne(
       { _id: otpToken._id },
       { $inc: { attempts: 1 } }
     )
@@ -186,7 +184,6 @@ export async function getUserNotificationPreferences(
   try {
     await dbConnect()
     
-    const User = (await import("@/lib/db/models/user")).default
     const user = await User.findById(userId).select("notificationPreferences").lean()
     
     if (!user) {
@@ -220,9 +217,7 @@ export async function updateUserNotificationPreferences(
   try {
     await dbConnect()
     
-    const User = (await import("@/lib/db/models/user")).default
-    
-    await User.findByIdAndUpdate(
+    await (User as any).findByIdAndUpdate(
       userId,
       { 
         $set: { 
@@ -253,12 +248,9 @@ export async function sendBookingConfirmationToUser(
   try {
     await dbConnect()
     
-    const User = (await import("@/lib/db/models/user")).default
-    const Booking = (await import("@/lib/db/models/booking")).default
-    
     const [user, booking] = await Promise.all([
-      User.findById(userId).select("name email phone notificationPreferences").lean(),
-      Booking.findById(bookingId)
+      (User as any).findById(userId).select("name email phone notificationPreferences").lean(),
+      (Booking as any).findById(bookingId)
         .populate('treatmentId', 'name')
         .lean()
     ])
@@ -277,7 +269,30 @@ export async function sendBookingConfirmationToUser(
       bookingNumber: booking.bookingNumber,
       recipientName: user.name,
       userName: user.name,
-      bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${booking.bookingNumber}`
+      bookingDetailsLink: `${process.env.NEXT_PUBLIC_APP_URL}/booking-details/${booking.bookingNumber}`,
+      bookingAddress: booking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
+      isForSomeoneElse: false,
+      // ➕ הוספת פרטי תשלום מפורטים
+      priceDetails: {
+        basePrice: booking.priceDetails?.basePrice || 0,
+        surcharges: booking.priceDetails?.surcharges || [],
+        totalSurchargesAmount: booking.priceDetails?.totalSurchargesAmount || 0,
+        discountAmount: booking.priceDetails?.discountAmount || 0,
+        voucherAppliedAmount: booking.priceDetails?.voucherAppliedAmount || 0,
+        couponDiscount: booking.priceDetails?.discountAmount || 0,
+        finalAmount: booking.priceDetails?.finalAmount || 0,
+        isFullyCoveredByVoucherOrSubscription: booking.priceDetails?.isFullyCoveredByVoucherOrSubscription || false,
+        appliedCouponCode: undefined, // ObjectId - נדרש populate נפרד
+        appliedGiftVoucherCode: undefined, // ObjectId - נדרש populate נפרד  
+        redeemedSubscriptionName: undefined, // ObjectId - נדרש populate נפרד
+      },
+      paymentDetails: {
+        paymentStatus: booking.paymentDetails?.paymentStatus || "pending",
+        transactionId: booking.paymentDetails?.transactionId,
+        paymentMethod: booking.paymentDetails?.transactionId ? "כרטיס אשראי" : undefined,
+        cardLast4: booking.enhancedPaymentDetails?.cardLast4,
+      },
+      bookingSource: booking.source || "new_purchase",
     }
 
     const recipients = []
@@ -321,8 +336,7 @@ export async function sendUserNotification(
   try {
     await dbConnect()
     
-    const User = (await import("@/lib/db/models/user")).default
-    const user = await User.findById(userId).select("name email phone notificationPreferences").lean()
+    const user = await (User as any).findById(userId).select("name email phone notificationPreferences").lean()
     
     if (!user) {
       return { success: false, error: "User not found" }
@@ -420,9 +434,7 @@ export async function getProfessionalResponses(
   try {
     await dbConnect()
     
-    const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
-    
-    const responses = await ProfessionalResponse.find({ bookingId })
+    const responses = await (ProfessionalResponse as any).find({ bookingId })
       .populate('professionalId', 'name phone email')
       .sort({ createdAt: -1 })
       .lean()
@@ -446,11 +458,8 @@ async function handleProfessionalResponse(
   try {
     await dbConnect()
     
-    const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
-    const Booking = (await import("@/lib/db/models/booking")).default
-    
     // Find response
-    const response = await ProfessionalResponse.findById(responseId)
+    const response = await (ProfessionalResponse as any).findById(responseId)
       .populate('professionalId', 'name phone')
       .populate('bookingId')
     

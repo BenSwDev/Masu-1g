@@ -117,3 +117,6 @@ function updateCacheExpiry<T>(key: string, newExpiryTime: number = CACHE_EXPIRY.
     console.error("Error updating cache expiry:", error)
   }
 }
+
+// Export the functions that were missing
+export { clearAllCache, removeCacheItem }

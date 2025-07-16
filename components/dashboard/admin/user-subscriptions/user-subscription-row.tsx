@@ -213,9 +213,9 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
         <td className="py-4 px-4">
           <div className="flex flex-col">
             <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.treatmentId?.name}</span>
-            {userSubscription.selectedDurationDetails && (
+            {userSubscription.selectedDurationId && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {userSubscription.selectedDurationDetails.minutes} {t("common.minutes")}
+                {t("common.selectedDuration")}
               </span>
             )}
             {userSubscription.pricePerSession && (
@@ -279,8 +279,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 ₪{userSubscription.paymentAmount?.toFixed(2) || "0.00"}
               </span>
               <span className="text-gray-500 dark:text-gray-400">
-                {userSubscription.paymentMethodId?.cardName || t("common.card")}{" "}
-                {maskCardNumber(userSubscription.paymentMethodId?.cardNumber)}
+                {t("common.card")} - כרטיס אשראי
               </span>
             </div>
           </div>

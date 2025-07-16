@@ -21,6 +21,7 @@ import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-s
 import Subscription from "@/lib/db/models/subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
+import { Payment } from "@/lib/db/models/payment"
 import User, { type IUser, UserRole } from "@/lib/db/models/user"
 import Address, { type IAddress, constructFullAddress as constructFullAddressHelper } from "@/lib/db/models/address"
 import {
@@ -47,7 +48,7 @@ import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, Create
 
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
-import { sendUserNotification, sendGuestNotification, sendBookingConfirmationToUser } from "@/actions/notification-service"
+import { sendUserNotification, sendGuestNotification, sendBookingConfirmationToUser } from "@/lib/notifications/notification-service"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -58,9 +59,7 @@ import type {
 
 import type { ICoupon } from "@/lib/db/models/coupon"
 import type { ISubscription } from "@/lib/db/models/subscription"
-import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
-import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
 
 // Add import for event system
 import { eventBus, createBookingEvent } from "@/lib/events/booking-event-system"
@@ -1114,9 +1113,6 @@ export async function createBooking(
           surchargesProfessionalPayment: validatedPayload.priceDetails.surchargesProfessionalPayment,
         } as IPriceDetails,
         paymentDetails: {
-          paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
-            ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
-            : undefined,
           paymentStatus:
             validatedPayload.priceDetails.finalAmount === 0
               ? "not_required"
@@ -1271,6 +1267,27 @@ export async function createBooking(
               bookingNumber: finalBookingObject.bookingNumber,
               bookingAddress: bookingAddress,
               isForSomeoneElse: true,
+              // ➕ הוספת פרטי תשלום מפורטים
+              priceDetails: {
+                basePrice: finalBookingObject.priceDetails.basePrice,
+                surcharges: finalBookingObject.priceDetails.surcharges,
+                totalSurchargesAmount: finalBookingObject.priceDetails.totalSurchargesAmount,
+                discountAmount: finalBookingObject.priceDetails.discountAmount,
+                voucherAppliedAmount: finalBookingObject.priceDetails.voucherAppliedAmount,
+                couponDiscount: finalBookingObject.priceDetails.discountAmount, // שימוש בdiscountAmount
+                finalAmount: finalBookingObject.priceDetails.finalAmount,
+                isFullyCoveredByVoucherOrSubscription: finalBookingObject.priceDetails.isFullyCoveredByVoucherOrSubscription,
+                appliedCouponCode: undefined, // ObjectId - נדרש populate נפרד
+                appliedGiftVoucherCode: undefined, // ObjectId - נדרש populate נפרד  
+                redeemedSubscriptionName: undefined, // ObjectId - נדרש populate נפרד
+              },
+              paymentDetails: {
+                paymentStatus: finalBookingObject.paymentDetails.paymentStatus,
+                transactionId: finalBookingObject.paymentDetails.transactionId,
+                paymentMethod: finalBookingObject.paymentDetails.transactionId ? "כרטיס אשראי" : undefined,
+                cardLast4: finalBookingObject.enhancedPaymentDetails?.cardLast4,
+              },
+              bookingSource: finalBookingObject.source,
             }
             
             await sendGuestNotification(
@@ -1499,10 +1516,7 @@ export async function getUserBookings(
           },
         ],
       })
-      .populate<{ "paymentDetails.paymentMethodId": IPaymentMethod | null }>({
-        path: "paymentDetails.paymentMethodId",
-        select: "type last4 brand isDefault displayName",
-      })
+
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -1665,7 +1679,6 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       giftVouchersResult,
       userResult,
       addressesResult,
-      paymentMethodsResult,
       treatmentsResult,
       workingHoursResult,
     ] = await Promise.allSettled([
@@ -1681,7 +1694,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       }).lean(),
       User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
       Address.find({ userId, isArchived: { $ne: true } }).lean(),
-      fetchUserActivePaymentMethods(),
+
       Treatment.find({ isActive: true }).populate("durations").lean(),
       (WorkingHoursSettings as any).findOne().lean() as Promise<any>,
     ])
@@ -1695,21 +1708,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     const user = getFulfilledValue(userResult)
     const userAddresses = getFulfilledValue(addressesResult, [])
 
-    const paymentMethodsSettledResult = paymentMethodsResult.status === "fulfilled" ? paymentMethodsResult.value : null
-    let userPaymentMethods: any[] = []
-    if (
-      paymentMethodsSettledResult &&
-      paymentMethodsSettledResult.success &&
-      paymentMethodsSettledResult.paymentMethods
-    ) {
-      userPaymentMethods = paymentMethodsSettledResult.paymentMethods
-    } else if (paymentMethodsSettledResult && paymentMethodsSettledResult.error) {
-      logger.warn(
-        `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsSettledResult.error}`,
-      )
-    } else if (paymentMethodsResult.status === "rejected") {
-      logger.error(`Failed to fetch payment methods for user ${userId}: ${paymentMethodsResult.reason}`)
-    }
+
 
     const activeTreatments = getFulfilledValue(treatmentsResult, [])
     const workingHoursSettings = getFulfilledValue(workingHoursResult)
@@ -1776,7 +1775,6 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         notificationLanguage: notificationPrefs.language || "he",
       },
       userAddresses,
-      userPaymentMethods,
       activeTreatments,
       workingHoursSettings,
       currentUser: {
@@ -2248,7 +2246,7 @@ export async function getAllBookings(
       .populate("priceDetails.appliedCouponId", "code discountType discountValue")
       .populate("priceDetails.appliedGiftVoucherId", "code amount")
       .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId", "type last4 brand displayName")
+      // Removed paymentMethodId populate - using CARDCOM only
       .lean()
 
     const populatedBookings: PopulatedBooking[] = bookings.map((booking) => ({
@@ -2833,9 +2831,6 @@ export async function createGuestBooking(
           surchargesProfessionalPayment: validatedPayload.priceDetails.surchargesProfessionalPayment,
         } as IPriceDetails,
         paymentDetails: {
-          paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
-            ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
-            : undefined,
           paymentStatus:
             validatedPayload.priceDetails.finalAmount === 0
               ? "not_required"
@@ -2997,6 +2992,27 @@ export async function createGuestBooking(
             isForSomeoneElse: false, // Always false for booker's own notification - they get "your booking" message
             isBookerForSomeoneElse: isBookingForSomeoneElse, // True if they booked for someone else
             actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
+            // ➕ הוספת פרטי תשלום מפורטים
+            priceDetails: {
+              basePrice: finalBookingObject.priceDetails.basePrice,
+              surcharges: finalBookingObject.priceDetails.surcharges,
+              totalSurchargesAmount: finalBookingObject.priceDetails.totalSurchargesAmount,
+              discountAmount: finalBookingObject.priceDetails.discountAmount,
+              voucherAppliedAmount: finalBookingObject.priceDetails.voucherAppliedAmount,
+              couponDiscount: finalBookingObject.priceDetails.discountAmount,
+              finalAmount: finalBookingObject.priceDetails.finalAmount,
+              isFullyCoveredByVoucherOrSubscription: finalBookingObject.priceDetails.isFullyCoveredByVoucherOrSubscription,
+              appliedCouponCode: undefined, // ObjectId - נדרש populate נפרד
+              appliedGiftVoucherCode: undefined, // ObjectId - נדרש populate נפרד  
+              redeemedSubscriptionName: undefined, // ObjectId - נדרש populate נפרד
+            },
+            paymentDetails: {
+              paymentStatus: finalBookingObject.paymentDetails.paymentStatus,
+              transactionId: finalBookingObject.paymentDetails.transactionId,
+              paymentMethod: finalBookingObject.paymentDetails.transactionId ? "כרטיס אשראי" : undefined,
+              cardLast4: finalBookingObject.enhancedPaymentDetails?.cardLast4,
+            },
+            bookingSource: finalBookingObject.source,
           }
 
           // Send notification to booker (guest) using smart system
@@ -3022,11 +3038,32 @@ export async function createGuestBooking(
               bookingNumber: finalBookingObject.bookingNumber,
               bookingAddress: bookingAddress,
               isForSomeoneElse: true,
-            }
-            
-            await sendGuestNotification(
-              {
-                name: recipientName,
+              // ➕ הוספת פרטי תשלום מפורטים
+              priceDetails: {
+                basePrice: finalBookingObject.priceDetails.basePrice,
+                surcharges: finalBookingObject.priceDetails.surcharges,
+                totalSurchargesAmount: finalBookingObject.priceDetails.totalSurchargesAmount,
+                discountAmount: finalBookingObject.priceDetails.discountAmount,
+                voucherAppliedAmount: finalBookingObject.priceDetails.voucherAppliedAmount,
+                couponDiscount: finalBookingObject.priceDetails.discountAmount,
+                finalAmount: finalBookingObject.priceDetails.finalAmount,
+                isFullyCoveredByVoucherOrSubscription: finalBookingObject.priceDetails.isFullyCoveredByVoucherOrSubscription,
+                appliedCouponCode: undefined, // ObjectId - נדרש populate נפרד
+                appliedGiftVoucherCode: undefined, // ObjectId - נדרש populate נפרד  
+                redeemedSubscriptionName: undefined, // ObjectId - נדרש populate נפרד
+              },
+                          paymentDetails: {
+              paymentStatus: finalBookingObject.paymentDetails.paymentStatus,
+              transactionId: finalBookingObject.paymentDetails.transactionId,
+              paymentMethod: finalBookingObject.paymentDetails.transactionId ? "כרטיס אשראי" : undefined,
+              cardLast4: finalBookingObject.enhancedPaymentDetails?.cardLast4,
+            },
+            bookingSource: finalBookingObject.source,
+          }
+          
+          await sendGuestNotification(
+            {
+              name: recipientName,
                 email: validatedPayload.recipientEmail,
                 phone: recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : undefined,
                 language: notificationLanguage
@@ -3687,6 +3724,29 @@ export async function updateBookingStatusAfterPayment(
           marketingOptIn: false,
           termsAccepted: false
         }
+      }
+      
+      // Update enhanced payment details with card info from Payment model
+      try {
+        const payment = await Payment.findOne({ booking_id: bookingId }).session(mongooseDbSession).lean()
+        if (payment?.result_data?.last4) {
+          if (!booking.enhancedPaymentDetails) {
+            booking.enhancedPaymentDetails = {}
+          }
+          booking.enhancedPaymentDetails.cardLast4 = payment.result_data.last4
+          booking.enhancedPaymentDetails.paymentStatus = "success"
+          if (payment.result_data.internalDealNumber) {
+            booking.enhancedPaymentDetails.transactionId = payment.result_data.internalDealNumber
+          }
+          
+          logger.info("Updated booking with enhanced payment details", { 
+            bookingId, 
+            cardLast4: payment.result_data.last4,
+            transactionId: payment.result_data.internalDealNumber
+          })
+        }
+      } catch (error) {
+        logger.warn("Failed to update enhanced payment details", { bookingId, error: error instanceof Error ? error.message : String(error) })
       }
       
         await booking.save({ session: mongooseDbSession })

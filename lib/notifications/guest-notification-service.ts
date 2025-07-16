@@ -21,6 +21,26 @@ interface NotificationData {
   isForSomeoneElse: boolean
   isBookerForSomeoneElse?: boolean
   actualRecipientName?: string
+  // ➕ הוספת פרטי תשלום מפורטים
+  priceDetails?: {
+    basePrice: number
+    surcharges?: Array<{ description: string; amount: number }>
+    totalSurchargesAmount: number
+    discountAmount?: number
+    voucherAppliedAmount?: number
+    couponDiscount?: number
+    finalAmount: number
+    isFullyCoveredByVoucherOrSubscription?: boolean
+    appliedCouponCode?: string
+    appliedGiftVoucherCode?: string
+    redeemedSubscriptionName?: string
+  }
+  paymentDetails?: {
+    paymentStatus: string
+    transactionId?: string
+    paymentMethod?: string
+  }
+  bookingSource?: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
 }
 
 export async function sendGuestNotification(

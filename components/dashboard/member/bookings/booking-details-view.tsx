@@ -211,16 +211,8 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   const paymentMethodDisplayName = useMemo(() => {
     if (priceDetails.isFullyCoveredByVoucherOrSubscription || priceDetails.finalAmount === 0)
       return t("common.notApplicable")
-    if (paymentDetails.paymentMethodId) {
-      return (
-        paymentDetails.paymentMethodId.displayName ||
-        (paymentDetails.paymentMethodId.type && paymentDetails.paymentMethodId.last4
-          ? `${t(`paymentMethods.type.${paymentDetails.paymentMethodId.type}`) || paymentDetails.paymentMethodId.type} **** ${paymentDetails.paymentMethodId.last4}`
-          : t("common.unknown"))
-      )
-    }
-    return t("common.notSpecified")
-  }, [paymentDetails.paymentMethodId, priceDetails.finalAmount, priceDetails.isFullyCoveredByVoucherOrSubscription, t])
+    return "כרטיס אשראי"
+  }, [priceDetails.finalAmount, priceDetails.isFullyCoveredByVoucherOrSubscription, t])
 
   const dateFnsLocaleMap: Record<string, Locale> = {
     en: enUS,
@@ -591,11 +583,14 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <span className="text-muted-foreground">{t("bookings.confirmation.paymentStatus")}:</span>
             <span className="font-semibold">{getPaymentStatusText(paymentDetails.paymentStatus)}</span>
           </div>
-          {paymentDetails.paymentMethodId &&
+          {paymentDetails.transactionId &&
             (priceDetails.finalAmount > 0 || !priceDetails.isFullyCoveredByVoucherOrSubscription) && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.confirmation.paymentMethod")}:</span>
-                <span className="font-semibold">{String(paymentMethodDisplayName || "")}</span>
+                <span className="font-semibold">
+                  {String(paymentMethodDisplayName || "")}
+                  {booking.enhancedPaymentDetails?.cardLast4 && ` (****${booking.enhancedPaymentDetails.cardLast4})`}
+                </span>
               </div>
             )}
           {paymentDetails.transactionId && (

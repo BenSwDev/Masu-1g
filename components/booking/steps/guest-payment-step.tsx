@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/ui/card";
+import { PaymentIframe } from "@/components/common/purchase/payment-iframe";
 import { Separator } from "@/components/common/ui/separator";
 import { Badge } from "@/components/common/ui/badge";
 import {
@@ -84,6 +85,15 @@ interface GuestPaymentStepProps {
   pendingBookingId?: string | null;
   isRedeeming?: boolean;
   customFailureHandler?: (reason?: string) => void | Promise<void>;
+  // ➕ הוספת פרמטרים לזיהוי סוג הרכישה ותיאור מותאם
+  purchaseType?: "booking" | "subscription" | "gift_voucher";
+  purchaseDetails?: {
+    treatmentName?: string;
+    subscriptionName?: string;
+    treatmentQuantity?: number;
+    voucherType?: "treatment" | "monetary";
+    voucherAmount?: number;
+  };
 }
 
 export function GuestPaymentStep({
@@ -97,6 +107,8 @@ export function GuestPaymentStep({
   pendingBookingId = null,
   isRedeeming = false,
   customFailureHandler,
+  purchaseType = "booking",
+  purchaseDetails = {},
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation()
   const {
@@ -175,6 +187,21 @@ export function GuestPaymentStep({
   };
 
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+
+  const handlePaymentError = (error: string) => {
+    console.error("Payment error:", error);
+    setPaymentUrl(null);
+    setIsPaymentLoading(false);
+    toast.error(error || "התשלום נכשל");
+  };
+
+  const handlePaymentCancel = () => {
+    console.log("Payment cancelled");
+    setPaymentUrl(null);
+    setIsPaymentLoading(false);
+    toast.info("התשלום בוטל");
+  };
 
   const handlePayNow = async () => {
     if (isCountingDown || !termsAccepted || isPaymentLoading) return;
@@ -212,25 +239,45 @@ export function GuestPaymentStep({
       };
       setGuestInfo(updatedGuestInfo);
 
-      // Create payment with CARDCOM
+              // Create payment with credit card processing
+      // ✅ יצירת תיאור דינמי לפי סוג הרכישה
+      let description = `הזמנה ${finalBookingId}`;
+      
+      if (purchaseType === "subscription") {
+        const treatmentName = purchaseDetails.treatmentName || "טיפול";
+        const quantity = purchaseDetails.treatmentQuantity || 1;
+        description = `רכישת מנוי - ${treatmentName} x${quantity} טיפולים`;
+      } else if (purchaseType === "gift_voucher") {
+        if (purchaseDetails.voucherType === "monetary") {
+          description = `רכישת שובר מתנה כספי - ₪${purchaseDetails.voucherAmount}`;
+        } else {
+          const treatmentName = purchaseDetails.treatmentName || "טיפול";
+          description = `רכישת שובר מתנה - ${treatmentName}`;
+        }
+      } else {
+        // Default booking description
+        description = `הזמנת טיפול - הזמנה ${finalBookingId}`;
+      }
+
       const paymentResponse = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: finalBookingId,
           amount: calculatedPrice?.finalAmount || 0,
-          description: `הזמנת טיפול - הזמנה ${finalBookingId}`,
+          description: description,
           customerName: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim(),
           customerEmail: guestInfo.email,
-          customerPhone: guestInfo.phone
+          customerPhone: guestInfo.phone,
+          type: purchaseType  // ✅ העברת סוג הרכישה ל-API
         })
       });
 
       const paymentData = await paymentResponse.json();
 
       if (paymentData.success && paymentData.redirectUrl) {
-        // Redirect to CARDCOM payment page
-        window.location.href = paymentData.redirectUrl;
+        // Set payment URL for iframe instead of redirect
+        setPaymentUrl(paymentData.redirectUrl);
       } else {
         throw new Error(paymentData.error || 'שגיאה ביצירת התשלום');
       }
@@ -732,9 +779,27 @@ export function GuestPaymentStep({
               {(isLoading || isPaymentLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isCountingDown
                 ? `נסה שוב בעוד ${countdown} שניות`
-                : `שלם כעת (CARDCOM) ${formatPrice(calculatedPrice.finalAmount)}`}
+                : `שלם כעת בכרטיס אשראי ${formatPrice(calculatedPrice.finalAmount)}`}
             </Button>
           </div>
+
+          {/* Payment IFRAME */}
+          {paymentUrl && (
+            <div className="mt-6">
+              <PaymentIframe
+                paymentUrl={paymentUrl}
+                bookingId={pendingBookingId || undefined}
+                onSuccess={handlePaymentSuccess}
+                onError={(error: string) => {
+                  console.log("🔴 Credit Card Payment Failed - calling handlePaymentFailure like demo");
+                  handlePaymentFailure(error);
+                }}
+                onCancel={handlePaymentCancel}
+                height="600px"
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -748,14 +813,14 @@ export function GuestPaymentStep({
           <div className="space-y-6" dir={dir}>
             {paymentStatus === "pending" && (
               <>
-                {/* CARDCOM Payment Processing */}
+                {/* Credit Card Payment Processing */}
                 <div className="border-2 border-primary/20 rounded-lg p-8 text-center bg-gradient-to-br from-primary/5 to-primary/10">
                   <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
                   <h3 className="text-lg font-semibold text-primary mb-2">
                     מעבר לתשלום מאובטח
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    עכשיו תועבר/י לדף התשלום המאובטח של CARDCOM
+                    עכשיו תועבר/י לדף התשלום המאובטח של כרטיס אשראי
                   </p>
                   <div className="mt-4 p-4 bg-white border rounded-lg shadow-sm">
                     <p className="text-sm text-gray-600 mb-2">

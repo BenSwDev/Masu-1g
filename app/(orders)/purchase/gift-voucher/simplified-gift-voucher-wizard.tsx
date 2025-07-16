@@ -458,6 +458,12 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
                 onConfirm={handlePurchase}
                 onPrev={() => setCurrentStep(1)}
                 isLoading={isLoading}
+                purchaseType="gift_voucher"
+                purchaseDetails={{
+                  treatmentName: selectedTreatment?.name,
+                  voucherType: voucherType,
+                  voucherAmount: voucherType === "monetary" ? monetaryValue : undefined,
+                }}
               />
             </CardContent>
           </Card>

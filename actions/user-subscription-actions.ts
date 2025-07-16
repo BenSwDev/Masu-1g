@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth/auth"
 import UserSubscription from "@/lib/db/models/user-subscription"
 import Subscription from "@/lib/db/models/subscription"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
-import PaymentMethod from "@/lib/db/models/payment-method"
+
 import User from "@/lib/db/models/user"
 import SubscriptionPurchase from "@/lib/db/models/subscription-purchase"
 import dbConnect from "@/lib/db/mongoose"
@@ -159,27 +159,24 @@ async function purchaseSubscription({
 
     // Load all required data in parallel
     const dataLoadStart = Date.now()
-    const [subscriptionResult, treatmentResult, paymentMethodResult] = await Promise.allSettled([
-      Subscription.findById(subscriptionId),
-      Treatment.findById(treatmentId).lean(),
-      PaymentMethod.findById(paymentMethodId)
+    const [subscriptionResult, treatmentResult] = await Promise.allSettled([
+      (Subscription as any).findById(subscriptionId),
+      Treatment.findById(treatmentId).lean()
     ])
     const dataLoadTime = Date.now() - dataLoadStart
 
     // Check for failed data loads
-    if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected" || paymentMethodResult.status === "rejected") {
+    if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected") {
       logger.error(`[${requestId}] Failed to load required data`, {
         dataLoadTime: `${dataLoadTime}ms`,
         subscriptionError: subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
         treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
-        paymentMethodError: paymentMethodResult.status === "rejected" ? paymentMethodResult.reason : null
       })
       return { success: false, error: "Failed to load required data" }
     }
 
     const subscription = subscriptionResult.value
     const treatment = treatmentResult.value as ITreatment | null
-    const paymentMethod = paymentMethodResult.value
 
     logger.info(`[${requestId}] Data loaded successfully`, {
       dataLoadTime: `${dataLoadTime}ms`,
@@ -187,7 +184,6 @@ async function purchaseSubscription({
       subscriptionActive: subscription?.isActive,
       treatmentFound: !!treatment,
       treatmentActive: treatment?.isActive,
-      paymentMethodFound: !!paymentMethod
     })
 
     if (!subscription || !subscription.isActive) {
@@ -200,13 +196,7 @@ async function purchaseSubscription({
       return { success: false, error: "Treatment not found or inactive" }
     }
 
-    if (!paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id) {
-      logger.warn(`[${requestId}] Payment method not found or not owned by user`, { 
-        paymentMethodId, 
-        userId: sessionData.user.id
-      })
-      return { success: false, error: "Payment method not found or not owned by user" }
-    }
+    // Removed payment method validation - using CARDCOM directly
 
     // Price calculation
     const priceCalcStart = Date.now()
@@ -267,7 +257,7 @@ async function purchaseSubscription({
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
       status: "pending_payment", // Wait for payment confirmation
-      paymentMethodId: paymentMethod._id,
+      // Removed paymentMethodId - using CARDCOM only
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
     })
@@ -635,7 +625,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
     }
 
     // Load subscription and treatment
-    const subscription = await Subscription.findById(subscriptionId).lean() as any
+    const subscription = await (Subscription as any).findById(subscriptionId).lean()
     if (!subscription || !subscription.isActive) {
       return { success: false, error: "Subscription not found or inactive" }
     }
@@ -809,7 +799,7 @@ export async function purchaseGuestSubscription({
     // Load all required data in parallel
     const dataLoadStart = Date.now()
     const [subscriptionResult, treatmentResult] = await Promise.allSettled([
-      Subscription.findById(subscriptionId),
+      (Subscription as any).findById(subscriptionId),
       Treatment.findById(treatmentId).lean(),
     ])
     const dataLoadTime = Date.now() - dataLoadStart

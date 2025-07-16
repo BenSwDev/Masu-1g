@@ -447,6 +447,12 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                 isLoading={isLoading}
                 pendingBookingId={pendingSubscriptionId}
                 customFailureHandler={pendingSubscriptionId ? handlePaymentFailure : undefined}
+                purchaseType="subscription"
+                purchaseDetails={{
+                  treatmentName: selectedTreatment?.name,
+                  subscriptionName: selectedSubscription?.name,
+                  treatmentQuantity: selectedSubscription?.quantity || 1,
+                }}
               />
             </CardContent>
           </Card>

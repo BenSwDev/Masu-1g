@@ -8,7 +8,7 @@ import type { ICoupon } from "@/lib/db/models/coupon"
 import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
-import type { IPaymentMethod } from "@/lib/db/models/payment-method"
+// Removed PaymentMethod import - no longer using payment methods
 
 // Add missing TimeSlot interface
 export interface TimeSlot {
@@ -85,8 +85,8 @@ export interface PopulatedPriceDetails
     | null
 }
 
-export interface PopulatedPaymentDetails extends Omit<IPaymentDetails, "paymentMethodId"> {
-  paymentMethodId?: Pick<IPaymentMethod, "_id" | "type" | "last4" | "brand" | "isDefault" | "displayName"> | null
+export interface PopulatedPaymentDetails extends IPaymentDetails {
+  // Removed paymentMethodId - using CARDCOM only
 }
 
 export interface PopulatedBookingTreatment
@@ -178,7 +178,6 @@ export interface BookingInitialData {
     notificationLanguage: string
   }
   userAddresses: any[]
-  userPaymentMethods: any[]
   activeTreatments: any[]
   workingHoursSettings: any
   currentUser: {
@@ -207,7 +206,6 @@ export interface SelectedBookingOptions {
   selectedAddressId?: string
   customAddressDetails?: Partial<IAddress>
   therapistGenderPreference: "male" | "female" | "any"
-  selectedPaymentMethodId?: string
   source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
   selectedUserSubscriptionId?: string
   selectedGiftVoucherId?: string

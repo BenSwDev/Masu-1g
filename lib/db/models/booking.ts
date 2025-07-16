@@ -37,7 +37,6 @@ export interface IPriceDetails {
 }
 
 export interface IPaymentDetails {
-  paymentMethodId?: Types.ObjectId
   transactionId?: string
   paymentStatus: "pending" | "paid" | "failed" | "not_required" // not_required for full redemption
 }
@@ -209,7 +208,6 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
 
 const PaymentDetailsSchema = new Schema<IPaymentDetails>(
   {
-    paymentMethodId: { type: Schema.Types.ObjectId, ref: "PaymentMethod" },
     transactionId: { type: String },
     paymentStatus: {
       type: String,

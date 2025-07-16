@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyOTP } from "@/actions/notification-service"
+import { verifyOTP } from "@/lib/notifications/notification-service"
 
 export async function POST(request: NextRequest) {
   try {

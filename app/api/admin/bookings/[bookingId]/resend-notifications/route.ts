@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { resendProfessionalNotifications } from "@/actions/notification-service"
+import { resendProfessionalNotifications } from "@/lib/notifications/notification-service"
 
 export async function POST(
   request: NextRequest,

@@ -43,6 +43,27 @@ export interface EmailNotificationData {
   clientName?: string
   address?: string
   bookingDetailsLink?: string
+  // ➕ הוספת פרטי תשלום מפורטים
+  priceDetails?: {
+    basePrice: number
+    surcharges?: Array<{ description: string; amount: number }>
+    totalSurchargesAmount: number
+    discountAmount?: number
+    voucherAppliedAmount?: number
+    couponDiscount?: number
+    finalAmount: number
+    isFullyCoveredByVoucherOrSubscription?: boolean
+    appliedCouponCode?: string
+    appliedGiftVoucherCode?: string
+    redeemedSubscriptionName?: string
+  }
+  paymentDetails?: {
+    paymentStatus: string
+    transactionId?: string
+    paymentMethod?: string
+    cardLast4?: string
+  }
+  bookingSource?: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -345,6 +366,110 @@ body {
   </div>
 </div>
 
+${data.priceDetails ? `
+<div class="booking-card">
+  <h3>${language === "he" ? "פרטי תשלום" : language === "ru" ? "Детали оплаты" : "Payment Details"}</h3>
+  
+  ${data.bookingSource ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מקור ההזמנה:" : language === "ru" ? "Источник заказа:" : "Booking Source:"}</span>
+    <span class="value">${
+      data.bookingSource === "subscription_redemption" 
+        ? (language === "he" ? "מימוש מנוי" : language === "ru" ? "Использование подписки" : "Subscription Redemption")
+        : data.bookingSource === "gift_voucher_redemption"
+        ? (language === "he" ? "מימוש שובר מתנה" : language === "ru" ? "Использование подарочного ваучера" : "Gift Voucher Redemption") 
+        : (language === "he" ? "רכישה חדשה" : language === "ru" ? "Новая покупка" : "New Purchase")
+    }</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.redeemedSubscriptionName ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "מנוי בשימוש:" : language === "ru" ? "Используемая подписка:" : "Used Subscription:"}</span>
+    <span class="value">${data.priceDetails.redeemedSubscriptionName}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.appliedGiftVoucherCode ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "שובר מתנה:" : language === "ru" ? "Подарочный ваучер:" : "Gift Voucher:"}</span>
+    <span class="value">${data.priceDetails.appliedGiftVoucherCode}</span>
+  </div>
+  ` : ''}
+  
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מחיר בסיס:" : language === "ru" ? "Базовая цена:" : "Base Price:"}</span>
+    <span class="value">₪${data.priceDetails.basePrice.toFixed(2)}</span>
+  </div>
+  
+  ${data.priceDetails.surcharges && data.priceDetails.surcharges.length > 0 ? `
+  ${data.priceDetails.surcharges.map(surcharge => `
+  <div class="booking-detail" style="color: #f59e0b;">
+    <span class="label">${surcharge.description === "workingHours.eveningHours" ? (language === "he" ? "תוספת שעות ערב:" : "Evening Hours:") : surcharge.description + ":"}</span>
+    <span class="value">+₪${surcharge.amount.toFixed(2)}</span>
+  </div>
+  `).join('')}
+  <div class="booking-detail" style="color: #f59e0b; border-top: 1px solid #f3f4f6; padding-top: 8px; margin-top: 8px;">
+    <span class="label">${language === "he" ? "סה״כ תוספות:" : language === "ru" ? "Всего доплат:" : "Total Surcharges:"}</span>
+    <span class="value">+₪${data.priceDetails.totalSurchargesAmount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.voucherAppliedAmount > 0 ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "שובר מתנה:" : language === "ru" ? "Подарочный ваучер:" : "Gift Voucher:"}</span>
+    <span class="value">-₪${data.priceDetails.voucherAppliedAmount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.couponDiscount > 0 ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "הנחת קופון:" : language === "ru" ? "Скидка по купону:" : "Coupon Discount:"}</span>
+    <span class="value">-₪${data.priceDetails.couponDiscount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  <div class="booking-detail" style="border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 12px; font-weight: bold; font-size: 18px;">
+    <span class="label">${language === "he" ? "סכום לתשלום:" : language === "ru" ? "К оплате:" : "Total Amount:"}</span>
+    <span class="value" style="color: #3b82f6;">
+      ${data.priceDetails.isFullyCoveredByVoucherOrSubscription 
+        ? (language === "he" ? "ללא תשלום" : language === "ru" ? "Бесплатно" : "Free") 
+        : "₪" + data.priceDetails.finalAmount.toFixed(2)}
+    </span>
+  </div>
+</div>
+` : ''}
+
+${data.paymentDetails ? `
+<div class="booking-card">
+  <h3>${language === "he" ? "אמצעי תשלום" : language === "ru" ? "Способ оплаты" : "Payment Method"}</h3>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "סטטוס תשלום:" : language === "ru" ? "Статус оплаты:" : "Payment Status:"}</span>
+    <span class="value">${
+      data.paymentDetails.paymentStatus === 'paid' 
+        ? (language === "he" ? "שולם" : language === "ru" ? "Оплачено" : "Paid")
+        : data.paymentDetails.paymentStatus === 'pending' 
+        ? (language === "he" ? "ממתין לתשלום" : language === "ru" ? "Ожидает оплаты" : "Pending")
+        : data.paymentDetails.paymentStatus === 'not_required'
+        ? (language === "he" ? "לא נדרש תשלום" : language === "ru" ? "Оплата не требуется" : "No Payment Required")
+        : (language === "he" ? "נכשל" : language === "ru" ? "Неуспешно" : "Failed")
+    }</span>
+  </div>
+  ${data.paymentDetails.paymentMethod ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "אמצעי תשלום:" : language === "ru" ? "Способ оплаты:" : "Payment Method:"}</span>
+    <span class="value">${data.paymentDetails.paymentMethod}${data.paymentDetails.cardLast4 ? ` (****${data.paymentDetails.cardLast4})` : ''}</span>
+  </div>
+  ` : ''}
+  ${data.paymentDetails.transactionId ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מזהה עסקה:" : language === "ru" ? "ID транзакции:" : "Transaction ID:"}</span>
+    <span class="value" style="font-family: monospace; font-size: 12px;">${data.paymentDetails.transactionId}</span>
+  </div>
+  ` : ''}
+</div>
+` : ''}
+
 <p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
 
 <p style="text-align: center; margin: 20px 0;">
@@ -418,6 +543,110 @@ body {
     <span class="value">${formattedTime}</span>
   </div>
 </div>
+
+${data.priceDetails ? `
+<div class="booking-card">
+  <h3>${language === "he" ? "פרטי תשלום" : language === "ru" ? "Детали оплаты" : "Payment Details"}</h3>
+  
+  ${data.bookingSource ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מקור ההזמנה:" : language === "ru" ? "Источник заказа:" : "Booking Source:"}</span>
+    <span class="value">${
+      data.bookingSource === "subscription_redemption" 
+        ? (language === "he" ? "מימוש מנוי" : language === "ru" ? "Использование подписки" : "Subscription Redemption")
+        : data.bookingSource === "gift_voucher_redemption"
+        ? (language === "he" ? "מימוש שובר מתנה" : language === "ru" ? "Использование подарочного ваучера" : "Gift Voucher Redemption") 
+        : (language === "he" ? "רכישה חדשה" : language === "ru" ? "Новая покупка" : "New Purchase")
+    }</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.redeemedSubscriptionName ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "מנוי בשימוש:" : language === "ru" ? "Используемая подписка:" : "Used Subscription:"}</span>
+    <span class="value">${data.priceDetails.redeemedSubscriptionName}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.appliedGiftVoucherCode ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "שובר מתנה:" : language === "ru" ? "Подарочный ваучер:" : "Gift Voucher:"}</span>
+    <span class="value">${data.priceDetails.appliedGiftVoucherCode}</span>
+  </div>
+  ` : ''}
+  
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מחיר בסיס:" : language === "ru" ? "Базовая цена:" : "Base Price:"}</span>
+    <span class="value">₪${data.priceDetails.basePrice.toFixed(2)}</span>
+  </div>
+  
+  ${data.priceDetails.surcharges && data.priceDetails.surcharges.length > 0 ? `
+  ${data.priceDetails.surcharges.map(surcharge => `
+  <div class="booking-detail" style="color: #f59e0b;">
+    <span class="label">${surcharge.description === "workingHours.eveningHours" ? (language === "he" ? "תוספת שעות ערב:" : "Evening Hours:") : surcharge.description + ":"}</span>
+    <span class="value">+₪${surcharge.amount.toFixed(2)}</span>
+  </div>
+  `).join('')}
+  <div class="booking-detail" style="color: #f59e0b; border-top: 1px solid #f3f4f6; padding-top: 8px; margin-top: 8px;">
+    <span class="label">${language === "he" ? "סה״כ תוספות:" : language === "ru" ? "Всего доплат:" : "Total Surcharges:"}</span>
+    <span class="value">+₪${data.priceDetails.totalSurchargesAmount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.voucherAppliedAmount > 0 ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "שובר מתנה:" : language === "ru" ? "Подарочный ваучер:" : "Gift Voucher:"}</span>
+    <span class="value">-₪${data.priceDetails.voucherAppliedAmount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  ${data.priceDetails.couponDiscount > 0 ? `
+  <div class="booking-detail" style="color: #10b981;">
+    <span class="label">${language === "he" ? "הנחת קופון:" : language === "ru" ? "Скидка по купону:" : "Coupon Discount:"}</span>
+    <span class="value">-₪${data.priceDetails.couponDiscount.toFixed(2)}</span>
+  </div>
+  ` : ''}
+  
+  <div class="booking-detail" style="border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 12px; font-weight: bold; font-size: 18px;">
+    <span class="label">${language === "he" ? "סכום לתשלום:" : language === "ru" ? "К оплате:" : "Total Amount:"}</span>
+    <span class="value" style="color: #3b82f6;">
+      ${data.priceDetails.isFullyCoveredByVoucherOrSubscription 
+        ? (language === "he" ? "ללא תשלום" : language === "ru" ? "Бесплатно" : "Free") 
+        : "₪" + data.priceDetails.finalAmount.toFixed(2)}
+    </span>
+  </div>
+</div>
+` : ''}
+
+${data.paymentDetails ? `
+<div class="booking-card">
+  <h3>${language === "he" ? "אמצעי תשלום" : language === "ru" ? "Способ оплаты" : "Payment Method"}</h3>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "סטטוס תשלום:" : language === "ru" ? "Статус оплаты:" : "Payment Status:"}</span>
+    <span class="value">${
+      data.paymentDetails.paymentStatus === 'paid' 
+        ? (language === "he" ? "שולם" : language === "ru" ? "Оплачено" : "Paid")
+        : data.paymentDetails.paymentStatus === 'pending' 
+        ? (language === "he" ? "ממתין לתשלום" : language === "ru" ? "Ожидает оплаты" : "Pending")
+        : data.paymentDetails.paymentStatus === 'not_required'
+        ? (language === "he" ? "לא נדרש תשלום" : language === "ru" ? "Оплата не требуется" : "No Payment Required")
+        : (language === "he" ? "נכשל" : language === "ru" ? "Неуспешно" : "Failed")
+    }</span>
+  </div>
+  ${data.paymentDetails.paymentMethod ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "אמצעי תשלום:" : language === "ru" ? "Способ оплаты:" : "Payment Method:"}</span>
+    <span class="value">${data.paymentDetails.paymentMethod}${data.paymentDetails.cardLast4 ? ` (****${data.paymentDetails.cardLast4})` : ''}</span>
+  </div>
+  ` : ''}
+  ${data.paymentDetails.transactionId ? `
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "מזהה עסקה:" : language === "ru" ? "ID транзакции:" : "Transaction ID:"}</span>
+    <span class="value" style="font-family: monospace; font-size: 12px;">${data.paymentDetails.transactionId}</span>
+  </div>
+  ` : ''}
+</div>
+` : ''}
 
 <p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
 

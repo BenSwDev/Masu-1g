@@ -125,8 +125,8 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
               <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  {booking.paymentDetails.paymentMethodId 
-                    ? `${booking.paymentDetails.paymentMethodId.type || "כרטיס אשראי"} ${booking.paymentDetails.paymentMethodId.last4 ? `****${booking.paymentDetails.paymentMethodId.last4}` : ""}`
+                  {booking.paymentDetails.transactionId 
+                    ? `תשלום בכרטיס אשראי ${booking.enhancedPaymentDetails?.cardLast4 ? `(****${booking.enhancedPaymentDetails.cardLast4})` : ''}` 
                     : "לא צוין"}
                 </span>
               </div>

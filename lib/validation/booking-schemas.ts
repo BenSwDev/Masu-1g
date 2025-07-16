@@ -192,9 +192,6 @@ const SummarySchema = z.object({
 
 // Schema for payment details
 const PaymentDetailsSchema = z.object({
-  selectedPaymentMethodId: z.string({
-    required_error: "bookings.validation.paymentMethodRequired",
-  }),
   appliedCouponCode: z.string().optional(),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: "bookings.validation.termsRequired",
@@ -262,10 +259,7 @@ const BaseBookingWizardSchema = z.object({
   recipientNotificationMethods: z.array(z.enum(["email", "sms"])).optional(), // For when booking for someone else
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
   
-  // Payment details
-  selectedPaymentMethodId: z.string({
-    required_error: "bookings.validation.paymentMethodRequired",
-  }),
+  // Payment details - Removed selectedPaymentMethodId (using CARDCOM directly)
   appliedCouponCode: z.string().optional(),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: "bookings.validation.termsRequired",
@@ -366,7 +360,6 @@ export const CreateBookingPayloadSchema = z.object({
   notes: z.string().max(500).optional(),
   priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
   paymentDetails: z.object({
-    paymentMethodId: z.string().optional(), // Optional if fully covered
     paymentStatus: z.enum(["paid", "pending", "failed", "not_required", "refunded"]),
     transactionId: z.string().optional(),
   }),
@@ -444,7 +437,6 @@ export const CreateGuestBookingPayloadSchema = z.object({
   notes: z.string().max(500, "Notes too long").optional(),
   priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
   paymentDetails: z.object({
-    paymentMethodId: z.string().optional(), // Optional if fully covered
     paymentStatus: z.enum(["paid", "pending", "failed", "not_required", "refunded"]),
     transactionId: z.string().optional(),
   }),

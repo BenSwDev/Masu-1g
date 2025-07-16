@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || ""
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/masu-test"
 
 let cached = (global as any).mongooseConnection
 if (!cached) {
@@ -25,7 +25,7 @@ async function loadModels() {
   await import("@/lib/db/models/coupon-usage")
   await import("@/lib/db/models/gift-voucher")
   await import("@/lib/db/models/password-reset-token")
-  await import("@/lib/db/models/payment-method")
+
   await import("@/lib/db/models/subscription")
   await import("@/lib/db/models/treatment")
   await import("@/lib/db/models/user-subscription")

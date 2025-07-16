@@ -29,6 +29,7 @@ export default async function PurchaseGiftVoucherPage() {
         <Separator />
         <GuestGiftVoucherWizard
           treatments={treatmentsResult.treatments || []}
+          currentUser={null}
         />
       </div>
     </ScrollArea>

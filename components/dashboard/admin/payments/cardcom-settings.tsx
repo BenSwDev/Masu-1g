@@ -7,7 +7,7 @@ import { Switch } from "@/components/common/ui/switch"
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Loader2, CheckCircle, AlertTriangle, Settings, TestTube, Shield } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/common/ui/use-toast"
 
 interface CardcomConfig {
   configured: boolean

@@ -18,7 +18,7 @@ async function getSubscriptions(): Promise<{
   try {
     await dbConnect()
 
-    const subscriptions = await Subscription.find({ isActive: true })
+    const subscriptions = await (Subscription as any).find({ isActive: true })
       .populate({
         path: "treatmentId",
         select: "name category pricingType fixedPrice durations defaultDurationMinutes",
@@ -52,7 +52,7 @@ async function getSubscriptionById(id: string): Promise<{
   try {
     await dbConnect()
 
-    const subscription = await Subscription.findById(id)
+    const subscription = await (Subscription as any).findById(id)
       .populate({
         path: "treatmentId",
         select: "name category pricingType fixedPrice durations defaultDurationMinutes",
@@ -143,7 +143,7 @@ async function updateSubscription(id: string, data: Partial<{
 
     await dbConnect()
 
-    const subscription = await Subscription.findByIdAndUpdate(
+    const subscription = await (Subscription as any).findByIdAndUpdate(
       id,
       data,
       { new: true, runValidators: true }
@@ -183,7 +183,7 @@ async function deleteSubscription(id: string): Promise<{
 
     await dbConnect()
 
-    const subscription = await Subscription.findByIdAndDelete(id)
+    const subscription = await (Subscription as any).findByIdAndDelete(id)
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -209,7 +209,7 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
   try {
     await dbConnect()
 
-    const subscriptions = await Subscription.find({ isActive: true })
+    const subscriptions = await (Subscription as any).find({ isActive: true })
       .populate({
         path: "treatmentId",
         select: "name category pricingType fixedPrice durations defaultDurationMinutes",

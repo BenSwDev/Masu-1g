@@ -6,7 +6,7 @@ import type { EmailRecipient, PhoneRecipient, NotificationLanguage } from "@/lib
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import PasswordResetToken from "@/lib/db/models/password-reset-token"
-import { sendOTP, verifyOTP } from "@/actions/notification-service"
+import { sendOTP, verifyOTP } from "@/lib/notifications/notification-service"
 import { randomBytes } from "crypto"
 
 /**

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions, hashPassword, verifyPassword, validateEmail, validatePhone } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
-import { sendOTP, verifyOTP } from "./notification-service"
+import { sendOTP, verifyOTP } from "@/lib/notifications/notification-service"
 import type { NotificationLanguage } from "@/lib/notifications/notification-types"
 
 export async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {

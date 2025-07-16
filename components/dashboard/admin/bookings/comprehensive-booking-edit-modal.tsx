@@ -204,7 +204,7 @@ export default function ComprehensiveBookingEditModal({
   const addressSnapshot = booking.bookingAddressSnapshot || booking.customAddressDetails
   
   // Payment data
-  const paymentMethod = booking.paymentDetails?.paymentMethodId as any
+  // Removed paymentMethodId - using CARDCOM only
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -862,20 +862,16 @@ export default function ComprehensiveBookingEditModal({
                     )}
                   </div>
 
-                  {paymentMethod && (
-                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="flex items-center gap-2 text-gray-800 mb-2">
-                        <CreditCard className="h-4 w-4" />
-                        <span className="font-medium">{t("adminBookings.paymentMethod")}</span>
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div><strong>{t("adminBookings.paymentType")}:</strong> {paymentMethod.type}</div>
-                        {paymentMethod.brand && <div><strong>{t("adminBookings.cardBrand")}:</strong> {paymentMethod.brand}</div>}
-                        {paymentMethod.last4 && <div><strong>{t("adminBookings.last4Digits")}:</strong> **** {paymentMethod.last4}</div>}
-                        <div><strong>{t("adminBookings.displayName")}:</strong> {paymentMethod.displayName}</div>
-                      </div>
+                  {/* Removed payment method display - using CARDCOM only */}
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-800 mb-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span className="font-medium">{t("adminBookings.paymentMethod")}</span>
                     </div>
-                  )}
+                    <div className="text-sm">
+                      <div><strong>סוג תשלום:</strong> כרטיס אשראי {booking.enhancedPaymentDetails?.cardLast4 && `(****${booking.enhancedPaymentDetails.cardLast4})`}</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -9,7 +9,7 @@ import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-s
 import Subscription, { type ISubscription } from "@/lib/db/models/subscription"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import User from "@/lib/db/models/user"
-import PaymentMethod from "@/lib/db/models/payment-method"
+// Removed PaymentMethod import - using CARDCOM only
 import mongoose from "mongoose"
 
 // Helper functions to check roles
@@ -280,7 +280,7 @@ export async function createUserSubscription(formData: FormData): Promise<Create
     // Check if user, subscription, and treatment exist
     const [user, subscription, treatment] = await Promise.all([
       User.findById(userId),
-      Subscription.findById(subscriptionId),
+      (Subscription as any).findById(subscriptionId),
       Treatment.findById(treatmentId)
     ])
 

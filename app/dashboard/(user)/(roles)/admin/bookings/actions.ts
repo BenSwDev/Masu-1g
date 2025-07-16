@@ -8,7 +8,7 @@ import Booking, { type IBooking, type BookingStatus } from "@/lib/db/models/book
 import User, { type IUser, UserRole } from "@/lib/db/models/user"
 import Review, { type IReview } from "@/lib/db/models/review"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
-import PaymentMethod, { type IPaymentMethod } from "@/lib/db/models/payment-method"
+// Removed PaymentMethod import - using CARDCOM only
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import Coupon from "@/lib/db/models/coupon"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
@@ -418,9 +418,8 @@ export async function getBookingInitialData(): Promise<GetBookingInitialDataResu
       .lean()
 
     // Get payment methods (system payment methods) - just get basic info
-    const paymentMethodsRaw = await PaymentMethod.find({ isSystemMethod: true })
-      .select("type displayName isActive")
-      .lean()
+    // Removed PaymentMethod - using CARDCOM only
+    const paymentMethodsRaw: any[] = []
 
     // Get working hours settings
     const workingHours = await WorkingHoursSettings.findOne().lean()

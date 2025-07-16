@@ -255,7 +255,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
                 notificationLanguage: "he",
               },
               userAddresses: [],
-              userPaymentMethods: [],
+              // Removed userPaymentMethods - using CARDCOM only
               workingHoursSettings: {},
               currentUser: {
                 id: "",
@@ -319,6 +319,12 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
             onConfirm={handlePurchase}
             onPrev={prevStep}
             isLoading={isLoading}
+            purchaseType="subscription"
+            purchaseDetails={{
+              treatmentName: treatments.find(t => t._id === selectedTreatmentId)?.name,
+              subscriptionName: subscriptions.find(s => s._id === selectedSubscriptionId)?.name,
+              treatmentQuantity: subscriptions.find(s => s._id === selectedSubscriptionId)?.quantity || 1,
+            }}
           />
         )
       default:

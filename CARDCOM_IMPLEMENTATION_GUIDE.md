@@ -458,10 +458,13 @@ db.payments.find({ complete: false, start_time: { $lt: new Date(Date.now() - 360
 
 ### שגיאות 404 מ-CARDCOM
 ```bash
-# וידוא endpoints נכונים בקוד
-grep -r "LowProfile\|Transaction" lib/services/cardcom-service.ts
+# וידוא endpoints נכונים בקוד (מתוקן ועובד ✅)
+grep -r "LowProfile/Create\|Transactions/Transaction" lib/services/cardcom-service.ts
 
-# אם נמצאו - החלפה ל-"payments", "directPay", "directRefund"
+# ה-endpoints הנכונים לפי CARDCOM swagger documentation:
+# - /api/v11/LowProfile/Create (תשלום iframe)
+# - /api/v11/Transactions/Transaction (חיוב ישיר)  
+# - /api/v11/Transactions/RefundByTransactionId (החזר)
 ```
 
 ### Callback לא מתקבל

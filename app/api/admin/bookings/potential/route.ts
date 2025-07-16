@@ -63,10 +63,9 @@ export async function GET(request: NextRequest) {
       .populate("treatmentId")
       .populate("userId")
       .populate("priceDetails.appliedCouponId")
-      .populate("priceDetails.appliedGiftVoucherId")
-      .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId")
-      .sort({ createdAt: -1 })
+              .populate("priceDetails.appliedGiftVoucherId")
+        .populate("priceDetails.redeemedUserSubscriptionId")
+        .sort({ createdAt: -1 })
       .lean()
 
     console.log(`Found ${unassignedBookings.length} unassigned bookings`)
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
 
       // Check professional's gender preference
       if (professionalProfile.genderPreference && professionalProfile.genderPreference !== "no_preference") {
-        const patientGender = booking.userId?.gender
+        const patientGender = (booking.userId as any)?.gender
         if (patientGender) {
           const professionalWantsMale = professionalProfile.genderPreference === "male_only"
           const professionalWantsFemale = professionalProfile.genderPreference === "female_only"

@@ -251,7 +251,6 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
       .populate("priceDetails.appliedCouponId")
       .populate("priceDetails.appliedGiftVoucherId")
       .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId")
       .lean()
 
     console.log(`Retrieved ${bookings.length} bookings after pagination`)
@@ -270,12 +269,17 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
           if (professionalProfile && professionalProfile.workAreas && professionalProfile.workAreas.length > 0) {
             // Find matching work area for this booking's city
             const bookingCity = booking.bookingAddressSnapshot?.city
-            const matchingWorkArea = professionalProfile.workAreas.find(area => 
-              area.cityName === bookingCity || area.coveredCities?.includes(bookingCity)
-            )
+            let matchingWorkArea: any = null
+            try {
+              matchingWorkArea = (professionalProfile.workAreas as any[]).find((area: any) => 
+                area.cityName === bookingCity || area.coveredCities?.includes(bookingCity)
+              )
+            } catch (error) {
+              console.error("Error finding matching work area:", error)
+            }
             
             // Add city and distance info to professional
-            (booking.professionalId as any).city = matchingWorkArea?.cityName || professionalProfile.workAreas[0].cityName || "לא צוין"
+            (booking.professionalId as any).city = matchingWorkArea?.cityName || (professionalProfile.workAreas[0] as any)?.cityName || "לא צוין"
             
             // Calculate distance if coordinates are available
             if (matchingWorkArea && 'coordinates' in matchingWorkArea && matchingWorkArea.coordinates && 
@@ -367,7 +371,6 @@ export async function getBookingById(bookingId: string): Promise<GetBookingByIdR
       .populate("priceDetails.appliedCouponId")
       .populate("priceDetails.appliedGiftVoucherId")
       .populate("priceDetails.redeemedUserSubscriptionId")
-      .populate("paymentDetails.paymentMethodId")
       .lean()
 
     if (!booking) {
@@ -422,7 +425,7 @@ export async function getBookingInitialData(): Promise<GetBookingInitialDataResu
     const paymentMethodsRaw: any[] = []
 
     // Get working hours settings
-    const workingHours = await WorkingHoursSettings.findOne().lean()
+    const workingHours = await (WorkingHoursSettings as any).findOne().lean()
 
     // Get active coupons
     const activeCoupons = await Coupon.find({
@@ -879,7 +882,6 @@ export async function createNewBooking(bookingData: {
       .populate("userId")
       .populate("priceDetails.appliedCouponId")
       .populate("priceDetails.appliedGiftVoucherId")
-      .populate("paymentDetails.paymentMethodId")
       .lean()
 
     revalidatePath("/dashboard/admin/bookings")
@@ -889,7 +891,7 @@ export async function createNewBooking(bookingData: {
       booking: {
         ...populatedBooking,
         _id: populatedBooking?._id?.toString() || "",
-      } as PopulatedBooking
+      } as unknown as PopulatedBooking
     }
   } catch (error) {
     logger.error("Error creating new booking:", error)
@@ -922,7 +924,6 @@ export async function sendReviewRequest(bookingId: string): Promise<SendReviewRe
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': `next-auth.session-token=${session.sessionToken}; next-auth.csrf-token=${session.csrfToken}`,
       },
     })
 

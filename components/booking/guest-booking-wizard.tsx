@@ -111,6 +111,7 @@ export default function UniversalBookingWizard({
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null)
   
   // Track redemption data for locked fields logic
   const [redemptionData, setRedemptionData] = useState<any>(null)
@@ -1264,8 +1265,9 @@ export default function UniversalBookingWizard({
         : await createGuestBooking(payload)
       
       if (result.success && result.booking) {
-        // ✅ No longer tracking pending booking ID
-        return String(result.booking._id)
+        const bookingId = String(result.booking._id)
+        setPendingBookingId(bookingId) // ✅ Track pending booking ID for payment
+        return bookingId
       } else {
         toast({
           variant: "destructive",
@@ -1285,30 +1287,64 @@ export default function UniversalBookingWizard({
       })
       return null
     }
-  }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments])
+  }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments, setPendingBookingId])
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
-    console.log("🎯 handleFinalSubmit called - creating final booking", { 
+    console.log("🎯 handleFinalSubmit called", { 
+      pendingBookingId,
       guestUserId,
       calculatedPrice: calculatedPrice?.finalAmount,
       currentStep 
     })
 
     setIsLoading(true)
-    console.log("⏳ Starting final booking creation...")
 
     try {
-      // ✅ Create the booking directly with confirmed status
-      const finalBookingId = await createFinalBooking()
-      if (!finalBookingId) {
-        console.error("❌ Failed to create final booking")
-        toast({
-          variant: "destructive",
-          title: "שגיאה ביצירת ההזמנה",
-          description: "לא ניתן ליצור את ההזמנה. אנא נסה שוב.",
-        })
-        return
+      let finalBookingId: string
+
+      if (pendingBookingId) {
+        // ✅ Update existing pending booking to paid status
+        console.log("⏳ Updating pending booking to paid status...")
+        const { updateBookingStatusAfterPayment } = await import("@/actions/booking-actions")
+        
+        // Generate transaction ID for successful payment
+        const isProduction = process.env.NODE_ENV === 'production'
+        const transactionId = isProduction 
+          ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
+          : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+        const updateResult = await updateBookingStatusAfterPayment(
+          pendingBookingId,
+          "success",
+          transactionId
+        )
+        
+        if (!updateResult.success) {
+          console.error("❌ Failed to update pending booking:", updateResult.error)
+          toast({
+            variant: "destructive",
+            title: "שגיאה בעדכון ההזמנה",
+            description: updateResult.error || "לא ניתן לעדכן את ההזמנה. אנא נסה שוב.",
+          })
+          return
+        }
+        
+        finalBookingId = pendingBookingId
+        console.log("✅ Pending booking updated successfully:", finalBookingId)
+      } else {
+        // ✅ Create new booking directly with confirmed status (fallback)
+        console.log("⏳ Creating final booking directly...")
+        finalBookingId = await createFinalBooking()
+        if (!finalBookingId) {
+          console.error("❌ Failed to create final booking")
+          toast({
+            variant: "destructive",
+            title: "שגיאה ביצירת ההזמנה",
+            description: "לא ניתן ליצור את ההזמנה. אנא נסה שוב.",
+          })
+          return
+        }
       }
       
       console.log("✅ Final booking created successfully:", finalBookingId)
@@ -1318,6 +1354,9 @@ export default function UniversalBookingWizard({
         localStorage.removeItem('guestUserId')
         console.log("🗑️ Cleared localStorage")
       }
+      
+      // Clear pending booking ID
+      setPendingBookingId(null)
       
       // Immediately redirect to booking details page
       console.log("🔄 Redirecting to booking details page")
@@ -1704,8 +1743,8 @@ export default function UniversalBookingWizard({
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}
-            createPendingBooking={undefined} // ✅ No longer needed - we create final booking directly
-            pendingBookingId={null} // ✅ No longer needed
+            createPendingBooking={createPendingBooking} // ✅ Restored for real payment flow
+            pendingBookingId={pendingBookingId} // ✅ Pass pending booking ID
             isRedeeming={Boolean(voucher || userSubscription)}
           />
         )

@@ -209,7 +209,7 @@ export function GuestPaymentStep({
     setIsPaymentLoading(true);
 
     try {
-      // Create booking if needed
+      // Create booking if needed (for backward compatibility)
       let finalBookingId = pendingBookingId;
       if (createPendingBooking && !finalBookingId) {
         finalBookingId = await createPendingBooking();
@@ -218,10 +218,12 @@ export function GuestPaymentStep({
         }
       }
 
+      // ✅ If no booking ID is available after creating pending booking, show error
       if (!finalBookingId) {
-        throw new Error("No booking ID available");
+        throw new Error("No booking ID available - failed to create pending booking");
       }
 
+      // ✅ For existing bookings with booking ID - proceed with payment API call
       // Update guest info with consents
       const customerAlertsMethod = bookerNotificationMethod === "both" ? "email" as const : 
                                   bookerNotificationMethod === "sms" ? "sms" as const : "email" as const;

@@ -23,19 +23,19 @@ interface CardcomDocument {
 
 // Low Profile (iframe) payment request
 interface LowProfileRequest {
-  TerminalNumber: string
-  APIKey: string
-  Operation: 1 // תמיד 1 לחיוב
-  Currency: 1 // תמיד 1 לשקלים
-  Sum: number
-  Description: string
+  TerminalNumber: number // Integer as required by CARDCOM
+  ApiName: string // Correct field name per CARDCOM API
+  Operation?: "ChargeOnly" // Default operation type
+  Amount: number // CARDCOM expects "Amount" not "Sum"
   ReturnValue: string // מזהה התשלום שלנו
   SuccessRedirectUrl: string
-  ErrorRedirectUrl: string
+  FailedRedirectUrl: string // CARDCOM expects "FailedRedirectUrl" not "ErrorRedirectUrl"
+  WebHookUrl: string // Required field for callbacks
+  ProductName?: string // Optional product description
   CustomerName?: string
   CustomerEmail?: string
   CustomerPhone?: string
-  Language: "he" // עברית
+  Language?: "he" // עברית
   Document?: CardcomDocument // Optional document creation
 }
 
@@ -168,15 +168,15 @@ class CardcomService {
       const errorUrl = params.errorUrl || `${callbackUrl}?status=error&paymentId=${params.paymentId}`
       
       const payload: LowProfileRequest = {
-        TerminalNumber: this.config.terminal,
-        APIKey: this.config.apiToken,
-        Operation: 1,
-        Currency: 1,
-        Sum: params.amount,
-        Description: params.description,
+        TerminalNumber: parseInt(this.config.terminal),
+        ApiName: this.config.apiToken,
+        Operation: "ChargeOnly",
+        Amount: params.amount,
+        ProductName: params.description,
         ReturnValue: params.paymentId,
         SuccessRedirectUrl: successUrl,
-        ErrorRedirectUrl: errorUrl,
+        FailedRedirectUrl: errorUrl,
+        WebHookUrl: callbackUrl, // Required callback URL
         CustomerName: params.customerName,
         CustomerEmail: params.customerEmail,
         CustomerPhone: params.customerPhone,
@@ -561,15 +561,15 @@ class CardcomService {
     try {
       // נבצע בקשת תשלום מדומה לבדיקת החיבור
       const testPayload: LowProfileRequest = {
-        TerminalNumber: this.config.terminal,
-        APIKey: this.config.apiToken,
-        Operation: 1,
-        Currency: 1,
-        Sum: 1, // שקל אחד לבדיקה
-        Description: "בדיקת חיבור",
+        TerminalNumber: parseInt(this.config.terminal),
+        ApiName: this.config.apiToken,
+        Operation: "ChargeOnly",
+        Amount: 1, // שקל אחד לבדיקה
+        ProductName: "בדיקת חיבור",
         ReturnValue: "test_connection_" + Date.now(),
         SuccessRedirectUrl: "https://example.com/success",
-        ErrorRedirectUrl: "https://example.com/error",
+        FailedRedirectUrl: "https://example.com/error",
+        WebHookUrl: "https://example.com/webhook",
         Language: "he"
       }
 

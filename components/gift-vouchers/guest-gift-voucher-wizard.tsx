@@ -20,7 +20,7 @@ import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface Props {
   treatments: ITreatment[]
-  currentUser: any
+  currentUser?: any
 }
 
 export default function GuestGiftVoucherWizard({ treatments, currentUser }: Props) {

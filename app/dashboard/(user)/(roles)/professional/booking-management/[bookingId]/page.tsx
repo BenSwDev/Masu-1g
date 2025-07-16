@@ -267,7 +267,7 @@ export default function ProfessionalBookingManagementPage() {
             )}
           </div>
 
-          {((booking.status !== "pending_professional_assignment" && isAssignedToCurrentPro) ||
+          {((booking.status !== "pending_professional" && isAssignedToCurrentPro) ||
             session?.user.roles.includes("admin")) && (
             <div>
               <h3 className="font-semibold text-lg mb-2">{t("professionalBookingManagement.clientDetails.title")}</h3>

@@ -43,7 +43,7 @@ export default async function GuestBookGiftVoucherPage() {
 
   return (
     <GuestLayout>
-      <GuestGiftVoucherWizard treatments={treatments} />
+      <GuestGiftVoucherWizard treatments={treatments} currentUser={null} />
     </GuestLayout>
   )
 } 

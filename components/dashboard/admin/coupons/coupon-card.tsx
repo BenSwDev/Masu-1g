@@ -22,7 +22,7 @@ interface CouponCardProps {
   coupon: ICoupon & { effectiveStatus: string }
   onEdit: (coupon: ICoupon & { effectiveStatus: string }) => void
   onDelete: (couponId: string) => void
-  t: TFunction
+  t: (key: string, options?: any) => string
   dir: "ltr" | "rtl"
 }
 

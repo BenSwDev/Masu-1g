@@ -31,7 +31,7 @@ export const getPartnerName = (partner: any, t: TFunction): string => {
   return partner.name || partner.email || t("adminPartnerCouponBatches.columns.partnerUnnamed")
 }
 
-export const StatusBadge = ({ status, t, dir }: { status: string; t: TFunction; dir: "ltr" | "rtl" }) => {
+export const StatusBadge = ({ status, t, dir }: { status: string; t: (key: string, options?: any) => string; dir: "ltr" | "rtl" }) => {
   switch (status) {
     case "active":
       return (

@@ -130,7 +130,6 @@ export default async function BookingConfirmationPage({ searchParams }: Props) {
                 notificationLanguage: "he",
               },
               userAddresses: [],
-              userPaymentMethods: [],
               workingHoursSettings: {},
               currentUser: {
                 id: "",

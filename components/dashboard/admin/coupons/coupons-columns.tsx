@@ -19,18 +19,18 @@ import type { TFunction } from "i18next" // Or the type from your i18n setup
 interface CouponColumnsProps {
   onEdit: (coupon: ICoupon & { effectiveStatus: string }) => void
   onDelete: (couponId: string) => void
-  t: TFunction // Or (key: string, options?: any) => string;
+  t: (key: string, options?: any) => string
   dir: "ltr" | "rtl"
 }
 
 // Helper to get populated partner name
-export const getPartnerName = (partner: any, t: TFunction): string => {
+export const getPartnerName = (partner: any, t: (key: string, options?: any) => string): string => {
   if (!partner) return t("adminCoupons.columns.partnerNotAssigned")
   if (typeof partner === "string") return t("adminCoupons.columns.partnerLoading") // Assuming string ID means loading
   return partner.name || partner.email || t("adminCoupons.columns.partnerUnnamed")
 }
 
-export const StatusBadge = ({ status, t, dir }: { status: string; t: TFunction; dir: "ltr" | "rtl" }) => {
+export const StatusBadge = ({ status, t, dir }: { status: string; t: (key: string, options?: any) => string; dir: "ltr" | "rtl" }) => {
   switch (status) {
     case "active":
       return (

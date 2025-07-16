@@ -119,7 +119,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const selectedSubscription = subscriptions.find(s => s._id === selectedSubscriptionId)
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
-    selectedTreatment.durations?.find(d => d._id === selectedDurationId) : undefined
+    selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId) : undefined
 
   // Calculate price
   const pricePerSession = selectedTreatment?.pricingType === "fixed" ? 
@@ -305,11 +305,11 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           <div className="grid gap-3">
             {subscriptions.map((sub) => (
               <div
-                key={sub._id}
+                key={sub._id as string}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedSubscriptionId === sub._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                  selectedSubscriptionId === (sub._id as string) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                 }`}
-                onClick={() => setSelectedSubscriptionId(sub._id)}
+                onClick={() => setSelectedSubscriptionId(sub._id as string)}
               >
                 <div className="flex justify-between items-center">
                   <div>
@@ -371,12 +371,12 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
             <div className="grid gap-3">
               {categoryTreatments.map((treatment) => (
                 <div
-                  key={treatment._id}
+                  key={treatment._id as string}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    selectedTreatmentId === treatment._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                    selectedTreatmentId === (treatment._id as string) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                   }`}
                   onClick={() => {
-                    setSelectedTreatmentId(treatment._id)
+                    setSelectedTreatmentId(treatment._id as string)
                     setSelectedDurationId("")
                   }}
                 >
@@ -403,11 +403,11 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
             <div className="grid grid-cols-2 gap-3">
               {selectedTreatment.durations.filter(d => d.isActive).map((duration) => (
                 <div
-                  key={duration._id}
+                  key={duration._id.toString()}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
-                    selectedDurationId === duration._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                    selectedDurationId === duration._id.toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                   }`}
-                  onClick={() => setSelectedDurationId(duration._id)}
+                  onClick={() => setSelectedDurationId(duration._id.toString())}
                 >
                   <div className="font-medium">{duration.minutes} דקות</div>
                   <div className="font-bold text-blue-600">₪{duration.price}</div>

@@ -31,7 +31,7 @@ export default function GuestGiftVoucherPageContent({ success, treatments }: Gue
 
   return (
     <GuestLayout>
-      <GuestGiftVoucherWizard treatments={treatments} />
+      <GuestGiftVoucherWizard treatments={treatments} currentUser={null} />
     </GuestLayout>
   )
 }

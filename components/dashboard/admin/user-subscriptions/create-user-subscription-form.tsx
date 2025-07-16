@@ -213,7 +213,7 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
                   <SelectContent>
                     {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.map((duration) => (
                       <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
-                        {duration.minutes} דקות - ₪{duration.price}
+                        {(duration as any).minutes || 'N/A'} דקות - ₪{(duration as any).price || 0}
                       </SelectItem>
                     ))}
                   </SelectContent>

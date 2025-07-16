@@ -241,7 +241,7 @@ export function GuestPaymentStep({
       };
       setGuestInfo(updatedGuestInfo);
 
-              // Create payment with credit card processing
+      // Create payment with credit card processing
       // ✅ יצירת תיאור דינמי לפי סוג הרכישה
       let description = `הזמנה ${finalBookingId}`;
       

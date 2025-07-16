@@ -58,7 +58,7 @@ process.env.CARDCOM_TEST_MODE = "false"
 
 ```typescript
 // יצירת תשלום iframe
-POST /api/v11/payments  // ✅ עובד (לא LowProfile)
+POST /api/v11/LowProfile  // ✅ עובד לפי הדוקומנטציה הרשמית
 
 // חיוב ישיר עם טוקן  
 POST /api/v11/directPay  // ✅ עובד 
@@ -67,7 +67,7 @@ POST /api/v11/directPay  // ✅ עובד
 POST /api/v11/directRefund  // ✅ עובד
 ```
 
-**הערה חשובה**: endpoints כמו `/LowProfile` ו-`/Transaction` נתנו שגיאות 404, לכן המעבר ל-endpoints הנוכחיים.
+**הערה חשובה**: לפי הדוקומנטציה הרשמית ב-swagger, endpoint `/LowProfile` הוא הנכון ליצירת תשלומי iframe.
 
 ## מבנה הנתונים
 

@@ -181,7 +181,7 @@ class CardcomService {
         customerEmail: params.customerEmail
       })
 
-      const response = await this.sendRequest("payments", payload)
+      const response = await this.sendRequest("LowProfile", payload)
       return this.handleResponse(response)
     } catch (error) {
       logger.error("CARDCOM createLowProfilePayment error", {
@@ -408,7 +408,7 @@ class CardcomService {
     const mockToken = "TOK_" + Math.random().toString(36).substr(2, 16)
 
     switch (endpoint) {
-      case "payments":
+      case "LowProfile":
         return {
           ...baseResponse,
           url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback?status=success&paymentId=${data.ReturnValue}&complete=1&token=1&sum=${data.Sum}&mock=true&Token=${mockToken}&Last4=1234`,
@@ -548,7 +548,7 @@ class CardcomService {
       }
 
       // בדיקת חיבור אמיתית
-      const response = await this.sendRequest("payments", testPayload)
+      const response = await this.sendRequest("LowProfile", testPayload)
       
       if (response.ResponseCode === "0") {
         return { success: true }

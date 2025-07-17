@@ -1005,7 +1005,7 @@ async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
         if (purchaser) {
           const lang = purchaser.notificationPreferences?.language || "he"
           const methods = purchaser.notificationPreferences?.methods || ["sms", "email"]
-          const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+          const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://v0-masu-lo.vercel.app"
 
           let messageContent: string
           

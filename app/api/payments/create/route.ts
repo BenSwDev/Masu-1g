@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
     // יצירת מזהה תשלום ייחודי
     const paymentId = crypto.randomUUID()
 
-    // יצירת URL אחיד להפניה לקבלת תוצאות
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    // Generate callback URLs for CARDCOM
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"
     const callbackUrl = `${baseUrl}/api/payments/callback?paymentId=${paymentId}`
 
     logger.info("Creating CARDCOM payment URL", {

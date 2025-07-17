@@ -277,7 +277,7 @@ async function purchaseSubscription({
       if (purchaser) {
         const lang = purchaser.notificationPreferences?.language || "he"
         const methods = purchaser.notificationPreferences?.methods || ["sms", "email"]
-        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://v0-masu-lo.vercel.app"
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
         const messageHe = `שלום ${purchaser.name}, תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.`
         const messageEn = `Hello ${purchaser.name}, thank you for your purchase! Your subscription code: ${newUserSubscription.code}\nUse this code to book treatments.`

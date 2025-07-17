@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     if (!paymentId && !returnValue) {
       logger.error("Payment callback missing identifiers")
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=error&complete=0&reason=missing_identifiers`)
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"}/payment-success?status=error&complete=0&reason=missing_identifiers`)
     }
 
     // חיפוש התשלום
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     
     if (!payment) {
       logger.error("Payment not found", { paymentId: finalPaymentId })
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?status=error&complete=0&reason=payment_not_found`)
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"}/payment-success?status=error&complete=0&reason=payment_not_found`)
     }
 
     const isSuccess = status === "success" && complete === "1"
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
           })
           
           // במקרה של כישלון ביצירת booking, נציין זאת בresponse
-          const errorUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_failed`
+          const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_failed`
           return NextResponse.redirect(errorUrl)
         }
       } catch (error) {
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
           error: error instanceof Error ? error.message : String(error)
         })
         
-        const errorUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_exception`
+        const errorUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_exception`
         return NextResponse.redirect(errorUrl)
       }
     }
@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
     }
 
     // הפניה לעמוד תוצאות אחיד (מצב רגיל)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"
     const reason = searchParams.get("reason") || (isSuccess ? undefined : "payment_failed")
     
     const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${finalBookingId}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     })
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"
     return NextResponse.redirect(`${baseUrl}/payment-success?status=error&complete=0&reason=internal_error`)
   }
 }
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : String(error)
     })
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "https://v0-masu-lo.vercel.app"
     return NextResponse.redirect(`${baseUrl}/payment-success?status=error&complete=0&reason=callback_error`)
   }
 } 

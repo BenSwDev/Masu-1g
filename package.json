@@ -25,6 +25,7 @@
     "cardcom:production-test": "tsx scripts/test-production-setup.ts",
     "cardcom:check-env": "tsx scripts/check-env-vars.ts",
     "cardcom:test-all": "npm run cardcom:quick && npm run cardcom:health && npm run cardcom:real-world",
+    "cardcom:test-mode": "tsx scripts/cardcom-test-mode-check.ts",
     "test:production-flow": "tsx scripts/test-production-payment-flow.ts",
     "test:production-flow:simple": "node scripts/run-production-test.mjs"
   },

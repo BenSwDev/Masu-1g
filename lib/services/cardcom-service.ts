@@ -117,7 +117,7 @@ class CardcomService {
       terminal: process.env.CARDCOM_TERMINAL || "125566",
       apiToken: process.env.CARDCOM_API_TOKEN || "Q3ZqTMTZGrSIKjktQrfN",  
       baseUrl: process.env.CARDCOM_BASE_URL || "https://secure.cardcom.solutions/api/v11",
-      testMode: process.env.CARDCOM_TEST_MODE === "false"
+      testMode: process.env.CARDCOM_TEST_MODE === "true"
     }
     
     // ✅ Log CARDCOM configuration for debugging
@@ -167,7 +167,7 @@ class CardcomService {
 
     try {
       // URLs לתוצאות תשלום - הפניה ל-callback API עם פרמטרים
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL
       const callbackUrl = `${baseUrl}/api/payments/callback`
       const drawerParam = params.drawerMode ? "&drawer=true" : ""
       const successUrl = params.successUrl || `${callbackUrl}?status=success&paymentId=${params.paymentId}${drawerParam}`

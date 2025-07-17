@@ -96,13 +96,15 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
     treatmentDisplay += ` (${data.treatmentDuration} דקות)`
   }
 
-  // Check if this is an admin assignment (based on presence of responseId indicating pre-created response)
-  const isAdminAssigned = !!data.responseId
+  // ✅ FIX: Correct way to detect admin assignment vs availability notification
+  // Admin assignment is when responseMethod is explicitly set to "admin_assignment"
+  const isAdminAssigned = data.responseMethod === "admin_assignment"
 
   let message: string
   switch (language) {
     case "he":
       if (isAdminAssigned) {
+        // Message for direct admin assignment
         message = `🎯 ההזמנה שוייכה אליך!
 
 📋 טיפול: ${treatmentDisplay}
@@ -117,44 +119,82 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
 
 או הכנס לאפליקציה: masu.co.il`
       } else {
-        message = `🔔 הזמנה חדשה זמינה!
+        // Message for booking availability notification
+        message = `🔔 הזמנה חדשה זמינה לשיוך!
 
 📋 טיפול: ${treatmentDisplay}
 📅 תאריך: ${bookingDate}
 🕐 שעה: ${bookingTime}
 📍 עיר: ${city}
 
-✅ לקבלת ההזמנה: ${responseUrl}?action=accept
+💡 ההזמנה זמינה לשיוך - כל עוד לא נתפסה על ידי מטפל אחר
+
+🔗 לצפייה ואישור: ${responseUrl}
 
 או הכנס לאפליקציה: masu.co.il`
       }
       break
     case "ru":
-      message = `🔔 Доступен новый заказ!
+      if (isAdminAssigned) {
+        message = `🎯 Заказ назначен вам!
+
+📋 Процедура: ${treatmentDisplay}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📍 Адрес: ${data.address || city}
+
+✅ Администратор системы назначил вам заказ
+💡 Заказ подтвержден и готов к выполнению
+
+🔗 Войти в систему: ${responseUrl}
+
+или войдите в приложение: masu.co.il`
+      } else {
+        message = `🔔 Доступен новый заказ!
 
 📋 Процедура: ${treatmentDisplay}
 📅 Дата: ${bookingDate}
 🕐 Время: ${bookingTime}
 📍 Город: ${city}
 
-✅ Принять заказ: ${responseUrl}?action=accept
+💡 Заказ доступен для назначения - пока не занят другим специалистом
 
-Или войдите в приложение: masu.co.il`
+🔗 Просмотр и подтверждение: ${responseUrl}
+
+или войдите в приложение: masu.co.il`
+      }
       break
     default: // English
-      message = `🔔 New booking available!
+      if (isAdminAssigned) {
+        message = `🎯 Booking assigned to you!
+
+📋 Treatment: ${treatmentDisplay}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📍 Address: ${data.address || city}
+
+✅ System administrator assigned you this booking
+💡 Booking is confirmed and ready for treatment
+
+🔗 Access treatment page: ${responseUrl}
+
+or enter the app: masu.co.il`
+      } else {
+        message = `🔔 New booking available!
 
 📋 Treatment: ${treatmentDisplay}
 📅 Date: ${bookingDate}
 🕐 Time: ${bookingTime}
 📍 City: ${city}
 
-✅ Accept booking: ${responseUrl}?action=accept
+💡 Booking available for assignment - until taken by another professional
 
-Or enter the app: masu.co.il`
+🔗 View and confirm: ${responseUrl}
+
+or enter the app: masu.co.il`
+      }
   }
-  
-  return message
+  return message + smsSignature
 }
 
 // OTP SMS Template

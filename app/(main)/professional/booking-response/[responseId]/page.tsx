@@ -176,7 +176,7 @@ export default function ProfessionalResponsePage() {
       pending: { label: "ממתין לתגובה", color: "bg-yellow-100 text-yellow-800" },
       accepted: { label: "התקבל", color: "bg-green-100 text-green-800" },
       declined: { label: "נדחה", color: "bg-red-100 text-red-800" },
-      expired: { label: "פג תוקף", color: "bg-gray-100 text-gray-800" },
+      expired: { label: "לא זמין", color: "bg-gray-100 text-gray-800" }, // Changed from "פג תוקף" to "לא זמין"
       pending_professional: { label: "ממתין לשיוך מטפל", color: "bg-orange-100 text-orange-800" },
       confirmed: { label: "מאושר", color: "bg-green-100 text-green-800" },
       on_way: { label: "בדרך", color: "bg-blue-100 text-blue-800" },
@@ -205,9 +205,9 @@ export default function ProfessionalResponsePage() {
       if (status === "declined") {
         alertMessage = "דחית את ההזמנה הזו"
       }
-      // אם התגובה פגה
+      // אם התגובה לא זמינה יותר (במקום "פג תוקף")
       else if (status === "expired") {
-        alertMessage = "פג תוקף התגובה - ההזמנה נתפסה על ידי מטפל אחר"
+        alertMessage = "ההזמנה כבר לא זמינה - נתפסה על ידי מטפל אחר"
       }
       // אם הטיפול הסתיים
       else if (["completed", "cancelled"].includes(bookingCurrentStatus)) {

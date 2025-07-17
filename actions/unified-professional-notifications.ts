@@ -202,7 +202,8 @@ async function sendUnifiedProfessionalNotifications(
           address,
           price,
           responseLink,
-          responseId: response._id.toString()
+          responseId: response._id.toString(),
+          responseMethod: response.responseMethod // ✅ Pass responseMethod to templates for correct message detection
         }
 
         let emailSent = false

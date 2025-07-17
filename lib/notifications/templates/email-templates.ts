@@ -38,6 +38,7 @@ export interface EmailNotificationData {
   // Professional booking notification fields
   responseLink?: string
   responseId?: string // Added to support admin assignment detection
+  responseMethod?: string // Added to detect admin assignment vs availability notification
   price?: number
   professionalName?: string
   clientName?: string
@@ -815,8 +816,9 @@ ${data.paymentDetails ? `
       )
       const responseLink = data.responseLink || "https://masu.co.il"
       
-      // Check if this is an admin assignment (based on presence of responseId indicating pre-created response)
-      const isAdminAssigned = !!data.responseId
+      // ✅ FIX: Correct way to detect admin assignment vs availability notification
+      // Admin assignment is when responseMethod is explicitly set to "admin_assignment"
+      const isAdminAssigned = data.responseMethod === "admin_assignment"
       
       if (isAdminAssigned) {
         subject = language === "he" ? "ההזמנה שוייכה אליך!" : language === "ru" ? "Заказ назначен вам!" : "Booking assigned to you!"
@@ -847,18 +849,30 @@ ${data.paymentDetails ? `
         text = textContent
         html = wrapHtml(htmlContent, subject)
       } else {
-        subject = language === "he" ? "הזמנה חדשה זמינה" : language === "ru" ? "Доступен новый заказ" : "New booking available"
+        subject = language === "he" ? "הזמנה חדשה זמינה לשיוך!" : language === "ru" ? "Доступен новый заказ!" : "New booking available!"
         const textContent =
           (language === "he"
-            ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address || data.bookingAddress}.\nלהשיב להזמנה: ${responseLink}`
+            ? `שלום,\n\n🔔 הזמנה חדשה לטיפול ${data.treatmentName} זמינה לשיוך!\n\nפרטי ההזמנה:\n📅 תאריך: ${formattedDate}\n🕐 שעה: ${formattedTime}\n📍 עיר: ${data.address ? data.address.split(',').pop().trim() : ""}\n\n💡 ההזמנה זמינה לשיוך - כל עוד לא נתפסה על ידי מטפל אחר\n\nלצפייה ואישור: ${responseLink}`
             : language === "ru"
-              ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address || data.bookingAddress}.\nОтветить на заказ: ${responseLink}`
-              : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address || data.bookingAddress} is available.\nRespond here: ${responseLink}`) +
+              ? `Здравствуйте,\n\n🔔 Доступен новый заказ на процедуру ${data.treatmentName}!\n\nДетали заказа:\n📅 Дата: ${formattedDate}\n🕐 Время: ${formattedTime}\n📍 Город: ${data.address ? data.address.split(',').pop().trim() : ""}\n\n💡 Заказ доступен для назначения - пока не занят другим специалистом\n\nПросмотр и подтверждение: ${responseLink}`
+              : `Hello,\n\n🔔 A new booking for ${data.treatmentName} is available!\n\nBooking details:\n📅 Date: ${formattedDate}\n🕐 Time: ${formattedTime}\n📍 City: ${data.address ? data.address.split(',').pop().trim() : ""}\n\n💡 Booking available for assignment - until taken by another professional\n\nView and confirm: ${responseLink}`) +
           emailTextSignature
         const htmlContent = `
-          <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
-          <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address || data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address || data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address || data.bookingAddress} is available.`}</p>
-          <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
+          <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 24px;">🔔 ${language === "he" ? "הזמנה חדשה זמינה לשיוך!" : language === "ru" ? "Доступен новый заказ!" : "New booking available!"}</h2>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">${language === "he" ? "הזמנה חדשה ממתינה לשיוך מטפל" : language === "ru" ? "Новый заказ ожидает назначения специалиста" : "New booking waiting for professional assignment"}</p>
+          </div>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #1f2937;">${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</strong> ${data.treatmentName}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</strong> ${formattedTime}</p>
+            <p style="margin: 5px 0;"><strong>${language === "he" ? "עיר:" : language === "ru" ? "Город:" : "City:"}</strong> ${data.address ? data.address.split(',').pop().trim() : ""}</p>
+          </div>
+          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #d97706;"><strong>💡 ${language === "he" ? "ההזמנה זמינה לשיוך - כל עוד לא נתפסה על ידי מטפל אחר" : language === "ru" ? "Заказ доступен для назначения - пока не занят другим специалистом" : "Booking available for assignment - until taken by another professional"}</strong></p>
+          </div>
+          <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה ואישור" : language === "ru" ? "Просмотр и подтверждение" : "View & Confirm"}</a></p>
         `
         text = textContent
         html = wrapHtml(htmlContent, subject)

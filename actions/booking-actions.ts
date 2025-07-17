@@ -2418,7 +2418,8 @@ export async function assignProfessionalToBooking(
             address: assignedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
             price: assignedBooking.priceDetails?.finalAmount || 0,
             responseLink,
-            responseId: response._id.toString()
+            responseId: response._id.toString(),
+            responseMethod: "admin_assignment" // ✅ Indicate this is an admin assignment for correct message
           }
 
           const professionalRecipients = []

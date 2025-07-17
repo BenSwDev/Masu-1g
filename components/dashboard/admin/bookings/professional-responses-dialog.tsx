@@ -235,18 +235,6 @@ export function ProfessionalResponsesDialog({
                         </div>
                       )}
 
-                      {response.status === "pending" && (
-                        <div className="text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                            פג תוקף {formatDistanceToNow(new Date(response.expiresAt), { 
-                              addSuffix: true, 
-                              locale: he 
-                            })}
-                          </div>
-                        </div>
-                      )}
-
                       {response.smsMessageId && (
                         <div className="text-xs text-muted-foreground">
                           מזהה הודעה: {response.smsMessageId}

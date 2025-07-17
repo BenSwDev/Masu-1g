@@ -166,12 +166,13 @@ class CardcomService {
     }
 
     try {
-      // URLs לתוצאות תשלום - הפניה ל-callback API עם פרמטרים
+      // URLs לתוצאות תשלום - הפניה לעמוד שמטפל ב-drawer communication
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL
       const callbackUrl = `${baseUrl}/api/payments/callback`
       const drawerParam = params.drawerMode ? "&drawer=true" : ""
-      const successUrl = params.successUrl || `${callbackUrl}?status=success&paymentId=${params.paymentId}${drawerParam}`
-      const errorUrl = params.errorUrl || `${callbackUrl}?status=error&paymentId=${params.paymentId}${drawerParam}`
+      // שינוי: Success URL מפנה לעמוד שמתקשר עם drawer
+      const successUrl = params.successUrl || `${baseUrl}/payment/success?paymentId=${params.paymentId}${drawerParam}`
+      const errorUrl = params.errorUrl || `${baseUrl}/payment/success?paymentId=${params.paymentId}&error=true${drawerParam}`
       
       const payload: LowProfileRequest = {
         TerminalNumber: parseInt(this.config.terminal),

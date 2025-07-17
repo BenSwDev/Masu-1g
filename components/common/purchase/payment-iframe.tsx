@@ -162,7 +162,7 @@ export function PaymentIframe({
         onLoad={handleIframeLoad}
         onError={handleIframeError}
         title="דף תשלום מאובטח"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation allow-modals allow-popups"
       />
       
       {/* חיווי בטיחות */}

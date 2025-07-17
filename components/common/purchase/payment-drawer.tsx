@@ -203,7 +203,7 @@ export function PaymentDrawer({
                   onLoad={handleIframeLoad}
                   onError={handleIframeError}
                   title="דף תשלום מאובטח"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation allow-modals allow-popups"
                 />
                 
                 {/* Security indicators */}
@@ -260,7 +260,7 @@ export function PaymentDrawer({
                   onLoad={handleIframeLoad}
                   onError={handleIframeError}
                   title="דף תשלום מאובטח"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation allow-modals allow-popups"
                 />
                 
                 {/* Security indicators */}

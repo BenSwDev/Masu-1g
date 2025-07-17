@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { 
-      bookingId, 
+      bookingId, // יכול להיות null עבור payment-first flow
       amount, 
       description, 
       customerName, 
@@ -20,11 +20,22 @@ export async function POST(request: NextRequest) {
       type, // booking, subscription, gift_voucher
       createDocument, // האם ליצור מסמך (חשבונית)
       documentType, // סוג המסמך
-      drawerMode // האם להשתמש במצב drawer
+      drawerMode, // האם להשתמש במצב drawer
+      // ✅ נתונים חדשים עבור payment-first flow
+      bookingData, // כל נתוני הbooking לשמירה עתידית
+      paymentFirst = false // האם זה payment-first flow
     } = body
 
-    // ולידציה
-    if (!bookingId || !amount || amount <= 0) {
+    // ולידציה בסיסית
+    if (!amount || amount <= 0) {
+      return NextResponse.json(
+        { success: false, error: "נתונים חסרים או לא תקינים" },
+        { status: 400 }
+      )
+    }
+
+    // עבור payment-first flow, לא נדרש bookingId
+    if (!paymentFirst && !bookingId) {
       return NextResponse.json(
         { success: false, error: "נתונים חסרים או לא תקינים" },
         { status: 400 }
@@ -34,44 +45,22 @@ export async function POST(request: NextRequest) {
     // יצירת מזהה תשלום ייחודי
     const paymentId = crypto.randomUUID()
 
-    // יצירת רשומת תשלום ב-MongoDB
-    const payment = new Payment({
-      _id: paymentId,
-      order_id: bookingId,
-      booking_id: bookingId,
-      sum: amount,
-      pay_type: "ccard",
-      sub_type: "token",
-      input_data: {
-        bookingId,
-        amount,
-        description,
-        customerName,
-        customerEmail,
-        customerPhone,
-        type: type || 'booking', // default to booking if not specified
-        timestamp: new Date().toISOString()
-      },
-      start_time: new Date()
-    })
-
-    await payment.save()
-
     // יצירת URL אחיד להפניה לקבלת תוצאות
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const callbackUrl = `${baseUrl}/api/payments/callback?paymentId=${paymentId}`
 
-    logger.info("Creating payment", {
+    logger.info("Creating CARDCOM payment URL", {
       paymentId,
-      bookingId,
+      bookingId: bookingId || "payment-first",
       amount,
-      customerEmail
+      customerEmail,
+      paymentFirst
     })
 
-    // קריאה ל-CARDCOM
+    // 🔧 קודם קוראים ל-CARDCOM, רק אחר כך יוצרים Payment record
     const cardcomResult = await cardcomService.createLowProfilePayment({
       amount,
-      description: description || `הזמנת טיפול - הזמנה ${bookingId}`,
+      description: description || `הזמנת טיפול - תשלום ${paymentId}`,
       paymentId,
       customerName,
       customerEmail,
@@ -84,26 +73,50 @@ export async function POST(request: NextRequest) {
     })
 
     if (cardcomResult.success && cardcomResult.data?.url) {
-      logger.info("Payment created successfully", {
+      // ✅ רק עכשיו יוצרים Payment record - אחרי שCARDCOM הצליח
+      const payment = new Payment({
+        _id: paymentId,
+        order_id: bookingId || paymentId, // אם אין booking, נשתמש בpaymentId
+        booking_id: bookingId, // יכול להיות null
+        sum: amount,
+        pay_type: "ccard",
+        sub_type: "token",
+        input_data: {
+          bookingId: bookingId || null,
+          amount,
+          description,
+          customerName,
+          customerEmail,
+          customerPhone,
+          type: type || 'booking',
+          timestamp: new Date().toISOString(),
+          paymentFirst,
+          // ✅ שמירת נתוני booking לעיבוד עתידי
+          bookingData: paymentFirst ? bookingData : undefined
+        },
+        start_time: new Date(),
+        cardcom_url: cardcomResult.data.url,
+        low_profile_code: cardcomResult.data.LowProfileCode
+      })
+
+      await payment.save()
+
+      logger.info("Payment URL created successfully", {
         paymentId,
-        redirectUrl: cardcomResult.data.url
+        redirectUrl: cardcomResult.data.url,
+        paymentFirst
       })
 
       return NextResponse.json({
         success: true,
         paymentId,
         redirectUrl: cardcomResult.data.url,
-        lowProfileCode: cardcomResult.data.LowProfileCode
+        lowProfileCode: cardcomResult.data.LowProfileCode,
+        paymentFirst
       })
     } else {
-      // עדכון הרשומה עם השגיאה
-      await Payment.findByIdAndUpdate(paymentId, {
-        result_data: cardcomResult,
-        end_time: new Date(),
-        complete: false
-      })
-
-      logger.error("Failed to create payment", {
+      // ❌ אם CARDCOM נכשל - לא יוצרים Payment record בכלל
+      logger.error("Failed to create CARDCOM payment URL", {
         paymentId,
         error: cardcomResult.error,
         fullCardcomResult: cardcomResult,

@@ -24,7 +24,9 @@
     "cardcom:debug": "tsx scripts/cardcom-debug-response.ts",
     "cardcom:production-test": "tsx scripts/test-production-setup.ts",
     "cardcom:check-env": "tsx scripts/check-env-vars.ts",
-    "cardcom:test-all": "npm run cardcom:quick && npm run cardcom:health && npm run cardcom:real-world"
+    "cardcom:test-all": "npm run cardcom:quick && npm run cardcom:health && npm run cardcom:real-world",
+    "test:production-flow": "tsx scripts/test-production-payment-flow.ts",
+    "test:production-flow:simple": "node scripts/run-production-test.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",

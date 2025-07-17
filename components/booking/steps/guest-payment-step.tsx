@@ -198,22 +198,15 @@ export function GuestPaymentStep({
     setIsPaymentLoading(true);
 
     try {
-      // Create booking if needed (for backward compatibility)
-      let finalBookingId = pendingBookingId;
-      if (createPendingBooking && !finalBookingId) {
-        finalBookingId = await createPendingBooking();
-        if (!finalBookingId) {
-          throw new Error("Failed to create booking");
-        }
+      // ✅ **PAYMENT-FIRST FLOW**: לא יוצרים booking, רק אוספים נתונים
+      console.log("🚀 Starting payment-first flow - collecting booking data without creating booking yet")
+
+      // ✅ אימות שיש לנו את כל הנתונים הנדרשים
+      if (!calculatedPrice) {
+        throw new Error("Missing calculated price for payment");
       }
 
-      // ✅ If no booking ID is available after creating pending booking, show error
-      if (!finalBookingId) {
-        throw new Error("No booking ID available - failed to create pending booking");
-      }
-
-      // ✅ For existing bookings with booking ID - proceed with payment API call
-      // Update guest info with consents
+      // עדכון guest info עם הסכמות
       const customerAlertsMethod = bookerNotificationMethod === "both" ? "email" as const : 
                                   bookerNotificationMethod === "sms" ? "sms" as const : "email" as const;
       const patientAlertsMethod = recipientNotificationMethod === "both" ? "email" as const : 
@@ -230,9 +223,21 @@ export function GuestPaymentStep({
       };
       setGuestInfo(updatedGuestInfo);
 
-      // Create payment with credit card processing
-      // ✅ יצירת תיאור דינמי לפי סוג הרכישה
-      let description = `הזמנה ${finalBookingId}`;
+      // ✅ אוסף את כל נתוני הbooking לשליחה עם התשלום
+      // הנתונים יישמרו ב-Payment record ויעובדו רק אחרי תשלום מוצלח
+      const bookingDataForPayment = {
+        guestInfo: updatedGuestInfo,
+        calculatedPrice,
+        purchaseType,
+        purchaseDetails,
+        // כל נתון נוסף שנדרש ליצירת booking
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        paymentInitiatedFrom: "guest-payment-step"
+      };
+
+      // יצירת תיאור דינמי לפי סוג הרכישה
+      let description = `הזמנת טיפול - תשלום`;
       
       if (purchaseType === "subscription") {
         const treatmentName = purchaseDetails.treatmentName || "טיפול";
@@ -246,13 +251,19 @@ export function GuestPaymentStep({
           description = `רכישת שובר מתנה - ${treatmentName}`;
         }
       } else {
-        // Default booking description
-        description = `הזמנת טיפול - הזמנה ${finalBookingId}`;
+        description = `הזמנת טיפול`;
       }
 
-      // ✅ פתיחת PaymentDrawer עם כל הנתונים
+      console.log("💳 Opening payment drawer with payment-first flow", {
+        amount: calculatedPrice.finalAmount,
+        hasBookingData: !!bookingDataForPayment,
+        description
+      });
+
+      // ✅ פתיחת PaymentDrawer עם התהליך החדש
       await paymentDrawer.openDrawer({
-        bookingId: finalBookingId,
+        // ✅ אין bookingId - נשתמש בpayment-first flow
+        bookingId: undefined,
         amount: calculatedPrice?.finalAmount || 0,
         description: description,
         customerName: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim(),
@@ -260,7 +271,10 @@ export function GuestPaymentStep({
         customerPhone: guestInfo.phone,
         type: purchaseType,
         createDocument: true,
-        documentType: purchaseType === "booking" ? "Order" : "Receipt"
+        documentType: purchaseType === "booking" ? "Order" : "Receipt",
+        // ✅ נתונים חדשים עבור payment-first flow
+        bookingData: bookingDataForPayment,
+        paymentFirst: true
       });
       
     } catch (error) {
@@ -729,11 +743,10 @@ export function GuestPaymentStep({
         onClose={paymentDrawer.closeDrawer}
         paymentUrl={paymentDrawer.paymentUrl}
         paymentId={paymentDrawer.paymentId}
-        bookingId={paymentDrawer.paymentData?.bookingId}
-        amount={paymentDrawer.paymentData?.amount}
-        description={paymentDrawer.paymentData?.description}
-        onSuccess={paymentDrawer.handleSuccess}
-        onError={paymentDrawer.handleError}
+        amount={calculatedPrice?.finalAmount}
+        description={`הזמנת טיפול`}
+        onSuccess={paymentDrawer.onSuccess}
+        onError={paymentDrawer.onError}
       />
     </>
   );

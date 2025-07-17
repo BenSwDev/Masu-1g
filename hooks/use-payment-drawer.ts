@@ -1,10 +1,14 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { toast } from "sonner"
+import { useState } from "react"
 
-interface PaymentData {
-  bookingId: string
+interface UsePaymentDrawerProps {
+  onSuccess: (data: any) => void
+  onError: (error: string) => void
+}
+
+interface PaymentDrawerData {
+  bookingId?: string
   amount: number
   description: string
   customerName?: string
@@ -13,130 +17,98 @@ interface PaymentData {
   type?: "booking" | "subscription" | "gift_voucher"
   createDocument?: boolean
   documentType?: "Order" | "Invoice" | "Receipt"
+  // ✅ נתונים חדשים עבור payment-first flow
+  bookingData?: any // כל נתוני הbooking לשמירה
+  paymentFirst?: boolean // האם להשתמש בתהליך החדש
 }
 
-interface UsePaymentDrawerProps {
-  onSuccess?: (data: any) => void
-  onError?: (error: string) => void
-}
+export function usePaymentDrawer({ onSuccess, onError }: UsePaymentDrawerProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+  const [paymentId, setPaymentId] = useState<string | null>(null)
 
-interface PaymentDrawerState {
-  isOpen: boolean
-  isLoading: boolean
-  paymentUrl?: string
-  paymentId?: string
-  paymentData?: PaymentData
-  error?: string
-}
-
-export function usePaymentDrawer({ onSuccess, onError }: UsePaymentDrawerProps = {}) {
-  const [state, setState] = useState<PaymentDrawerState>({
-    isOpen: false,
-    isLoading: false
-  })
-
-  const openDrawer = useCallback(async (paymentData: PaymentData) => {
-    setState(prev => ({ 
-      ...prev, 
-      isOpen: true, 
-      isLoading: true, 
-      paymentData,
-      error: undefined 
-    }))
-
+  const openDrawer = async (data: PaymentDrawerData) => {
+    setIsLoading(true)
+    
     try {
-      // יצירת תשלום עם מצב drawer
-      const response = await fetch('/api/payments/create', {
-        method: 'POST',
+      console.log("🏦 Opening payment drawer", { 
+        hasBookingId: !!data.bookingId, 
+        amount: data.amount,
+        paymentFirst: data.paymentFirst 
+      })
+
+      // קריאת API ליצירת תשלום
+      const response = await fetch("/api/payments/create", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...paymentData,
-          drawerMode: true // ✅ מצב drawer
+          bookingId: data.bookingId,
+          amount: data.amount,
+          description: data.description,
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          customerPhone: data.customerPhone,
+          type: data.type || "booking",
+          createDocument: data.createDocument,
+          documentType: data.documentType,
+          drawerMode: true,
+          // ✅ נתונים חדשים עבור payment-first flow
+          bookingData: data.bookingData,
+          paymentFirst: data.paymentFirst || false
         }),
       })
 
       const result = await response.json()
 
       if (result.success && result.redirectUrl) {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          paymentUrl: result.redirectUrl,
-          paymentId: result.paymentId
-        }))
+        setPaymentUrl(result.redirectUrl)
+        setPaymentId(result.paymentId)
+        setIsOpen(true)
+        
+        console.log("✅ Payment URL created successfully", { 
+          paymentId: result.paymentId,
+          paymentFirst: result.paymentFirst 
+        })
       } else {
-        throw new Error(result.error || 'שגיאה ביצירת התשלום')
+        console.error("❌ Payment URL creation failed:", result.error)
+        onError(result.error || "שגיאה ביצירת קישור התשלום")
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'שגיאה ביצירת התשלום'
-      
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: errorMessage 
-      }))
-      
-      toast.error(errorMessage)
-      
-      if (onError) {
-        onError(errorMessage)
-      }
+      console.error("❌ Payment drawer error:", error)
+      onError("שגיאה ביצירת התשלום")
+    } finally {
+      setIsLoading(false)
     }
-  }, [onError])
+  }
 
-  const closeDrawer = useCallback(() => {
-    setState(prev => ({ 
-      ...prev, 
-      isOpen: false,
-      isLoading: false,
-      paymentUrl: undefined,
-      paymentId: undefined,
-      paymentData: undefined,
-      error: undefined
-    }))
-  }, [])
+  const closeDrawer = () => {
+    setIsOpen(false)
+    setPaymentUrl(null)
+    setPaymentId(null)
+  }
 
-  const handleSuccess = useCallback((data: any) => {
-    toast.success('התשלום הושלם בהצלחה!')
-    
-    // נסגור את הdrawer אחרי 2 שניות
-    setTimeout(() => {
-      closeDrawer()
-    }, 2000)
-    
-    if (onSuccess) {
-      onSuccess(data)
-    }
-  }, [onSuccess, closeDrawer])
+  const handleSuccess = (data: any) => {
+    console.log("✅ Payment completed successfully", data)
+    closeDrawer()
+    onSuccess(data)
+  }
 
-  const handleError = useCallback((error: string) => {
-    setState(prev => ({ 
-      ...prev, 
-      error 
-    }))
-    
-    toast.error(error)
-    
-    if (onError) {
-      onError(error)
-    }
-  }, [onError])
+  const handleError = (error: string) => {
+    console.error("❌ Payment failed:", error)
+    onError(error)
+  }
 
   return {
-    // State
-    isOpen: state.isOpen,
-    isLoading: state.isLoading,
-    paymentUrl: state.paymentUrl,
-    paymentId: state.paymentId,
-    paymentData: state.paymentData,
-    error: state.error,
-    
-    // Actions
+    isOpen,
+    isLoading,
+    paymentUrl,
+    paymentId,
     openDrawer,
     closeDrawer,
-    handleSuccess,
-    handleError
+    onSuccess: handleSuccess,
+    onError: handleError,
   }
 } 

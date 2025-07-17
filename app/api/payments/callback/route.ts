@@ -5,6 +5,8 @@ import { cardcomService } from "@/lib/services/cardcom-service"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { updateBookingStatusAfterPayment } from "@/actions/booking-actions"
+// ✅ ייבוא עבור יצירת booking חדש
+import { createGuestBooking } from "@/actions/booking-actions"
 
 export async function GET(request: NextRequest) {
   try {
@@ -91,11 +93,74 @@ export async function GET(request: NextRequest) {
 
     await Payment.findByIdAndUpdate(finalPaymentId, updateData)
 
-    // עדכון סטטוס ההזמנה
-    if (payment.booking_id) {
+    // ✅ **PAYMENT-FIRST FLOW**: יצירת booking אחרי תשלום מוצלח
+    let finalBookingId = payment.booking_id
+    
+    if (isSuccess && payment.input_data?.paymentFirst && payment.input_data?.bookingData) {
+      try {
+        logger.info("Payment-first flow: Creating booking after successful payment", {
+          paymentId: finalPaymentId,
+          hasBookingData: !!payment.input_data.bookingData
+        })
+
+        // הכנת הנתונים עבור יצירת booking
+        const bookingData = payment.input_data.bookingData
+        const bookingPayload = {
+          ...bookingData,
+          // הוספת פרטי התשלום המוצלח
+          paymentDetails: {
+            paymentStatus: "paid",
+            transactionId: internalDealNumber
+          },
+          input_data: {
+            ...bookingData.input_data,
+            paymentId: finalPaymentId,
+            paymentCompleted: true
+          }
+        }
+
+        // יצירת הbooking הסופי
+        const bookingResult = await createGuestBooking(bookingPayload)
+        
+        if (bookingResult.success && bookingResult.booking) {
+          finalBookingId = String(bookingResult.booking._id)
+          
+          // עדכון רשומת התשלום עם booking ID
+          await Payment.findByIdAndUpdate(finalPaymentId, {
+            booking_id: finalBookingId,
+            order_id: finalBookingId
+          })
+          
+          logger.info("Payment-first flow: Booking created successfully", {
+            paymentId: finalPaymentId,
+            bookingId: finalBookingId
+          })
+        } else {
+          logger.error("Payment-first flow: Failed to create booking", {
+            paymentId: finalPaymentId,
+            error: bookingResult.error
+          })
+          
+          // במקרה של כישלון ביצירת booking, נציין זאת בresponse
+          const errorUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_failed`
+          return NextResponse.redirect(errorUrl)
+        }
+      } catch (error) {
+        logger.error("Payment-first flow: Error creating booking", {
+          paymentId: finalPaymentId,
+          error: error instanceof Error ? error.message : String(error)
+        })
+        
+        const errorUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?paymentId=${finalPaymentId}&status=success&complete=1&bookingError=true&reason=booking_creation_exception`
+        return NextResponse.redirect(errorUrl)
+      }
+    }
+
+    // עדכון סטטוס ההזמנה הקיימת (רק אם יש booking ID)
+    if (finalBookingId) {
       try {
         const bookingUpdateResult = await updateBookingStatusAfterPayment(
-          payment.booking_id,
+          finalBookingId,
           isSuccess ? "success" : "failed",
           internalDealNumber || undefined
         )
@@ -103,20 +168,20 @@ export async function GET(request: NextRequest) {
         if (bookingUpdateResult.success) {
           logger.info("Booking status updated successfully", {
             paymentId: finalPaymentId,
-            bookingId: payment.booking_id,
+            bookingId: finalBookingId,
             paymentStatus: isSuccess ? "success" : "failed"
           })
         } else {
           logger.error("Failed to update booking status", {
             paymentId: finalPaymentId,
-            bookingId: payment.booking_id,
+            bookingId: finalBookingId,
             error: bookingUpdateResult.error
           })
         }
       } catch (error) {
         logger.error("Error updating booking status", {
           paymentId: finalPaymentId,
-          bookingId: payment.booking_id,
+          bookingId: finalBookingId,
           error: error instanceof Error ? error.message : String(error)
         })
       }
@@ -131,7 +196,7 @@ export async function GET(request: NextRequest) {
         success: isSuccess,
         status: isSuccess ? 'success' : 'failed',
         paymentId: finalPaymentId,
-        bookingId: payment.booking_id,
+        bookingId: finalBookingId,
         transactionId: internalDealNumber,
         complete: isSuccess ? '1' : '0',
         reason: searchParams.get("reason") || (isSuccess ? undefined : "payment_failed"),
@@ -143,7 +208,7 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const reason = searchParams.get("reason") || (isSuccess ? undefined : "payment_failed")
     
-    const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${payment.booking_id}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
+    const resultUrl = `${baseUrl}/payment-success?paymentId=${finalPaymentId}&bookingId=${finalBookingId}&status=${isSuccess ? 'success' : 'error'}&complete=${isSuccess ? '1' : '0'}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
     
     return NextResponse.redirect(resultUrl)
 
@@ -158,7 +223,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// תמיכה גם ב-POST (למקרה ש-CARDCOM שולח POST)
+// ✅ תמיכה גם ב-POST (למקרה ש-CARDCOM שולח POST)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

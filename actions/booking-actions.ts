@@ -1125,7 +1125,11 @@ export async function createBooking(
       await newBooking.save({ session: mongooseDbSession })
       bookingResult = newBooking
 
+      // Only perform redemptions and notifications if payment is not pending
+      const shouldProcessRedemptionsAndNotifications = bookingResult.status !== "pending_payment"
+
       if (
+        shouldProcessRedemptionsAndNotifications &&
         validatedPayload.priceDetails.redeemedUserSubscriptionId &&
         validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
       ) {
@@ -1150,6 +1154,7 @@ export async function createBooking(
       }
 
       if (
+        shouldProcessRedemptionsAndNotifications &&
         validatedPayload.priceDetails.appliedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
@@ -1198,7 +1203,7 @@ export async function createBooking(
         updatedVoucherDetails = voucher.toObject() as IGiftVoucher
       }
 
-      if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
+      if (shouldProcessRedemptionsAndNotifications && validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
         const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
         if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
         coupon.timesUsed += 1
@@ -1226,15 +1231,19 @@ export async function createBooking(
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
-      // Send booking confirmation using smart notification system
-      try {
-        const userId = validatedPayload.userId
-        const isBookingForSomeoneElse = validatedPayload.isBookingForSomeoneElse || false
-        
-        // Get notification preferences from payload (with defaults)
-        const notificationMethods = validatedPayload.notificationMethods || ["email"]
-        const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
-        const notificationLanguage = validatedPayload.notificationLanguage || "he"
+      // Check if we should process notifications based on booking status  
+      const shouldProcessRedemptionsAndNotifications = finalBookingObject.status !== "pending_payment"
+
+      // Send booking success notifications - only if payment is not pending
+      if (shouldProcessRedemptionsAndNotifications) {
+        try {
+          const userId = validatedPayload.userId
+          const isBookingForSomeoneElse = validatedPayload.isBookingForSomeoneElse || false
+          
+          // Get notification preferences from payload (with defaults)
+          const notificationMethods = validatedPayload.notificationMethods || ["email"]
+          const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
+          const notificationLanguage = validatedPayload.notificationLanguage || "he"
         
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
         const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
@@ -1317,6 +1326,7 @@ export async function createBooking(
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
           bookingId: String(finalBookingObject._id),
         })
+      }
       }
 
       // Send notifications to professionals if booking is ready for assignment
@@ -2930,8 +2940,11 @@ export async function createGuestBooking(
       logger.info("Guest booking created successfully", { bookingId: newBooking.id, bookingNumber })
       bookingResult = newBooking
 
+      // Only perform redemptions if payment is not pending
+      const shouldProcessRedemptionsAndNotifications = bookingResult.status !== "pending_payment"
+
       // Handle gift voucher redemption for guest bookings
-      if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
+      if (shouldProcessRedemptionsAndNotifications && validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
         logger.info("Processing gift voucher redemption for guest booking", { 
           voucherId: validatedPayload.priceDetails.appliedGiftVoucherId 
         })
@@ -2981,7 +2994,7 @@ export async function createGuestBooking(
       }
 
       // Handle coupon application for guest bookings
-      if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
+      if (shouldProcessRedemptionsAndNotifications && validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
         logger.info("Processing coupon application for guest booking", { 
           couponId: validatedPayload.priceDetails.appliedCouponId 
         })
@@ -2994,6 +3007,7 @@ export async function createGuestBooking(
 
       // Handle subscription redemption for guest bookings
       if (
+        shouldProcessRedemptionsAndNotifications &&
         validatedPayload.priceDetails.redeemedUserSubscriptionId &&
         validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
       ) {
@@ -3919,6 +3933,173 @@ export async function updateBookingStatusAfterPayment(
           bookingId,
           error: error instanceof Error ? error.message : String(error) 
         })
+      }
+    }
+    
+    // Process redemptions and send customer notifications after successful payment
+    if (paymentStatus === "success" && updatedBooking) {
+      try {
+        logger.info("Processing post-payment redemptions and customer notifications", {
+          bookingId,
+          hasVoucher: !!updatedBooking.priceDetails.appliedGiftVoucherId,
+          hasSubscription: !!updatedBooking.priceDetails.redeemedUserSubscriptionId,
+          hasCoupon: !!updatedBooking.priceDetails.appliedCouponId
+        })
+
+        const mongooseDbSession = await mongoose.startSession()
+        await mongooseDbSession.withTransaction(async () => {
+          // Process voucher redemption
+          if (updatedBooking.priceDetails.appliedGiftVoucherId && updatedBooking.priceDetails.voucherAppliedAmount > 0) {
+            const voucher = await GiftVoucher.findById(updatedBooking.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
+            if (voucher && (voucher.isActive || voucher.status === "sent")) {
+              if (voucher.voucherType === "treatment" && updatedBooking.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
+                voucher.status = "fully_used"
+                voucher.remainingAmount = 0
+                voucher.isActive = false
+              } else if (voucher.voucherType === "monetary") {
+                voucher.remainingAmount = Math.max(0, (voucher.remainingAmount || 0) - updatedBooking.priceDetails.voucherAppliedAmount)
+                voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
+                voucher.isActive = voucher.remainingAmount > 0
+              }
+              
+              voucher.usageHistory = voucher.usageHistory || []
+              voucher.usageHistory.push({
+                date: new Date(),
+                amountUsed: updatedBooking.priceDetails.voucherAppliedAmount,
+                orderId: updatedBooking._id as any,
+                description: `Booking ${updatedBooking.bookingNumber}`,
+              })
+              
+              await voucher.save({ session: mongooseDbSession })
+              logger.info("Voucher redeemed after payment", { voucherId: voucher._id, bookingId })
+            }
+          }
+
+          // Process subscription redemption
+          if (updatedBooking.priceDetails.redeemedUserSubscriptionId && updatedBooking.priceDetails.isBaseTreatmentCoveredBySubscription) {
+            const userSub = await UserSubscription.findById(updatedBooking.priceDetails.redeemedUserSubscriptionId).session(mongooseDbSession)
+            if (userSub && userSub.remainingQuantity > 0 && userSub.status === "active") {
+              userSub.remainingQuantity -= 1
+              if (userSub.remainingQuantity === 0) userSub.status = "depleted"
+              await userSub.save({ session: mongooseDbSession })
+              logger.info("Subscription redeemed after payment", { subscriptionId: userSub._id, bookingId })
+            }
+          }
+
+          // Process coupon usage
+          if (updatedBooking.priceDetails.appliedCouponId && updatedBooking.priceDetails.discountAmount > 0) {
+            const coupon = await Coupon.findById(updatedBooking.priceDetails.appliedCouponId).session(mongooseDbSession)
+            if (coupon && coupon.isActive) {
+              coupon.timesUsed += 1
+              await coupon.save({ session: mongooseDbSession })
+              logger.info("Coupon applied after payment", { couponId: coupon._id, bookingId })
+            }
+          }
+        })
+        await mongooseDbSession.endSession()
+
+        // Send customer notifications
+        try {
+          const treatment = await Treatment.findById(updatedBooking.treatmentId).select("name").lean()
+          if (treatment) {
+            // Determine if this is a guest booking or user booking
+            if (updatedBooking.userId) {
+              // User booking - send notification to user
+              await sendBookingConfirmationToUser(updatedBooking.userId.toString(), updatedBooking._id.toString())
+              
+              // Send notification to recipient if booking for someone else
+              if (updatedBooking.isBookingForSomeoneElse && updatedBooking.recipientEmail) {
+                const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
+                const recipientBookingData = {
+                  type: "treatment-booking-success" as const,
+                  recipientName: updatedBooking.recipientName!,
+                  bookerName: updatedBooking.bookedByUserName!,
+                  treatmentName: treatment.name,
+                  bookingDateTime: updatedBooking.bookingDateTime,
+                  bookingNumber: updatedBooking.bookingNumber,
+                  bookingAddress: updatedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
+                  isForSomeoneElse: true,
+                  priceDetails: {
+                    basePrice: updatedBooking.priceDetails.basePrice,
+                    surcharges: updatedBooking.priceDetails.surcharges || [],
+                    totalSurchargesAmount: updatedBooking.priceDetails.totalSurchargesAmount || 0,
+                    discountAmount: updatedBooking.priceDetails.discountAmount || 0,
+                    voucherAppliedAmount: updatedBooking.priceDetails.voucherAppliedAmount || 0,
+                    couponDiscount: updatedBooking.priceDetails.discountAmount || 0,
+                    finalAmount: updatedBooking.priceDetails.finalAmount,
+                    isFullyCoveredByVoucherOrSubscription: updatedBooking.priceDetails.isFullyCoveredByVoucherOrSubscription || false,
+                  },
+                  paymentDetails: {
+                    paymentStatus: updatedBooking.paymentDetails.paymentStatus,
+                    transactionId: updatedBooking.paymentDetails.transactionId,
+                  },
+                  bookingSource: updatedBooking.source,
+                }
+                
+                await sendGuestNotification(
+                  {
+                    name: updatedBooking.recipientName!,
+                    email: updatedBooking.recipientEmail,
+                    phone: updatedBooking.recipientPhone,
+                    language: "he"
+                  },
+                  recipientBookingData
+                )
+              }
+            } else {
+              // Guest booking - send notification to booker
+              const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
+              const bookerBookingData = {
+                type: "treatment-booking-success" as const,
+                recipientName: updatedBooking.bookedByUserName!,
+                treatmentName: treatment.name,
+                bookingDateTime: updatedBooking.bookingDateTime,
+                bookingNumber: updatedBooking.bookingNumber,
+                bookingAddress: updatedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
+                isForSomeoneElse: false,
+                priceDetails: {
+                  basePrice: updatedBooking.priceDetails.basePrice,
+                  surcharges: updatedBooking.priceDetails.surcharges || [],
+                  totalSurchargesAmount: updatedBooking.priceDetails.totalSurchargesAmount || 0,
+                  discountAmount: updatedBooking.priceDetails.discountAmount || 0,
+                  voucherAppliedAmount: updatedBooking.priceDetails.voucherAppliedAmount || 0,
+                  couponDiscount: updatedBooking.priceDetails.discountAmount || 0,
+                  finalAmount: updatedBooking.priceDetails.finalAmount,
+                  isFullyCoveredByVoucherOrSubscription: updatedBooking.priceDetails.isFullyCoveredByVoucherOrSubscription || false,
+                },
+                paymentDetails: {
+                  paymentStatus: updatedBooking.paymentDetails.paymentStatus,
+                  transactionId: updatedBooking.paymentDetails.transactionId,
+                },
+                bookingSource: updatedBooking.source,
+              }
+              
+              await sendGuestNotification(
+                {
+                  name: updatedBooking.bookedByUserName!,
+                  email: updatedBooking.bookedByUserEmail!,
+                  phone: updatedBooking.bookedByUserPhone!,
+                  language: "he"
+                },
+                bookerBookingData
+              )
+            }
+            
+            logger.info("Customer notifications sent after payment success", { bookingId })
+          }
+        } catch (notificationError) {
+          logger.error("Failed to send customer notifications after payment", {
+            bookingId,
+            error: notificationError instanceof Error ? notificationError.message : String(notificationError)
+          })
+        }
+        
+      } catch (error) {
+        logger.error("Error processing post-payment redemptions or notifications", {
+          bookingId,
+          error: error instanceof Error ? error.message : String(error)
+        })
+        // Don't fail the payment update if redemptions/notifications fail
       }
     }
     

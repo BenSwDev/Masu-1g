@@ -36,7 +36,7 @@ interface PaymentDrawerProps {
   className?: string
 }
 
-type PaymentStatus = 'loading' | 'iframe_loaded' | 'processing' | 'success' | 'failed' | 'error'
+type PaymentStatus = 'loading' | 'ready' | 'iframe_loaded' | 'processing' | 'success' | 'failed' | 'error'
 
 export function PaymentDrawer({
   isOpen,
@@ -54,55 +54,15 @@ export function PaymentDrawer({
   const [error, setError] = useState<string | null>(null)
   const [retryCountdown, setRetryCountdown] = useState(0)
   const [iframeKey, setIframeKey] = useState(0)
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
 
-  // פוליגת מצב התשלום מהשרת
-  const pollPaymentStatus = useCallback(async () => {
-    if (!paymentId) return
-
-    try {
-      const response = await fetch(`/api/payments/${paymentId}/status`)
-      const data = await response.json()
-      
-      if (data.success) {
-        if (data.status === 'completed') {
-          setStatus('success')
-          onSuccess(data.paymentData)
-          stopPolling()
-        } else if (data.status === 'failed') {
-          setStatus('failed')
-          setError(data.error || 'התשלום נכשל')
-          stopPolling()
-        }
-        // אם עדיין pending - ממשיך polling
-      }
-    } catch (error) {
-      console.error('Error polling payment status:', error)
-    }
-  }, [paymentId, onSuccess])
-
-  const startPolling = useCallback(() => {
-    if (pollingInterval) return
-    
-    const interval = setInterval(pollPaymentStatus, 2000) // כל 2 שניות
-    setPollingInterval(interval)
-  }, [pollPaymentStatus, pollingInterval])
-
-  const stopPolling = useCallback(() => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval)
-      setPollingInterval(null)
-    }
-  }, [pollingInterval])
-
-  // התחלת polling כאשר iframe נטען
+  // 🔧 FIX: כשpaymentUrl מגיע מהAPI, מציג את iframe מיד
   useEffect(() => {
-    if (status === 'iframe_loaded' && paymentId) {
-      startPolling()
+    if (paymentUrl && status === 'loading') {
+      setStatus('ready') // מציג iframe מיד
     }
-    
-    return () => stopPolling()
-  }, [status, paymentId, startPolling, stopPolling])
+  }, [paymentUrl, status])
+
+  // ✅ בוטל polling - משתמשים רק בPostMessage מCARDCOM iframe
 
   // מאזין להודעות מ-iframe
   useEffect(() => {
@@ -120,11 +80,9 @@ export function PaymentDrawer({
         if (data.status === 'success') {
           setStatus('success')
           onSuccess(data)
-          stopPolling()
         } else {
           setStatus('failed')
           setError(data.error || 'התשלום נכשל')
-          stopPolling()
         }
       } else if (data.type === 'payment_cancelled') {
         handleCancel()
@@ -138,7 +96,7 @@ export function PaymentDrawer({
     return () => {
       window.removeEventListener('message', handleMessage)
     }
-  }, [isOpen, onSuccess, stopPolling])
+  }, [isOpen, onSuccess])
 
   const handleIframeLoad = () => {
     setStatus('iframe_loaded')
@@ -148,12 +106,10 @@ export function PaymentDrawer({
   const handleIframeError = () => {
     setStatus('error')
     setError("שגיאה בטעינת דף התשלום")
-    stopPolling()
   }
 
   const handleCancel = () => {
     setStatus('loading')
-    stopPolling()
     onClose()
   }
 
@@ -184,15 +140,14 @@ export function PaymentDrawer({
     }
   }, [status])
 
-  // ניקוי polling כאשר הdrawer נסגר
+  // ניקוי כאשר הdrawer נסגר
   useEffect(() => {
     if (!isOpen) {
-      stopPolling()
       setStatus('loading')
       setError(null)
       setRetryCountdown(0)
     }
-  }, [isOpen, stopPolling])
+  }, [isOpen])
 
   const renderContent = () => {
     switch (status) {
@@ -207,7 +162,7 @@ export function PaymentDrawer({
           </div>
         )
 
-      case 'iframe_loaded':
+      case 'ready':
         return (
           <div className="space-y-4">
             {/* Progress Bar */}
@@ -228,6 +183,63 @@ export function PaymentDrawer({
                   <div className="text-xs">
                     {description && <div>עבור: {description}</div>}
                     {amount && <div>סכום: ₪{amount.toFixed(2)}</div>}
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+
+            {/* CARDCOM iframe */}
+            {paymentUrl && (
+              <div className="relative">
+                <iframe
+                  key={iframeKey}
+                  src={paymentUrl}
+                  width="100%"
+                  height="500"
+                  frameBorder="0"
+                  allowTransparency={true}
+                  scrolling="auto"
+                  className="rounded-lg border bg-white"
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                  title="דף תשלום מאובטח"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"
+                />
+                
+                {/* Security indicators */}
+                <div className="mt-2 flex items-center justify-center text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    חיבור מאובטח SSL
+                  </div>
+                  <span className="mx-2">•</span>
+                  <span>מופעל על ידי CARDCOM</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+
+      case 'iframe_loaded':
+        return (
+          <div className="space-y-4">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>התקדמות תשלום</span>
+                <span>שלב 2 מתוך 3</span>
+              </div>
+              <Progress value={66} className="h-2" />
+            </div>
+
+            {/* Payment Info */}
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <div className="space-y-1">
+                  <div className="font-medium">דף תשלום נטען בהצלחה</div>
+                  <div className="text-xs">
+                    מלא את פרטי התשלום בדף שלמעלה
                   </div>
                 </div>
               </AlertDescription>

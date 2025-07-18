@@ -12,6 +12,12 @@ export interface EmailNotificationData {
     | "purchase-success"
     | "review-reminder"
     | "review_request"
+    | "booking_confirmed"
+    | "booking_cancelled"
+    | "booking_updated"
+    | "professional_assigned"
+    | "professional_unassigned"
+    | "new_booking_available"
   userName?: string
   email?: string
   resetLink?: string
@@ -65,6 +71,10 @@ export interface EmailNotificationData {
     cardLast4?: string
   }
   bookingSource?: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
+  // Additional booking status notification fields
+  reason?: string // For cancellations
+  changes?: string // For updates
+  city?: string // For new booking available
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -117,12 +127,40 @@ body {
   overflow: hidden;
 }
 
-/* Header with brand colors */
+/* Header with brand turquoise colors */
 .header { 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0cd6d0 0%, #06aeac 100%);
   padding: 30px 20px; 
   text-align: center; 
   color: white;
+  position: relative;
+}
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"%3E%3Cpath d="M1200 120L0 16.48V0h1200v120z" fill="rgba(255,255,255,0.1)"/%3E%3C/svg%3E') no-repeat bottom;
+  background-size: 100% 30px;
+}
+.header-content {
+  position: relative;
+  z-index: 1;
+}
+.logo-container {
+  display: inline-block;
+  margin-bottom: 15px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+.logo {
+  height: 50px;
+  width: auto;
+  max-width: 200px;
 }
 .header h1 { 
   font-size: 28px; 
@@ -132,8 +170,9 @@ body {
 }
 .header .tagline { 
   font-size: 14px; 
-  opacity: 0.9; 
+  opacity: 0.95; 
   font-weight: 300;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 /* Content area */
@@ -143,7 +182,7 @@ body {
   line-height: 1.7;
 }
 .content h2 {
-  color: #667eea;
+  color: #0cd6d0;
   font-size: 24px;
   margin-bottom: 20px;
   font-weight: 600;
@@ -155,15 +194,16 @@ body {
 
 /* Booking details card */
 .booking-card {
-  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-  border: 2px solid #667eea;
+  background: linear-gradient(135deg, #edfffe 0%, #d0fffc 100%);
+  border: 2px solid #0cd6d0;
   border-radius: 12px;
   padding: 25px;
   margin: 25px 0;
   text-align: center;
+  box-shadow: 0 4px 15px rgba(12, 214, 208, 0.15);
 }
 .booking-card h3 {
-  color: #667eea;
+  color: #0cd6d0;
   font-size: 20px;
   margin-bottom: 15px;
   font-weight: 600;
@@ -173,7 +213,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  border-bottom: 1px solid rgba(12, 214, 208, 0.2);
   margin-bottom: 8px;
 }
 .booking-detail:last-child {
@@ -185,7 +225,7 @@ body {
   color: #555;
 }
 .booking-detail .value {
-  color: #667eea;
+  color: #0cd6d0;
   font-weight: 500;
 }
 
@@ -193,33 +233,34 @@ body {
 .button { 
   display: inline-block; 
   padding: 15px 30px; 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0cd6d0 0%, #06aeac 100%);
   color: white !important; 
   text-decoration: none; 
   border-radius: 8px; 
   font-weight: 600; 
   text-align: center; 
   font-size: 16px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(12, 214, 208, 0.3);
   transition: all 0.3s ease;
 }
 .button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(12, 214, 208, 0.4);
 }
 
 /* OTP code styling */
 .otp-code { 
   font-size: 32px; 
   font-weight: 700; 
-  color: #667eea; 
+  color: #0cd6d0; 
   text-align: center; 
   padding: 20px; 
-  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-  border: 2px dashed #667eea;
+  background: linear-gradient(135deg, #edfffe 0%, #d0fffc 100%);
+  border: 2px dashed #0cd6d0;
   border-radius: 12px; 
   margin: 25px 0; 
   letter-spacing: 4px;
+  box-shadow: 0 4px 15px rgba(12, 214, 208, 0.15);
 }
 
 /* Footer */
@@ -232,8 +273,12 @@ body {
   border-top: 1px solid #e9ecef;
 }
 .footer a {
-  color: #667eea;
+  color: #0cd6d0;
   text-decoration: none;
+}
+.footer a:hover {
+  color: #06aeac;
+  text-decoration: underline;
 }
 
 /* Mobile responsive */
@@ -273,8 +318,13 @@ body {
 <body>
 <div class="email-container">
 <div class="header">
-  <h1>${appName}</h1>
-  <div class="tagline">${language === "he" ? "הטיפולים הטובים ביותר עד הבית" : language === "ru" ? "Лучшие процедуры на дому" : "Premium Home Treatments"}</div>
+  <div class="header-content">
+    <div class="logo-container">
+      <img src="${process.env.NEXT_PUBLIC_APP_URL || 'https://masu.co.il'}/Masu_logo_big.png" alt="${appName} Logo" class="logo" />
+    </div>
+    <h1>${appName}</h1>
+    <div class="tagline">${language === "he" ? "הטיפולים הטובים ביותר עד הבית" : language === "ru" ? "Лучшие процедуры на дому" : "Premium Home Treatments"}</div>
+  </div>
 </div>
 <div class="content">
  ${content}
@@ -287,11 +337,11 @@ body {
  </p>
  <p style="margin-bottom: 15px;">
    בברכה,<br/>
-   צוות מאסו - <a href="https://masu.co.il" style="color: #667eea; text-decoration: none;">masu.co.il</a>
+   צוות מאסו - <a href="https://masu.co.il" style="color: #0cd6d0; text-decoration: none;">masu.co.il</a>
  </p>
  <p style="margin-bottom: 15px;">
    להצטרפות למועדון:<br/>
-   <a href="https://www.spaplus.co.il/club/?src=masu" style="color: #667eea; text-decoration: none;">https://www.spaplus.co.il/club/?src=masu</a>
+   <a href="https://www.spaplus.co.il/club/?src=masu" style="color: #0cd6d0; text-decoration: none;">https://www.spaplus.co.il/club/?src=masu</a>
  </p>
  <p style="font-size: 12px; color: #999; margin-top: 20px;">
    נא לא להגיב להודעה זו
@@ -1023,6 +1073,387 @@ ${data.paymentDetails ? `
       text = reviewRequestTextContent
       html = wrapHtml(reviewRequestHtmlContent, subject)
       break
+
+    case "booking_confirmed": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "ההזמנה שלך אושרה!" : language === "ru" ? "Ваш заказ подтвержден!" : "Your booking is confirmed!"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nההזמנה שלך אושרה!\n\nפרטי ההזמנה:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nמספר הזמנה: ${data.bookingNumber}\n\n${data.professionalName ? `המטפל שלך: ${data.professionalName}` : 'המטפל ייקבע בקרוב'}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nВаш заказ подтвержден!\n\nДетали заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nНомер заказа: ${data.bookingNumber}\n\n${data.professionalName ? `Ваш специалист: ${data.professionalName}` : 'Специалист будет назначен в ближайшее время'}`
+            : `Hello ${data.customerName},\n\nYour booking is confirmed!\n\nBooking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nBooking Number: ${data.bookingNumber}\n\n${data.professionalName ? `Your therapist: ${data.professionalName}` : 'Your therapist will be assigned soon'}`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "ההזמנה שלך אושרה!" : language === "ru" ? "Ваш заказ подтвержден!" : "Your booking is confirmed!"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? "ההזמנה שלך אושרה בהצלחה!" : language === "ru" ? "Ваш заказ успешно подтвержден!" : "Your booking has been successfully confirmed!"}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking Number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+          ${data.professionalName ? `
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "המטפל שלך:" : language === "ru" ? "Ваш специалист:" : "Your therapist:"}</span>
+            <span class="value">${data.professionalName}</span>
+          </div>
+          ` : `
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "סטטוס:" : language === "ru" ? "Статус:" : "Status:"}</span>
+            <span class="value">${language === "he" ? "המטפל ייקבע בקרוב" : language === "ru" ? "Специалист будет назначен в ближайшее время" : "Therapist will be assigned soon"}</span>
+          </div>
+          `}
+        </div>
+        
+        ${data.bookingDetailsLink ? `
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${data.bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+        </p>
+        ` : ''}
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "booking_cancelled": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "ההזמנה שלך בוטלה" : language === "ru" ? "Ваш заказ отменен" : "Your booking has been cancelled"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nההזמנה שלך בוטלה.\n\nפרטי ההזמנה שבוטלה:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nמספר הזמנה: ${data.bookingNumber}\n\n${data.reason ? `סיבת הביטול: ${data.reason}` : ''}\n\nנשמח לעזור לך להזמין מועד חדש.`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nВаш заказ был отменен.\n\nДетали отмененного заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nНомер заказа: ${data.bookingNumber}\n\n${data.reason ? `Причина отмены: ${data.reason}` : ''}\n\nМы будем рады помочь вам забронировать новое время.`
+            : `Hello ${data.customerName},\n\nYour booking has been cancelled.\n\nCancelled Booking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nBooking Number: ${data.bookingNumber}\n\n${data.reason ? `Cancellation reason: ${data.reason}` : ''}\n\nWe'd be happy to help you book a new appointment.`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "ההזמנה שלך בוטלה" : language === "ru" ? "Ваш заказ отменен" : "Your booking has been cancelled"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? "מצטערים להודיע שההזמנה שלך בוטלה." : language === "ru" ? "Сожалеем сообщить, что ваш заказ был отменен." : "We regret to inform you that your booking has been cancelled."}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה שבוטלה" : language === "ru" ? "Детали отмененного заказа" : "Cancelled Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking Number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+          ${data.reason ? `
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "סיבת הביטול:" : language === "ru" ? "Причина отмены:" : "Cancellation reason:"}</span>
+            <span class="value">${data.reason}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <p>${language === "he" ? "נשמח לעזור לך להזמין מועד חדש. ניתן ליצור קשר איתנו או להזמין דרך האפליקציה." : language === "ru" ? "Мы будем рады помочь вам забронировать новое время. Вы можете связаться с нами или забронировать через приложение." : "We'd be happy to help you book a new appointment. You can contact us or book through the app."}</p>
+        
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://masu.co.il'}" class="button">${language === "he" ? "הזמן טיפול חדש" : language === "ru" ? "Забронировать новую процедуру" : "Book New Treatment"}</a>
+        </p>
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "booking_updated": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "ההזמנה שלך עודכנה" : language === "ru" ? "Ваш заказ обновлен" : "Your booking has been updated"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nההזמנה שלך עודכנה.\n\nפרטי ההזמנה המעודכנת:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nמספר הזמנה: ${data.bookingNumber}\n\n${data.changes ? `שינויים: ${data.changes}` : ''}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nВаш заказ был обновлен.\n\nОбновленные детали заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nНомер заказа: ${data.bookingNumber}\n\n${data.changes ? `Изменения: ${data.changes}` : ''}`
+            : `Hello ${data.customerName},\n\nYour booking has been updated.\n\nUpdated Booking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nBooking Number: ${data.bookingNumber}\n\n${data.changes ? `Changes: ${data.changes}` : ''}`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "ההזמנה שלך עודכנה" : language === "ru" ? "Ваш заказ обновлен" : "Your booking has been updated"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? "ההזמנה שלך עודכנה בהצלחה." : language === "ru" ? "Ваш заказ был успешно обновлен." : "Your booking has been successfully updated."}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה המעודכנת" : language === "ru" ? "Обновленные детали заказа" : "Updated Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking Number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+          ${data.changes ? `
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שינויים:" : language === "ru" ? "Изменения:" : "Changes:"}</span>
+            <span class="value">${data.changes}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        ${data.bookingDetailsLink ? `
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${data.bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+        </p>
+        ` : ''}
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "professional_assigned": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "שויך מטפל להזמנה שלך!" : language === "ru" ? "К вашему заказу назначен специалист!" : "A therapist has been assigned to your booking!"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nמטפל שויך להזמנה שלך!\n\nפרטי ההזמנה:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nמספר הזמנה: ${data.bookingNumber}\nהמטפל שלך: ${data.professionalName}\n\nהמטפל יצור איתך קשר בקרוב לתיאום פרטים נוספים.`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nК вашему заказу назначен специалист!\n\nДетали заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nНомер заказа: ${data.bookingNumber}\nВаш специалист: ${data.professionalName}\n\nСпециалист свяжется с вами в ближайшее время для согласования дополнительных деталей.`
+            : `Hello ${data.customerName},\n\nA therapist has been assigned to your booking!\n\nBooking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nBooking Number: ${data.bookingNumber}\nYour therapist: ${data.professionalName}\n\nYour therapist will contact you soon to coordinate additional details.`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "שויך מטפל להזמנה שלך!" : language === "ru" ? "К вашему заказу назначен специалист!" : "A therapist has been assigned to your booking!"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? "מצוין! מטפל מקצועי שויך להזמנה שלך." : language === "ru" ? "Отлично! К вашему заказу назначен профессиональный специалист." : "Great! A professional therapist has been assigned to your booking."}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking Number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "המטפל שלך:" : language === "ru" ? "Ваш специалист:" : "Your therapist:"}</span>
+            <span class="value">${data.professionalName}</span>
+          </div>
+        </div>
+        
+        <p>${language === "he" ? "המטפל יצור איתך קשר בקרוב לתיאום פרטים נוספים והכנה לטיפול." : language === "ru" ? "Специалист свяжется с вами в ближайшее время для согласования дополнительных деталей и подготовки к процедуре." : "Your therapist will contact you soon to coordinate additional details and prepare for the treatment."}</p>
+        
+        ${data.bookingDetailsLink ? `
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${data.bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+        </p>
+        ` : ''}
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "professional_unassigned": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "עדכון בנוגע להזמנה שלך" : language === "ru" ? "Обновление по вашему заказу" : "Update regarding your booking"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום ${data.customerName},\n\nיש עדכון בנוגע להזמנה שלך.\n\nפרטי ההזמנה:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nמספר הזמנה: ${data.bookingNumber}\n\nמהסיבות שונות, המטפל ${data.professionalName} לא יוכל לבצע את הטיפול. אנחנו כבר עובדים על מציאת מטפל חלופי והודעה תישלח אליך בהקדם.`
+          : language === "ru"
+            ? `Здравствуйте, ${data.customerName},\n\nЕсть обновление по вашему заказу.\n\nДетали заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nНомер заказа: ${data.bookingNumber}\n\nПо различным причинам специалист ${data.professionalName} не сможет выполнить процедуру. Мы уже работаем над поиском альтернативного специалиста и уведомление будет отправлено вам в ближайшее время.`
+            : `Hello ${data.customerName},\n\nThere's an update regarding your booking.\n\nBooking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nBooking Number: ${data.bookingNumber}\n\nDue to various reasons, therapist ${data.professionalName} will not be able to perform the treatment. We are already working on finding an alternative therapist and a notification will be sent to you shortly.`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "עדכון בנוגע להזמנה שלך" : language === "ru" ? "Обновление по вашему заказу" : "Update regarding your booking"}</h2>
+        <p>${language === "he" ? `שלום ${data.customerName},` : language === "ru" ? `Здравствуйте, ${data.customerName},` : `Hello ${data.customerName},`}</p>
+        <p>${language === "he" ? "יש עדכון חשוב בנוגע להזמנה שלך." : language === "ru" ? "Есть важное обновление по вашему заказу." : "There's an important update regarding your booking."}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מספר הזמנה:" : language === "ru" ? "Номер заказа:" : "Booking Number:"}</span>
+            <span class="value">${data.bookingNumber}</span>
+          </div>
+        </div>
+        
+        <p>${language === "he" ? `מהסיבות שונות, המטפל ${data.professionalName} לא יוכל לבצע את הטיפול. אנחנו כבר עובדים על מציאת מטפל חלופי מתאים והודעה תישלח אליך בהקדם.` : language === "ru" ? `По различным причинам специалист ${data.professionalName} не сможет выполнить процедуру. Мы уже работаем над поиском подходящего альтернативного специалиста и уведомление будет отправлено вам в ближайшее время.` : `Due to various reasons, therapist ${data.professionalName} will not be able to perform the treatment. We are already working on finding a suitable alternative therapist and a notification will be sent to you shortly.`}</p>
+        
+        <p>${language === "he" ? "מצטערים על אי הנוחות ותודה על הסבלנות." : language === "ru" ? "Извините за неудобства и спасибо за терпение." : "We apologize for the inconvenience and thank you for your patience."}</p>
+        
+        ${data.bookingDetailsLink ? `
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${data.bookingDetailsLink}" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+        </p>
+        ` : ''}
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
+
+    case "new_booking_available": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      
+      subject = language === "he" ? "הזמנה חדשה זמינה!" : language === "ru" ? "Доступен новый заказ!" : "New booking available!"
+      
+      const textContent =
+        (language === "he"
+          ? `שלום,\n\nהזמנה חדשה זמינה לשיוך!\n\nפרטי ההזמנה:\nטיפול: ${data.treatmentName}\nתאריך: ${formattedDate}\nשעה: ${formattedTime}\nעיר: ${data.city}\nמחיר: ₪${data.price}\n\n${data.responseLink ? `לצפייה ואישור: ${data.responseLink}` : ''}`
+          : language === "ru"
+            ? `Здравствуйте,\n\nДоступен новый заказ для назначения!\n\nДетали заказа:\nПроцедура: ${data.treatmentName}\nДата: ${formattedDate}\nВремя: ${formattedTime}\nГород: ${data.city}\nЦена: ₪${data.price}\n\n${data.responseLink ? `Для просмотра и подтверждения: ${data.responseLink}` : ''}`
+            : `Hello,\n\nA new booking is available for assignment!\n\nBooking Details:\nTreatment: ${data.treatmentName}\nDate: ${formattedDate}\nTime: ${formattedTime}\nCity: ${data.city}\nPrice: ₪${data.price}\n\n${data.responseLink ? `To view and confirm: ${data.responseLink}` : ''}`) +
+        emailTextSignature
+      
+      const htmlContent = `
+        <h2>${language === "he" ? "הזמנה חדשה זמינה!" : language === "ru" ? "Доступен новый заказ!" : "New booking available!"}</h2>
+        <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
+        <p>${language === "he" ? "הזמנה חדשה זמינה לשיוך ומתאימה לפרופיל שלך!" : language === "ru" ? "Новый заказ доступен для назначения и подходит вашему профилю!" : "A new booking is available for assignment and matches your profile!"}</p>
+        
+        <div class="booking-card">
+          <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+            <span class="value">${data.treatmentName}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+            <span class="value">${formattedDate}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+            <span class="value">${formattedTime}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "עיר:" : language === "ru" ? "Город:" : "City:"}</span>
+            <span class="value">${data.city}</span>
+          </div>
+          <div class="booking-detail">
+            <span class="label">${language === "he" ? "מחיר:" : language === "ru" ? "Цена:" : "Price:"}</span>
+            <span class="value">₪${data.price}</span>
+          </div>
+        </div>
+        
+        <p>${language === "he" ? "ההזמנה זמינה כל עוד לא נתפסה על ידי מטפל אחר. מומלץ לענות מהר!" : language === "ru" ? "Заказ доступен, пока не занят другим специалистом. Рекомендуется отвечать быстро!" : "The booking is available as long as it hasn't been taken by another therapist. We recommend responding quickly!"}</p>
+        
+        ${data.responseLink ? `
+        <p style="text-align: center; margin: 20px 0;">
+          <a href="${data.responseLink}" class="button">${language === "he" ? "לצפייה ואישור" : language === "ru" ? "Просмотр и подтверждение" : "View and Confirm"}</a>
+        </p>
+        ` : ''}
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
 
     default:
       subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"

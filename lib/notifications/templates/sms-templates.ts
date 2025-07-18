@@ -57,6 +57,24 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "professional-on-way":
       return getProfessionalOnWaySmsTemplate(data, language)
 
+    case "booking_confirmed":
+      return getBookingConfirmedSmsTemplate(data, language)
+
+    case "booking_cancelled":
+      return getBookingCancelledSmsTemplate(data, language)
+
+    case "booking_updated":
+      return getBookingUpdatedSmsTemplate(data, language)
+
+    case "professional_assigned":
+      return getProfessionalAssignedSmsTemplate(data, language)
+
+    case "professional_unassigned":
+      return getProfessionalUnassignedSmsTemplate(data, language)
+
+    case "new_booking_available":
+      return getNewBookingAvailableSmsTemplate(data, language)
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,
@@ -505,6 +523,408 @@ Hello, ${data.professionalName} is heading to you for ${data.treatmentName} trea
 📝 Booking: ${data.bookingNumber}
 
 Your therapist will arrive soon!`
+  }
+  
+  return message + smsSignature
+}
+
+// Booking Confirmed SMS Template
+function getBookingConfirmedSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `✅ ההזמנה שלך אושרה!
+
+שלום ${data.customerName}, ההזמנה שלך אושרה בהצלחה:
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+
+${data.professionalName ? `👨‍⚕️ המטפל שלך: ${data.professionalName}` : '🔄 המטפל ייקבע בקרוב'}`
+      break
+    case "ru":
+      message = `✅ Ваш заказ подтвержден!
+
+Здравствуйте, ${data.customerName}, ваш заказ успешно подтвержден:
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+
+${data.professionalName ? `👨‍⚕️ Ваш специалист: ${data.professionalName}` : '🔄 Специалист будет назначен в ближайшее время'}`
+      break
+    default: // English
+      message = `✅ Your booking is confirmed!
+
+Hello ${data.customerName}, your booking has been successfully confirmed:
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+
+${data.professionalName ? `👨‍⚕️ Your therapist: ${data.professionalName}` : '🔄 Your therapist will be assigned soon'}`
+  }
+  
+  return message + smsSignature
+}
+
+// Booking Cancelled SMS Template
+function getBookingCancelledSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `❌ ההזמנה שלך בוטלה
+
+שלום ${data.customerName}, ההזמנה שלך בוטלה:
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+
+${data.reason ? `💭 סיבת הביטול: ${data.reason}` : ''}
+
+💡 נשמח לעזור לך להזמין מועד חדש`
+      break
+    case "ru":
+      message = `❌ Ваш заказ отменен
+
+Здравствуйте, ${data.customerName}, ваш заказ был отменен:
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+
+${data.reason ? `💭 Причина отмены: ${data.reason}` : ''}
+
+💡 Мы будем рады помочь вам забронировать новое время`
+      break
+    default: // English
+      message = `❌ Your booking has been cancelled
+
+Hello ${data.customerName}, your booking has been cancelled:
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+
+${data.reason ? `💭 Cancellation reason: ${data.reason}` : ''}
+
+💡 We'd be happy to help you book a new appointment`
+  }
+  
+  return message + smsSignature
+}
+
+// Booking Updated SMS Template
+function getBookingUpdatedSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🔄 ההזמנה שלך עודכנה
+
+שלום ${data.customerName}, ההזמנה שלך עודכנה:
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+
+${data.changes ? `📝 שינויים: ${data.changes}` : ''}`
+      break
+    case "ru":
+      message = `🔄 Ваш заказ обновлен
+
+Здравствуйте, ${data.customerName}, ваш заказ был обновлен:
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+
+${data.changes ? `📝 Изменения: ${data.changes}` : ''}`
+      break
+    default: // English
+      message = `🔄 Your booking has been updated
+
+Hello ${data.customerName}, your booking has been updated:
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+
+${data.changes ? `📝 Changes: ${data.changes}` : ''}`
+  }
+  
+  return message + smsSignature
+}
+
+// Professional Assigned SMS Template
+function getProfessionalAssignedSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🎯 שויך מטפל להזמנה שלך!
+
+שלום ${data.customerName}, מטפל שויך להזמנה שלך:
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+👨‍⚕️ המטפל שלך: ${data.professionalName}
+
+`
+      break
+    case "ru":
+      message = `🎯 К вашему заказу назначен специалист!
+
+Здравствуйте, ${data.customerName}, к вашему заказу назначен специалист:
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+👨‍⚕️ Ваш специалист: ${data.professionalName}
+
+`
+      break
+    default: // English
+      message = `🎯 A therapist has been assigned to your booking!
+
+Hello ${data.customerName}, a therapist has been assigned to your booking:
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+👨‍⚕️ Your therapist: ${data.professionalName}
+
+`
+  }
+  
+  return message + smsSignature
+}
+
+// Professional Unassigned SMS Template
+function getProfessionalUnassignedSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `⚠️ עדכון בנוגע להזמנה שלך
+
+שלום ${data.customerName}, יש עדכון בנוגע להזמנה שלך:
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+
+💭 מסיבות שונות, ${data.professionalName} לא יוכל לבצע את הטיפול
+🔄 אנחנו כבר עובדים על מציאת מטפל חלופי מתאים
+
+💡 הודעה תישלח אליך בהקדם`
+      break
+    case "ru":
+      message = `⚠️ Обновление по вашему заказу
+
+Здравствуйте, ${data.customerName}, есть обновление по вашему заказу:
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+
+💭 По различным причинам ${data.professionalName} не сможет выполнить процедуру
+🔄 Мы уже работаем над поиском подходящего альтернативного специалиста
+
+💡 Уведомление будет отправлено вам в ближайшее время`
+      break
+    default: // English
+      message = `⚠️ Update regarding your booking
+
+Hello ${data.customerName}, there's an update regarding your booking:
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+
+💭 Due to various reasons, ${data.professionalName} will not be able to perform the treatment
+🔄 We are already working on finding a suitable alternative therapist
+
+💡 A notification will be sent to you shortly`
+  }
+  
+  return message + smsSignature
+}
+
+// New Booking Available SMS Template (for professionals)
+function getNewBookingAvailableSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🔔 הזמנה חדשה זמינה לשיוך!
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📍 עיר: ${data.city}
+💰 מחיר: ₪${data.price}
+
+⚡ ההזמנה זמינה כל עוד לא נתפסה על ידי מטפל אחר
+💡 מומלץ לענות מהר!
+
+${data.responseLink ? `🔗 לצפייה ואישור: ${data.responseLink}` : '📱 או הכנס לאפליקציה: masu.co.il'}`
+      break
+    case "ru":
+      message = `🔔 Доступен новый заказ для назначения!
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📍 Город: ${data.city}
+💰 Цена: ₪${data.price}
+
+⚡ Заказ доступен, пока не занят другим специалистом
+💡 Рекомендуется отвечать быстро!
+
+${data.responseLink ? `🔗 Для просмотра и подтверждения: ${data.responseLink}` : '📱 или войдите в приложение: masu.co.il'}`
+      break
+    default: // English
+      message = `🔔 New booking available for assignment!
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📍 City: ${data.city}
+💰 Price: ₪${data.price}
+
+⚡ The booking is available as long as it hasn't been taken by another therapist
+💡 We recommend responding quickly!
+
+${data.responseLink ? `🔗 To view and confirm: ${data.responseLink}` : '📱 or enter the app: masu.co.il'}`
   }
   
   return message + smsSignature

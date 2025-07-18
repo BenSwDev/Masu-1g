@@ -103,6 +103,41 @@ export interface ProfessionalOnWayNotificationData extends BaseNotificationData 
   bookingNumber: string
 }
 
+// Booking status notification data
+export interface BookingStatusNotificationData extends BaseNotificationData {
+  type: "booking_confirmed" | "booking_cancelled" | "booking_updated"
+  bookingNumber: string
+  treatmentName: string
+  bookingDateTime: Date
+  customerName: string
+  professionalName?: string
+  reason?: string // For cancellations
+  changes?: string // For updates
+  bookingDetailsLink?: string
+}
+
+// Professional assignment notification data
+export interface ProfessionalAssignmentNotificationData extends BaseNotificationData {
+  type: "professional_assigned" | "professional_unassigned"
+  bookingNumber: string
+  treatmentName: string
+  bookingDateTime: Date
+  customerName: string
+  professionalName: string
+  bookingDetailsLink?: string
+}
+
+// New booking available notification data
+export interface NewBookingAvailableNotificationData extends BaseNotificationData {
+  type: "new_booking_available"
+  treatmentName: string
+  bookingDateTime: Date
+  city: string
+  price: number
+  responseLink?: string
+  bookingId: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
@@ -114,6 +149,9 @@ export type NotificationData =
   | ReviewRequestNotificationData
   | ProfessionalBookingNotificationData
   | ProfessionalOnWayNotificationData
+  | BookingStatusNotificationData
+  | ProfessionalAssignmentNotificationData
+  | NewBookingAvailableNotificationData
 
 // Notification result interface
 export interface NotificationResult {

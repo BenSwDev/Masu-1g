@@ -407,7 +407,7 @@ export async function sendPaymentBonusNotifications(
         }
 
         // Expire any existing pending responses for this professional
-        await ProfessionalResponse.updateMany(
+        await (ProfessionalResponse.updateMany as any)(
           {
             bookingId: new mongoose.Types.ObjectId(bookingId),
             professionalId: new mongoose.Types.ObjectId(professionalId),
@@ -416,15 +416,52 @@ export async function sendPaymentBonusNotifications(
           { status: "expired" }
         )
 
-        // Create new response record for tracking
-        const response = new ProfessionalResponse({
+        // Try to find existing response first
+        let response = await (ProfessionalResponse.findOne as any)({
           bookingId: new mongoose.Types.ObjectId(bookingId),
-          professionalId: new mongoose.Types.ObjectId(professionalId),
-          phoneNumber: professional.phone,
-          status: "pending"
+          professionalId: new mongoose.Types.ObjectId(professionalId)
         })
 
-        await response.save()
+        if (response) {
+          // Update existing response
+          response.status = "pending"
+          response.phoneNumber = professional.phone
+          response.createdAt = new Date()
+          await response.save()
+        } else {
+          // Create new response record for tracking
+          response = new ProfessionalResponse({
+            bookingId: new mongoose.Types.ObjectId(bookingId),
+            professionalId: new mongoose.Types.ObjectId(professionalId),
+            phoneNumber: professional.phone,
+            status: "pending"
+          })
+
+          try {
+            await response.save()
+          } catch (duplicateError: any) {
+            if (duplicateError.code === 11000) {
+              // Handle duplicate key error - find and update existing
+              response = await (ProfessionalResponse.findOneAndUpdate as any)(
+                {
+                  bookingId: new mongoose.Types.ObjectId(bookingId),
+                  professionalId: new mongoose.Types.ObjectId(professionalId)
+                },
+                {
+                  status: "pending",
+                  phoneNumber: professional.phone,
+                  createdAt: new Date()
+                },
+                { new: true }
+              )
+              if (!response) {
+                throw duplicateError
+              }
+            } else {
+              throw duplicateError
+            }
+          }
+        }
 
         // Prepare attractive notification with smart messaging
         const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`

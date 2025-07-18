@@ -2565,9 +2565,28 @@ export async function addPaymentBonusToBooking(
       return { success: false, error: "bookings.errors.noPriceDetails" }
     }
 
+    // Ensure priceDetails is initialized for older bookings
+    if (!booking.priceDetails.totalProfessionalPayment) {
+      booking.priceDetails.totalProfessionalPayment = 0
+    }
+    if (!booking.priceDetails.baseProfessionalPayment) {
+      booking.priceDetails.baseProfessionalPayment = 0
+    }
+    if (!booking.priceDetails.surchargesProfessionalPayment) {
+      booking.priceDetails.surchargesProfessionalPayment = 0
+    }
+
     // Check if booking already has a payment bonus
     if (booking.priceDetails.paymentBonus) {
       return { success: false, error: "bookings.errors.bookingAlreadyHasPaymentBonus" }
+    }
+
+    // Validate required fields for payment bonus
+    if (!amount || amount <= 0) {
+      return { success: false, error: "bookings.errors.invalidBonusAmount" }
+    }
+    if (!description || description.trim().length === 0) {
+      return { success: false, error: "bookings.errors.bonusDescriptionRequired" }
     }
 
     // Add payment bonus

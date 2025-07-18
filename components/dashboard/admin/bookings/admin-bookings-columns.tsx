@@ -146,8 +146,6 @@ const AdminBookingActions = ({
   const [showSendReviewModal, setShowSendReviewModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
-  const [showPaymentBonusModal, setShowPaymentBonusModal] = useState(false)
-  const [showEditPaymentBonusModal, setShowEditPaymentBonusModal] = useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -167,8 +165,6 @@ const AdminBookingActions = ({
   const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
   const canSendToProfessionals = !booking.professionalId && ["confirmed", "pending_professional"].includes(booking.status)
   const canViewResponses = ["confirmed", "pending_professional"].includes(booking.status)
-  const canAddPaymentBonus = booking.status === "pending_professional" && !booking.professionalId && !booking.priceDetails?.paymentBonus
-  const canEditPaymentBonus = booking.priceDetails?.paymentBonus && booking.status === "pending_professional" && !booking.professionalId
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -178,118 +174,6 @@ const AdminBookingActions = ({
 
   const handleSendReviewReminder = () => {
     setShowSendReviewModal(true)
-  }
-
-  const handleAddPaymentBonus = async (amount: number, description: string) => {
-    try {
-      const response = await fetch(`/api/admin/bookings/${booking._id}/add-payment-bonus`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount, description }),
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        toast({
-          title: "הצלחה",
-          description: "תוספת תשלום נוספה בהצלחה"
-        })
-        if (result.notificationsSent) {
-          toast({
-            title: "הצלחה", 
-            description: "הודעות נשלחו למטפלים המתאימים"
-          })
-        }
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-        setShowPaymentBonusModal(false)
-      } else {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "שגיאה בהוספת תוספת תשלום"
-        })
-      }
-    } catch (error) {
-      console.error("Add payment bonus error:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה בהוספת תוספת תשלום"
-      })
-    }
-  }
-
-  const handleEditPaymentBonus = async (amount: number, description: string) => {
-    try {
-      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount, description }),
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        toast({
-          title: "הצלחה",
-          description: "תוספת תשלום עודכנה בהצלחה"
-        })
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-        setShowEditPaymentBonusModal(false)
-      } else {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "שגיאה בעדכון תוספת תשלום"
-        })
-      }
-    } catch (error) {
-      console.error("Edit payment bonus error:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה בעדכון תוספת תשלום"
-      })
-    }
-  }
-
-  const handleDeletePaymentBonus = async () => {
-    try {
-      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        toast({
-          title: "הצלחה",
-          description: "תוספת תשלום נמחקה בהצלחה"
-        })
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-      } else {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "שגיאה במחיקת תוספת תשלום"
-        })
-      }
-    } catch (error) {
-      console.error("Delete payment bonus error:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה במחיקת תוספת תשלום"
-      })
-    }
   }
 
   const handleSendToAllSuitableProfessionals = async () => {
@@ -366,34 +250,7 @@ const AdminBookingActions = ({
             <span>{t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}</span>
           </DropdownMenuItem>
 
-          {canAddPaymentBonus && (
-            <DropdownMenuItem
-              onClick={() => setShowPaymentBonusModal(true)}
-              className="cursor-pointer text-green-600"
-            >
-              <CheckCircle className="mr-2 h-4 w-4" />
-              <span>הוסף תוספת תשלום למטפלים</span>
-            </DropdownMenuItem>
-          )}
 
-          {canEditPaymentBonus && (
-            <>
-              <DropdownMenuItem
-                onClick={() => setShowEditPaymentBonusModal(true)}
-                className="cursor-pointer text-blue-600"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                <span>ערוך תוספת תשלום (₪{booking.priceDetails?.paymentBonus?.amount})</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDeletePaymentBonus}
-                className="cursor-pointer text-red-600"
-              >
-                <X className="mr-2 h-4 w-4" />
-                <span>מחק תוספת תשלום</span>
-              </DropdownMenuItem>
-            </>
-          )}
 
           {canSendToProfessionals && (
             <>
@@ -483,22 +340,7 @@ const AdminBookingActions = ({
         </Dialog>
       )}
 
-      {/* Payment Bonus Modal */}
-      <PaymentBonusModal
-        isOpen={showPaymentBonusModal}
-        onClose={() => setShowPaymentBonusModal(false)}
-        onSubmit={handleAddPaymentBonus}
-      />
 
-      {/* Edit Payment Bonus Modal */}
-      <PaymentBonusModal
-        isOpen={showEditPaymentBonusModal}
-        onClose={() => setShowEditPaymentBonusModal(false)}
-        onSubmit={handleEditPaymentBonus}
-        existingAmount={booking.priceDetails?.paymentBonus?.amount}
-        existingDescription={booking.priceDetails?.paymentBonus?.description}
-        isEdit={true}
-      />
 
       {/* Professional Responses Modal */}
       <ProfessionalResponsesDialog
@@ -1619,7 +1461,13 @@ export const getAdminBookingColumns = (
     header: t("adminBookings.columns.financialSummary"),
     cell: ({ row }) => <FinancialSummaryInfo booking={row.original} t={t} />,
   },
-  // 12. Actions
+  // 12. Payment Bonus
+  {
+    accessorKey: "paymentBonus",
+    header: "תוספת תשלום",
+    cell: ({ row }) => <PaymentBonusColumn booking={row.original} t={t} />,
+  },
+  // 13. Actions
   {
     id: "actions",
     header: t("common.actions"),
@@ -1641,6 +1489,215 @@ export const getAdminBookingColumns = (
     ),
   },
 ]
+
+// Payment Bonus Column Component
+const PaymentBonusColumn = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const [showPaymentBonusModal, setShowPaymentBonusModal] = useState(false)
+  const [showEditPaymentBonusModal, setShowEditPaymentBonusModal] = useState(false)
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  // Check if booking can receive payment bonus - handle older bookings without all fields
+  const canAddPaymentBonus = booking.status === "pending_professional" && 
+    !booking.professionalId && 
+    !booking.priceDetails?.paymentBonus &&
+    booking.priceDetails  // Must have priceDetails
+
+  const canEditPaymentBonus = booking.priceDetails?.paymentBonus && 
+    booking.status === "pending_professional" && 
+    !booking.professionalId
+
+  const handleAddPaymentBonus = async (amount: number, description: string) => {
+    console.log("Adding payment bonus:", { bookingId: booking._id, amount, description })
+    
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/add-payment-bonus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, description }),
+      })
+      
+      const result = await response.json()
+      console.log("Payment bonus result:", result)
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום נוספה בהצלחה"
+        })
+        if (result.notificationsSent) {
+          toast({
+            title: "הצלחה", 
+            description: "הודעות נשלחו למטפלים המתאימים"
+          })
+        }
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        setShowPaymentBonusModal(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בהוספת תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Add payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בהוספת תוספת תשלום"
+      })
+    }
+  }
+
+  const handleEditPaymentBonus = async (amount: number, description: string) => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, description }),
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום עודכנה בהצלחה"
+        })
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        setShowEditPaymentBonusModal(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Edit payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בעדכון תוספת תשלום"
+      })
+    }
+  }
+
+  const handleDeletePaymentBonus = async () => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום נמחקה בהצלחה"
+        })
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה במחיקת תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Delete payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה במחיקת תוספת תשלום"
+      })
+    }
+  }
+
+  if (booking.priceDetails?.paymentBonus) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
+          <span className="text-green-600 font-medium">₪{booking.priceDetails.paymentBonus.amount}</span>
+        </div>
+        <div className="text-xs text-gray-500 max-w-[120px] truncate">
+          {booking.priceDetails.paymentBonus.description}
+        </div>
+        {canEditPaymentBonus && (
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowEditPaymentBonusModal(true)
+              }}
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeletePaymentBonus()
+              }}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
+        {/* Edit Payment Bonus Modal */}
+        <PaymentBonusModal
+          isOpen={showEditPaymentBonusModal}
+          onClose={() => setShowEditPaymentBonusModal(false)}
+          onSubmit={handleEditPaymentBonus}
+          existingAmount={booking.priceDetails?.paymentBonus?.amount}
+          existingDescription={booking.priceDetails?.paymentBonus?.description}
+          isEdit={true}
+        />
+      </div>
+    )
+  }
+
+  if (canAddPaymentBonus) {
+    return (
+      <div>
+        <Button
+          size="sm"
+          className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowPaymentBonusModal(true)
+          }}
+        >
+          <CheckCircle className="h-3 w-3 mr-1" />
+          הוסף בונוס
+        </Button>
+
+        {/* Add Payment Bonus Modal */}
+        <PaymentBonusModal
+          isOpen={showPaymentBonusModal}
+          onClose={() => setShowPaymentBonusModal(false)}
+          onSubmit={handleAddPaymentBonus}
+        />
+      </div>
+    )
+  }
+
+  return <span className="text-gray-400 text-xs">לא זמין</span>
+}
 
 // Payment Bonus Modal Component
 const PaymentBonusModal = ({ 

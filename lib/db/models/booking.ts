@@ -212,9 +212,9 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     surchargesProfessionalPayment: { type: Number, min: 0 },
     paymentBonus: {
       amount: { type: Number, min: 0 },
-      description: { type: String, required: true },
-      addedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-      addedAt: { type: Date, default: Date.now, required: true }
+      description: { type: String },
+      addedBy: { type: Schema.Types.ObjectId, ref: "User" },
+      addedAt: { type: Date, default: Date.now }
     },
     professionalPaymentOverride: { type: Number, min: 0 },
   },

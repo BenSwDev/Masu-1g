@@ -29,6 +29,13 @@ interface BookingData {
   bookingCurrentStatus: string
   isAdminAssigned?: boolean
   responseMethod?: string
+  expectedPayment?: {
+    basePayment: number
+    surcharges: number
+    paymentBonus: number
+    total: number
+    breakdown: Array<{ description: string; amount: number }>
+  }
 }
 
 interface ProfessionalResponseClientProps {
@@ -281,6 +288,30 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
                 <p className="text-sm text-yellow-700 mt-1">{data.booking.notes}</p>
               </div>
             )}
+
+            {/* Expected Payment */}
+            {data.expectedPayment && data.expectedPayment.total > 0 && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-medium text-green-800 mb-2">תשלום צפוי עבור הטיפול:</p>
+                <div className="space-y-1">
+                  {data.expectedPayment.breakdown.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.description}:</span>
+                      <span>₪{item.amount}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between font-bold border-t pt-1 text-lg">
+                    <span>סה"כ:</span>
+                    <span className="text-green-600">₪{data.expectedPayment.total}</span>
+                  </div>
+                  {data.expectedPayment.paymentBonus > 0 && (
+                    <div className="text-xs text-green-600 mt-1">
+                      ✨ כולל תוספת מיוחדת!
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -348,6 +379,30 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm font-medium text-yellow-800">הערות:</p>
                 <p className="text-sm text-yellow-700 mt-1">{data.booking.notes}</p>
+              </div>
+            )}
+
+            {/* Expected Payment */}
+            {data.expectedPayment && data.expectedPayment.total > 0 && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-medium text-green-800 mb-2">תשלום צפוי עבור הטיפול:</p>
+                <div className="space-y-1">
+                  {data.expectedPayment.breakdown.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.description}:</span>
+                      <span>₪{item.amount}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between font-bold border-t pt-1 text-lg">
+                    <span>סה"כ:</span>
+                    <span className="text-green-600">₪{data.expectedPayment.total}</span>
+                  </div>
+                  {data.expectedPayment.paymentBonus > 0 && (
+                    <div className="text-xs text-green-600 mt-1">
+                      ✨ כולל תוספת מיוחדת!
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

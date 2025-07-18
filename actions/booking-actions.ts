@@ -451,6 +451,7 @@ export async function getAvailableTimeSlots(
 
 export async function calculateBookingPrice(
   payload: unknown,
+  professionalId?: string // הוספת פרמטר למטפל
 ): Promise<{ success: boolean; priceDetails?: ClientCalculatedPriceDetails; error?: string; issues?: z.ZodIssue[] }> {
   const validationResult = CalculatePricePayloadSchema.safeParse(payload)
   if (!validationResult.success) {
@@ -882,35 +883,69 @@ export async function calculateBookingPrice(
       surcharges: priceDetails.surcharges
     })
 
-    // Calculate professional payment and office commission
-    // 1. Base treatment professional payment (המטפל מקבל את החלק שלו תמיד, גם אם הטיפול מכוסה)
+    // Calculate professional payment - use professional-specific pricing if available
     let baseProfessionalPayment = 0
-    if (treatment.pricingType === "fixed" && treatment.fixedProfessionalPrice) {
-      baseProfessionalPayment = treatment.fixedProfessionalPrice
-    } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
-      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
-      if (duration) {
-        baseProfessionalPayment = duration.professionalPrice
+    let surchargesProfessionalPayment = 0
+
+    // אם יש מטפל מוקצה, השתמש בחישוב המדויק שלו
+    if (professionalId) {
+      try {
+        const { calculateProfessionalPaymentForBooking } = await import("@/lib/utils/professional-payment-utils")
+        const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+        
+        const professionalProfile = await ProfessionalProfile.findOne({ userId: professionalId }).lean()
+        if (professionalProfile) {
+          // יצירת booking זמני לחישוב
+          const tempBooking = {
+            treatmentId: new mongoose.Types.ObjectId(treatmentId),
+            selectedDurationId: selectedDurationId ? new mongoose.Types.ObjectId(selectedDurationId) : undefined,
+            priceDetails: {
+              surcharges: priceDetails.surcharges
+            }
+          } as any
+
+          const paymentCalc = calculateProfessionalPaymentForBooking(tempBooking, professionalProfile, treatment)
+          baseProfessionalPayment = paymentCalc.baseProfessionalPayment
+          surchargesProfessionalPayment = paymentCalc.surchargesProfessionalPayment
+        }
+      } catch (error) {
+        logger.warn("Failed to calculate professional payment, using fallback", { error, professionalId })
       }
     }
 
-    // 2. Surcharges professional payment
-    let surchargesProfessionalPayment = 0
-    for (const surcharge of priceDetails.surcharges) {
-      if (surcharge.professionalShare) {
-        const surchargeAmount = surcharge.amount
-        if (surcharge.professionalShare.type === "fixed") {
-          surchargesProfessionalPayment += surcharge.professionalShare.amount
-        } else if (surcharge.professionalShare.type === "percentage") {
-          surchargesProfessionalPayment += surchargeAmount * (surcharge.professionalShare.amount / 100)
+    // אם אין מטפל או נכשל החישוב, השתמש במחיר בסיס מהטיפול
+    if (baseProfessionalPayment === 0) {
+      // 1. Base treatment professional payment (המטפל מקבל את החלק שלו תמיד, גם אם הטיפול מכוסה)
+      if (treatment.pricingType === "fixed" && treatment.fixedProfessionalPrice) {
+        baseProfessionalPayment = treatment.fixedProfessionalPrice
+      } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
+        const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+        if (duration) {
+          baseProfessionalPayment = duration.professionalPrice
+        }
+      }
+
+      // 2. Surcharges professional payment
+      for (const surcharge of priceDetails.surcharges) {
+        if (surcharge.professionalShare) {
+          const surchargeAmount = surcharge.amount
+          if (surcharge.professionalShare.type === "fixed") {
+            surchargesProfessionalPayment += surcharge.professionalShare.amount
+          } else if (surcharge.professionalShare.type === "percentage") {
+            surchargesProfessionalPayment += surchargeAmount * (surcharge.professionalShare.amount / 100)
+          }
         }
       }
     }
 
-    // 3. Total professional payment (המטפל מקבל את החלק שלו תמיד)
-    const totalProfessionalPayment = baseProfessionalPayment + surchargesProfessionalPayment
+    // 3. Payment bonus (if exists in the booking)
+    let paymentBonusAmount = 0
+    // TODO: This will be set when adding bonus to existing booking
+    
+    // 4. Total professional payment (המטפל מקבל את החלק שלו תמיד)
+    const totalProfessionalPayment = baseProfessionalPayment + surchargesProfessionalPayment + paymentBonusAmount
 
-    // 4. Office commission calculation:
+    // 5. Office commission calculation:
     // - אם הלקוח משלם הכל: עמלת משרד = מה שהלקוח משלם - מה שהמטפל מקבל
     // - אם הטיפול מכוסה על ידי מנוי/שובר: המשרד משלם למטפל מהכיס שלו, ועמלת המשרד שלילית
     const totalOfficeCommission = priceDetails.finalAmount - totalProfessionalPayment
@@ -2506,6 +2541,80 @@ export async function getAvailableProfessionals(): Promise<{ success: boolean; p
   } catch (error) {
     logger.error("Error in getAvailableProfessionals:", { error })
     return { success: false, error: "bookings.errors.fetchProfessionalsFailed" }
+  }
+}
+
+export async function addPaymentBonusToBooking(
+  bookingId: string,
+  amount: number,
+  description: string
+): Promise<{ success: boolean; error?: string; booking?: IBooking; shouldNotifyProfessionals?: boolean }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  try {
+    await dbConnect()
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+
+    if (!booking.priceDetails) {
+      return { success: false, error: "bookings.errors.noPriceDetails" }
+    }
+
+    // Check if booking already has a payment bonus
+    if (booking.priceDetails.paymentBonus) {
+      return { success: false, error: "bookings.errors.bookingAlreadyHasPaymentBonus" }
+    }
+
+    // Add payment bonus
+    booking.priceDetails.paymentBonus = {
+      amount: Number(amount),
+      description: description.trim(),
+      addedBy: session.user.id,
+      addedAt: new Date()
+    }
+
+    // Recalculate total professional payment
+    const currentBasePay = booking.priceDetails.baseProfessionalPayment || 0
+    const currentSurcharges = booking.priceDetails.surchargesProfessionalPayment || 0
+    const bonusAmount = booking.priceDetails.paymentBonus.amount
+    
+    booking.priceDetails.totalProfessionalPayment = currentBasePay + currentSurcharges + bonusAmount
+
+    // Recalculate office commission
+    const customerPaid = booking.priceDetails.finalAmount || 0
+    const professionalReceives = booking.priceDetails.totalProfessionalPayment
+    booking.priceDetails.totalOfficeCommission = customerPaid - professionalReceives
+
+    await booking.save()
+
+    logger.info("Payment bonus added to booking", {
+      bookingId,
+      amount,
+      description,
+      addedBy: session.user.id,
+      newTotalProfessionalPayment: booking.priceDetails.totalProfessionalPayment
+    })
+
+    // Determine if should notify professionals (if booking is still pending professional assignment)
+    const shouldNotifyProfessionals = booking.status === "pending_professional" && !booking.professionalId
+
+    return { 
+      success: true, 
+      booking: booking.toObject(),
+      shouldNotifyProfessionals
+    }
+  } catch (error) {
+    logger.error("Error adding payment bonus:", { error, bookingId, amount })
+    const errorMessage = error instanceof Error ? error.message : "bookings.errors.addPaymentBonusFailed"
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.addPaymentBonusFailed",
+    }
   }
 }
 

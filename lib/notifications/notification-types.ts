@@ -138,6 +138,20 @@ export interface NewBookingAvailableNotificationData extends BaseNotificationDat
   bookingId: string
 }
 
+// Professional payment bonus notification data
+export interface ProfessionalPaymentBonusNotificationData extends BaseNotificationData {
+  type: "professional-payment-bonus-notification"
+  treatmentName: string
+  bookingDateTime: Date
+  address: string
+  basePayment: number
+  bonusAmount: number
+  totalPayment: number
+  bonusDescription: string
+  responseLink: string
+  responseId: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
@@ -152,6 +166,7 @@ export type NotificationData =
   | BookingStatusNotificationData
   | ProfessionalAssignmentNotificationData
   | NewBookingAvailableNotificationData
+  | ProfessionalPaymentBonusNotificationData
 
 // Notification result interface
 export interface NotificationResult {

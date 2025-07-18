@@ -71,6 +71,12 @@ export interface CalculatedPriceDetails {
   totalOfficeCommission: number // Total office commission
   baseProfessionalPayment: number // Professional payment from base treatment
   surchargesProfessionalPayment: number // Professional payment from surcharges
+  paymentBonus?: {
+    amount: number
+    description: string
+    addedBy: string // admin user ID
+    addedAt: Date
+  }
 }
 
 export interface PopulatedPriceDetails

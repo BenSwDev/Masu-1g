@@ -34,6 +34,12 @@ export interface IPriceDetails {
   totalOfficeCommission?: number // Total office commission
   baseProfessionalPayment?: number // Professional payment from base treatment
   surchargesProfessionalPayment?: number // Professional payment from surcharges
+  paymentBonus?: {
+    amount: number
+    description: string
+    addedBy: string // admin user ID
+    addedAt: Date
+  }
   professionalPaymentOverride?: number // Manual override for professional payment (admin only)
 }
 
@@ -204,6 +210,12 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     totalOfficeCommission: { type: Number, min: 0 },
     baseProfessionalPayment: { type: Number, min: 0 },
     surchargesProfessionalPayment: { type: Number, min: 0 },
+    paymentBonus: {
+      amount: { type: Number, min: 0 },
+      description: { type: String, required: true },
+      addedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      addedAt: { type: Date, default: Date.now, required: true }
+    },
     professionalPaymentOverride: { type: Number, min: 0 },
   },
   { _id: false },

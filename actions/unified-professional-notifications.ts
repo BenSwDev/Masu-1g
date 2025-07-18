@@ -338,6 +338,188 @@ export async function sendManualProfessionalNotifications(
 }
 
 /**
+ * Send payment bonus notifications to suitable professionals
+ * This creates attractive notifications that encourage professionals to take the booking
+ */
+export async function sendPaymentBonusNotifications(
+  bookingId: string,
+  bonusAmount: number,
+  bonusDescription: string
+): Promise<{ success: boolean; sentCount?: number; error?: string; results?: any[] }> {
+  try {
+    await dbConnect()
+
+    // Import models
+    const Booking = (await import("@/lib/db/models/booking")).default
+    const User = (await import("@/lib/db/models/user")).default
+    const ProfessionalResponse = (await import("@/lib/db/models/professional-response")).default
+
+    // Get booking details
+    const booking = await Booking.findById(bookingId)
+      .populate('treatmentId', 'name')
+      .populate('selectedDurationId')
+      .lean()
+
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    if (booking.status !== "pending_professional" || booking.professionalId) {
+      return { success: false, error: "Booking is not available for professional assignment" }
+    }
+
+    // Get suitable professionals for this booking
+    const { getSuitableProfessionalsForBooking } = await import("@/actions/booking-actions")
+    const suitableProfessionals = await getSuitableProfessionalsForBooking(bookingId)
+
+    if (!suitableProfessionals.success || !suitableProfessionals.professionals?.length) {
+      return { success: false, error: "No suitable professionals found" }
+    }
+
+    // Prepare attractive notification data
+    const treatmentName = (booking.treatmentId as any)?.name || "טיפול"
+    const bookingDateTime = booking.bookingDateTime
+    const address = `${booking.bookingAddressSnapshot?.city || ""}${booking.bookingAddressSnapshot?.street ? `, ${booking.bookingAddressSnapshot.street}` : ""}`
+    const basePayment = booking.priceDetails?.baseProfessionalPayment || 0
+    const surcharges = booking.priceDetails?.surchargesProfessionalPayment || 0
+    const totalWithBonus = basePayment + surcharges + bonusAmount
+
+    const results: any[] = []
+    let sentCount = 0
+
+    // Send notifications to each suitable professional
+    for (const prof of suitableProfessionals.professionals) {
+      const professionalId = prof._id.toString()
+      
+      try {
+        // Get professional details
+        const professional = await User.findById(professionalId)
+          .select("name email phone preferredLanguage notificationPreferences")
+          .lean()
+
+        if (!professional) {
+          results.push({
+            professionalId,
+            success: false,
+            error: "Professional not found"
+          })
+          continue
+        }
+
+        // Expire any existing pending responses for this professional
+        await ProfessionalResponse.updateMany(
+          {
+            bookingId: new mongoose.Types.ObjectId(bookingId),
+            professionalId: new mongoose.Types.ObjectId(professionalId),
+            status: "pending"
+          },
+          { status: "expired" }
+        )
+
+        // Create new response record for tracking
+        const response = new ProfessionalResponse({
+          bookingId: new mongoose.Types.ObjectId(bookingId),
+          professionalId: new mongoose.Types.ObjectId(professionalId),
+          phoneNumber: professional.phone,
+          status: "pending"
+        })
+
+        await response.save()
+
+        // Prepare attractive notification with smart messaging
+        const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`
+        const userLanguage = "he"
+
+        const notificationData = {
+          type: "professional-payment-bonus-notification" as const,
+          treatmentName,
+          bookingDateTime,
+          address,
+          basePayment,
+          bonusAmount,
+          totalPayment: totalWithBonus,
+          bonusDescription,
+          responseLink,
+          responseId: response._id.toString()
+        }
+
+        // Send via unified notification service
+        const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
+        
+        const recipients = []
+        
+        // Add email recipient if available
+        if (professional.email) {
+          recipients.push({
+            type: "email" as const,
+            value: professional.email,
+            name: professional.name,
+            language: userLanguage
+          })
+        }
+        
+        // Add SMS recipient
+        if (professional.phone) {
+          recipients.push({
+            type: "phone" as const,
+            value: professional.phone,
+            language: userLanguage
+          })
+        }
+
+        if (recipients.length > 0) {
+          await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
+          sentCount++
+          
+          results.push({
+            professionalId,
+            success: true,
+            sentVia: recipients.map(r => r.type)
+          })
+        } else {
+          results.push({
+            professionalId,
+            success: false,
+            error: "No contact information available"
+          })
+        }
+
+      } catch (error) {
+        logger.error("Error sending payment bonus notification to professional", {
+          error,
+          professionalId,
+          bookingId
+        })
+        
+        results.push({
+          professionalId,
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error"
+        })
+      }
+    }
+
+    logger.info("Payment bonus notifications sent", {
+      bookingId,
+      bonusAmount,
+      totalProfessionals: suitableProfessionals.professionals.length,
+      sentCount,
+      successRate: (sentCount / suitableProfessionals.professionals.length) * 100
+    })
+
+    return {
+      success: true,
+      sentCount,
+      results
+    }
+
+  } catch (error) {
+    logger.error("Error in sendPaymentBonusNotifications:", error)
+    return { success: false, error: "Failed to send payment bonus notifications" }
+  }
+}
+
+/**
  * Resend notifications to professionals (admin only)
  */
 export async function resendProfessionalNotifications(

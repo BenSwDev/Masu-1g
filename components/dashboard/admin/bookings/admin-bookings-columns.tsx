@@ -146,6 +146,8 @@ const AdminBookingActions = ({
   const [showSendReviewModal, setShowSendReviewModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [showPaymentBonusModal, setShowPaymentBonusModal] = useState(false)
+  const [showEditPaymentBonusModal, setShowEditPaymentBonusModal] = useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -165,6 +167,8 @@ const AdminBookingActions = ({
   const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
   const canSendToProfessionals = !booking.professionalId && ["confirmed", "pending_professional"].includes(booking.status)
   const canViewResponses = ["confirmed", "pending_professional"].includes(booking.status)
+  const canAddPaymentBonus = booking.status === "pending_professional" && !booking.professionalId && !booking.priceDetails?.paymentBonus
+  const canEditPaymentBonus = booking.priceDetails?.paymentBonus && booking.status === "pending_professional" && !booking.professionalId
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -174,6 +178,118 @@ const AdminBookingActions = ({
 
   const handleSendReviewReminder = () => {
     setShowSendReviewModal(true)
+  }
+
+  const handleAddPaymentBonus = async (amount: number, description: string) => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/add-payment-bonus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, description }),
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום נוספה בהצלחה"
+        })
+        if (result.notificationsSent) {
+          toast({
+            title: "הצלחה", 
+            description: "הודעות נשלחו למטפלים המתאימים"
+          })
+        }
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        setShowPaymentBonusModal(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בהוספת תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Add payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בהוספת תוספת תשלום"
+      })
+    }
+  }
+
+  const handleEditPaymentBonus = async (amount: number, description: string) => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, description }),
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום עודכנה בהצלחה"
+        })
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        setShowEditPaymentBonusModal(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Edit payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בעדכון תוספת תשלום"
+      })
+    }
+  }
+
+  const handleDeletePaymentBonus = async () => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking._id}/edit-payment-bonus`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "תוספת תשלום נמחקה בהצלחה"
+        })
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה במחיקת תוספת תשלום"
+        })
+      }
+    } catch (error) {
+      console.error("Delete payment bonus error:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה במחיקת תוספת תשלום"
+      })
+    }
   }
 
   const handleSendToAllSuitableProfessionals = async () => {
@@ -249,6 +365,35 @@ const AdminBookingActions = ({
             <UserPlus className="mr-2 h-4 w-4" />
             <span>{t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}</span>
           </DropdownMenuItem>
+
+          {canAddPaymentBonus && (
+            <DropdownMenuItem
+              onClick={() => setShowPaymentBonusModal(true)}
+              className="cursor-pointer text-green-600"
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              <span>הוסף תוספת תשלום למטפלים</span>
+            </DropdownMenuItem>
+          )}
+
+          {canEditPaymentBonus && (
+            <>
+              <DropdownMenuItem
+                onClick={() => setShowEditPaymentBonusModal(true)}
+                className="cursor-pointer text-blue-600"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                <span>ערוך תוספת תשלום (₪{booking.priceDetails?.paymentBonus?.amount})</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDeletePaymentBonus}
+                className="cursor-pointer text-red-600"
+              >
+                <X className="mr-2 h-4 w-4" />
+                <span>מחק תוספת תשלום</span>
+              </DropdownMenuItem>
+            </>
+          )}
 
           {canSendToProfessionals && (
             <>
@@ -337,6 +482,23 @@ const AdminBookingActions = ({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Payment Bonus Modal */}
+      <PaymentBonusModal
+        isOpen={showPaymentBonusModal}
+        onClose={() => setShowPaymentBonusModal(false)}
+        onSubmit={handleAddPaymentBonus}
+      />
+
+      {/* Edit Payment Bonus Modal */}
+      <PaymentBonusModal
+        isOpen={showEditPaymentBonusModal}
+        onClose={() => setShowEditPaymentBonusModal(false)}
+        onSubmit={handleEditPaymentBonus}
+        existingAmount={booking.priceDetails?.paymentBonus?.amount}
+        existingDescription={booking.priceDetails?.paymentBonus?.description}
+        isEdit={true}
+      />
 
       {/* Professional Responses Modal */}
       <ProfessionalResponsesDialog
@@ -1478,4 +1640,111 @@ export const getAdminBookingColumns = (
       </div>
     ),
   },
-] 
+]
+
+// Payment Bonus Modal Component
+const PaymentBonusModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit,
+  existingAmount,
+  existingDescription,
+  isEdit = false
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (amount: number, description: string) => Promise<void>
+  existingAmount?: number
+  existingDescription?: string
+  isEdit?: boolean
+}) => {
+  const [amount, setAmount] = useState(existingAmount?.toString() || "")
+  const [description, setDescription] = useState(existingDescription || "")
+  const [loading, setLoading] = useState(false)
+
+  // Update state when modal opens with existing data
+  React.useEffect(() => {
+    if (isOpen) {
+      setAmount(existingAmount?.toString() || "")
+      setDescription(existingDescription || "")
+    }
+  }, [isOpen, existingAmount, existingDescription])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const numAmount = parseFloat(amount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return
+    }
+    
+    if (!description.trim()) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      await onSubmit(numAmount, description.trim())
+      setAmount("")
+      setDescription("")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "ערוך תוספת תשלום למטפלים" : "הוסף תוספת תשלום למטפלים"}</DialogTitle>
+          <DialogDescription>
+            {isEdit 
+              ? "עדכן את פרטי תוספת התשלום. שמירת השינויים לא תשלח הודעות נוספות למטפלים."
+              : "תוספת התשלום תשלח הודעות לכל המטפלים המתאימים ותעודד אותם לקחת את ההזמנה"
+            }
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+              סכום התוספת (₪)
+            </label>
+            <Input
+              id="amount"
+              type="number"
+              min="1"
+              step="1"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="הכנס סכום"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              תיאור התוספת
+            </label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="לדוגמה: תמריץ מיוחד לשעות הערב"
+              required
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-2 space-x-reverse">
+            <Button type="button" variant="outline" onClick={onClose}>
+              ביטול
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (isEdit ? "עדכן תוספת" : "הוסף תוספת")}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+} 

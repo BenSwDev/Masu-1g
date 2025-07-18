@@ -75,6 +75,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "new_booking_available":
       return getNewBookingAvailableSmsTemplate(data, language)
 
+    case "professional-payment-bonus-notification":
+      return getProfessionalPaymentBonusSmsTemplate(data, language)
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,
@@ -925,6 +928,90 @@ ${data.responseLink ? `🔗 Для просмотра и подтвержден�
 💡 We recommend responding quickly!
 
 ${data.responseLink ? `🔗 To view and confirm: ${data.responseLink}` : '📱 or enter the app: masu.co.il'}`
+  }
+  
+  return message + smsSignature
+}
+
+// Professional Payment Bonus SMS Template
+function getProfessionalPaymentBonusSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem",
+      hour12: false
+    }
+  )
+
+  let message = ""
+  const smsSignature = `\n\n${appName} - מאסו`
+  
+  // Extract city from address for consistency
+  const city = data.address ? data.address.split(',').pop()?.trim() : ''
+
+  switch (language) {
+    case "he":
+      message = `🔔 הזמנה חדשה זמינה לשיוך!
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📍 עיר: ${city}
+
+💰 החלטנו להעניק בונוס של ₪${data.bonusAmount} להזמנה זו
+${data.bonusDescription ? `📝 ${data.bonusDescription}` : ''}
+
+💡 ההזמנה זמינה לשיוך - כל עוד לא נתפסה על ידי מטפל אחר
+
+🔗 לצפייה ואישור: ${data.responseLink}
+
+או הכנס לאפליקציה: masu.co.il`
+      break
+    case "ru":
+      message = `🔔 Новый заказ доступен для назначения!
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}  
+🕐 Время: ${bookingTime}
+📍 Город: ${city}
+
+💰 Мы решили предоставить бонус ₪${data.bonusAmount} за этот заказ
+${data.bonusDescription ? `📝 ${data.bonusDescription}` : ''}
+
+💡 Заказ доступен для назначения - пока не занят другим специалистом
+
+🔗 Просмотр и подтверждение: ${data.responseLink}
+
+или войдите в приложение: masu.co.il`
+      break
+    default: // English
+      message = `🔔 New booking available for assignment!
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📍 City: ${city}
+
+💰 We decided to provide a bonus of ₪${data.bonusAmount} for this booking
+${data.bonusDescription ? `📝 ${data.bonusDescription}` : ''}
+
+💡 Booking available for assignment - while not taken by another therapist
+
+🔗 To view and confirm: ${data.responseLink}
+
+or enter the app: masu.co.il`
   }
   
   return message + smsSignature

@@ -81,6 +81,73 @@ export async function GET(
       (response.status === "accepted" && booking.professionalId && booking.professionalId.toString() === professional._id.toString())
     ) && ["pending_professional", "confirmed", "on_way", "in_treatment"].includes(booking.status)
 
+    // Calculate expected professional payment
+    let expectedPayment = {
+      basePayment: 0,
+      surcharges: 0,
+      paymentBonus: 0,
+      total: 0,
+      breakdown: [] as Array<{ description: string; amount: number }>
+    }
+
+    try {
+      // Get professional profile to calculate accurate payment
+      const { default: ProfessionalProfile } = await import("@/lib/db/models/professional-profile")
+      const professionalProfile = await ProfessionalProfile.findOne({ userId: professional._id }).lean()
+      
+      if (professionalProfile) {
+        const { calculateProfessionalPaymentForBooking } = await import("@/lib/utils/professional-payment-utils")
+        const paymentCalc = calculateProfessionalPaymentForBooking(booking, professionalProfile)
+        
+        expectedPayment.basePayment = paymentCalc.baseProfessionalPayment
+        expectedPayment.surcharges = paymentCalc.surchargesProfessionalPayment
+        expectedPayment.breakdown.push({
+          description: "תשלום בסיס",
+          amount: paymentCalc.baseProfessionalPayment
+        })
+        
+        if (paymentCalc.surchargesProfessionalPayment > 0) {
+          expectedPayment.breakdown.push({
+            description: "תוספות שעות",
+            amount: paymentCalc.surchargesProfessionalPayment
+          })
+        }
+      } else {
+        // Fallback to booking's calculated payment
+        expectedPayment.basePayment = booking.priceDetails?.baseProfessionalPayment || 0
+        expectedPayment.surcharges = booking.priceDetails?.surchargesProfessionalPayment || 0
+        expectedPayment.breakdown.push({
+          description: "תשלום בסיס",
+          amount: expectedPayment.basePayment
+        })
+        
+        if (expectedPayment.surcharges > 0) {
+          expectedPayment.breakdown.push({
+            description: "תוספות שעות", 
+            amount: expectedPayment.surcharges
+          })
+        }
+      }
+      
+      // Add payment bonus if exists
+      if (booking.priceDetails?.paymentBonus) {
+        expectedPayment.paymentBonus = booking.priceDetails.paymentBonus.amount
+        expectedPayment.breakdown.push({
+          description: booking.priceDetails.paymentBonus.description || "תוספת תשלום מיוחדת",
+          amount: booking.priceDetails.paymentBonus.amount
+        })
+      }
+      
+      expectedPayment.total = expectedPayment.basePayment + expectedPayment.surcharges + expectedPayment.paymentBonus
+      
+    } catch (error) {
+      logger.warn("Failed to calculate expected payment for professional response", { 
+        error, 
+        responseId, 
+        professionalId: professional._id 
+      })
+    }
+
     const responseData = {
       _id: response._id,
       status: response.status,
@@ -102,7 +169,8 @@ export async function GET(
       canRespond,
       bookingCurrentStatus: booking.status,
       isAdminAssigned: response.responseMethod === "admin_assignment",
-      responseMethod: response.responseMethod
+      responseMethod: response.responseMethod,
+      expectedPayment
     }
 
     return NextResponse.json({

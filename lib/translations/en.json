@@ -1605,6 +1605,8 @@
     "assignEditRemoveProfessional": "[adminBookings.assignEditRemoveProfessional]",
     "assignError": "[adminBookings.assignError]",
     "assignProfessional": "[adminBookings.assignProfessional]",
+    "suitableProfessionals": "Suitable Professionals",
+    "availableProfessionals": "Available Professionals",
           "assignSuccess": "Professional assigned successfully",
       "unassign": "Unassign",
       "unassignSuccess": "Professional unassigned successfully",

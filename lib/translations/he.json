@@ -273,6 +273,8 @@
       "selectNewProfessional": "בחר מטפל חדש",
       "reassign": "שייך מחדש",
       "suitable": "מתאים",
+      "suitableProfessionals": "מטפלים מתאימים",
+      "availableProfessionals": "מטפלים זמינים",
       "suitableProfessionalsFound": "נמצאו {{count}} מטפלים מתאימים",
       "showingAllProfessionals": "מציג את כל המטפלים הזמינים",
       "useColumnInstead": "השתמש בעמודה במקום",

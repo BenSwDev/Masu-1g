@@ -1966,6 +1966,8 @@
     "assignEditRemoveProfessional": "[adminBookings.assignEditRemoveProfessional]",
     "assignError": "[adminBookings.assignError]",
     "assignProfessional": "[adminBookings.assignProfessional]",
+    "suitableProfessionals": "Подходящие специалисты",
+    "availableProfessionals": "Доступные специалисты",
           "assignSuccess": "Специалист назначен успешно",
       "unassign": "Отменить назначение",
       "unassignSuccess": "Назначение отменено успешно",

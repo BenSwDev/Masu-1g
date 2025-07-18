@@ -54,6 +54,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "BOOKING_ASSIGNED_PROFESSIONAL":
       return getBookingAssignedProfessionalSmsTemplate(data, language)
 
+    case "professional-on-way":
+      return getProfessionalOnWaySmsTemplate(data, language)
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,
@@ -444,5 +447,65 @@ We'd love your feedback: ${data.reviewUrl}
 Booking #${data.bookingNumber}
 Thank you for choosing Masu! 🙏`
   }
+  return message + smsSignature
+}
+
+// Professional On Way SMS Template - when professional marks en route
+function getProfessionalOnWaySmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🚗 המטפל/ת בדרך אליכם!
+
+שלום, ${data.professionalName} יצא/ה אליכם לטיפול ${data.treatmentName}.
+
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📝 הזמנה: ${data.bookingNumber}
+
+המטפל/ת יגיע/תגיע בקרוב!`
+      break
+    case "ru":
+      message = `🚗 Специалист в пути к вам!
+
+Здравствуйте, ${data.professionalName} направляется к вам для процедуры ${data.treatmentName}.
+
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📝 Заказ: ${data.bookingNumber}
+
+Специалист скоро прибудет!`
+      break
+    default: // English
+      message = `🚗 Your therapist is on the way!
+
+Hello, ${data.professionalName} is heading to you for ${data.treatmentName} treatment.
+
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📝 Booking: ${data.bookingNumber}
+
+Your therapist will arrive soon!`
+  }
+  
   return message + smsSignature
 }

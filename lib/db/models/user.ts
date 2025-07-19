@@ -3,7 +3,9 @@ import mongoose, { Schema, type Document, type Model } from "mongoose"
 export enum UserRole {
   MEMBER = "member",
   PROFESSIONAL = "professional",
-  }
+  ADMIN = "admin",
+  PARTNER = "partner",
+}
 
 // Define interfaces for preferences
 export interface ITreatmentPreferences {

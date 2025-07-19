@@ -46,11 +46,21 @@ export async function GET(
       })
       .populate({
         path: 'bookingId',
-        select: 'bookingNumber treatmentId bookingDateTime bookingAddressSnapshot status priceDetails notes professionalId',
-        populate: {
-          path: 'treatmentId',
-          select: 'name'
-        }
+        select: 'bookingNumber treatmentId selectedDurationId bookingDateTime bookingAddressSnapshot status priceDetails notes professionalId bookedByUserName bookedByUserEmail bookedByUserPhone bookedByUserGender userId therapistGenderPreference',
+        populate: [
+          {
+            path: 'treatmentId',
+            select: 'name'
+          },
+          {
+            path: 'selectedDurationId',
+            select: 'name durationMinutes'
+          },
+          {
+            path: 'userId',
+            select: 'name email phone gender'
+          }
+        ]
       })
       .lean()
 
@@ -148,6 +158,135 @@ export async function GET(
       })
     }
 
+    // Get client details - either from booking fields or populated userId
+    // Support for booking made for someone else
+    const clientUser = booking.userId as any || {}
+    const isBookingForSomeoneElse = booking.isBookingForSomeoneElse || false
+    
+    const clientName = isBookingForSomeoneElse 
+      ? (booking.recipientName || "לא צוין")
+      : (booking.bookedByUserName || clientUser.name || "לא צוין")
+      
+    const clientGender = isBookingForSomeoneElse
+      ? (booking.recipientGender || "לא צוין") 
+      : (booking.bookedByUserGender || clientUser.gender || "לא צוין")
+      
+    const clientPhone = isBookingForSomeoneElse
+      ? (booking.recipientPhone || booking.bookedByUserPhone || clientUser.phone || "לא צוין")
+      : (booking.bookedByUserPhone || clientUser.phone || "לא צוין")
+      
+    const clientEmail = isBookingForSomeoneElse
+      ? (booking.recipientEmail || booking.bookedByUserEmail || clientUser.email || "לא צוין")
+      : (booking.bookedByUserEmail || clientUser.email || "לא צוין")
+      
+    // If booking is for someone else, add additional info
+    const bookerInfo = isBookingForSomeoneElse ? {
+      name: booking.bookedByUserName || clientUser.name || "לא צוין",
+      phone: booking.bookedByUserPhone || clientUser.phone || "לא צוין",
+      email: booking.bookedByUserEmail || clientUser.email || "לא צוין"
+    } : null
+
+    // Get treatment duration details
+    const treatmentDuration = booking.selectedDurationId || {}
+    const durationText = treatmentDuration.name || 
+                        (treatmentDuration.durationMinutes ? `${treatmentDuration.durationMinutes} דקות` : "לא צוין")
+
+    // Get full address details with support for all address types
+    const addressSnapshot = booking.bookingAddressSnapshot || {}
+    const addressType = addressSnapshot.addressType || "apartment"
+    
+    // Build address details based on type
+    const getAddressDetails = () => {
+      const details = {
+        city: addressSnapshot.city || "לא צוין",
+        street: addressSnapshot.street || "לא צוין", 
+        streetNumber: addressSnapshot.streetNumber || "",
+        addressType,
+        notes: addressSnapshot.notes || "",
+        hasPrivateParking: addressSnapshot.hasPrivateParking || false,
+        specificDetails: {} as any,
+        fullDisplayText: "",
+        specificInstructions: ""
+      }
+
+      // Basic address components
+      const baseParts = [addressSnapshot.street, addressSnapshot.streetNumber].filter(Boolean)
+      
+      // Add type-specific details
+      switch (addressType) {
+        case "apartment":
+          details.specificDetails = {
+            apartment: addressSnapshot.apartment || "",
+            floor: addressSnapshot.floor || "",
+            entrance: addressSnapshot.entrance || ""
+          }
+          const aptParts = []
+          if (addressSnapshot.apartment) aptParts.push(`דירה ${addressSnapshot.apartment}`)
+          if (addressSnapshot.floor) aptParts.push(`קומה ${addressSnapshot.floor}`)
+          if (addressSnapshot.entrance) aptParts.push(`כניסה ${addressSnapshot.entrance}`)
+          details.specificInstructions = aptParts.join(", ")
+          break
+
+        case "house":
+          details.specificDetails = {
+            doorName: addressSnapshot.doorName || "",
+            entrance: addressSnapshot.entrance || ""
+          }
+          const houseParts = []
+          if (addressSnapshot.doorName) houseParts.push(addressSnapshot.doorName)
+          if (addressSnapshot.entrance) houseParts.push(`כניסה ${addressSnapshot.entrance}`)
+          details.specificInstructions = houseParts.join(", ")
+          break
+
+        case "office":
+          details.specificDetails = {
+            buildingName: addressSnapshot.buildingName || "",
+            floor: addressSnapshot.floor || "",
+            entrance: addressSnapshot.entrance || ""
+          }
+          const officeParts = []
+          if (addressSnapshot.buildingName) officeParts.push(addressSnapshot.buildingName)
+          if (addressSnapshot.floor) officeParts.push(`קומה ${addressSnapshot.floor}`)
+          if (addressSnapshot.entrance) officeParts.push(`כניסה ${addressSnapshot.entrance}`)
+          details.specificInstructions = officeParts.join(", ")
+          break
+
+        case "hotel":
+          details.specificDetails = {
+            hotelName: addressSnapshot.hotelName || "",
+            roomNumber: addressSnapshot.roomNumber || ""
+          }
+          const hotelParts = []
+          if (addressSnapshot.hotelName) hotelParts.push(addressSnapshot.hotelName)
+          if (addressSnapshot.roomNumber) hotelParts.push(`חדר ${addressSnapshot.roomNumber}`)
+          details.specificInstructions = hotelParts.join(", ")
+          break
+
+        case "other":
+          details.specificDetails = {
+            instructions: addressSnapshot.instructions || addressSnapshot.otherInstructions || ""
+          }
+          details.specificInstructions = addressSnapshot.instructions || addressSnapshot.otherInstructions || ""
+          break
+
+        default:
+          details.specificInstructions = ""
+      }
+
+      // Build complete display text
+      const allParts = [
+        ...baseParts,
+        details.specificInstructions,
+        addressSnapshot.city
+      ].filter(Boolean)
+
+      details.fullDisplayText = allParts.join(", ")
+      
+      return details
+    }
+
+    const fullAddress = getAddressDetails()
+
     const responseData = {
       _id: response._id,
       status: response.status,
@@ -155,14 +294,20 @@ export async function GET(
         _id: booking._id,
         bookingNumber: booking.bookingNumber,
         treatmentName: booking.treatmentId?.name || "טיפול",
+        treatmentDuration: durationText,
         bookingDateTime: booking.bookingDateTime,
-        address: {
-          city: booking.bookingAddressSnapshot?.city || "",
-          street: booking.bookingAddressSnapshot?.street || "",
-          streetNumber: booking.bookingAddressSnapshot?.streetNumber || ""
-        },
+        address: fullAddress,
         status: booking.status,
-        notes: booking.notes
+        notes: booking.notes,
+        client: {
+          name: clientName,
+          gender: clientGender,
+          phone: clientPhone,
+          email: clientEmail,
+          genderPreference: booking.therapistGenderPreference || "ללא העדפה",
+          isBookingForSomeoneElse,
+          bookerInfo
+        }
       },
       professionalName: professional.name,
       professionalPhone: response.phoneNumber || professional.phone || "",

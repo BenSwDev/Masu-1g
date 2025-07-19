@@ -9,22 +9,69 @@ import { Separator } from "@/components/common/ui/separator"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
-import { Loader2, CheckCircle, XCircle, Clock, MapPin, Calendar, User, Phone, AlertCircle, Shield } from "lucide-react"
+import { Loader2, CheckCircle, XCircle, Clock, MapPin, Calendar, User, Phone, AlertCircle, Shield, DollarSign, Users, Timer } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+
+interface AddressDetails {
+  city: string
+  street: string
+  streetNumber: string
+  addressType: "apartment" | "house" | "office" | "hotel" | "other"
+  notes: string
+  hasPrivateParking: boolean
+  specificDetails: {
+    // Apartment
+    apartment?: string
+    floor?: string
+    entrance?: string
+    // House
+    doorName?: string
+    // Office
+    buildingName?: string
+    // Hotel
+    hotelName?: string
+    roomNumber?: string
+    // Other
+    instructions?: string
+  }
+  fullDisplayText: string
+  specificInstructions: string
+}
 
 interface BookingDetails {
   _id: string
   bookingNumber: string
   treatmentName: string
+  treatmentDuration: string
   bookingDateTime: Date
-  address: {
-    city: string
-    street: string
-    streetNumber?: string
-  }
+  address: AddressDetails
   status: string
   notes?: string
+  client: {
+    name: string
+    gender: string
+    phone: string
+    email: string
+    genderPreference: string
+    isBookingForSomeoneElse: boolean
+    bookerInfo?: {
+      name: string
+      phone: string
+      email: string
+    } | null
+  }
+}
+
+interface ExpectedPayment {
+  basePayment: number
+  surcharges: number
+  paymentBonus: number
+  total: number
+  breakdown: Array<{
+    description: string
+    amount: number
+  }>
 }
 
 interface ResponseData {
@@ -35,6 +82,7 @@ interface ResponseData {
   canRespond: boolean
   bookingCurrentStatus: string
   professionalPhone: string
+  expectedPayment: ExpectedPayment
 }
 
 type ActionType = "accept" | "decline" | "on_way" | "start_treatment" | "complete_treatment"
@@ -454,6 +502,64 @@ export default function ProfessionalResponsePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* פרטי מטופל */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                {responseData.booking.client.isBookingForSomeoneElse ? "פרטי מטופל ומזמין" : "פרטי מטופל"}
+              </h3>
+              
+              {/* פרטי המטופל שמקבל את הטיפול */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="font-medium text-blue-800">שם המטופל</p>
+                  <p className="text-blue-700">{responseData.booking.client.name}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-800">מין</p>
+                  <p className="text-blue-700">
+                    {responseData.booking.client.gender === "male" ? "זכר" : 
+                     responseData.booking.client.gender === "female" ? "נקבה" : "לא צוין"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-800">העדפת מין מטפל</p>
+                  <p className="text-blue-700">
+                    {responseData.booking.client.genderPreference === "male" ? "זכר" :
+                     responseData.booking.client.genderPreference === "female" ? "נקבה" : "ללא העדפה"}
+                  </p>
+                </div>
+              </div>
+
+              {/* אם ההזמנה עבור מישהו אחר - הצג פרטי מזמין */}
+              {responseData.booking.client.isBookingForSomeoneElse && responseData.booking.client.bookerInfo && (
+                <>
+                  <Separator className="my-3" />
+                  <div className="bg-blue-100 p-3 rounded">
+                    <h4 className="font-medium text-blue-800 mb-2">פרטי מזמין ההזמנה</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="font-medium text-blue-700">שם המזמין</p>
+                        <p className="text-blue-600">{responseData.booking.client.bookerInfo.name}</p>
+                      </div>
+                      {responseData.booking.client.bookerInfo.email !== "לא צוין" && (
+                        <div>
+                          <p className="font-medium text-blue-700">אימייל המזמין</p>
+                          <p className="text-blue-600">{responseData.booking.client.bookerInfo.email}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-blue-500 mt-2">
+                      💡 הוזמן עבור אדם אחר
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* פרטי טיפול */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-gray-500" />
@@ -464,6 +570,14 @@ export default function ProfessionalResponsePage() {
               </div>
               
               <div className="flex items-center gap-2">
+                <Timer className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="font-medium">משך זמן</p>
+                  <p className="text-gray-600">{responseData.booking.treatmentDuration}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
                 <Calendar className="h-5 w-5 text-gray-500" />
                 <div>
                   <p className="font-medium">תאריך ושעה</p>
@@ -474,13 +588,120 @@ export default function ProfessionalResponsePage() {
 
             <Separator />
 
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="font-medium">כתובת</p>
-                <p className="text-gray-600">
-                  {responseData.booking.address.street} {responseData.booking.address.streetNumber}, {responseData.booking.address.city}
-                </p>
+            {/* כתובת מלאה */}
+            <div className="flex items-start gap-2">
+              <MapPin className="h-5 w-5 text-gray-500 mt-1" />
+              <div className="flex-1">
+                <p className="font-medium mb-2">כתובת מלאה</p>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-gray-700 font-medium mb-2">{responseData.booking.address.fullDisplayText}</p>
+                  
+                  {/* סוג הכתובת */}
+                  <div className="text-sm text-gray-600 mb-2">
+                    <span className="font-medium">סוג כתובת: </span>
+                    {responseData.booking.address.addressType === "apartment" && "דירה"}
+                    {responseData.booking.address.addressType === "house" && "בית פרטי"}
+                    {responseData.booking.address.addressType === "office" && "משרד"}
+                    {responseData.booking.address.addressType === "hotel" && "מלון"}
+                    {responseData.booking.address.addressType === "other" && "אחר"}
+                  </div>
+
+                  {/* פרטים ספציפיים לפי סוג כתובת */}
+                  {responseData.booking.address.specificInstructions && (
+                    <div className="text-sm text-gray-600 mb-2">
+                      <span className="font-medium">פרטים נוספים: </span>
+                      {responseData.booking.address.specificInstructions}
+                    </div>
+                  )}
+
+                  {/* פרטים נוספים */}
+                  <div className="text-sm text-gray-600 space-y-1">
+                    {responseData.booking.address.addressType === "apartment" && (
+                      <>
+                        {responseData.booking.address.specificDetails.apartment && (
+                          <p>דירה: {responseData.booking.address.specificDetails.apartment}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.floor && (
+                          <p>קומה: {responseData.booking.address.specificDetails.floor}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.entrance && (
+                          <p>כניסה: {responseData.booking.address.specificDetails.entrance}</p>
+                        )}
+                      </>
+                    )}
+
+                    {responseData.booking.address.addressType === "house" && (
+                      <>
+                        {responseData.booking.address.specificDetails.doorName && (
+                          <p>שם הדלת: {responseData.booking.address.specificDetails.doorName}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.entrance && (
+                          <p>כניסה: {responseData.booking.address.specificDetails.entrance}</p>
+                        )}
+                      </>
+                    )}
+
+                    {responseData.booking.address.addressType === "office" && (
+                      <>
+                        {responseData.booking.address.specificDetails.buildingName && (
+                          <p>שם הבניין: {responseData.booking.address.specificDetails.buildingName}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.floor && (
+                          <p>קומה: {responseData.booking.address.specificDetails.floor}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.entrance && (
+                          <p>כניסה: {responseData.booking.address.specificDetails.entrance}</p>
+                        )}
+                      </>
+                    )}
+
+                    {responseData.booking.address.addressType === "hotel" && (
+                      <>
+                        {responseData.booking.address.specificDetails.hotelName && (
+                          <p>שם המלון: {responseData.booking.address.specificDetails.hotelName}</p>
+                        )}
+                        {responseData.booking.address.specificDetails.roomNumber && (
+                          <p>חדר: {responseData.booking.address.specificDetails.roomNumber}</p>
+                        )}
+                      </>
+                    )}
+
+                    {responseData.booking.address.addressType === "other" && responseData.booking.address.specificDetails.instructions && (
+                      <p>הנחיות: {responseData.booking.address.specificDetails.instructions}</p>
+                    )}
+
+                    {responseData.booking.address.hasPrivateParking && (
+                      <p className="text-green-600">✓ חניה פרטית זמינה</p>
+                    )}
+
+                    {responseData.booking.address.notes && (
+                      <p>הערות כתובת: {responseData.booking.address.notes}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* מחיר למטפל */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                התשלום המצופה שלך
+              </h3>
+              <div className="space-y-2">
+                {responseData.expectedPayment.breakdown.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-green-700">{item.description}</span>
+                    <span className="font-medium text-green-800">₪{item.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+                <Separator className="my-2" />
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span className="text-green-800">סה"כ</span>
+                  <span className="text-green-900 text-xl">₪{responseData.expectedPayment.total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
@@ -489,7 +710,7 @@ export default function ProfessionalResponsePage() {
             {responseData.booking.notes && (
               <>
                 <div>
-                  <p className="font-medium mb-2">הערות</p>
+                  <p className="font-medium mb-2">הערות להזמנה</p>
                   <p className="text-gray-600 bg-gray-50 p-3 rounded">{responseData.booking.notes}</p>
                 </div>
                 <Separator />

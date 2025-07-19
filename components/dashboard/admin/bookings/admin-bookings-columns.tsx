@@ -532,16 +532,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   const hasAnyProfessionals = (professionalsToShow?.length || 0) > 0
   const canSendNotifications = !booking.professionalId && ["confirmed", "pending_professional"].includes(booking.status)
 
-  // Debug logging
-  console.log("ProfessionalInfo Debug:", {
-    bookingId: booking._id,
-    bookingStatus: booking.status,
-    professionalId: booking.professionalId,
-    canSendNotifications,
-    showNotificationModal,
-    showSuitableProfessionalsModal,
-    hasButtons: canSendNotifications ? "YES - Buttons should be visible" : "NO - Buttons hidden"
-  })
+
 
   // If professional is assigned
   if (booking?.professionalId) {
@@ -706,7 +697,6 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              console.log("Opening notification modal...")
               setShowNotificationModal(true)
             }}
             className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full"
@@ -725,7 +715,6 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              console.log("Opening suitable professionals modal...")
               setShowSuitableProfessionalsModal(true)
             }}
             className="text-purple-600 border-purple-200 hover:bg-purple-50 w-full"
@@ -815,42 +804,21 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
       </Dialog>
 
       {/* Professional Notification Modal */}
-      {showNotificationModal && (
-        <>
-          <div style={{position: 'fixed', top: 0, left: 0, background: 'red', color: 'white', padding: '10px', zIndex: 9999}}>
-            Notification Modal Should Open - Check Console
-          </div>
-          <ProfessionalNotificationModal
-            open={showNotificationModal}
-            onOpenChange={(open) => {
-              console.log("Notification modal open state changed:", open)
-              setShowNotificationModal(open)
-            }}
-            booking={booking}
-            onSuccess={() => {
-              console.log("Notification modal success callback")
-              queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-            }}
-          />
-        </>
-      )}
+      <ProfessionalNotificationModal
+        open={showNotificationModal}
+        onOpenChange={setShowNotificationModal}
+        booking={booking}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        }}
+      />
 
       {/* Suitable Professionals Modal */}
-      {showSuitableProfessionalsModal && (
-        <>
-          <div style={{position: 'fixed', top: 50, left: 0, background: 'blue', color: 'white', padding: '10px', zIndex: 9999}}>
-            Suitable Professionals Modal Should Open - Check Console
-          </div>
-          <SuitableProfessionalsModal
-            open={showSuitableProfessionalsModal}
-            onOpenChange={(open) => {
-              console.log("Suitable professionals modal open state changed:", open)
-              setShowSuitableProfessionalsModal(open)
-            }}
-            booking={booking}
-          />
-        </>
-      )}
+      <SuitableProfessionalsModal
+        open={showSuitableProfessionalsModal}
+        onOpenChange={setShowSuitableProfessionalsModal}
+        booking={booking}
+      />
     </>
   )
 }

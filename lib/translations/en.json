@@ -1392,8 +1392,9 @@
     "welcome": "[login.welcome]"
   },
   "notifications": {
-    "roleSwitchError": "[notifications.roleSwitchError]",
-    "roleSwitchSuccess": "[notifications.roleSwitchSuccess]"
+    "roleSwitchError": "Error switching role",
+    "roleSwitchSuccess": "Role switched successfully",
+    "roleSwitchFallback": "Requested role not available, switched to available role"
   },
   "professionalBookingManagement": {
     "actions": {

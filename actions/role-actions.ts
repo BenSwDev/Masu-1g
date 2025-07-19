@@ -169,10 +169,20 @@ export async function setActiveRole(role: string): Promise<{
         : "member"
       user.activeRole = fallback
       await user.save()
+      
+      // Revalidate dashboard paths for fallback role
+      revalidatePath("/dashboard")
+      revalidatePath(`/dashboard/${fallback}`)
+      
       return { success: false, message: "roleNotAssigned", activeRole: fallback }
     }
     user.activeRole = role
     await user.save()
+    
+    // Revalidate dashboard paths to ensure UI consistency
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/${role}`)
+    
     return { success: true, message: "activeRoleUpdated", activeRole: role }
   } catch (error) {
     console.error("Error setting active role:", error)

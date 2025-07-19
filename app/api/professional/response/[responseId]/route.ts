@@ -50,10 +50,11 @@ export async function GET(
         populate: [
           {
             path: 'treatmentId',
-            select: 'name'
+            select: 'name pricingType'
           },
           {
             path: 'selectedDurationId',
+            model: 'TreatmentDuration',
             select: 'name durationMinutes'
           },
           {
@@ -111,10 +112,13 @@ export async function GET(
         
         expectedPayment.basePayment = paymentCalc.baseProfessionalPayment
         expectedPayment.surcharges = paymentCalc.surchargesProfessionalPayment
-        expectedPayment.breakdown.push({
-          description: "תשלום בסיס",
-          amount: paymentCalc.baseProfessionalPayment
-        })
+        
+        if (paymentCalc.baseProfessionalPayment > 0) {
+          expectedPayment.breakdown.push({
+            description: "תשלום בסיס",
+            amount: paymentCalc.baseProfessionalPayment
+          })
+        }
         
         if (paymentCalc.surchargesProfessionalPayment > 0) {
           expectedPayment.breakdown.push({
@@ -124,12 +128,16 @@ export async function GET(
         }
       } else {
         // Fallback to booking's calculated payment
+        
         expectedPayment.basePayment = booking.priceDetails?.baseProfessionalPayment || 0
         expectedPayment.surcharges = booking.priceDetails?.surchargesProfessionalPayment || 0
-        expectedPayment.breakdown.push({
-          description: "תשלום בסיס",
-          amount: expectedPayment.basePayment
-        })
+        
+        if (expectedPayment.basePayment > 0) {
+          expectedPayment.breakdown.push({
+            description: "תשלום בסיס",
+            amount: expectedPayment.basePayment
+          })
+        }
         
         if (expectedPayment.surcharges > 0) {
           expectedPayment.breakdown.push({
@@ -187,9 +195,10 @@ export async function GET(
     } : null
 
     // Get treatment duration details
-    const treatmentDuration = booking.selectedDurationId || {}
+    const treatmentDuration = booking.selectedDurationId as any || {}
     const durationText = treatmentDuration.name || 
-                        (treatmentDuration.durationMinutes ? `${treatmentDuration.durationMinutes} דקות` : "לא צוין")
+                        (treatmentDuration.durationMinutes ? `${treatmentDuration.durationMinutes} דקות` : 
+                         (booking.treatmentId?.pricingType === "fixed" ? "זמן קבוע" : "לא צוין"))
 
     // Get full address details with support for all address types
     const addressSnapshot = booking.bookingAddressSnapshot || {}

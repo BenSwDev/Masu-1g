@@ -438,10 +438,10 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
           if (selectedDuration) {
-            durationDisplay = t("memberBookings.table.duration")
+            durationDisplay = `${selectedDuration.minutes || 0} דקות`
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
-                      durationDisplay = t("memberBookings.table.duration")
+          durationDisplay = `${treatment.defaultDurationMinutes} דקות`
         }
 
         return (

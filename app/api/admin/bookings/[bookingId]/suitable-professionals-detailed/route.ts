@@ -170,6 +170,64 @@ export async function GET(
         sms: !!user.phone && userNotificationMethods.includes("sms")
       }
 
+      // Calculate expected professional payment
+      let expectedPayment = {
+        basePayment: 0,
+        surcharges: 0,
+        paymentBonus: 0,
+        total: 0
+      }
+
+      try {
+        // Find the professional's price for this specific treatment and duration
+        const professionalTreatment = prof.treatments.find(pt => {
+          const ptTreatmentId = pt.treatmentId._id.toString()
+          const ptDurationId = pt.durationId?.toString()
+          
+          // For duration-based treatments, both treatmentId and durationId must match
+          if (durationId && ptDurationId) {
+            return ptTreatmentId === treatmentId && ptDurationId === durationId
+          }
+          
+          // For fixed-price treatments, only treatmentId needs to match (and no durationId)
+          return ptTreatmentId === treatmentId && !ptDurationId
+        })
+
+        if (professionalTreatment) {
+          expectedPayment.basePayment = professionalTreatment.professionalPrice || 0
+          
+          // Add surcharges from booking if any
+          if (booking.priceDetails?.surcharges?.length) {
+            booking.priceDetails.surcharges.forEach((surcharge: any) => {
+              if (surcharge.professionalShare) {
+                let professionalAmount = 0
+                
+                if (surcharge.professionalShare.type === 'fixed') {
+                  professionalAmount = surcharge.professionalShare.amount
+                } else if (surcharge.professionalShare.type === 'percentage') {
+                  professionalAmount = (surcharge.amount * surcharge.professionalShare.amount) / 100
+                }
+                
+                expectedPayment.surcharges += professionalAmount
+              }
+            })
+          }
+          
+          // Add payment bonus if exists
+          if (booking.priceDetails?.paymentBonus) {
+            expectedPayment.paymentBonus = booking.priceDetails.paymentBonus.amount
+          }
+          
+          expectedPayment.total = expectedPayment.basePayment + expectedPayment.surcharges + expectedPayment.paymentBonus
+        }
+      } catch (error) {
+        logger.warn("Failed to calculate expected payment for professional", { 
+          error, 
+          professionalId: profId,
+          bookingId
+        })
+      }
+
       return {
         _id: profId,
         name: user.name,
@@ -181,9 +239,11 @@ export async function GET(
         criteriaMatch,
         notificationStatus,
         notificationPreferences,
+        expectedPayment,
         workAreas: prof.workAreas.map(area => ({
           cityName: area.cityName,
-          coveredCities: area.coveredCities || []
+          coveredCities: area.coveredCities || [],
+          radius: area.distanceRadius === 'unlimited' ? 'כל מרחק' : area.distanceRadius || '20km'
         })),
         treatments: prof.treatments.map(t => ({
           treatmentId: t.treatmentId._id.toString(),

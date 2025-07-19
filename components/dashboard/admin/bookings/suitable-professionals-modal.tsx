@@ -68,9 +68,16 @@ interface ProfessionalAnalysis {
     email: boolean
     sms: boolean
   }
+  expectedPayment: {
+    basePayment: number
+    surcharges: number
+    paymentBonus: number
+    total: number
+  }
   workAreas: Array<{
     cityName: string
     coveredCities: string[]
+    radius?: string
   }>
   treatments: Array<{
     treatmentId: string
@@ -335,6 +342,53 @@ export function SuitableProfessionalsModal({
                               <span className="text-sm">{professional.criteriaMatch.durationMatch.details}</span>
                             </div>
                           </div>
+
+                          {/* Work Areas */}
+                          {professional.workAreas.length > 0 && (
+                            <div className="bg-blue-50 p-3 rounded-lg mb-3">
+                              <div className="text-sm font-medium mb-2 text-blue-800">אזורי עבודה</div>
+                              <div className="grid grid-cols-1 gap-2 text-sm">
+                                {professional.workAreas.map((area, index) => (
+                                  <div key={index} className="flex items-center gap-2">
+                                    <MapPin className="h-3 w-3 text-blue-600" />
+                                    <span>{area.cityName}</span>
+                                    {area.radius && (
+                                      <span className="text-xs text-blue-600">({area.radius})</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Expected Payment */}
+                          {professional.expectedPayment.total > 0 && (
+                            <div className="bg-green-50 p-3 rounded-lg mb-3">
+                              <div className="text-sm font-medium mb-2 text-green-800">תשלום צפוי למטפל</div>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">תשלום בסיס: </span>
+                                  <span className="font-medium text-green-700">₪{professional.expectedPayment.basePayment.toFixed(2)}</span>
+                                </div>
+                                {professional.expectedPayment.surcharges > 0 && (
+                                  <div>
+                                    <span className="text-muted-foreground">תוספות: </span>
+                                    <span className="font-medium text-green-700">₪{professional.expectedPayment.surcharges.toFixed(2)}</span>
+                                  </div>
+                                )}
+                                {professional.expectedPayment.paymentBonus > 0 && (
+                                  <div>
+                                    <span className="text-muted-foreground">בונוס: </span>
+                                    <span className="font-medium text-green-700">₪{professional.expectedPayment.paymentBonus.toFixed(2)}</span>
+                                  </div>
+                                )}
+                                <div className="col-span-2">
+                                  <span className="text-muted-foreground">סה"כ: </span>
+                                  <span className="font-bold text-green-800 text-lg">₪{professional.expectedPayment.total.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Notification Status */}
                           <div className="bg-gray-50 p-3 rounded-lg">

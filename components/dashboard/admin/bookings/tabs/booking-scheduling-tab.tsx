@@ -59,15 +59,27 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
   }
 
   const getDuration = () => {
-    // Use treatment duration info since startTime/endTime don't exist
-    if (booking.treatmentId?.defaultDurationMinutes) {
-      const minutes = booking.treatmentId.defaultDurationMinutes
-      const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      
-
-      return `${minutes} דקות`
+    const treatment = booking.treatmentId
+    
+    if (!treatment) {
+      return "לא צוין"
     }
+    
+    // For duration-based treatments, find the selected duration
+    if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+      const selectedDuration = treatment.durations.find(
+        (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
+      )
+      if (selectedDuration) {
+        return `${selectedDuration.minutes || 0} דקות`
+      }
+    }
+    
+    // For fixed-price treatments, use the default duration
+    if (treatment.pricingType === "fixed" && treatment.defaultDurationMinutes) {
+      return `${treatment.defaultDurationMinutes} דקות`
+    }
+    
     return "לא צוין"
   }
 

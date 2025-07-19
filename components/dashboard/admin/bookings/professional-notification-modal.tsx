@@ -18,6 +18,18 @@ interface Professional {
   phone?: string
   gender?: string
   profileId: string
+  isSuitable: boolean
+  expectedPayment: {
+    basePayment: number
+    surcharges: number
+    paymentBonus: number
+    total: number
+  }
+  notificationPreferences: {
+    methods: string[]
+    email: boolean
+    sms: boolean
+  }
   workAreas?: any[]
   treatments?: any[]
   isOnline?: boolean
@@ -70,54 +82,30 @@ export function ProfessionalNotificationModal({
   const loadProfessionals = async () => {
     setLoading(true)
     try {
-      // Load suitable professionals first
-      const suitableResponse = await fetch(`/api/admin/bookings/${booking._id}/suitable-professionals`)
-      const suitableData = await suitableResponse.json()
+      // Load detailed professionals data
+      const detailedResponse = await fetch(`/api/admin/bookings/${booking._id}/suitable-professionals-detailed`)
+      const detailedData = await detailedResponse.json()
       
-      let suitableProfs: Professional[] = []
-      if (suitableData.success && suitableData.professionals) {
-        suitableProfs = suitableData.professionals
+      if (detailedData.success && detailedData.professionals) {
+        const allProfs = detailedData.professionals
+        const suitableProfs = allProfs.filter((p: Professional) => p.isSuitable)
+        
+        setProfessionals(allProfs)
         setSuitableProfessionals(suitableProfs)
         
         // Pre-select all suitable professionals
-        const suitableIds = new Set(suitableProfs.map(p => p._id))
+        const suitableIds = new Set(suitableProfs.map((p: Professional) => p._id))
         setSelectedProfessionals(suitableIds)
         
-        // Set default notification preferences based on user preferences
+        // Set default notification preferences based on professional preferences
         const defaultPrefs: Record<string, NotificationPreferences> = {}
-        suitableProfs.forEach(prof => {
-          // Get user notification preferences, default to ["sms"] if not set
-          const userNotificationMethods = prof.userId?.notificationPreferences?.methods || ["sms"]
-          
+        allProfs.forEach((prof: Professional) => {
           defaultPrefs[prof._id] = {
-            email: !!prof.email && userNotificationMethods.includes("email"),
-            sms: !!prof.phone && userNotificationMethods.includes("sms")
+            email: prof.notificationPreferences.email,
+            sms: prof.notificationPreferences.sms
           }
         })
         setNotificationPreferences(defaultPrefs)
-      }
-      
-      // Load all professionals as fallback
-      const allResponse = await fetch(`/api/admin/professionals/available`)
-      const allData = await allResponse.json()
-      
-      if (allData.success && allData.professionals) {
-        setProfessionals(allData.professionals)
-        
-        // Add notification preferences for all professionals
-        const allPrefs = { ...notificationPreferences }
-        allData.professionals.forEach((prof: Professional) => {
-          if (!allPrefs[prof._id]) {
-            // Get user notification preferences, default to ["sms"] if not set
-            const userNotificationMethods = prof.userId?.notificationPreferences?.methods || ["sms"]
-            
-            allPrefs[prof._id] = {
-              email: !!prof.email && userNotificationMethods.includes("email"),
-              sms: !!prof.phone && userNotificationMethods.includes("sms")
-            }
-          }
-        })
-        setNotificationPreferences(allPrefs)
       }
       
     } catch (error) {
@@ -376,6 +364,17 @@ export function ProfessionalNotificationModal({
                           </div>
                         )}
                       </div>
+
+                      {/* Expected Payment */}
+                      {professional.expectedPayment?.total > 0 && (
+                        <div className="bg-green-50 p-2 rounded text-sm">
+                          <span className="text-muted-foreground">תשלום צפוי: </span>
+                          <span className="font-bold text-green-800">₪{professional.expectedPayment.total.toFixed(2)}</span>
+                          {professional.expectedPayment.paymentBonus > 0 && (
+                            <span className="text-xs text-green-600 mr-2">(כולל בונוס ₪{professional.expectedPayment.paymentBonus.toFixed(2)})</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Notification Preferences */}
                       {selectedProfessionals.has(professional._id) && (

@@ -68,6 +68,12 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   if (!session?.user) return null
   const { roles, activeRole } = session.user
   if (!roles || roles.length <= 1) return null
+  
+  // Ensure session is fully loaded
+  if (!activeRole) {
+    console.warn("Session activeRole is not loaded yet")
+    return null
+  }
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -101,15 +107,57 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
   const handleRoleSwitch = async (role: string) => {
     if (role === activeRole) return
+    
+    // Validate that user has this role before attempting to switch
+    if (!session?.user?.roles?.includes(role)) {
+      toast({ 
+        title: `אין לך הרשאה לתפקיד ${getRoleLabel(role)}`, 
+        variant: "destructive" 
+      })
+      return
+    }
+    
     setIsLoading(true)
     try {
+      console.log("Starting role switch to:", role)
+      console.log("Current session roles:", session?.user?.roles)
+      console.log("Current active role:", session?.user?.activeRole)
+      
       const result = await setActiveRole(role)
+      console.log("setActiveRole result:", result)
+      
       if (result.success || result.activeRole) {
-        await update({ activeRole: result.activeRole || role }) // This will trigger JWT update
+        const newActiveRole = result.activeRole || role
+        console.log("Updating session with activeRole:", newActiveRole)
+        
+        // Wait for session update to complete before navigation
+        await update({ activeRole: newActiveRole })
+        
+        // Add a small delay to ensure session is fully updated
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
         toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-        router.push(`/dashboard/${result.activeRole || role}`)
+        
+        // Use replace instead of push to avoid navigation issues
+        const targetPath = `/dashboard/${newActiveRole}`
+        console.log("Navigating to:", targetPath)
+        
+        // Force a page refresh to ensure the session is properly updated
+        window.location.href = targetPath
       } else {
-        toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
+        console.error("Role switch failed:", result.message)
+        let errorMessage = t("notifications.roleSwitchError")
+        
+        // Provide more specific error messages
+        if (result.message === "roleNotAssigned") {
+          errorMessage = `אין לך הרשאה לתפקיד ${getRoleLabel(role)}`
+        } else if (result.message === "notAuthenticated") {
+          errorMessage = "שגיאה באימות המשתמש"
+        } else if (result.message === "userNotFound") {
+          errorMessage = "משתמש לא נמצא"
+        }
+        
+        toast({ title: errorMessage, variant: "destructive" })
       }
     } catch (error) {
       console.error("Error switching role:", error)

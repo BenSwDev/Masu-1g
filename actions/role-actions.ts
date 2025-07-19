@@ -155,13 +155,22 @@ export async function setActiveRole(role: string): Promise<{
     if (!session?.user?.id) {
       return { success: false, message: "notAuthenticated" }
     }
+    
     await dbConnect()
     const user = await User.findById(session.user.id)
     if (!user) {
       return { success: false, message: "userNotFound" }
     }
+    
+    // Ensure user has roles array
+    if (!user.roles || user.roles.length === 0) {
+      user.roles = ["member"]
+      await user.save()
+    }
+    
     // Check if user has the requested role
     if (!user.roles.includes(role)) {
+      console.warn(`User ${session.user.id} tried to switch to role ${role} but has roles:`, user.roles)
       // Fallback to default role
       const fallback = user.roles.includes("admin") ? "admin"
         : user.roles.includes("professional") ? "professional"
@@ -171,8 +180,12 @@ export async function setActiveRole(role: string): Promise<{
       await user.save()
       return { success: false, message: "roleNotAssigned", activeRole: fallback }
     }
+    
+    // Update the active role
     user.activeRole = role
     await user.save()
+    
+    console.log(`Successfully updated active role for user ${session.user.id} to ${role}`)
     return { success: true, message: "activeRoleUpdated", activeRole: role }
   } catch (error) {
     console.error("Error setting active role:", error)

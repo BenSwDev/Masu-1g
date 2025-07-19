@@ -6,6 +6,7 @@ import { DashboardHeader } from "./header"
 import { DashboardFooter } from "./footer"
 import { DashboardSidebar } from "./sidebar"
 import { QueryProvider } from "@/components/common/providers/query-provider"
+import { RoleSwitchDebug } from "./role-switch-debug"
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode
@@ -31,6 +32,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
           <DashboardFooter />
         </div>
       </div>
+      <RoleSwitchDebug />
     </QueryProvider>
   )
 }

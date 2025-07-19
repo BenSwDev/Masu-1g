@@ -224,8 +224,10 @@ export const authOptions: NextAuthOptions = {
 
           if (session.activeRole) {
             let activeRole = session.activeRole
+            // Validate that the user has this role, otherwise use the database activeRole
             if (!dbUser.roles.includes(activeRole)) {
-              activeRole = getDefaultActiveRole(dbUser.roles)
+              console.warn(`User ${token.id} tried to switch to role ${activeRole} but doesn't have it. Available roles:`, dbUser.roles)
+              activeRole = dbUser.activeRole || getDefaultActiveRole(dbUser.roles)
             }
             token.activeRole = activeRole
           }

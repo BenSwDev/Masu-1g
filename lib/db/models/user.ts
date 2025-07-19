@@ -2,8 +2,10 @@ import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export enum UserRole {
   MEMBER = "member",
+  ADMIN = "admin", // Newly added role
   PROFESSIONAL = "professional",
-  }
+  PARTNER = "partner", // Newly added role
+}
 
 // Define interfaces for preferences
 export interface ITreatmentPreferences {
@@ -79,10 +81,12 @@ const UserSchema: Schema = new Schema(
     roles: {
       type: [String],
       default: [UserRole.MEMBER],
+      // Extend enum to include all roles
       enum: Object.values(UserRole),
     },
     activeRole: {
       type: String,
+      // Align activeRole enum with the expanded roles enum
       enum: Object.values(UserRole),
       required: false,
     },

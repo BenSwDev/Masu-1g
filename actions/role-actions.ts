@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache"
 async function getAvailableRoles(): Promise<string[]> {
   // This could be fetched from a database in the future
   // For now, we'll return the hardcoded roles
-  return ["member", "admin"]
+  return ["member", "admin", "professional", "partner"]
 }
 
 /**

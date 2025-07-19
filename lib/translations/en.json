@@ -222,10 +222,11 @@
       "settings": "Settings",
       "sections": {
         "mainMenu": "Main Menu",
-        "purchases": "Purchases & Redemptions",
-        "users": "Users",
-        "settings": "Settings",
-        "reports": "Reports"
+        "business": "Transactions & Reports",
+        "bookings": "Bookings & Treatments",
+        "users": "User Management",
+        "products": "Products & Services",
+        "settings": "System Settings"
       },
       "userMenu": {
         "treatmentPreferences": "Treatment Preferences",

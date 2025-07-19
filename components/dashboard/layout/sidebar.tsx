@@ -324,31 +324,33 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>> = {
       admin: [
-        // רכישות ומימושים (Purchases & Redemptions)
-        { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
-        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "purchases" },
-        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "purchases" },
-        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions", section: "purchases" },
-        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers", section: "purchases" },
-        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons", section: "purchases" },
-        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches", section: "purchases" },
+        // עסקאות ודוחות (Transactions & Reports)
+        { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions", section: "business" },
+        { titleKey: "revenueSummary", icon: PieChart, hrefSuffix: "reports/revenue-summary", section: "business" },
+        { titleKey: "bookingsPerProfessional", icon: Users, hrefSuffix: "reports/bookings-per-professional", section: "business" },
+        { titleKey: "bookingsPerCity", icon: MapPin, hrefSuffix: "reports/bookings-per-city", section: "business" },
         
-        // משתמשים (Users)
+        // הזמנות וטיפולים (Bookings & Treatments)
+        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "bookings" },
+        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "bookings" },
+        
+        // ניהול משתמשים (User Management)
         { titleKey: "customers", icon: Users, hrefSuffix: "customers", section: "users" },
         { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management", section: "users" },
         { titleKey: "partners", icon: Handshake, hrefSuffix: "partners", section: "users" },
         { titleKey: "users", icon: User, hrefSuffix: "users", section: "users" },
         
-        // הגדרות (Settings)
+        // מוצרים ושירותים (Products & Services)
+        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions", section: "products" },
+        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers", section: "products" },
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons", section: "products" },
+        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches", section: "products" },
+
+        // הגדרות מערכת (System Settings)
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments", section: "settings" },
         { titleKey: "cities", icon: MapPin, hrefSuffix: "cities", section: "settings" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours", section: "settings" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions", section: "settings" },
-
-        // דוחות (Reports)
-        { titleKey: "revenueSummary", icon: PieChart, hrefSuffix: "reports/revenue-summary", section: "reports" },
-        { titleKey: "bookingsPerProfessional", icon: Users, hrefSuffix: "reports/bookings-per-professional", section: "reports" },
-        { titleKey: "bookingsPerCity", icon: MapPin, hrefSuffix: "reports/bookings-per-city", section: "reports" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
@@ -670,22 +672,25 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     // For admin role, group items by section
     if (activeRole === "admin") {
       const mainMenuItems: any[] = []
-      const purchasesItems: any[] = []
+      const businessItems: any[] = []
+      const bookingsItems: any[] = []
       const usersItems: any[] = []
+      const productsItems: any[] = []
       const settingsItems: any[] = []
-      const reportsItems: any[] = []
       
       items.forEach((item: any) => {
         if (!item.section) {
           mainMenuItems.push(item)
-        } else if (item.section === "purchases") {
-          purchasesItems.push(item)
+        } else if (item.section === "business") {
+          businessItems.push(item)
+        } else if (item.section === "bookings") {
+          bookingsItems.push(item)
         } else if (item.section === "users") {
           usersItems.push(item)
+        } else if (item.section === "products") {
+          productsItems.push(item)
         } else if (item.section === "settings") {
           settingsItems.push(item)
-        } else if (item.section === "reports") {
-          reportsItems.push(item)
         }
       })
 
@@ -775,11 +780,19 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           {renderSectionLabel("mainMenu")}
           {renderItemGroup(mainMenuItems)}
           
-          {/* Purchases & Redemptions */}
-          {purchasesItems.length > 0 && (
+          {/* Business & Reports */}
+          {businessItems.length > 0 && (
             <>
-              {renderSectionLabel("purchases")}
-              {renderItemGroup(purchasesItems)}
+              {renderSectionLabel("business")}
+              {renderItemGroup(businessItems)}
+            </>
+          )}
+          
+          {/* Bookings & Treatments */}
+          {bookingsItems.length > 0 && (
+            <>
+              {renderSectionLabel("bookings")}
+              {renderItemGroup(bookingsItems)}
             </>
           )}
           
@@ -791,19 +804,19 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             </>
           )}
           
+          {/* Products & Services */}
+          {productsItems.length > 0 && (
+            <>
+              {renderSectionLabel("products")}
+              {renderItemGroup(productsItems)}
+            </>
+          )}
+          
           {/* Settings */}
           {settingsItems.length > 0 && (
             <>
               {renderSectionLabel("settings")}
               {renderItemGroup(settingsItems, false)}
-            </>
-          )}
-
-          {/* Reports */}
-          {reportsItems.length > 0 && (
-            <>
-              {renderSectionLabel("reports")}
-              {renderItemGroup(reportsItems, false)}
             </>
           )}
         </nav>

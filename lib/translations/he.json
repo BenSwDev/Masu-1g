@@ -4383,11 +4383,11 @@
           "transactions": "עסקאות",
           "sections": {
             "mainMenu": "תפריט ראשי",
-            "purchases": "רכישות ומימושים",
-            "users": "משתמשים",
-            "settings": "הגדרות",
-            "reports": "דוחות",
-            "partners": "שותפים"
+            "business": "עסקאות ודוחות",
+            "bookings": "הזמנות וטיפולים",
+            "users": "ניהול משתמשים",
+            "products": "מוצרים ושירותים",
+            "settings": "הגדרות מערכת"
           },
         "userMenu": {
           "toggleTooltip": "תפריט משתמש",

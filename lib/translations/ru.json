@@ -213,6 +213,14 @@
       "revenueSummary": "Сводка доходов",
       "support": "Поддержка",
       "settings": "Настройки",
+      "sections": {
+        "mainMenu": "Главное меню",
+        "business": "Транзакции и отчеты",
+        "bookings": "Записи и процедуры",
+        "users": "Управление пользователями",
+        "products": "Продукты и услуги",
+        "settings": "Системные настройки"
+      },
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления",

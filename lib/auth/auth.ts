@@ -224,16 +224,23 @@ export const authOptions: NextAuthOptions = {
 
           if (session.activeRole) {
             let activeRole = session.activeRole
+            // Ensure the requested role is valid for this user
             if (!dbUser.roles.includes(activeRole)) {
               activeRole = getDefaultActiveRole(dbUser.roles)
+              console.warn(`User ${token.id} attempted to switch to role ${session.activeRole} but doesn't have access. Falling back to ${activeRole}`)
             }
             token.activeRole = activeRole
+            
+            // Update database to match the token
+            if (dbUser.activeRole !== activeRole) {
+              await User.findByIdAndUpdate(token.id, { activeRole })
+            }
           } else {
             // Always sync with database activeRole to ensure consistency
             token.activeRole = dbUser.activeRole || getDefaultActiveRole(dbUser.roles)
           }
-          // If preferences were updated, they should be in the session object passed to update()
-          // However, it's safer to re-fetch from DB to ensure consistency
+          
+          // Update other user data
           token.phone = dbUser.phone
           token.gender = dbUser.gender
           token.dateOfBirth = dbUser.dateOfBirth

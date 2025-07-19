@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import dbConnect from "@/lib/db/mongoose"
+import User from "@/lib/db/models/user"
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'
@@ -14,20 +16,31 @@ export default async function DashboardPage() {
   }
 
   const activeRole = session.user?.activeRole || "member"
-  const roles = session.user?.roles || []
+  const roles = session.user?.roles || ["member"]
 
-  // Ensure activeRole is valid
-  if (!roles.includes(activeRole)) {
-    // fallback to first available role
+  // Ensure activeRole is valid and roles array exists
+  if (!roles.length || !roles.includes(activeRole)) {
+    // Fallback to first available role based on priority
+    let fallbackRole = "member"
     if (roles.includes("admin")) {
-      redirect("/dashboard/admin")
+      fallbackRole = "admin"
     } else if (roles.includes("professional")) {
-      redirect("/dashboard/professional")
+      fallbackRole = "professional"
     } else if (roles.includes("partner")) {
-      redirect("/dashboard/partner")
-    } else {
-      redirect("/dashboard/member")
+      fallbackRole = "partner"
     }
+    
+    // If we had to fallback, update the user's activeRole in the database
+    if (fallbackRole !== activeRole) {
+      try {
+        await dbConnect()
+        await User.findByIdAndUpdate(session.user.id, { activeRole: fallbackRole })
+      } catch (error) {
+        console.error("Error updating activeRole fallback:", error)
+      }
+    }
+    
+    redirect(`/dashboard/${fallbackRole}`)
   }
 
   // Redirect to the active role's dashboard

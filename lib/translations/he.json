@@ -1971,6 +1971,9 @@
         "roleSwitchError": "שגיאה בהחלפת תפקיד",
         "roleSwitchSuccess": "התפקיד הוחלף בהצלחה"
       },
+      "errors": {
+        "roleNotAssigned": "אין לך הרשאה לתפקיד זה"
+      },
       "page": "עמוד",
       "partnerAssignedCoupons": {
         "card": {

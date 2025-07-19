@@ -1903,6 +1903,9 @@
     "roleSwitchSuccess": "Роль успешно изменена",
     "roleSwitchError": "[notifications.roleSwitchError]"
   },
+  "errors": {
+    "roleNotAssigned": "У вас нет разрешения на эту роль"
+  },
   "translations": {
     "normalizationNote": "Код языка нормализуется для обеспечения соответствия существующим ключам перевода."
   },

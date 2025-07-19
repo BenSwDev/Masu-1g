@@ -104,10 +104,25 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     setIsLoading(true)
     try {
       const result = await setActiveRole(role)
-      if (result.success || result.activeRole) {
+      if (result.success) {
         await update({ activeRole: result.activeRole || role }) // This will trigger JWT update
         toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-        router.push(`/dashboard/${result.activeRole || role}`)
+        // Small delay to ensure session update completes
+        setTimeout(() => {
+          router.push(`/dashboard/${result.activeRole || role}`)
+        }, 100)
+      } else if (result.activeRole && result.message === "roleNotAssigned") {
+        // User doesn't have the requested role, fallback was used
+        await update({ activeRole: result.activeRole }) // Update with fallback role
+        toast({ 
+          title: t("notifications.roleSwitchError"), 
+          description: t("errors.roleNotAssigned"),
+          variant: "destructive" 
+        })
+        // Small delay to ensure session update completes
+        setTimeout(() => {
+          router.push(`/dashboard/${result.activeRole}`)
+        }, 100)
       } else {
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }

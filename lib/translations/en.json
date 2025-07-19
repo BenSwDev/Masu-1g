@@ -1395,6 +1395,9 @@
     "roleSwitchError": "[notifications.roleSwitchError]",
     "roleSwitchSuccess": "[notifications.roleSwitchSuccess]"
   },
+  "errors": {
+    "roleNotAssigned": "You don't have permission for this role"
+  },
   "professionalBookingManagement": {
     "actions": {
       "acceptBooking": "[professionalBookingManagement.actions.acceptBooking]",

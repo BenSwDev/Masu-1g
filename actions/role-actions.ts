@@ -160,9 +160,16 @@ export async function setActiveRole(role: string): Promise<{
     if (!user) {
       return { success: false, message: "userNotFound" }
     }
+    
+    // Ensure user.roles is an array and not empty
+    if (!user.roles || !Array.isArray(user.roles) || user.roles.length === 0) {
+      user.roles = ["member"]
+      await user.save()
+    }
+    
     // Check if user has the requested role
     if (!user.roles.includes(role)) {
-      // Fallback to default role
+      // Fallback to default role based on priority
       const fallback = user.roles.includes("admin") ? "admin"
         : user.roles.includes("professional") ? "professional"
         : user.roles.includes("partner") ? "partner"
@@ -170,18 +177,27 @@ export async function setActiveRole(role: string): Promise<{
       user.activeRole = fallback
       await user.save()
       
-      // Revalidate dashboard paths for fallback role
+      // Revalidate multiple paths to ensure consistency
       revalidatePath("/dashboard")
       revalidatePath(`/dashboard/${fallback}`)
+      revalidatePath("/")
       
       return { success: false, message: "roleNotAssigned", activeRole: fallback }
     }
+    
+    // Set the requested role
     user.activeRole = role
     await user.save()
     
-    // Revalidate dashboard paths to ensure UI consistency
+    // Revalidate all relevant dashboard paths to ensure UI consistency
     revalidatePath("/dashboard")
     revalidatePath(`/dashboard/${role}`)
+    revalidatePath("/")
+    
+    // Also revalidate other potential role paths the user might have
+    user.roles.forEach(userRole => {
+      revalidatePath(`/dashboard/${userRole}`)
+    })
     
     return { success: true, message: "activeRoleUpdated", activeRole: role }
   } catch (error) {

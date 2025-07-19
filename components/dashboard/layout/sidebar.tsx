@@ -100,24 +100,46 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   }
 
   const handleRoleSwitch = async (role: string) => {
-    if (role === activeRole) return
+    if (role === activeRole) {
+      console.log(`Role switch skipped: already active role ${role}`)
+      return
+    }
+    
+    console.log(`Starting role switch from ${activeRole} to ${role}`)
     setIsLoading(true)
+    
     try {
       const result = await setActiveRole(role)
+      console.log('Role switch result:', result)
+      
       if (result.activeRole) {
         // Always update session with the actual active role from server
+        console.log(`Updating session with activeRole: ${result.activeRole}`)
         await update({ activeRole: result.activeRole })
+        
+        // Wait a bit for session to update properly
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         if (result.success) {
+          console.log(`Role successfully switched to ${result.activeRole}`)
           toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-                 } else {
-           // Handle fallback case - user doesn't have requested role, but got a fallback
-           toast({ 
-             title: t("notifications.roleSwitchFallback"), 
-             variant: "default" 
-           })
-         }
-        router.push(`/dashboard/${result.activeRole}`)
+        } else {
+          // Handle fallback case - user doesn't have requested role, but got a fallback
+          console.log(`Role switch fell back to ${result.activeRole} (requested: ${role})`)
+          toast({ 
+            title: t("notifications.roleSwitchFallback"), 
+            variant: "default" 
+          })
+        }
+        
+        // Use replace instead of push to avoid back button issues
+        // Also add a small delay to ensure session is fully updated
+        console.log(`Navigating to /dashboard/${result.activeRole}`)
+        setTimeout(() => {
+          router.replace(`/dashboard/${result.activeRole}`)
+        }, 150)
       } else {
+        console.error('Role switch failed: no activeRole returned')
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }
     } catch (error) {

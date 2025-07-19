@@ -30,7 +30,7 @@ export default async function AdminDailyTransactionsPage({
   // Validate date format (YYYY-MM-DD)
   const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date)
   if (!isValidDate) {
-    redirect("/dashboard/admin/transactions")
+          redirect("/dashboard/(user)/(roles)/admin/transactions")
   }
 
   const formattedDate = new Date(date).toLocaleDateString("he-IL", {
@@ -49,7 +49,7 @@ export default async function AdminDailyTransactionsPage({
             description="רשימה מפורטת של כל העסקאות שבוצעו באותו יום"
           />
           <Button asChild variant="outline">
-            <Link href="/dashboard/admin/transactions">
+            <Link href="/dashboard/(user)/(roles)/admin/transactions">
               חזרה לדוח השבועי
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

@@ -103,7 +103,7 @@ export default function AdminBookingsClient() {
 
   const handleViewBooking = (booking: PopulatedBooking) => {
     // Navigate to the booking edit page
-    window.location.href = `/dashboard/admin/bookings/${booking._id}`
+            window.location.href = `/dashboard/(user)/(roles)/admin/bookings/${booking._id}`
   }
 
   const handleCloseEditModal = () => {
@@ -112,7 +112,7 @@ export default function AdminBookingsClient() {
   }
 
   const handleCreateNewBooking = () => {
-    window.location.href = "/dashboard/admin/bookings/new"
+            window.location.href = "/dashboard/(user)/(roles)/admin/bookings/new"
   }
 
   const columns = useMemo(() => getAdminBookingColumns(t, language, handleViewBooking), [t, language, handleViewBooking])

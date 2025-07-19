@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
               <CardTitle className="flex items-center justify-between">
                 <span>מטפלים ממתינים לאישור</span>
                 <Link
-                  href="/dashboard/admin/professional-management"
+                  href="/dashboard/(user)/(roles)/admin/professional-management"
                   className="text-sm text-primary flex items-center gap-1"
                 >
                   לניהול מטפלים

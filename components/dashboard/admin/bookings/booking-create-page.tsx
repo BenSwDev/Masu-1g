@@ -124,7 +124,7 @@ export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
   }
 
   const handleBack = () => {
-    router.push("/dashboard/admin/bookings")
+    router.push("/dashboard/(user)/(roles)/admin/bookings")
   }
 
   const nextStep = () => {
@@ -151,7 +151,7 @@ export function BookingCreatePage({ initialData }: BookingCreatePageProps) {
         description: "ההזמנה נוצרה בהצלחה"
       })
       
-      router.push("/dashboard/admin/bookings")
+      router.push("/dashboard/(user)/(roles)/admin/bookings")
     } catch (error) {
       toast({
         variant: "destructive",

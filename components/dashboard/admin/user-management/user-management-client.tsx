@@ -145,7 +145,7 @@ export default function UserManagementClient({
       }
     })
     
-    router.push(`/dashboard/admin/users?${params.toString()}`)
+    router.push(`/dashboard/(user)/(roles)/admin/users?${params.toString()}`)
     
     // Fetch new data
     await fetchUsers(updatedFilters)
@@ -180,7 +180,7 @@ export default function UserManagementClient({
     
     const params = new URLSearchParams(searchParams.toString())
     params.set("page", page.toString())
-    router.push(`/dashboard/admin/users?${params.toString()}`)
+    router.push(`/dashboard/(user)/(roles)/admin/users?${params.toString()}`)
     
     await fetchUsers(newFilters)
   }, [filters, searchParams, router, fetchUsers])

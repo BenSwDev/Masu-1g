@@ -346,7 +346,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           // הפניה אוטומטית לעמוד התפקיד
           setTimeout(() => {
             const role = session?.user?.activeRole || "member"
-            router.push(`/dashboard/${role}`)
+            router.push(`/dashboard/(user)/(roles)/${role}`)
           }, 500)
         }
       } else {

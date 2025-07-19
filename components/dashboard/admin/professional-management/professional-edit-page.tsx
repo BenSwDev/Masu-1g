@@ -141,7 +141,7 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
       const confirmLeave = window.confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?")
       if (!confirmLeave) return
     }
-    router.push("/dashboard/admin/professional-management")
+            router.push("/dashboard/(user)/(roles)/admin/professional-management")
   }
 
   const handleSaveAll = async () => {

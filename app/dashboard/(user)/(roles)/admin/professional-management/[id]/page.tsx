@@ -235,12 +235,12 @@ export default async function ProfessionalEditPageRoute({ params }: { params: { 
   }
 
   if (!params.id) {
-    redirect("/dashboard/admin/professional-management")
+    redirect("/dashboard/(user)/(roles)/admin/professional-management")
   }
 
   // Redirect old "new" route to the main page
   if (params.id === "new") {
-    redirect("/dashboard/admin/professional-management")
+    redirect("/dashboard/(user)/(roles)/admin/professional-management")
   }
 
   return (

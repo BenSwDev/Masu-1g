@@ -32,7 +32,7 @@ function BookingsErrorFallback() {
         </p>
         <div className="mt-4">
           <Link 
-            href="/dashboard/admin/bookings"
+            href="/dashboard/(user)/(roles)/admin/bookings"
             className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             רענון הדף

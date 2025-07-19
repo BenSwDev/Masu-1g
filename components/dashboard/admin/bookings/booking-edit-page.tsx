@@ -111,11 +111,11 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
   const handleBack = () => {
     if (hasUnsavedChanges) {
       if (confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שאתה רוצה לצאת?")) {
-        router.push("/dashboard/admin/bookings")
+        router.push("/dashboard/(user)/(roles)/admin/bookings")
       }
-    } else {
-      router.push("/dashboard/admin/bookings")
-    }
+          } else {
+        router.push("/dashboard/(user)/(roles)/admin/bookings")
+      }
   }
 
   const getStatusBadge = (status: BookingStatus) => {

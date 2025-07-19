@@ -20,16 +20,16 @@ export default async function DashboardPage() {
   if (!roles.includes(activeRole)) {
     // fallback to first available role
     if (roles.includes("admin")) {
-      redirect("/dashboard/admin")
+      redirect("/dashboard/(user)/(roles)/admin")
     } else if (roles.includes("professional")) {
-      redirect("/dashboard/professional")
+      redirect("/dashboard/(user)/(roles)/professional")
     } else if (roles.includes("partner")) {
-      redirect("/dashboard/partner")
+      redirect("/dashboard/(user)/(roles)/partner")
     } else {
-      redirect("/dashboard/member")
+      redirect("/dashboard/(user)/(roles)/member")
     }
   }
 
   // Redirect to the active role's dashboard
-  redirect(`/dashboard/${activeRole}`)
+  redirect(`/dashboard/(user)/(roles)/${activeRole}`)
 }

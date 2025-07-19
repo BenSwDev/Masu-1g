@@ -7,7 +7,7 @@ export default function ProfessionalNotFound() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/admin/professional-management">
+        <Link href="/dashboard/(user)/(roles)/admin/professional-management">
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             חזור לרשימה
@@ -30,7 +30,7 @@ export default function ProfessionalNotFound() {
           </p>
           
           <div className="flex gap-3">
-            <Link href="/dashboard/admin/professional-management">
+            <Link href="/dashboard/(user)/(roles)/admin/professional-management">
               <Button>
                 חזור לרשימת המטפלים
               </Button>

@@ -170,9 +170,9 @@ export async function setActiveRole(role: string): Promise<{
       user.activeRole = fallback
       await user.save()
       
-      // Revalidate dashboard paths for fallback role
-      revalidatePath("/dashboard")
-      revalidatePath(`/dashboard/${fallback}`)
+          // Revalidate dashboard paths for fallback role
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/(user)/(roles)/${fallback}`)
       
       return { success: false, message: "roleNotAssigned", activeRole: fallback }
     }
@@ -181,7 +181,7 @@ export async function setActiveRole(role: string): Promise<{
     
     // Revalidate dashboard paths to ensure UI consistency
     revalidatePath("/dashboard")
-    revalidatePath(`/dashboard/${role}`)
+    revalidatePath(`/dashboard/(user)/(roles)/${role}`)
     
     return { success: true, message: "activeRoleUpdated", activeRole: role }
   } catch (error) {

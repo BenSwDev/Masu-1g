@@ -253,7 +253,7 @@ export default function ProfessionalAssignedBookingsClient({ professional }: Pro
               </p>
               <Button 
                 variant="outline" 
-                onClick={() => router.push('/dashboard/professional/potential-bookings')}
+                onClick={() => router.push('/dashboard/(user)/(roles)/professional/potential-bookings')}
                 className="gap-2"
               >
                 <Target className="w-4 h-4" />
@@ -309,7 +309,7 @@ export default function ProfessionalAssignedBookingsClient({ professional }: Pro
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => router.push(`/dashboard/professional/booking-management/${booking._id}`)}
+                          onClick={() => router.push(`/dashboard/(user)/(roles)/professional/booking-management/${booking._id}`)}
                           className="gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />

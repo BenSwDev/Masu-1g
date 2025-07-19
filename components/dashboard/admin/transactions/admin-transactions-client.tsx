@@ -109,7 +109,7 @@ export default function AdminTransactionsClient() {
 
   // Handle row click to navigate to daily details
   const handleRowClick = (date: string) => {
-    router.push(`/dashboard/admin/transactions/${date}`)
+          router.push(`/dashboard/(user)/(roles)/admin/transactions/${date}`)
   }
 
   // Load data when week changes

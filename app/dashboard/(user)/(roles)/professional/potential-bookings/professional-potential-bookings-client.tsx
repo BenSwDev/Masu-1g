@@ -159,7 +159,7 @@ export default function ProfessionalPotentialBookingsClient({ professional }: Pr
   }
 
   const handleViewBooking = (bookingId: string) => {
-    router.push(`/dashboard/professional/booking-response/${bookingId}`)
+          router.push(`/dashboard/(user)/(roles)/professional/booking-response/${bookingId}`)
   }
 
   // Filter bookings
@@ -278,7 +278,7 @@ export default function ProfessionalPotentialBookingsClient({ professional }: Pr
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={() => router.push('/dashboard/professional/work-areas')}
+                onClick={() => router.push('/dashboard/(user)/(roles)/professional/work-areas')}
               >
                 הגדר איזורים
               </Button>
@@ -296,7 +296,7 @@ export default function ProfessionalPotentialBookingsClient({ professional }: Pr
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={() => router.push('/dashboard/professional/treatments')}
+                onClick={() => router.push('/dashboard/(user)/(roles)/professional/treatments')}
               >
                 הגדר טיפולים
               </Button>

@@ -52,7 +52,7 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
       {pagination.totalPages > 1 && (
         <div className="mt-8 flex justify-center space-x-2">
           <Button
-            onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage - 1}`)}
+            onClick={() => router.push(`/dashboard/(user)/(roles)/partner/assigned-coupons?page=${pagination.currentPage - 1}`)}
             disabled={pagination.currentPage <= 1 || loading}
           >
             {t("partnerAssignedCoupons.pagination.previous")}
@@ -61,7 +61,7 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
             {t("partnerAssignedCoupons.pagination.pageInfo")} - {t("common.page")}: {pagination.currentPage}, {t("common.totalPages")}: {pagination.totalPages}
           </span>
           <Button
-            onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage + 1}`)}
+            onClick={() => router.push(`/dashboard/(user)/(roles)/partner/assigned-coupons?page=${pagination.currentPage + 1}`)}
             disabled={pagination.currentPage >= pagination.totalPages || loading}
           >
             {t("partnerAssignedCoupons.pagination.next")}

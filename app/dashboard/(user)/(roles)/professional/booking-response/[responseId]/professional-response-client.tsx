@@ -175,7 +175,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
           </p>
           <div className="text-center">
             <Button asChild variant="outline">
-              <Link href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/(user)/(roles)/professional/booking-management">
                 כניסה לאפליקציה
               </Link>
             </Button>
@@ -210,7 +210,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
           {actionResult.success && action === "accept" && (
             <div className="text-center">
               <Button asChild>
-                <Link href="/dashboard/professional/booking-management">
+                <Link href="/dashboard/(user)/(roles)/professional/booking-management">
                   צפייה בהזמנות שלי
                 </Link>
               </Button>
@@ -218,7 +218,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
           )}
           <div className="text-center">
             <Button asChild variant="outline">
-              <Link href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/(user)/(roles)/professional/booking-management">
                 כניסה לאפליקציה
               </Link>
             </Button>
@@ -328,7 +328,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
             )}
             
             <Button asChild variant="outline" className="w-full">
-              <Link href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/(user)/(roles)/professional/booking-management">
                 כניסה לאפליקציה
               </Link>
             </Button>
@@ -416,7 +416,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
               asChild
               className="bg-green-600 hover:bg-green-700"
             >
-              <Link href={`/dashboard/professional/booking-response/${responseId}?action=accept`}>
+              <Link href={`/dashboard/(user)/(roles)/professional/booking-response/${responseId}?action=accept`}>
                 <CheckCircle className="h-4 w-4 mr-2" />
                 אקבל את ההזמנה
               </Link>
@@ -425,7 +425,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
               asChild
               variant="destructive"
             >
-              <Link href={`/dashboard/professional/booking-response/${responseId}?action=decline`}>
+              <Link href={`/dashboard/(user)/(roles)/professional/booking-response/${responseId}?action=decline`}>
                 <XCircle className="h-4 w-4 mr-2" />
                 אדחה את ההזמנה
               </Link>
@@ -434,7 +434,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
           
           <div className="text-center">
             <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/professional/booking-management">
+              <Link href="/dashboard/(user)/(roles)/professional/booking-management">
                 כניסה לאפליקציה
               </Link>
             </Button>
@@ -459,7 +459,7 @@ export default function ProfessionalResponseClient({ responseId, action }: Profe
         </p>
         <div className="text-center">
           <Button asChild variant="outline">
-            <Link href="/dashboard/professional/booking-management">
+            <Link href="/dashboard/(user)/(roles)/professional/booking-management">
               כניסה לאפליקציה
             </Link>
           </Button>

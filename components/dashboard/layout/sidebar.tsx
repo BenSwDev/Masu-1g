@@ -109,14 +109,15 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
         await update({ activeRole: result.activeRole })
         if (result.success) {
           toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-                 } else {
-           // Handle fallback case - user doesn't have requested role, but got a fallback
-           toast({ 
-             title: t("notifications.roleSwitchFallback"), 
-             variant: "default" 
-           })
-         }
-        router.push(`/dashboard/${result.activeRole}`)
+        } else {
+          // Handle fallback case - user doesn't have requested role, but got a fallback
+          toast({ 
+            title: t("notifications.roleSwitchFallback"), 
+            variant: "default" 
+          })
+        }
+        // Navigate to the correct dashboard route based on the active role
+        router.push(`/dashboard/(user)/(roles)/${result.activeRole}`)
       } else {
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }
@@ -295,8 +296,8 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       {
         title: t("dashboard.sidebar.dashboard"),
         icon: LayoutDashboard,
-        href: `/dashboard/${activeRole}`,
-        isActive: pathname === `/dashboard/${activeRole}` || pathname === "/dashboard",
+        href: `/dashboard/(user)/(roles)/${activeRole}`,
+        isActive: pathname === `/dashboard/(user)/(roles)/${activeRole}` || pathname === "/dashboard",
       },
     ]
 
@@ -353,7 +354,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       ],
     }
     ;(roleMenus[activeRole] || []).forEach((item) => {
-      const href = `/dashboard/${activeRole}/${item.hrefSuffix}`
+      const href = `/dashboard/(user)/(roles)/${activeRole}/${item.hrefSuffix}`
       baseItems.push({
         title: t(`dashboard.sidebar.${item.titleKey}`),
         icon: item.icon,
@@ -370,19 +371,19 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       {
         title: t("dashboard.sidebar.bookTreatment"),
         icon: Calendar,
-        href: "/dashboard/member/book-treatment",
+        href: "/dashboard/(user)/(roles)/member/book-treatment",
         variant: "default" as const,
       },
       {
         title: t("dashboard.sidebar.purchaseSubscription"),
         icon: CreditCard,
-        href: "/dashboard/member/subscriptions/purchase",
+        href: "/dashboard/(user)/(roles)/member/subscriptions/purchase",
         variant: "outline" as const,
       },
       {
         title: t("dashboard.sidebar.purchaseGiftVoucher"),
         icon: Gift,
-        href: "/dashboard/member/gift-vouchers/purchase",
+        href: "/dashboard/(user)/(roles)/member/gift-vouchers/purchase",
         variant: "outline" as const,
       },
     ]

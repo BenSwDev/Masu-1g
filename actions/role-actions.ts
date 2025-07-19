@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import User from "@/lib/db/models/user"
+import User, { UserRole } from "@/lib/db/models/user"
 import { revalidatePath } from "next/cache"
 
 /**
@@ -11,8 +11,8 @@ import { revalidatePath } from "next/cache"
  */
 async function getAvailableRoles(): Promise<string[]> {
   // This could be fetched from a database in the future
-  // For now, we'll return the hardcoded roles
-  return ["member", "admin"]
+  // For now, we'll return the hardcoded roles from the enum
+  return Object.values(UserRole)
 }
 
 /**
@@ -64,7 +64,7 @@ async function addRoleToUser(
     }
 
     // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
       return { success: false, message: "notAuthorized" }
     }
 
@@ -112,7 +112,7 @@ async function removeRoleFromUser(
     }
 
     // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
       return { success: false, message: "notAuthorized" }
     }
 
@@ -163,17 +163,17 @@ export async function setActiveRole(role: string): Promise<{
     
     // Ensure user.roles is an array and not empty
     if (!user.roles || !Array.isArray(user.roles) || user.roles.length === 0) {
-      user.roles = ["member"]
+      user.roles = [UserRole.MEMBER]
       await user.save()
     }
     
     // Check if user has the requested role
     if (!user.roles.includes(role)) {
       // Fallback to default role based on priority
-      const fallback = user.roles.includes("admin") ? "admin"
-        : user.roles.includes("professional") ? "professional"
-        : user.roles.includes("partner") ? "partner"
-        : "member"
+      const fallback = user.roles.includes(UserRole.ADMIN) ? UserRole.ADMIN
+        : user.roles.includes(UserRole.PROFESSIONAL) ? UserRole.PROFESSIONAL
+        : user.roles.includes(UserRole.PARTNER) ? UserRole.PARTNER
+        : UserRole.MEMBER
       user.activeRole = fallback
       await user.save()
       

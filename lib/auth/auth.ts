@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/db/mongodb"
 import dbConnect from "@/lib/db/mongoose"
-import User, { type ITreatmentPreferences, type INotificationPreferences } from "@/lib/db/models/user"
+import User, { UserRole, type ITreatmentPreferences, type INotificationPreferences } from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
 
 // Add interface for our custom user type
@@ -77,12 +77,12 @@ export function validatePhone(phone: string): boolean {
 
 // Helper function to determine the default active role based on priority
 function getDefaultActiveRole(roles: string[]): string {
-  if (!roles || roles.length === 0) return "member"
-  if (roles.includes("admin")) return "admin"
-  if (roles.includes("professional")) return "professional"
-  if (roles.includes("partner")) return "partner"
-  if (roles.includes("member")) return "member"
-  return roles[0] || "member"
+  if (!roles || roles.length === 0) return UserRole.MEMBER
+  if (roles.includes(UserRole.ADMIN)) return UserRole.ADMIN
+  if (roles.includes(UserRole.PROFESSIONAL)) return UserRole.PROFESSIONAL
+  if (roles.includes(UserRole.PARTNER)) return UserRole.PARTNER
+  if (roles.includes(UserRole.MEMBER)) return UserRole.MEMBER
+  return roles[0] || UserRole.MEMBER
 }
 
 const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "any" }

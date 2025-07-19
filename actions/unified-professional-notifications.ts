@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
+import { calculateTreatmentDuration } from "@/lib/utils/treatment-duration-utils"
 
 /**
  * Unified Professional Notification System
@@ -41,8 +42,7 @@ async function sendUnifiedProfessionalNotifications(
 
     // Get booking details
     const booking = await Booking.findById(options.bookingId)
-      .populate('treatmentId', 'name')
-      .populate('selectedDurationId')
+      .populate('treatmentId', 'name durations pricingType')
       .lean()
 
     if (!booking) {
@@ -58,10 +58,15 @@ async function sendUnifiedProfessionalNotifications(
     }
 
     // Prepare notification data
-    const treatmentName = (booking.treatmentId as any)?.name || "טיפול"
+    const treatment = booking.treatmentId as any
+    const treatmentName = treatment?.name || "טיפול"
     const bookingDateTime = booking.bookingDateTime
     const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.streetNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
     const price = booking.priceDetails?.finalAmount || 0
+    
+    // Calculate treatment duration using utility function
+    const treatmentDurationText = calculateTreatmentDuration(booking as any)
+    const treatmentDuration = treatmentDurationText
 
     let professionalsToNotify: Array<{
       professionalId: string
@@ -198,6 +203,7 @@ async function sendUnifiedProfessionalNotifications(
         const notificationData = {
           type: "professional-booking-notification" as const,
           treatmentName,
+          treatmentDuration, // ✅ Add duration for SMS template
           bookingDateTime,
           address,
           price,
@@ -356,8 +362,7 @@ export async function sendPaymentBonusNotifications(
 
     // Get booking details
     const booking = await Booking.findById(bookingId)
-      .populate('treatmentId', 'name')
-      .populate('selectedDurationId')
+      .populate('treatmentId', 'name durations pricingType')
       .lean()
 
     if (!booking) {

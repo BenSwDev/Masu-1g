@@ -133,8 +133,7 @@ const TreatmentPricingSchema = new Schema<ITreatmentPricing>({
     required: true 
   },
   durationId: { 
-    type: Schema.Types.ObjectId, 
-    ref: "TreatmentDuration" 
+    type: Schema.Types.ObjectId
   },
   professionalPrice: { type: Number, required: true, min: 0 }
 }, { _id: false })

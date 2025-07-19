@@ -37,7 +37,6 @@ export async function GET(
     // Get booking details
     const booking = await Booking.findById(bookingId)
       .populate('treatmentId')
-      .populate('selectedDurationId')
       .lean()
 
     if (!booking) {

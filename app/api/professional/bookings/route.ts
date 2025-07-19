@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
     // Get bookings with necessary population (but hide customer payment info)
     const bookings = await Booking.find(query)
       .populate("treatmentId", "name category durations defaultDurationMinutes")
-      .populate("selectedDurationId")
       .populate("userId", "name phone") // Only basic user info, no financial data
       .select(`
         bookingNumber bookedByUserName bookedByUserPhone recipientName recipientPhone

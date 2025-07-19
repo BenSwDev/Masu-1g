@@ -73,12 +73,7 @@ export async function GET(
           populate: [
             {
               path: 'treatmentId',
-              select: 'name pricingType'
-            },
-            {
-              path: 'selectedDurationId',
-              model: 'TreatmentDuration',
-              select: 'name durationMinutes'
+              select: 'name pricingType durations'
             },
             {
               path: 'userId',
@@ -235,13 +230,23 @@ export async function GET(
       } : null
       logger.info("✅ Client details processed")
 
-      // Get treatment duration details
-      logger.info("⏱️ Processing treatment duration")
-      const treatmentDuration = booking.selectedDurationId as any || {}
-      const durationText = treatmentDuration.name || 
-                          (treatmentDuration.durationMinutes ? `${treatmentDuration.durationMinutes} דקות` : 
-                           (booking.treatmentId?.pricingType === "fixed" ? "זמן קבוע" : "לא צוין"))
-      logger.info("✅ Treatment duration processed")
+             // Get treatment duration details
+       logger.info("⏱️ Processing treatment duration")
+       const treatment = booking.treatmentId as any
+       let durationText = "לא צוין"
+       
+       if (treatment?.pricingType === "fixed") {
+         durationText = "זמן קבוע"
+       } else if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+         // Find the selected duration in the treatment's durations array
+         const selectedDuration = treatment.durations.find((d: any) => 
+           d._id.toString() === booking.selectedDurationId.toString()
+         )
+         if (selectedDuration) {
+           durationText = `${selectedDuration.minutes} דקות`
+         }
+       }
+       logger.info("✅ Treatment duration processed", { durationText })
 
       // Get full address details with support for all address types
       logger.info("🏠 Processing address details")

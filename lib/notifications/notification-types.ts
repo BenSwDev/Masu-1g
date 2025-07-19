@@ -82,6 +82,7 @@ interface ReviewRequestNotificationData extends BaseNotificationData {
 export interface ProfessionalBookingNotificationData extends BaseNotificationData {
   type: "professional-booking-notification" | "BOOKING_ASSIGNED_PROFESSIONAL"
   treatmentName: string
+  treatmentDuration?: string // ✅ Duration text for SMS template (e.g., "60 דקות")
   bookingDateTime: Date
   address?: string
   price?: number

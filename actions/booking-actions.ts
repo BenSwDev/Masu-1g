@@ -49,6 +49,7 @@ import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, Create
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
 import { sendUserNotification, sendGuestNotification, sendBookingConfirmationToUser } from "@/lib/notifications/notification-service"
+import { calculateTreatmentDuration } from "@/lib/utils/treatment-duration-utils"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -1280,7 +1281,7 @@ export async function createBooking(
           const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
           const notificationLanguage = validatedPayload.notificationLanguage || "he"
         
-        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name durations pricingType").lean()
         const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
         
         if (treatment) {
@@ -1303,10 +1304,12 @@ export async function createBooking(
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
             // Prepare booking data for the recipient
+            const treatmentDuration = calculateTreatmentDuration(finalBookingObject as any)
             const recipientBookingData = {
               recipientName: validatedPayload.recipientName!,
               bookerName: bookingUser.name,
               treatmentName: treatment.name,
+              treatmentDuration,
               bookingDateTime: finalBookingObject.bookingDateTime,
               bookingNumber: finalBookingObject.bookingNumber,
               bookingAddress: bookingAddress,
@@ -3183,7 +3186,7 @@ export async function createGuestBooking(
 
       // Send booking success notifications
       try {
-        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name durations pricingType").lean()
 
         if (treatment) {
           const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
@@ -3201,11 +3204,13 @@ export async function createGuestBooking(
           const notificationLanguage = validatedPayload.notificationLanguage || "he"
           
           // Prepare booking data for the booker (guest)
+          const treatmentDuration = calculateTreatmentDuration(finalBookingObject as any)
           const bookerBookingData = {
             type: "treatment-booking-success" as const,
             recipientName: bookerName, // Always the booker's name for their own notification
             bookerName: undefined, // No booker name needed when notifying the booker themselves
             treatmentName: treatment.name,
+            treatmentDuration,
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
@@ -4129,7 +4134,7 @@ export async function updateBookingStatusAfterPayment(
 
         // Send customer notifications
         try {
-          const treatment = await Treatment.findById(updatedBooking.treatmentId).select("name").lean()
+          const treatment = await Treatment.findById(updatedBooking.treatmentId).select("name durations pricingType").lean()
           if (treatment) {
             // Determine if this is a guest booking or user booking
             if (updatedBooking.userId) {
@@ -4139,11 +4144,13 @@ export async function updateBookingStatusAfterPayment(
               // Send notification to recipient if booking for someone else
               if (updatedBooking.isBookingForSomeoneElse && updatedBooking.recipientEmail) {
                 const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
+                const treatmentDuration = calculateTreatmentDuration(updatedBooking as any)
                 const recipientBookingData = {
                   type: "treatment-booking-success" as const,
                   recipientName: updatedBooking.recipientName!,
                   bookerName: updatedBooking.bookedByUserName!,
                   treatmentName: treatment.name,
+                  treatmentDuration,
                   bookingDateTime: updatedBooking.bookingDateTime,
                   bookingNumber: updatedBooking.bookingNumber,
                   bookingAddress: updatedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
@@ -4178,10 +4185,12 @@ export async function updateBookingStatusAfterPayment(
             } else {
               // Guest booking - send notification to booker
               const { sendGuestNotification } = await import("@/lib/notifications/guest-notification-service")
+              const treatmentDuration = calculateTreatmentDuration(updatedBooking as any)
               const bookerBookingData = {
                 type: "treatment-booking-success" as const,
                 recipientName: updatedBooking.bookedByUserName!,
                 treatmentName: treatment.name,
+                treatmentDuration,
                 bookingDateTime: updatedBooking.bookingDateTime,
                 bookingNumber: updatedBooking.bookingNumber,
                 bookingAddress: updatedBooking.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה",
@@ -4265,12 +4274,10 @@ export async function findSuitableProfessionals(
       // Search by _id
       booking = await Booking.findById(bookingId)
       .populate('treatmentId')
-      .populate('selectedDurationId')
     } else {
       // Search by booking number
       booking = await Booking.findOne({ bookingNumber: bookingId })
         .populate('treatmentId')
-        .populate('selectedDurationId')
     }
     
     if (!booking) {

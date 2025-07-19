@@ -5,6 +5,7 @@ import { logger } from "@/lib/logs/logger"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { smsService } from "@/lib/notifications/sms-service"
 import mongoose from "mongoose"
+import { calculateTreatmentDuration } from "@/lib/utils/treatment-duration-utils"
 
 // Static imports for all models
 import VerificationToken from "@/lib/db/models/verification-token"
@@ -251,7 +252,7 @@ export async function sendBookingConfirmationToUser(
     const [user, booking] = await Promise.all([
       (User as any).findById(userId).select("name email phone notificationPreferences").lean(),
       (Booking as any).findById(bookingId)
-        .populate('treatmentId', 'name')
+        .populate('treatmentId', 'name durations pricingType')
         .lean()
     ])
 
@@ -262,9 +263,12 @@ export async function sendBookingConfirmationToUser(
     const userLanguage = user.notificationPreferences?.language || "he"
     const notificationMethods = user.notificationPreferences?.methods || ["sms"]
 
+    const treatmentDuration = calculateTreatmentDuration(booking as any)
+    
     const notificationData = {
       type: "treatment-booking-success" as const,
       treatmentName: (booking.treatmentId as any)?.name || "טיפול",
+      treatmentDuration,
       bookingDateTime: booking.bookingDateTime,
       bookingNumber: booking.bookingNumber,
       recipientName: user.name,

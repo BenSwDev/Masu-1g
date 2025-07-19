@@ -117,7 +117,7 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
   // Format treatment name with duration if available
   let treatmentDisplay = data.treatmentName || ''
   if (data.treatmentDuration) {
-    treatmentDisplay += ` (${data.treatmentDuration} דקות)`
+    treatmentDisplay += ` (${data.treatmentDuration})`
   }
 
   // ✅ FIX: Correct way to detect admin assignment vs availability notification

@@ -104,10 +104,19 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     setIsLoading(true)
     try {
       const result = await setActiveRole(role)
-      if (result.success || result.activeRole) {
-        await update({ activeRole: result.activeRole || role }) // This will trigger JWT update
-        toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-        router.push(`/dashboard/${result.activeRole || role}`)
+      if (result.activeRole) {
+        // Always update session with the actual active role from server
+        await update({ activeRole: result.activeRole })
+        if (result.success) {
+          toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
+                 } else {
+           // Handle fallback case - user doesn't have requested role, but got a fallback
+           toast({ 
+             title: t("notifications.roleSwitchFallback"), 
+             variant: "default" 
+           })
+         }
+        router.push(`/dashboard/${result.activeRole}`)
       } else {
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }
@@ -144,9 +153,11 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
                 {roles.map((role) => (
                   <DropdownMenuItem
                     key={role}
-                    onClick={() => handleRoleSwitch(role)}
+                    onClick={() => !isLoading && handleRoleSwitch(role)}
                     className={cn(
-                      "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
+                      "flex items-center gap-2.5 py-2 px-3 text-sm",
+                      !isLoading && "cursor-pointer",
+                      isLoading && "cursor-not-allowed opacity-50",
                       role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
                     )}
                   >
@@ -183,9 +194,11 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
           {roles.map((role) => (
             <DropdownMenuItem
               key={role}
-              onClick={() => handleRoleSwitch(role)}
+              onClick={() => !isLoading && handleRoleSwitch(role)}
               className={cn(
-                "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
+                "flex items-center gap-2.5 py-2 px-3 text-sm",
+                !isLoading && "cursor-pointer",
+                isLoading && "cursor-not-allowed opacity-50",
                 role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
               )}
             >

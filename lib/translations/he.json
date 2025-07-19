@@ -4346,7 +4346,8 @@
     },
     "notifications": {
       "roleSwitchSuccess": "תפקיד הוחלף בהצלחה",
-      "roleSwitchError": "שגיאה בהחלפת תפקיד"
+      "roleSwitchError": "שגיאה בהחלפת תפקיד",
+      "roleSwitchFallback": "התפקיד המבוקש לא זמין, הועברת לתפקיד זמין"
     },
     "dashboard": {
       "sidebar": {

@@ -1901,7 +1901,8 @@
   },
   "notifications": {
     "roleSwitchSuccess": "Роль успешно изменена",
-    "roleSwitchError": "[notifications.roleSwitchError]"
+    "roleSwitchError": "Ошибка при смене роли",
+    "roleSwitchFallback": "Запрашиваемая роль недоступна, переключено на доступную роль"
   },
   "translations": {
     "normalizationNote": "Код языка нормализуется для обеспечения соответствия существующим ключам перевода."

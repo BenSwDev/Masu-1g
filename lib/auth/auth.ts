@@ -228,6 +228,9 @@ export const authOptions: NextAuthOptions = {
               activeRole = getDefaultActiveRole(dbUser.roles)
             }
             token.activeRole = activeRole
+          } else {
+            // Always sync with database activeRole to ensure consistency
+            token.activeRole = dbUser.activeRole || getDefaultActiveRole(dbUser.roles)
           }
           // If preferences were updated, they should be in the session object passed to update()
           // However, it's safer to re-fetch from DB to ensure consistency

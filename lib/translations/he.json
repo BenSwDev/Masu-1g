@@ -1443,6 +1443,11 @@
           "support": "תמיכה",
           "title": "לוח בקרה",
           "treatments": "טיפולים",
+          "workAreas": "איזורי פעילות",
+          "assignedBookings": "הזמנות מוקצות",
+          "potentialBookings": "הזמנות פוטנציאליות",
+          "contract": "הסכמים",
+          "financial": "דוחות כספיים",
           "userMenu": {
             "notifications": "התראות",
             "toggleTooltip": "פתח/סגור תפריט משתמש",

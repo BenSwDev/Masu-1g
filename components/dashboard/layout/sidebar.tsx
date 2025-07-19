@@ -35,6 +35,8 @@ import {
   PieChart,
   Star,
   DollarSign,
+  Stethoscope,
+  ScrollText,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -322,12 +324,15 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
       professional: [
-        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
-        { titleKey: "financial", icon: DollarSign, hrefSuffix: "financial" },
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
-        { titleKey: "location", icon: MapPin, hrefSuffix: "location" },
+        { titleKey: "treatments", icon: Stethoscope, hrefSuffix: "treatments" },
+        { titleKey: "workAreas", icon: MapPin, hrefSuffix: "work-areas" },
+        { titleKey: "assignedBookings", icon: Calendar, hrefSuffix: "assigned-bookings" },
+        { titleKey: "potentialBookings", icon: Clock, hrefSuffix: "potential-bookings" },
+        { titleKey: "financial", icon: DollarSign, hrefSuffix: "financial" },
         { titleKey: "bankAccount", icon: CreditCard, hrefSuffix: "bank-account" },
         { titleKey: "documents", icon: FileText, hrefSuffix: "documents" },
+        { titleKey: "contract", icon: ScrollText, hrefSuffix: "contract" },
       ],
       partner: [
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },

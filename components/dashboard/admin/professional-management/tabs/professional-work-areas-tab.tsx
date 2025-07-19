@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/common/ui/dialog"
 import { useToast } from "@/components/common/ui/use-toast"
-import { MapPin, Plus, Edit, Trash2, Target, Globe, CheckCircle, Loader2 } from "lucide-react"
+import { MapPin, Plus, Edit, Trash2, Target, Globe, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react"
 import type { ProfessionalTabProps } from "@/lib/types/professional"
 import { updateProfessionalWorkAreas } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 
@@ -41,6 +41,90 @@ interface WorkArea {
   cityName: string
   distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
   coveredCities: string[]
+}
+
+// קומפוננט תצוגת ערים מכוסות
+function CoveredCitiesDisplay({ 
+  cities, 
+  cityName, 
+  radius 
+}: { 
+  cities: string[]
+  cityName: string
+  radius: string 
+}) {
+  const [showAll, setShowAll] = useState(false)
+  
+  if (!cities || cities.length === 0) {
+    return (
+      <div className="text-xs text-gray-500 italic">
+        אין ערים מכוסות
+      </div>
+    )
+  }
+
+  const displayedCities = showAll ? cities : cities.slice(0, 8)
+  const hasMore = cities.length > 8
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-blue-600" />
+          <span className="text-sm font-medium text-blue-800">
+            כיסוי אזור {cityName} ({radius})
+          </span>
+        </div>
+        {hasMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(!showAll)}
+            className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800"
+          >
+            {showAll ? (
+              <>
+                <EyeOff className="h-3 w-3 mr-1" />
+                הסתר
+              </>
+            ) : (
+              <>
+                <Eye className="h-3 w-3 mr-1" />
+                הצג הכל ({cities.length})
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 text-xs">
+        {displayedCities.map((city, index) => (
+          <div
+            key={index}
+            className={`px-2 py-1 rounded text-center ${
+              city === cityName 
+                ? "bg-blue-200 text-blue-900 font-medium border border-blue-300" 
+                : "bg-white text-blue-700 border border-blue-100"
+            }`}
+          >
+            {city === cityName && "🏠 "}{city}
+          </div>
+        ))}
+      </div>
+      
+      {hasMore && !showAll && (
+        <div className="text-center">
+          <span className="text-xs text-blue-600">
+            ועוד {cities.length - 8} ערים נוספות...
+          </span>
+        </div>
+      )}
+      
+      <div className="text-xs text-blue-600 text-center border-t border-blue-200 pt-2">
+        סה"כ {cities.length} ערים מכוסות ברדיוס {radius}
+      </div>
+    </div>
+  )
 }
 
 function ProfessionalWorkAreasTab({
@@ -465,9 +549,16 @@ function ProfessionalWorkAreasTab({
                     </Badge>
                   </div>
                   {area.coveredCities && area.coveredCities.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      <strong>ערים מכוסות:</strong> {area.coveredCities.slice(0, 5).join(", ")}
-                      {area.coveredCities.length > 5 && ` ועוד ${area.coveredCities.length - 5}...`}
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">
+                        <strong>ערים מכוסות:</strong> {area.coveredCities.slice(0, 3).join(", ")}
+                        {area.coveredCities.length > 3 && ` ועוד ${area.coveredCities.length - 3}...`}
+                      </div>
+                      <CoveredCitiesDisplay 
+                        cities={area.coveredCities} 
+                        cityName={area.cityName}
+                        radius={getDistanceLabel(area.distanceRadius)}
+                      />
                     </div>
                   )}
                 </div>

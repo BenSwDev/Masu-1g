@@ -18,6 +18,7 @@ import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
 import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
 import ProfessionalContractTab from "./tabs/professional-contract-tab"
 import ProfessionalBookingsTab from "./tabs/professional-bookings-tab"
+import ProfessionalAllCitiesTab from "./tabs/professional-all-cities-tab"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { Professional } from "@/lib/types/professional"
 
@@ -254,7 +255,7 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
             })
             setActiveTab(value)
           }} dir={dir} className="w-full">
-            <TabsList className="grid w-full grid-cols-8 mb-6">
+            <TabsList className="grid w-full grid-cols-9 mb-6">
               <TabsTrigger value="profile" className="flex items-center gap-2" key="tab-profile">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">פרופיל</span>
@@ -286,6 +287,10 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
               <TabsTrigger value="contract" className="flex items-center gap-2" key="tab-contract">
                 <ScrollText className="w-4 h-4" />
                 <span className="hidden sm:inline">הסכמים</span>
+              </TabsTrigger>
+              <TabsTrigger value="allCities" className="flex items-center gap-2" key="tab-allCities">
+                <MapPin className="w-4 h-4" />
+                <span className="hidden sm:inline">כל הערים</span>
               </TabsTrigger>
             </TabsList>
 
@@ -344,6 +349,13 @@ function ProfessionalEditPageComponent({ professional, isCreatingNew = false }: 
 
               <TabsContent value="contract" className="m-0" key="content-contract">
                 <ProfessionalContractTab
+                  professional={stableProfessional}
+                  onUpdate={handleUpdate}
+                />
+              </TabsContent>
+
+              <TabsContent value="allCities" className="m-0" key="content-allCities">
+                <ProfessionalAllCitiesTab
                   professional={stableProfessional}
                   onUpdate={handleUpdate}
                 />

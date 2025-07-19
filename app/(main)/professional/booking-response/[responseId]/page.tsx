@@ -694,13 +694,13 @@ export default function ProfessionalResponsePage() {
                 {responseData.expectedPayment.breakdown.map((item, index) => (
                   <div key={index} className="flex justify-between items-center">
                     <span className="text-green-700">{item.description}</span>
-                    <span className="font-medium text-green-800">₪{item.amount.toFixed(2)}</span>
+                    <span className="font-medium text-green-800">₪{(item.amount || 0).toFixed(2)}</span>
                   </div>
                 ))}
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span className="text-green-800">סה"כ</span>
-                  <span className="text-green-900 text-xl">₪{responseData.expectedPayment.total.toFixed(2)}</span>
+                  <span className="text-green-900 text-xl">₪{(responseData.expectedPayment.total || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>

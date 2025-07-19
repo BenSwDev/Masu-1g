@@ -189,7 +189,7 @@ export async function GET(
           })
         }
         
-        expectedPayment.total = expectedPayment.basePayment + expectedPayment.surcharges + expectedPayment.paymentBonus
+        expectedPayment.total = expectedPayment.basePayment + expectedPayment.surcharges + (expectedPayment.paymentBonus || 0)
         logger.info("✅ Final payment calculation completed", { expectedPayment })
         
       } catch (paymentError) {

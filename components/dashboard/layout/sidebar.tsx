@@ -107,16 +107,22 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
       if (result.activeRole) {
         // Always update session with the actual active role from server
         await update({ activeRole: result.activeRole })
+        
+        // Force a small delay to ensure session is updated
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         if (result.success) {
           toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-                 } else {
-           // Handle fallback case - user doesn't have requested role, but got a fallback
-           toast({ 
-             title: t("notifications.roleSwitchFallback"), 
-             variant: "default" 
-           })
-         }
-        router.push(`/dashboard/${result.activeRole}`)
+        } else {
+          // Handle fallback case - user doesn't have requested role, but got a fallback
+          toast({ 
+            title: t("notifications.roleSwitchFallback"), 
+            variant: "default" 
+          })
+        }
+        
+        // Use window.location for a hard navigation to ensure proper routing
+        window.location.href = `/dashboard/${result.activeRole}`
       } else {
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }

@@ -155,33 +155,46 @@ export async function setActiveRole(role: string): Promise<{
     if (!session?.user?.id) {
       return { success: false, message: "notAuthenticated" }
     }
+    
     await dbConnect()
     const user = await User.findById(session.user.id)
     if (!user) {
       return { success: false, message: "userNotFound" }
     }
+    
     // Check if user has the requested role
     if (!user.roles.includes(role)) {
-      // Fallback to default role
+      // Fallback to default role based on priority
       const fallback = user.roles.includes("admin") ? "admin"
         : user.roles.includes("professional") ? "professional"
         : user.roles.includes("partner") ? "partner"
         : "member"
+      
       user.activeRole = fallback
       await user.save()
       
-      // Revalidate dashboard paths for fallback role
+      // Revalidate all possible dashboard paths
       revalidatePath("/dashboard")
       revalidatePath(`/dashboard/${fallback}`)
+      revalidatePath(`/dashboard/admin`)
+      revalidatePath(`/dashboard/professional`)
+      revalidatePath(`/dashboard/partner`)
+      revalidatePath(`/dashboard/member`)
       
       return { success: false, message: "roleNotAssigned", activeRole: fallback }
     }
+    
+    // Set the requested role as active
     user.activeRole = role
     await user.save()
     
-    // Revalidate dashboard paths to ensure UI consistency
+    // Revalidate all possible dashboard paths to ensure UI consistency
     revalidatePath("/dashboard")
     revalidatePath(`/dashboard/${role}`)
+    revalidatePath(`/dashboard/admin`)
+    revalidatePath(`/dashboard/professional`)
+    revalidatePath(`/dashboard/partner`)
+    revalidatePath(`/dashboard/member`)
     
     return { success: true, message: "activeRoleUpdated", activeRole: role }
   } catch (error) {

@@ -48,7 +48,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
-import { setActiveRole } from "@/actions/role-actions"
 import { TreatmentPreferencesModal } from "@/components/dashboard/preferences/treatment-preferences-modal" // Import modal
 import { NotificationsModal } from "@/components/dashboard/preferences/notifications-modal" // Import modal
 import type { ITreatmentPreferences, INotificationPreferences } from "@/lib/db/models/user" // Import preference types
@@ -103,11 +102,23 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     if (role === activeRole) return
     setIsLoading(true)
     try {
-      const result = await setActiveRole(role)
-      if (result.success || result.activeRole) {
-        await update({ activeRole: result.activeRole || role }) // This will trigger JWT update
-        toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
-        router.push(`/dashboard/${result.activeRole || role}`)
+      const response = await fetch("/api/role/switch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ role }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success || data.activeRole) {
+          await update({ activeRole: data.activeRole || role }) // This will trigger JWT update
+          toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
+          router.push(`/dashboard/${data.activeRole || role}`)
+        } else {
+          toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
+        }
       } else {
         toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }
